@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Devices from './pages/Devices'
 import APIMonitor from './pages/APIMonitor'
 import APIConfig from './pages/APIConfig'
+import Branding from './pages/Branding'
 import Bugs from './pages/Bugs'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
@@ -30,6 +31,7 @@ function App() {
             <Route path="devices" element={<Devices />} />
             <Route path="api-monitor" element={<APIMonitor />} />
             <Route path="api-config" element={<APIConfig />} />
+            <Route path="branding" element={<Branding />} />
             <Route path="bugs" element={<Bugs />} />
             <Route path="versions" element={<Versions />} />
             <Route path="logs" element={<Logs />} />

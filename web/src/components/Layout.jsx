@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings } from 'lucide-react'
+import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings, Palette } from 'lucide-react'
 import Logo from './Logo'
 
 const Layout = () => {
@@ -14,6 +14,7 @@ const Layout = () => {
     { path: '/devices', icon: Smartphone, label: 'Dispositivos' },
     { path: '/api-monitor', icon: Activity, label: 'Monitor de APIs' },
     { path: '/api-config', icon: Settings, label: 'Configurar APIs' },
+    { path: '/branding', icon: Palette, label: 'Branding' },
     { path: '/bugs', icon: Bug, label: 'Bugs' },
     { path: '/versions', icon: Package, label: 'Versões' },
     { path: '/logs', icon: FileText, label: 'Logs' },
