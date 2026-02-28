@@ -19,4 +19,10 @@ router.post('/block', authMiddleware, macController.blockDevice);
 router.get('/list', authMiddleware, macController.listDevices);
 router.get('/list-all', authMiddleware, macController.listAllDevices); // Lista TODOS (admin)
 
+// Configurar URL da API de teste grátis
+router.post('/test-api-url', authMiddleware, macController.setTestApiUrl);
+
+// Buscar URL da API de teste grátis (público - para o app)
+router.get('/test-api-url/:mac_address', macController.getTestApiUrl);
+
 module.exports = router;

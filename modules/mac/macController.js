@@ -158,3 +158,51 @@ exports.listAllDevices = async (req, res) => {
     res.status(500).json({ error: 'Erro ao listar dispositivos' });
   }
 };
+
+// Configurar URL da API de teste grátis para um dispositivo
+exports.setTestApiUrl = async (req, res) => {
+  const { device_id, test_api_url } = req.body;
+
+  try {
+    const result = await pool.query(
+      'UPDATE devices SET test_api_url = $1 WHERE id = $2 RETURNING *',
+      [test_api_url || null, device_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+
+    res.json({ 
+      device: result.rows[0], 
+      message: test_api_url ? 'URL configurada com sucesso' : 'URL removida com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao configurar URL de teste:', error);
+    res.status(500).json({ error: 'Erro ao configurar URL' });
+  }
+};
+
+// Buscar URL da API de teste grátis por MAC (público - sem autenticação)
+exports.getTestApiUrl = async (req, res) => {
+  const { mac_address } = req.params;
+
+  try {
+    const result = await pool.query(
+      'SELECT test_api_url FROM devices WHERE mac_address = $1',
+      [mac_address]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+
+    res.json({ 
+      test_api_url: result.rows[0].test_api_url,
+      has_custom_url: !!result.rows[0].test_api_url
+    });
+  } catch (error) {
+    console.error('Erro ao buscar URL de teste:', error);
+    res.status(500).json({ error: 'Erro ao buscar URL' });
+  }
+};
