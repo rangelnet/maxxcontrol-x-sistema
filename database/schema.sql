@@ -86,3 +86,15 @@ CREATE TABLE device_iptv_config (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(device_id)
 );
+
+-- Tabela de banners gerados
+CREATE TABLE banners (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  data JSONB NOT NULL,
+  template VARCHAR(50),
+  image_url VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

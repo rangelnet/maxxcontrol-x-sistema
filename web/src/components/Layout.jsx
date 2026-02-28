@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings, Palette, Server } from 'lucide-react'
+import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings, Palette, Server, Image } from 'lucide-react'
 import Logo from './Logo'
 
 const Layout = () => {
@@ -16,6 +16,7 @@ const Layout = () => {
     { path: '/api-config', icon: Settings, label: 'Configurar APIs' },
     { path: '/branding', icon: Palette, label: 'Branding' },
     { path: '/iptv-server', icon: Server, label: 'Servidor IPTV' },
+    { path: '/banners', icon: Image, label: 'Banners' },
     { path: '/bugs', icon: Bug, label: 'Bugs' },
     { path: '/versions', icon: Package, label: 'Versões' },
     { path: '/logs', icon: FileText, label: 'Logs' },

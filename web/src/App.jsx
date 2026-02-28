@@ -10,6 +10,7 @@ import Bugs from './pages/Bugs'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
 import IptvServer from './pages/IptvServer'
+import BannerGenerator from './pages/BannerGenerator'
 import Layout from './components/Layout'
 
 const PrivateRoute = ({ children }) => {
@@ -37,6 +38,7 @@ function App() {
             <Route path="versions" element={<Versions />} />
             <Route path="logs" element={<Logs />} />
             <Route path="iptv-server" element={<IptvServer />} />
+            <Route path="banners" element={<BannerGenerator />} />
           </Route>
         </Routes>
       </BrowserRouter>
