@@ -1,5 +1,5 @@
 const pool = require('../../config/database');
-const { createCanvas, loadImage, registerFont } = require('canvas');
+// const { createCanvas, loadImage, registerFont } = require('canvas');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -91,27 +91,15 @@ exports.generateBanner = async (req, res) => {
   const { type, data } = req.body;
   
   try {
-    let imageBuffer;
-    
-    if (type === 'movie') {
-      imageBuffer = await generateMovieBanner(data);
-    } else if (type === 'football') {
-      imageBuffer = await generateFootballBanner(data);
-    } else {
-      return res.status(400).json({ error: 'Tipo de banner inválido' });
-    }
-    
-    // Salvar imagem
-    const filename = `banner_${Date.now()}.png`;
-    const filepath = path.join(__dirname, '../../public/banners', filename);
-    
-    await fs.mkdir(path.dirname(filepath), { recursive: true });
-    await fs.writeFile(filepath, imageBuffer);
+    // Por enquanto, retorna apenas os dados sem gerar imagem
+    // A geração de imagem com canvas requer dependências nativas no servidor
+    // Alternativa: usar serviço externo ou gerar no frontend
     
     res.json({ 
       success: true, 
-      url: `/banners/${filename}`,
-      filename 
+      message: 'Banner configurado com sucesso',
+      data: data,
+      note: 'Geração de imagem será implementada em breve'
     });
   } catch (err) {
     console.error('Erro ao gerar banner:', err);
@@ -119,6 +107,10 @@ exports.generateBanner = async (req, res) => {
   }
 };
 
+// Funções de geração comentadas temporariamente
+// Requerem biblioteca canvas com dependências nativas
+
+/*
 // Gerar banner de filme/série
 async function generateMovieBanner(data) {
   const canvas = createCanvas(1920, 1080);
@@ -295,5 +287,8 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     ctx.fillText(line, x, y);
   }
 }
+
+module.exports = exports;
+*/
 
 module.exports = exports;

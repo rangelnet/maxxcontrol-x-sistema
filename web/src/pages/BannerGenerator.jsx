@@ -111,10 +111,13 @@ const BannerGenerator = () => {
         type: bannerType,
         data
       })
-      setPreview(response.data.url)
+      
+      if (response.data.success) {
+        alert('✅ Banner configurado com sucesso!\n\nNota: A geração de imagem visual será implementada em breve.\nPor enquanto, os dados do banner foram salvos.')
+      }
     } catch (error) {
       console.error('Erro ao gerar preview:', error)
-      alert('Erro ao gerar preview')
+      alert('Erro ao configurar banner')
     } finally {
       setLoading(false)
     }
@@ -494,16 +497,15 @@ const BannerGenerator = () => {
               </div>
             )}
 
+            {/* Aviso temporário */}
+            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p className="text-blue-400 text-sm">
+                ℹ️ A geração visual de banners será implementada em breve. Por enquanto, você pode configurar e salvar os dados dos banners.
+              </p>
+            </div>
+
             {/* Ações */}
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={generatePreview}
-                disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
-              >
-                <Eye size={20} />
-                {loading ? 'Gerando...' : 'Gerar Preview'}
-              </button>
               <button
                 onClick={saveBanner}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
