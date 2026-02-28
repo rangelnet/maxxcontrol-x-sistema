@@ -7,6 +7,9 @@ const deviceAuthMiddleware = require('../../middlewares/deviceAuth');
 // Rota com autenticação de dispositivo (token fixo) para registro
 router.post('/register-device', deviceAuthMiddleware, macController.registerDevicePublic);
 
+// Rota para atualizar status de conexão (online/offline)
+router.post('/connection-status', deviceAuthMiddleware, macController.updateConnectionStatus);
+
 // Rota pública para registro inicial de dispositivo (sem autenticação) - DEPRECATED
 router.post('/register-public', macController.registerDevicePublic);
 

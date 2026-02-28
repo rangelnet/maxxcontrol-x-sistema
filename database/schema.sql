@@ -22,7 +22,8 @@ CREATE TABLE devices (
   app_version VARCHAR(20),
   ip VARCHAR(45),
   ultimo_acesso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  status VARCHAR(20) DEFAULT 'ativo'
+  status VARCHAR(20) DEFAULT 'ativo',
+  connection_status VARCHAR(20) DEFAULT 'offline'
 );
 
 -- Tabela de logs

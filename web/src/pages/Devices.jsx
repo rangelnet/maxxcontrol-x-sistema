@@ -106,6 +106,7 @@ const Devices = () => {
                 <th className="text-left py-3 px-4">App</th>
                 <th className="text-left py-3 px-4">IP</th>
                 <th className="text-left py-3 px-4">Último Acesso</th>
+                <th className="text-left py-3 px-4">Conexão</th>
                 <th className="text-left py-3 px-4">Status</th>
                 <th className="text-left py-3 px-4">Ações</th>
               </tr>
@@ -120,8 +121,20 @@ const Devices = () => {
                   <td className="py-3 px-4">{device.ip}</td>
                   <td className="py-3 px-4 text-sm text-gray-400">{formatDate(device.ultimo_acesso)}</td>
                   <td className="py-3 px-4">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
+                      device.connection_status === 'online' 
+                        ? 'bg-green-500/20 text-green-500' 
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${
+                        device.connection_status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-gray-500'
+                      }`}></span>
+                      {device.connection_status === 'online' ? 'ONLINE' : 'OFFLINE'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                      device.status === 'ativo' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'
+                      device.status === 'ativo' ? 'bg-blue-500/20 text-blue-500' : 'bg-red-500/20 text-red-500'
                     }`}>
                       {device.status === 'ativo' ? <CheckCircle size={14} /> : <Ban size={14} />}
                       {device.status}

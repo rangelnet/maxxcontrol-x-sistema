@@ -8,7 +8,7 @@ exports.registerDevicePublic = async (req, res) => {
     const existing = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
 
     if (existing.rows.length > 0) {
-      // Atualizar dispositivo existente
+      // Atualizar dispositivo existente - mantém connection_status como está
       const result = await pool.query(
         'UPDATE devices SET modelo = $1, android_version = $2, app_version = $3, ip = $4, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $5 RETURNING *',
         [modelo, android_version, app_version, ip, mac_address]
@@ -16,16 +16,44 @@ exports.registerDevicePublic = async (req, res) => {
       return res.json({ device: result.rows[0], message: 'Dispositivo atualizado' });
     }
 
-    // Criar novo dispositivo SEM user_id (será associado depois)
+    // Criar novo dispositivo SEM user_id, connection_status = 'offline'
     const result = await pool.query(
-      'INSERT INTO devices (mac_address, modelo, android_version, app_version, ip, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [mac_address, modelo, android_version, app_version, ip, 'ativo']
+      'INSERT INTO devices (mac_address, modelo, android_version, app_version, ip, status, connection_status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [mac_address, modelo, android_version, app_version, ip, 'ativo', 'offline']
     );
 
     res.status(201).json({ device: result.rows[0], message: 'Dispositivo registrado' });
   } catch (error) {
     console.error('Erro ao registrar dispositivo público:', error);
     res.status(500).json({ error: 'Erro ao registrar dispositivo' });
+  }
+};
+
+// Atualizar status de conexão (online/offline)
+exports.updateConnectionStatus = async (req, res) => {
+  const { mac_address, connection_status } = req.body;
+
+  if (!['online', 'offline'].includes(connection_status)) {
+    return res.status(400).json({ error: 'Status inválido. Use: online ou offline' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE devices SET connection_status = $1, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $2 RETURNING *',
+      [connection_status, mac_address]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+
+    res.json({ 
+      device: result.rows[0], 
+      message: `Status atualizado para ${connection_status}` 
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar status de conexão:', error);
+    res.status(500).json({ error: 'Erro ao atualizar status' });
   }
 };
 
