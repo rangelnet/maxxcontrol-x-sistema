@@ -20,7 +20,7 @@ const Devices = () => {
 
   const loadDevices = async () => {
     try {
-      const response = await api.get('/api/mac/list-all') // Lista TODOS os dispositivos
+      const response = await api.get('/api/device/list-all') // Lista TODOS os dispositivos
       setDevices(response.data.devices)
     } catch (error) {
       console.error('Erro ao carregar dispositivos:', error)
