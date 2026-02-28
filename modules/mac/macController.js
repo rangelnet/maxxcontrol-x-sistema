@@ -139,3 +139,22 @@ exports.listDevices = async (req, res) => {
     res.status(500).json({ error: 'Erro ao listar dispositivos' });
   }
 };
+
+// Listar TODOS os dispositivos (admin)
+exports.listAllDevices = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        d.*,
+        u.username,
+        u.email
+      FROM devices d
+      LEFT JOIN users u ON d.user_id = u.id
+      ORDER BY d.ultimo_acesso DESC
+    `);
+    res.json({ devices: result.rows });
+  } catch (error) {
+    console.error('Erro ao listar todos os dispositivos:', error);
+    res.status(500).json({ error: 'Erro ao listar dispositivos' });
+  }
+};
