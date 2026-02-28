@@ -34,6 +34,7 @@ app.use('/api/api-monitor', require('./modules/api-monitor/apiMonitorRoutes'));
 app.use('/api/api-config', require('./modules/api-config/apiConfigRoutes'));
 app.use('/api/content', require('./modules/content/contentRoutes'));
 app.use('/api/branding', require('./modules/branding/brandingRoutes'));
+app.use('/api/iptv-server', require('./modules/iptv-server/iptvServerRoutes'));
 
 // Rota de health check
 app.get('/health', (req, res) => {

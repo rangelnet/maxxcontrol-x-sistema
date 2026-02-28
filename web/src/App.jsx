@@ -9,6 +9,7 @@ import Branding from './pages/Branding'
 import Bugs from './pages/Bugs'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
+import IptvServer from './pages/IptvServer'
 import Layout from './components/Layout'
 
 const PrivateRoute = ({ children }) => {
@@ -35,6 +36,7 @@ function App() {
             <Route path="bugs" element={<Bugs />} />
             <Route path="versions" element={<Versions />} />
             <Route path="logs" element={<Logs />} />
+            <Route path="iptv-server" element={<IptvServer />} />
           </Route>
         </Routes>
       </BrowserRouter>
