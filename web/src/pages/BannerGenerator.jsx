@@ -13,7 +13,29 @@ const BannerGenerator = () => {
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedSize, setSelectedSize] = useState('banner')
+  const [selectedPlatforms, setSelectedPlatforms] = useState(['tv', 'mobile'])
   const canvasRef = useRef(null)
+
+  // Tamanhos disponíveis
+  const sizes = {
+    'cartaz': { width: 1080, height: 1920, name: 'Cartaz (Portrait)', icon: '📱' },
+    'banner': { width: 1920, height: 1080, name: 'Banner (Landscape)', icon: '🖥️' },
+    'stories': { width: 1080, height: 1920, name: 'Stories', icon: '📲' },
+    'post': { width: 1080, height: 1080, name: 'Post Quadrado', icon: '⬛' },
+    'facebook': { width: 820, height: 312, name: 'Capa Facebook', icon: '📘' },
+    'youtube': { width: 1280, height: 720, name: 'Thumbnail YouTube', icon: '▶️' }
+  }
+
+  // Ícones de plataformas
+  const platformIcons = {
+    'tv': { icon: '📺', name: 'TV Box' },
+    'notebook': { icon: '💻', name: 'Notebook' },
+    'mobile': { icon: '📱', name: 'Celular' },
+    'xbox': { icon: '🎮', name: 'Xbox' },
+    'chromecast': { icon: '📡', name: 'Chromecast' },
+    'smart': { icon: '🖥️', name: 'Smart TV' }
+  }
   
   // Dados do banner de filme
   const [movieData, setMovieData] = useState({
@@ -69,11 +91,26 @@ const BannerGenerator = () => {
   }
 
   const selectContent = (content) => {
+    // Escolher imagem baseada no tamanho selecionado
+    let imageUrl = ''
+    const isPortrait = ['cartaz', 'stories'].includes(selectedSize)
+    
+    if (isPortrait && content.poster_path) {
+      // Para formatos verticais, usar poster
+      imageUrl = `https://image.tmdb.org/t/p/original${content.poster_path}`
+    } else if (content.backdrop_path) {
+      // Para formatos horizontais, usar backdrop
+      imageUrl = `https://image.tmdb.org/t/p/original${content.backdrop_path}`
+    } else if (content.poster_path) {
+      // Fallback para poster
+      imageUrl = `https://image.tmdb.org/t/p/original${content.poster_path}`
+    }
+    
     setMovieData({
       title: content.titulo,
       year: content.ano,
       description: content.descricao,
-      posterUrl: content.poster_path ? `https://image.tmdb.org/t/p/w500${content.poster_path}` : '',
+      posterUrl: imageUrl,
       rating: content.nota || 8,
       dubbed: true,
       isNew: false
@@ -87,16 +124,34 @@ const BannerGenerator = () => {
   )
 
   const searchTMDB = async (query) => {
+    if (!query.trim()) return
+    
     try {
       const response = await api.get(`/api/content/search?query=${query}`)
       if (response.data.results && response.data.results.length > 0) {
         const movie = response.data.results[0]
+        
+        // Escolher imagem baseada no tamanho selecionado
+        let imageUrl = ''
+        const isPortrait = ['cartaz', 'stories'].includes(selectedSize)
+        
+        if (isPortrait && movie.poster_path) {
+          // Para formatos verticais, usar poster
+          imageUrl = `https://image.tmdb.org/t/p/original${movie.poster_path}`
+        } else if (movie.backdrop_path) {
+          // Para formatos horizontais, usar backdrop
+          imageUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+        } else if (movie.poster_path) {
+          // Fallback para poster
+          imageUrl = `https://image.tmdb.org/t/p/original${movie.poster_path}`
+        }
+        
         setMovieData({
           ...movieData,
           title: movie.title || movie.name,
           year: movie.release_date?.split('-')[0] || movie.first_air_date?.split('-')[0],
           description: movie.overview,
-          posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+          posterUrl: imageUrl,
           rating: movie.vote_average
         })
       }
@@ -108,20 +163,21 @@ const BannerGenerator = () => {
   const generatePreview = async () => {
     setLoading(true)
     try {
+      const sizeConfig = sizes[selectedSize]
       const canvas = document.createElement('canvas')
-      canvas.width = 1920
-      canvas.height = 1080
+      canvas.width = sizeConfig.width
+      canvas.height = sizeConfig.height
       const ctx = canvas.getContext('2d')
 
       if (bannerType === 'movie') {
-        await generateMovieBanner(ctx, canvas)
+        await generateMovieBanner(ctx, canvas, sizeConfig)
       } else {
-        await generateFootballBanner(ctx, canvas)
+        await generateFootballBanner(ctx, canvas, sizeConfig)
       }
 
       const dataUrl = canvas.toDataURL('image/png')
       setPreview(dataUrl)
-      setShowPreviewModal(true) // Abre modal de preview
+      setShowPreviewModal(true)
     } catch (error) {
       console.error('Erro ao gerar preview:', error)
       alert('Erro ao gerar preview')
@@ -130,15 +186,19 @@ const BannerGenerator = () => {
     }
   }
 
-  const generateMovieBanner = async (ctx, canvas) => {
+  const generateMovieBanner = async (ctx, canvas, sizeConfig) => {
+    const { width, height } = sizeConfig
+    const isPortrait = height > width
+    const scale = width / 1920 // Escala para adaptar elementos
+
     // Fundo gradiente
-    const gradient = ctx.createLinearGradient(0, 0, 1920, 1080)
+    const gradient = ctx.createLinearGradient(0, 0, width, height)
     gradient.addColorStop(0, '#0a0a0a')
     gradient.addColorStop(1, '#1a1a2e')
     ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, 1920, 1080)
+    ctx.fillRect(0, 0, width, height)
 
-    // Carregar poster se houver
+    // Carregar poster/backdrop
     if (movieData.posterUrl) {
       try {
         const img = new window.Image()
@@ -148,123 +208,187 @@ const BannerGenerator = () => {
           img.onerror = reject
           img.src = movieData.posterUrl
         })
-        ctx.drawImage(img, 1200, 150, 600, 900)
+
+        if (isPortrait) {
+          // Layout vertical - imagem no topo
+          const imgHeight = height * 0.6
+          const imgWidth = width * 0.9
+          const x = (width - imgWidth) / 2
+          ctx.drawImage(img, x, 50 * scale, imgWidth, imgHeight)
+        } else {
+          // Layout horizontal - imagem na direita
+          const imgWidth = width * 0.4
+          const imgHeight = height * 0.8
+          const x = width - imgWidth - 50 * scale
+          const y = (height - imgHeight) / 2
+          ctx.drawImage(img, x, y, imgWidth, imgHeight)
+        }
       } catch (err) {
-        console.error('Erro ao carregar poster:', err)
+        console.error('Erro ao carregar imagem:', err)
       }
     }
 
+    // Posições adaptadas ao layout
+    const textX = isPortrait ? width * 0.1 : width * 0.05
+    const textY = isPortrait ? height * 0.65 : height * 0.15
+    const maxTextWidth = isPortrait ? width * 0.8 : width * 0.5
+
     // Título
     ctx.fillStyle = '#FF6A00'
-    ctx.font = 'bold 80px Arial'
-    ctx.fillText(movieData.title || 'Título', 100, 200)
+    ctx.font = `bold ${Math.floor(60 * scale)}px Arial`
+    ctx.fillText(movieData.title || 'Título', textX, textY)
 
     // Ano
     ctx.fillStyle = '#ffffff'
-    ctx.font = '40px Arial'
-    ctx.fillText(`(${movieData.year || '2025'})`, 100, 280)
+    ctx.font = `${Math.floor(30 * scale)}px Arial`
+    ctx.fillText(`(${movieData.year || '2025'})`, textX, textY + 50 * scale)
 
     // Descrição
     ctx.fillStyle = '#cccccc'
-    ctx.font = '32px Arial'
-    wrapText(ctx, movieData.description || 'Descrição', 100, 380, 1000, 45)
+    ctx.font = `${Math.floor(24 * scale)}px Arial`
+    wrapText(ctx, movieData.description || 'Descrição', textX, textY + 100 * scale, maxTextWidth, 35 * scale)
 
     // Rating
     if (movieData.rating) {
       const stars = Math.round(movieData.rating / 2)
       ctx.fillStyle = '#FFD700'
-      ctx.font = '60px Arial'
-      ctx.fillText('★'.repeat(stars) + '☆'.repeat(5 - stars), 100, 900)
+      ctx.font = `${Math.floor(40 * scale)}px Arial`
+      const ratingY = isPortrait ? height * 0.85 : height * 0.65
+      ctx.fillText('★'.repeat(stars) + '☆'.repeat(5 - stars), textX, ratingY)
     }
 
     // Badges
+    const badgeY = 30 * scale
     if (movieData.dubbed) {
-      drawBadge(ctx, 'DUBLADO', 100, 50, '#00AA00')
+      drawBadge(ctx, 'DUBLADO', textX, badgeY, '#00AA00', scale)
     }
     if (movieData.isNew) {
-      drawBadge(ctx, 'LANÇAMENTO', 350, 50, '#FF6A00')
+      drawBadge(ctx, 'LANÇAMENTO', textX + 220 * scale, badgeY, '#FF6A00', scale)
     }
+
+    // Ícones de plataformas no rodapé
+    drawPlatformIcons(ctx, width, height, scale)
   }
 
-  const generateFootballBanner = async (ctx, canvas) => {
+  const generateFootballBanner = async (ctx, canvas, sizeConfig) => {
+    const { width, height } = sizeConfig
+    const scale = width / 1920
+
     // Fundo gradiente de fogo
-    const gradient = ctx.createLinearGradient(0, 0, 1920, 1080)
+    const gradient = ctx.createLinearGradient(0, 0, width, height)
     gradient.addColorStop(0, '#1a0000')
     gradient.addColorStop(0.5, '#330000')
     gradient.addColorStop(1, '#1a0000')
     ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, 1920, 1080)
+    ctx.fillRect(0, 0, width, height)
 
     // Título
     ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 70px Arial'
+    ctx.font = `bold ${Math.floor(50 * scale)}px Arial`
     ctx.textAlign = 'center'
-    ctx.fillText(footballData.title || 'TABELA DE JOGOS', 960, 120)
+    ctx.fillText(footballData.title || 'TABELA DE JOGOS', width / 2, 80 * scale)
 
     // Data
     ctx.fillStyle = '#FF6A00'
-    ctx.font = 'bold 50px Arial'
-    ctx.fillText(footballData.date || 'HOJE', 960, 200)
+    ctx.font = `bold ${Math.floor(35 * scale)}px Arial`
+    ctx.fillText(footballData.date || 'HOJE', width / 2, 140 * scale)
 
     // Jogos
-    let yPos = 300
+    let yPos = 200 * scale
+    const matchHeight = 120 * scale
     footballData.matches.forEach((match) => {
-      drawMatch(ctx, match, yPos)
-      yPos += 180
+      drawMatch(ctx, match, yPos, width, scale)
+      yPos += matchHeight + 20 * scale
     })
 
-    // Logo Fire TV
-    ctx.fillStyle = '#FF6A00'
-    ctx.font = 'bold 40px Arial'
-    ctx.textAlign = 'left'
-    ctx.fillText('🔥 Fire TV', 50, 1030)
-    ctx.textAlign = 'right'
-    ctx.fillText('Fire TV 🔥', 1870, 1030)
+    // Ícones de plataformas no rodapé
+    drawPlatformIcons(ctx, width, height, scale)
   }
 
-  const drawMatch = (ctx, match, y) => {
+  const drawMatch = (ctx, match, y, width, scale) => {
+    const centerX = width / 2
+    const boxWidth = width * 0.8
+    const boxX = (width - boxWidth) / 2
+
     // Box da partida
     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
-    ctx.fillRect(200, y, 1520, 150)
+    ctx.fillRect(boxX, y, boxWidth, 100 * scale)
 
     // Campeonato
     ctx.fillStyle = '#cccccc'
-    ctx.font = 'bold 30px Arial'
+    ctx.font = `bold ${Math.floor(20 * scale)}px Arial`
     ctx.textAlign = 'center'
-    ctx.fillText(match.league || 'CAMPEONATO', 960, y + 40)
+    ctx.fillText(match.league || 'CAMPEONATO', centerX, y + 30 * scale)
 
     // Time 1
     ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 40px Arial'
+    ctx.font = `bold ${Math.floor(28 * scale)}px Arial`
     ctx.textAlign = 'right'
-    ctx.fillText(match.team1 || 'TIME 1', 800, y + 100)
+    ctx.fillText(match.team1 || 'TIME 1', centerX - 80 * scale, y + 70 * scale)
 
     // VS
     ctx.fillStyle = '#FF6A00'
-    ctx.font = 'bold 50px Arial'
+    ctx.font = `bold ${Math.floor(35 * scale)}px Arial`
     ctx.textAlign = 'center'
-    ctx.fillText('VS', 960, y + 100)
+    ctx.fillText('VS', centerX, y + 70 * scale)
 
     // Time 2
     ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 40px Arial'
+    ctx.font = `bold ${Math.floor(28 * scale)}px Arial`
     ctx.textAlign = 'left'
-    ctx.fillText(match.team2 || 'TIME 2', 1120, y + 100)
+    ctx.fillText(match.team2 || 'TIME 2', centerX + 80 * scale, y + 70 * scale)
 
     // Horário
     ctx.fillStyle = '#FFD700'
-    ctx.font = 'bold 35px Arial'
+    ctx.font = `bold ${Math.floor(25 * scale)}px Arial`
     ctx.textAlign = 'center'
-    ctx.fillText(match.time || '20:00', 1650, y + 100)
+    ctx.fillText(match.time || '20:00', boxX + boxWidth - 80 * scale, y + 70 * scale)
   }
 
-  const drawBadge = (ctx, text, x, y, color) => {
+  const drawBadge = (ctx, text, x, y, color, scale = 1) => {
+    const badgeWidth = 180 * scale
+    const badgeHeight = 50 * scale
+    
     ctx.fillStyle = color
-    ctx.fillRect(x, y, 200, 60)
+    ctx.fillRect(x, y, badgeWidth, badgeHeight)
     ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 24px Arial'
+    ctx.font = `bold ${Math.floor(20 * scale)}px Arial`
     ctx.textAlign = 'center'
-    ctx.fillText(text, x + 100, y + 40)
+    ctx.fillText(text, x + badgeWidth / 2, y + badgeHeight / 2 + 8 * scale)
+    ctx.textAlign = 'left'
+  }
+
+  const drawPlatformIcons = (ctx, width, height, scale) => {
+    if (selectedPlatforms.length === 0) return
+
+    const iconSize = 40 * scale
+    const spacing = 60 * scale
+    const totalWidth = selectedPlatforms.length * spacing
+    const startX = (width - totalWidth) / 2
+    const y = height - 60 * scale
+
+    ctx.font = `${Math.floor(iconSize)}px Arial`
+    ctx.textAlign = 'center'
+
+    selectedPlatforms.forEach((platform, index) => {
+      const x = startX + index * spacing + spacing / 2
+      const platformData = platformIcons[platform]
+      
+      if (platformData) {
+        // Ícone
+        ctx.fillText(platformData.icon, x, y)
+        
+        // Nome (opcional, apenas se houver espaço)
+        if (scale >= 0.5) {
+          ctx.font = `${Math.floor(12 * scale)}px Arial`
+          ctx.fillStyle = '#888888'
+          ctx.fillText(platformData.name, x, y + 25 * scale)
+          ctx.font = `${Math.floor(iconSize)}px Arial`
+          ctx.fillStyle = '#ffffff'
+        }
+      }
+    })
+
     ctx.textAlign = 'left'
   }
 
@@ -295,8 +419,9 @@ const BannerGenerator = () => {
   const downloadBanner = () => {
     if (!preview) return
     
+    const sizeConfig = sizes[selectedSize]
     const link = document.createElement('a')
-    link.download = `banner_${Date.now()}.png`
+    link.download = `banner_${sizeConfig.name.replace(/\s+/g, '_')}_${Date.now()}.png`
     link.href = preview
     link.click()
   }
@@ -420,6 +545,59 @@ const BannerGenerator = () => {
               </button>
             </div>
 
+            {/* Seletor de Tamanho */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                📐 Tamanho do Banner
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Object.entries(sizes).map(([key, size]) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedSize(key)}
+                    className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all ${
+                      selectedSize === key 
+                        ? 'bg-primary text-white ring-2 ring-primary' 
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="text-2xl">{size.icon}</span>
+                    <span className="text-xs font-semibold text-center">{size.name}</span>
+                    <span className="text-xs opacity-70">{size.width}x{size.height}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Seletor de Plataformas */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                🎮 Plataformas (aparecerão no rodapé)
+              </label>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                {Object.entries(platformIcons).map(([key, platform]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      if (selectedPlatforms.includes(key)) {
+                        setSelectedPlatforms(selectedPlatforms.filter(p => p !== key))
+                      } else {
+                        setSelectedPlatforms([...selectedPlatforms, key])
+                      }
+                    }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
+                      selectedPlatforms.includes(key)
+                        ? 'bg-primary text-white ring-2 ring-primary'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="text-xl">{platform.icon}</span>
+                    <span className="text-xs">{platform.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Formulário de Filme */}
             {bannerType === 'movie' && (
               <div className="space-y-4">
@@ -518,11 +696,19 @@ const BannerGenerator = () => {
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Digite o nome do filme/série"
+                      placeholder="Digite o nome do filme/série e aperte Enter"
                       className="flex-1 px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                      onKeyPress={(e) => e.key === 'Enter' && searchTMDB(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          searchTMDB(e.target.value)
+                          e.target.value = ''
+                        }
+                      }}
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Dica: A busca usa imagens em alta qualidade do TMDB. Para formatos verticais (Cartaz/Stories) usa poster, para horizontais usa backdrop.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
