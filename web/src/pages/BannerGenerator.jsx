@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Image, Film, Trophy, Plus, Trash2, Eye, Download, Save } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Image, Film, Trophy, Plus, Trash2, Eye, Download, Save, X } from 'lucide-react'
 import api from '../services/api'
 
 const BannerGenerator = () => {
@@ -12,6 +12,7 @@ const BannerGenerator = () => {
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const canvasRef = useRef(null)
   
   // Dados do banner de filme
   const [movieData, setMovieData] = useState({
@@ -106,21 +107,196 @@ const BannerGenerator = () => {
   const generatePreview = async () => {
     setLoading(true)
     try {
-      const data = bannerType === 'movie' ? movieData : footballData
-      const response = await api.post('/api/banners/generate', {
-        type: bannerType,
-        data
-      })
-      
-      if (response.data.success) {
-        alert('✅ Banner configurado com sucesso!\n\nNota: A geração de imagem visual será implementada em breve.\nPor enquanto, os dados do banner foram salvos.')
+      const canvas = document.createElement('canvas')
+      canvas.width = 1920
+      canvas.height = 1080
+      const ctx = canvas.getContext('2d')
+
+      if (bannerType === 'movie') {
+        await generateMovieBanner(ctx, canvas)
+      } else {
+        await generateFootballBanner(ctx, canvas)
       }
+
+      const dataUrl = canvas.toDataURL('image/png')
+      setPreview(dataUrl)
     } catch (error) {
       console.error('Erro ao gerar preview:', error)
-      alert('Erro ao configurar banner')
+      alert('Erro ao gerar preview')
     } finally {
       setLoading(false)
     }
+  }
+
+  const generateMovieBanner = async (ctx, canvas) => {
+    // Fundo gradiente
+    const gradient = ctx.createLinearGradient(0, 0, 1920, 1080)
+    gradient.addColorStop(0, '#0a0a0a')
+    gradient.addColorStop(1, '#1a1a2e')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, 1920, 1080)
+
+    // Carregar poster se houver
+    if (movieData.posterUrl) {
+      try {
+        const img = new window.Image()
+        img.crossOrigin = 'anonymous'
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+          img.src = movieData.posterUrl
+        })
+        ctx.drawImage(img, 1200, 150, 600, 900)
+      } catch (err) {
+        console.error('Erro ao carregar poster:', err)
+      }
+    }
+
+    // Título
+    ctx.fillStyle = '#FF6A00'
+    ctx.font = 'bold 80px Arial'
+    ctx.fillText(movieData.title || 'Título', 100, 200)
+
+    // Ano
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '40px Arial'
+    ctx.fillText(`(${movieData.year || '2025'})`, 100, 280)
+
+    // Descrição
+    ctx.fillStyle = '#cccccc'
+    ctx.font = '32px Arial'
+    wrapText(ctx, movieData.description || 'Descrição', 100, 380, 1000, 45)
+
+    // Rating
+    if (movieData.rating) {
+      const stars = Math.round(movieData.rating / 2)
+      ctx.fillStyle = '#FFD700'
+      ctx.font = '60px Arial'
+      ctx.fillText('★'.repeat(stars) + '☆'.repeat(5 - stars), 100, 900)
+    }
+
+    // Badges
+    if (movieData.dubbed) {
+      drawBadge(ctx, 'DUBLADO', 100, 50, '#00AA00')
+    }
+    if (movieData.isNew) {
+      drawBadge(ctx, 'LANÇAMENTO', 350, 50, '#FF6A00')
+    }
+  }
+
+  const generateFootballBanner = async (ctx, canvas) => {
+    // Fundo gradiente de fogo
+    const gradient = ctx.createLinearGradient(0, 0, 1920, 1080)
+    gradient.addColorStop(0, '#1a0000')
+    gradient.addColorStop(0.5, '#330000')
+    gradient.addColorStop(1, '#1a0000')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, 1920, 1080)
+
+    // Título
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 70px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText(footballData.title || 'TABELA DE JOGOS', 960, 120)
+
+    // Data
+    ctx.fillStyle = '#FF6A00'
+    ctx.font = 'bold 50px Arial'
+    ctx.fillText(footballData.date || 'HOJE', 960, 200)
+
+    // Jogos
+    let yPos = 300
+    footballData.matches.forEach((match) => {
+      drawMatch(ctx, match, yPos)
+      yPos += 180
+    })
+
+    // Logo Fire TV
+    ctx.fillStyle = '#FF6A00'
+    ctx.font = 'bold 40px Arial'
+    ctx.textAlign = 'left'
+    ctx.fillText('🔥 Fire TV', 50, 1030)
+    ctx.textAlign = 'right'
+    ctx.fillText('Fire TV 🔥', 1870, 1030)
+  }
+
+  const drawMatch = (ctx, match, y) => {
+    // Box da partida
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
+    ctx.fillRect(200, y, 1520, 150)
+
+    // Campeonato
+    ctx.fillStyle = '#cccccc'
+    ctx.font = 'bold 30px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText(match.league || 'CAMPEONATO', 960, y + 40)
+
+    // Time 1
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 40px Arial'
+    ctx.textAlign = 'right'
+    ctx.fillText(match.team1 || 'TIME 1', 800, y + 100)
+
+    // VS
+    ctx.fillStyle = '#FF6A00'
+    ctx.font = 'bold 50px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText('VS', 960, y + 100)
+
+    // Time 2
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 40px Arial'
+    ctx.textAlign = 'left'
+    ctx.fillText(match.team2 || 'TIME 2', 1120, y + 100)
+
+    // Horário
+    ctx.fillStyle = '#FFD700'
+    ctx.font = 'bold 35px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText(match.time || '20:00', 1650, y + 100)
+  }
+
+  const drawBadge = (ctx, text, x, y, color) => {
+    ctx.fillStyle = color
+    ctx.fillRect(x, y, 200, 60)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = 'bold 24px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText(text, x + 100, y + 40)
+    ctx.textAlign = 'left'
+  }
+
+  const wrapText = (ctx, text, x, y, maxWidth, lineHeight) => {
+    const words = text.split(' ')
+    let line = ''
+    let lineCount = 0
+
+    for (let i = 0; i < words.length && lineCount < 5; i++) {
+      const testLine = line + words[i] + ' '
+      const metrics = ctx.measureText(testLine)
+
+      if (metrics.width > maxWidth && i > 0) {
+        ctx.fillText(line, x, y)
+        line = words[i] + ' '
+        y += lineHeight
+        lineCount++
+      } else {
+        line = testLine
+      }
+    }
+
+    if (lineCount < 5) {
+      ctx.fillText(line, x, y)
+    }
+  }
+
+  const downloadBanner = () => {
+    if (!preview) return
+    
+    const link = document.createElement('a')
+    link.download = `banner_${Date.now()}.png`
+    link.href = preview
+    link.click()
   }
 
   const saveBanner = async () => {
@@ -212,8 +388,11 @@ const BannerGenerator = () => {
           <div className="bg-card rounded-lg p-6 max-w-4xl w-full mx-4 my-8 border border-gray-800">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Criar Banner</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white">
-                ✕
+              <button 
+                onClick={() => setShowModal(false)} 
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={28} />
               </button>
             </div>
 
@@ -497,15 +676,27 @@ const BannerGenerator = () => {
               </div>
             )}
 
-            {/* Aviso temporário */}
-            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-blue-400 text-sm">
-                ℹ️ A geração visual de banners será implementada em breve. Por enquanto, você pode configurar e salvar os dados dos banners.
-              </p>
-            </div>
-
             {/* Ações */}
             <div className="flex gap-3 mt-6">
+              <button
+                onClick={generatePreview}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                <Eye size={20} />
+                {loading ? 'Gerando...' : 'Gerar Preview'}
+              </button>
+              
+              {preview && (
+                <button
+                  onClick={downloadBanner}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download size={20} />
+                  Baixar
+                </button>
+              )}
+              
               <button
                 onClick={saveBanner}
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
