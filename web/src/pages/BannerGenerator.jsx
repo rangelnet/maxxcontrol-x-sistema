@@ -7,6 +7,7 @@ const BannerGenerator = () => {
   const [contents, setContents] = useState([])
   const [recentContents, setRecentContents] = useState([])
   const [showModal, setShowModal] = useState(false)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [showContentList, setShowContentList] = useState(false)
   const [bannerType, setBannerType] = useState('movie')
   const [loading, setLoading] = useState(false)
@@ -120,6 +121,7 @@ const BannerGenerator = () => {
 
       const dataUrl = canvas.toDataURL('image/png')
       setPreview(dataUrl)
+      setShowPreviewModal(true) // Abre modal de preview
     } catch (error) {
       console.error('Erro ao gerar preview:', error)
       alert('Erro ao gerar preview')
@@ -669,10 +671,20 @@ const BannerGenerator = () => {
             )}
 
             {/* Preview */}
-            {preview && (
+            {preview && !showPreviewModal && (
               <div className="mt-6">
                 <h3 className="text-white font-semibold mb-3">Preview:</h3>
-                <img src={preview} alt="Preview" className="w-full rounded-lg border border-gray-700" />
+                <div className="relative">
+                  <img 
+                    src={preview} 
+                    alt="Preview" 
+                    className="w-full rounded-lg border border-gray-700 cursor-pointer hover:border-primary transition-colors" 
+                    onClick={() => setShowPreviewModal(true)}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50 rounded-lg cursor-pointer" onClick={() => setShowPreviewModal(true)}>
+                    <Eye size={48} className="text-white" />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -704,6 +716,53 @@ const BannerGenerator = () => {
                 <Save size={20} />
                 Salvar Banner
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Preview do Banner */}
+      {showPreviewModal && preview && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-7xl w-full">
+            {/* Botão Fechar */}
+            <button
+              onClick={() => setShowPreviewModal(false)}
+              className="absolute -top-12 right-0 text-white hover:text-primary transition-colors flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg"
+            >
+              <X size={24} />
+              Fechar
+            </button>
+
+            {/* Banner Preview */}
+            <div className="bg-dark rounded-lg p-4 border border-gray-800">
+              <img 
+                src={preview} 
+                alt="Preview do Banner" 
+                className="w-full rounded-lg shadow-2xl"
+              />
+              
+              {/* Ações */}
+              <div className="flex gap-3 mt-4 justify-center">
+                <button
+                  onClick={downloadBanner}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download size={20} />
+                  Baixar Banner
+                </button>
+                
+                <button
+                  onClick={() => {
+                    saveBanner()
+                    setShowPreviewModal(false)
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
+                >
+                  <Save size={20} />
+                  Salvar e Fechar
+                </button>
+              </div>
             </div>
           </div>
         </div>
