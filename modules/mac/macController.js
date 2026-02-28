@@ -1,5 +1,34 @@
 const pool = require('../../config/database');
 
+// Registrar dispositivo PÚBLICO (sem autenticação - para primeiro acesso)
+exports.registerDevicePublic = async (req, res) => {
+  const { mac_address, modelo, android_version, app_version, ip } = req.body;
+
+  try {
+    const existing = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
+
+    if (existing.rows.length > 0) {
+      // Atualizar dispositivo existente
+      const result = await pool.query(
+        'UPDATE devices SET modelo = $1, android_version = $2, app_version = $3, ip = $4, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $5 RETURNING *',
+        [modelo, android_version, app_version, ip, mac_address]
+      );
+      return res.json({ device: result.rows[0], message: 'Dispositivo atualizado' });
+    }
+
+    // Criar novo dispositivo SEM user_id (será associado depois)
+    const result = await pool.query(
+      'INSERT INTO devices (mac_address, modelo, android_version, app_version, ip, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [mac_address, modelo, android_version, app_version, ip, 'ativo']
+    );
+
+    res.status(201).json({ device: result.rows[0], message: 'Dispositivo registrado' });
+  } catch (error) {
+    console.error('Erro ao registrar dispositivo público:', error);
+    res.status(500).json({ error: 'Erro ao registrar dispositivo' });
+  }
+};
+
 // Registrar dispositivo
 exports.registerDevice = async (req, res) => {
   const { mac_address, modelo, android_version, app_version, ip } = req.body;
