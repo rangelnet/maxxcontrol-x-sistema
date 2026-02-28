@@ -5,6 +5,7 @@ const authMiddleware = require('../../middlewares/auth');
 
 // Conteúdo
 router.get('/', authMiddleware, contentController.listarConteudos);
+router.get('/list', authMiddleware, contentController.listarConteudos);
 router.post('/importar-filme/:id', authMiddleware, contentController.importarFilme);
 router.post('/importar-serie/:id', authMiddleware, contentController.importarSerie);
 router.get('/pesquisar', authMiddleware, contentController.pesquisarTMDB);

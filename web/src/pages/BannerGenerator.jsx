@@ -4,10 +4,13 @@ import api from '../services/api'
 
 const BannerGenerator = () => {
   const [banners, setBanners] = useState([])
+  const [contents, setContents] = useState([])
   const [showModal, setShowModal] = useState(false)
+  const [showContentList, setShowContentList] = useState(false)
   const [bannerType, setBannerType] = useState('movie')
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
   
   // Dados do banner de filme
   const [movieData, setMovieData] = useState({
@@ -31,6 +34,7 @@ const BannerGenerator = () => {
 
   useEffect(() => {
     loadBanners()
+    loadContents()
   }, [])
 
   const loadBanners = async () => {
@@ -41,6 +45,33 @@ const BannerGenerator = () => {
       console.error('Erro ao carregar banners:', error)
     }
   }
+
+  const loadContents = async () => {
+    try {
+      const response = await api.get('/api/content/list?limit=100')
+      setContents(response.data.conteudos || [])
+    } catch (error) {
+      console.error('Erro ao carregar conteúdos:', error)
+    }
+  }
+
+  const selectContent = (content) => {
+    setMovieData({
+      title: content.titulo,
+      year: content.ano,
+      description: content.descricao,
+      posterUrl: content.poster_path ? `https://image.tmdb.org/t/p/w500${content.poster_path}` : '',
+      rating: content.nota || 8,
+      dubbed: true,
+      isNew: false
+    })
+    setShowContentList(false)
+  }
+
+  const filteredContents = contents.filter(c => 
+    c.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.titulo_original?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const searchTMDB = async (query) => {
     try {
@@ -197,9 +228,60 @@ const BannerGenerator = () => {
             {/* Formulário de Filme */}
             {bannerType === 'movie' && (
               <div className="space-y-4">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowContentList(!showContentList)}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    📋 Ver Conteúdos Cadastrados ({contents.length})
+                  </button>
+                </div>
+
+                {/* Lista de Conteúdos */}
+                {showContentList && (
+                  <div className="bg-dark rounded-lg p-4 max-h-96 overflow-y-auto border border-gray-700">
+                    <input
+                      type="text"
+                      placeholder="Buscar conteúdo..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white mb-3"
+                    />
+                    
+                    {filteredContents.length === 0 ? (
+                      <p className="text-gray-400 text-center py-4">Nenhum conteúdo encontrado</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredContents.map((content) => (
+                          <button
+                            key={content.id}
+                            onClick={() => selectContent(content)}
+                            className="w-full flex items-center gap-3 p-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors text-left"
+                          >
+                            {content.poster_path && (
+                              <img
+                                src={`https://image.tmdb.org/t/p/w92${content.poster_path}`}
+                                alt={content.titulo}
+                                className="w-12 h-16 object-cover rounded"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <p className="text-white font-semibold">{content.titulo}</p>
+                              <p className="text-gray-400 text-sm">
+                                {content.tipo === 'filme' ? '🎬 Filme' : '📺 Série'} • {content.ano}
+                              </p>
+                            </div>
+                            <span className="text-yellow-500">⭐ {content.nota?.toFixed(1)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Buscar no TMDB
+                    Ou buscar no TMDB
                   </label>
                   <div className="flex gap-2">
                     <input

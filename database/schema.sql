@@ -98,3 +98,26 @@ CREATE TABLE banners (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Tabela de conteúdos (filmes e séries)
+CREATE TABLE conteudos (
+  id SERIAL PRIMARY KEY,
+  tmdb_id INTEGER UNIQUE,
+  tipo VARCHAR(20) NOT NULL,
+  titulo VARCHAR(255) NOT NULL,
+  titulo_original VARCHAR(255),
+  descricao TEXT,
+  poster_path VARCHAR(255),
+  backdrop_path VARCHAR(255),
+  nota DECIMAL(3,1),
+  ano VARCHAR(4),
+  generos TEXT[],
+  duracao INTEGER,
+  ativo BOOLEAN DEFAULT TRUE,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_conteudos_tipo ON conteudos(tipo);
+CREATE INDEX idx_conteudos_ativo ON conteudos(ativo);
+CREATE INDEX idx_conteudos_tmdb ON conteudos(tmdb_id);
