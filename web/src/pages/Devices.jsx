@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Smartphone, Ban, CheckCircle } from 'lucide-react'
+import { Smartphone, Ban, CheckCircle, Server, X, Save, Trash2 } from 'lucide-react'
 
 const Devices = () => {
   const [devices, setDevices] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedDevice, setSelectedDevice] = useState(null)
+  const [showModal, setShowModal] = useState(false)
+  const [iptvConfig, setIptvConfig] = useState({
+    xtream_url: '',
+    xtream_username: '',
+    xtream_password: ''
+  })
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     loadDevices()
@@ -29,6 +37,49 @@ const Devices = () => {
       loadDevices()
     } catch (error) {
       console.error('Erro ao bloquear dispositivo:', error)
+    }
+  }
+
+  const openIptvModal = async (device) => {
+    setSelectedDevice(device)
+    setShowModal(true)
+    
+    try {
+      const response = await api.get(`/api/iptv-server/device/${device.id}`)
+      if (response.data.xtream_url) {
+        setIptvConfig(response.data)
+      } else {
+        setIptvConfig({ xtream_url: '', xtream_username: '', xtream_password: '' })
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configuração:', error)
+    }
+  }
+
+  const saveIptvConfig = async () => {
+    setSaving(true)
+    try {
+      await api.post(`/api/iptv-server/device/${selectedDevice.id}`, iptvConfig)
+      alert('Configuração salva com sucesso!')
+      setShowModal(false)
+    } catch (error) {
+      console.error('Erro ao salvar:', error)
+      alert('Erro ao salvar configuração')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const deleteIptvConfig = async () => {
+    if (!confirm('Remover configuração específica? O dispositivo usará a configuração global.')) return
+    
+    try {
+      await api.delete(`/api/iptv-server/device/${selectedDevice.id}`)
+      alert('Configuração removida. Dispositivo usará configuração global.')
+      setShowModal(false)
+    } catch (error) {
+      console.error('Erro ao remover:', error)
+      alert('Erro ao remover configuração')
     }
   }
 
@@ -77,14 +128,23 @@ const Devices = () => {
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    {device.status === 'ativo' && (
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => blockDevice(device.id)}
-                        className="text-red-500 hover:text-red-400"
+                        onClick={() => openIptvModal(device)}
+                        className="text-primary hover:text-primary/80 flex items-center gap-1"
+                        title="Configurar Servidor IPTV"
                       >
-                        Bloquear
+                        <Server size={16} />
                       </button>
-                    )}
+                      {device.status === 'ativo' && (
+                        <button
+                          onClick={() => blockDevice(device.id)}
+                          className="text-red-500 hover:text-red-400"
+                        >
+                          Bloquear
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -98,6 +158,95 @@ const Devices = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Configuração IPTV */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4 border border-gray-800">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Server className="text-primary" size={24} />
+                Servidor IPTV
+              </h2>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 bg-dark rounded border border-gray-800">
+              <p className="text-sm text-gray-400">Dispositivo:</p>
+              <p className="text-white font-mono">{selectedDevice?.mac_address}</p>
+              <p className="text-sm text-gray-400 mt-1">{selectedDevice?.modelo}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  URL do Servidor
+                </label>
+                <input
+                  type="text"
+                  value={iptvConfig.xtream_url}
+                  onChange={(e) => setIptvConfig({ ...iptvConfig, xtream_url: e.target.value })}
+                  placeholder="http://exemplo.com:8080"
+                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Usuário
+                </label>
+                <input
+                  type="text"
+                  value={iptvConfig.xtream_username}
+                  onChange={(e) => setIptvConfig({ ...iptvConfig, xtream_username: e.target.value })}
+                  placeholder="usuario"
+                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Senha
+                </label>
+                <input
+                  type="password"
+                  value={iptvConfig.xtream_password}
+                  onChange={(e) => setIptvConfig({ ...iptvConfig, xtream_password: e.target.value })}
+                  placeholder="senha"
+                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={saveIptvConfig}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
+                >
+                  <Save size={18} />
+                  {saving ? 'Salvando...' : 'Salvar'}
+                </button>
+                
+                {iptvConfig.xtream_url && (
+                  <button
+                    onClick={deleteIptvConfig}
+                    className="px-4 py-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-colors"
+                    title="Usar configuração global"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-500 text-center">
+                Se não configurar, o dispositivo usará o servidor global
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

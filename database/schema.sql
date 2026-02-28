@@ -66,7 +66,7 @@ CREATE INDEX idx_logs_data ON logs(data);
 CREATE INDEX idx_bugs_resolvido ON bugs(resolvido);
 CREATE INDEX idx_users_email ON users(email);
 
--- Tabela de configuração do servidor IPTV
+-- Tabela de configuração do servidor IPTV (global - padrão)
 CREATE TABLE iptv_server_config (
   id INTEGER PRIMARY KEY DEFAULT 1,
   xtream_url VARCHAR(255) NOT NULL,
@@ -74,4 +74,15 @@ CREATE TABLE iptv_server_config (
   xtream_password VARCHAR(100) NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT single_row CHECK (id = 1)
+);
+
+-- Tabela de configuração de servidor IPTV por dispositivo
+CREATE TABLE device_iptv_config (
+  id SERIAL PRIMARY KEY,
+  device_id INTEGER REFERENCES devices(id) ON DELETE CASCADE,
+  xtream_url VARCHAR(255) NOT NULL,
+  xtream_username VARCHAR(100) NOT NULL,
+  xtream_password VARCHAR(100) NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(device_id)
 );

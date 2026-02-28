@@ -82,7 +82,16 @@ const IptvServer = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Server className="text-primary" size={32} />
-        <h1 className="text-3xl font-bold text-white">Servidor IPTV</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-white">Servidor IPTV Global</h1>
+          <p className="text-gray-400 text-sm">Configuração padrão para todos os dispositivos</p>
+        </div>
+      </div>
+
+      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+        <p className="text-blue-400 text-sm">
+          💡 Esta é a configuração global. Você pode configurar servidores específicos para cada dispositivo na página "Dispositivos".
+        </p>
       </div>
 
       <div className="bg-card rounded-lg p-6 border border-gray-800">
