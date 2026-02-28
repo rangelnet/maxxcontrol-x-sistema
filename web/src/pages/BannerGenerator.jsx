@@ -9,6 +9,8 @@ const BannerGenerator = () => {
   const [showModal, setShowModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [showContentList, setShowContentList] = useState(false)
+  const [showSizeSelector, setShowSizeSelector] = useState(false)
+  const [selectedContent, setSelectedContent] = useState(null)
   const [bannerType, setBannerType] = useState('movie')
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState(null)
@@ -88,6 +90,142 @@ const BannerGenerator = () => {
     } catch (error) {
       console.error('Erro ao carregar recentes:', error)
     }
+  }
+
+  const openSizeSelector = (content) => {
+    setSelectedContent(content)
+    setShowSizeSelector(true)
+  }
+
+  const generateAndDownload = async (size) => {
+    if (!selectedContent) return
+    
+    setLoading(true)
+    try {
+      const sizeConfig = sizes[size]
+      const canvas = document.createElement('canvas')
+      canvas.width = sizeConfig.width
+      canvas.height = sizeConfig.height
+      const ctx = canvas.getContext('2d')
+
+      // Preparar dados do conteúdo
+      const isPortrait = ['cartaz', 'stories'].includes(size)
+      let imageUrl = ''
+      
+      if (isPortrait && selectedContent.poster_path) {
+        imageUrl = `https://image.tmdb.org/t/p/original${selectedContent.poster_path}`
+      } else if (selectedContent.backdrop_path) {
+        imageUrl = `https://image.tmdb.org/t/p/original${selectedContent.backdrop_path}`
+      } else if (selectedContent.poster_path) {
+        imageUrl = `https://image.tmdb.org/t/p/original${selectedContent.poster_path}`
+      }
+
+      const movieData = {
+        title: selectedContent.titulo,
+        year: selectedContent.ano,
+        description: selectedContent.descricao,
+        posterUrl: imageUrl,
+        rating: selectedContent.nota || 8,
+        dubbed: true,
+        isNew: false
+      }
+
+      // Gerar banner
+      await generateMovieBannerDirect(ctx, canvas, sizeConfig, movieData)
+
+      // Download direto
+      const dataUrl = canvas.toDataURL('image/png')
+      const link = document.createElement('a')
+      link.download = `${selectedContent.titulo.replace(/[^a-z0-9]/gi, '_')}_${sizeConfig.name.replace(/\s+/g, '_')}.png`
+      link.href = dataUrl
+      link.click()
+
+      setShowSizeSelector(false)
+      setSelectedContent(null)
+    } catch (error) {
+      console.error('Erro ao gerar banner:', error)
+      alert('Erro ao gerar banner')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const generateMovieBannerDirect = async (ctx, canvas, sizeConfig, data) => {
+    const { width, height } = sizeConfig
+    const isPortrait = height > width
+    const scale = width / 1920
+
+    // Fundo gradiente
+    const gradient = ctx.createLinearGradient(0, 0, width, height)
+    gradient.addColorStop(0, '#0a0a0a')
+    gradient.addColorStop(1, '#1a1a2e')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, width, height)
+
+    // Carregar imagem
+    if (data.posterUrl) {
+      try {
+        const img = new window.Image()
+        img.crossOrigin = 'anonymous'
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+          img.src = data.posterUrl
+        })
+
+        if (isPortrait) {
+          const imgHeight = height * 0.6
+          const imgWidth = width * 0.9
+          const x = (width - imgWidth) / 2
+          ctx.drawImage(img, x, 50 * scale, imgWidth, imgHeight)
+        } else {
+          const imgWidth = width * 0.4
+          const imgHeight = height * 0.8
+          const x = width - imgWidth - 50 * scale
+          const y = (height - imgHeight) / 2
+          ctx.drawImage(img, x, y, imgWidth, imgHeight)
+        }
+      } catch (err) {
+        console.error('Erro ao carregar imagem:', err)
+      }
+    }
+
+    const textX = isPortrait ? width * 0.1 : width * 0.05
+    const textY = isPortrait ? height * 0.65 : height * 0.15
+    const maxTextWidth = isPortrait ? width * 0.8 : width * 0.5
+
+    // Título
+    ctx.fillStyle = '#FF6A00'
+    ctx.font = `bold ${Math.floor(60 * scale)}px Arial`
+    ctx.fillText(data.title || 'Título', textX, textY)
+
+    // Ano
+    ctx.fillStyle = '#ffffff'
+    ctx.font = `${Math.floor(30 * scale)}px Arial`
+    ctx.fillText(`(${data.year || '2025'})`, textX, textY + 50 * scale)
+
+    // Descrição
+    ctx.fillStyle = '#cccccc'
+    ctx.font = `${Math.floor(24 * scale)}px Arial`
+    wrapText(ctx, data.description || 'Descrição', textX, textY + 100 * scale, maxTextWidth, 35 * scale)
+
+    // Rating
+    if (data.rating) {
+      const stars = Math.round(data.rating / 2)
+      ctx.fillStyle = '#FFD700'
+      ctx.font = `${Math.floor(40 * scale)}px Arial`
+      const ratingY = isPortrait ? height * 0.85 : height * 0.65
+      ctx.fillText('★'.repeat(stars) + '☆'.repeat(5 - stars), textX, ratingY)
+    }
+
+    // Badges
+    const badgeY = 30 * scale
+    if (data.dubbed) {
+      drawBadge(ctx, 'DUBLADO', textX, badgeY, '#00AA00', scale)
+    }
+
+    // Ícones de plataformas
+    drawPlatformIcons(ctx, width, height, scale)
   }
 
   const selectContent = (content) => {
@@ -485,31 +623,208 @@ const BannerGenerator = () => {
           className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
         >
           <Plus size={20} />
-          Novo Banner
+          Criar Personalizado
         </button>
       </div>
 
-      {/* Lista de Banners */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {banners.map((banner) => (
-          <div key={banner.id} className="bg-card rounded-lg p-4 border border-gray-800">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white font-semibold">{banner.title}</h3>
+      {/* Galeria de Conteúdos - ÚLTIMAS SÉRIES ADICIONADAS */}
+      {recentContents.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-primary">⚡ ÚLTIMAS SÉRIES ADICIONADAS</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            {recentContents.map((content) => (
               <button
-                onClick={() => deleteBanner(banner.id)}
-                className="text-red-500 hover:text-red-400"
+                key={content.id}
+                onClick={() => openSizeSelector(content)}
+                className="group relative overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all transform hover:scale-105"
+                title={`Clique para gerar banner de ${content.titulo}`}
               >
-                <Trash2 size={18} />
+                {content.poster_path ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w300${content.poster_path}`}
+                    alt={content.titulo}
+                    className="w-full h-64 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-64 bg-gray-800 flex items-center justify-center">
+                    <span className="text-gray-600">Sem imagem</span>
+                  </div>
+                )}
+                
+                {/* Overlay com info */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                  <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
+                  <p className="text-gray-300 text-xs">{content.ano}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-yellow-500 text-xs">⭐ {content.nota?.toFixed(1)}</span>
+                    <span className="text-primary text-xs font-semibold">Clique para gerar</span>
+                  </div>
+                </div>
+
+                {/* Badge de rating */}
+                <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
+                  ⭐ {content.nota?.toFixed(1)}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Galeria de Todos os Conteúdos */}
+      {contents.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white">📚 TODOS OS CONTEÚDOS</h2>
+            <input
+              type="text"
+              placeholder="🔍 Buscar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white w-64"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            {contents
+              .filter(c => 
+                c.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.titulo_original?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((content) => (
+                <button
+                  key={content.id}
+                  onClick={() => openSizeSelector(content)}
+                  className="group relative overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all transform hover:scale-105"
+                  title={`Clique para gerar banner de ${content.titulo}`}
+                >
+                  {content.poster_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w300${content.poster_path}`}
+                      alt={content.titulo}
+                      className="w-full h-64 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-64 bg-gray-800 flex items-center justify-center">
+                      <span className="text-gray-600">Sem imagem</span>
+                    </div>
+                  )}
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                    <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
+                    <p className="text-gray-300 text-xs">{content.ano}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-yellow-500 text-xs">⭐ {content.nota?.toFixed(1)}</span>
+                      <span className="text-primary text-xs font-semibold">Clique para gerar</span>
+                    </div>
+                  </div>
+
+                  <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
+                    ⭐ {content.nota?.toFixed(1)}
+                  </div>
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Seleção de Tamanho */}
+      {showSizeSelector && selectedContent && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg p-6 max-w-4xl w-full border border-gray-800">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white">{selectedContent.titulo}</h2>
+                <p className="text-gray-400">{selectedContent.ano} • ⭐ {selectedContent.nota?.toFixed(1)}</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowSizeSelector(false)
+                  setSelectedContent(null)
+                }} 
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={28} />
               </button>
             </div>
-            <div className="bg-dark rounded p-2 text-sm text-gray-400">
-              Tipo: {banner.type === 'movie' ? 'Filme/Série' : 'Futebol'}
+
+            {/* Preview do Conteúdo */}
+            <div className="mb-6 flex gap-4">
+              {selectedContent.poster_path && (
+                <img
+                  src={`https://image.tmdb.org/t/p/w200${selectedContent.poster_path}`}
+                  alt={selectedContent.titulo}
+                  className="w-32 h-48 object-cover rounded-lg"
+                />
+              )}
+              <div className="flex-1">
+                <p className="text-gray-300 text-sm line-clamp-4">{selectedContent.descricao}</p>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-white mb-4">📐 Escolha o tamanho do banner:</h3>
+
+            {/* Grid de Tamanhos */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+              {Object.entries(sizes).map(([key, size]) => (
+                <button
+                  key={key}
+                  onClick={() => generateAndDownload(key)}
+                  disabled={loading}
+                  className="flex flex-col items-center gap-3 p-4 rounded-lg bg-gray-800 hover:bg-primary hover:ring-2 hover:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <span className="text-4xl">{size.icon}</span>
+                  <div className="text-center">
+                    <p className="text-white font-semibold group-hover:text-white">{size.name}</p>
+                    <p className="text-xs text-gray-400 group-hover:text-gray-200">{size.width}x{size.height}</p>
+                  </div>
+                  <Download size={20} className="text-primary group-hover:text-white" />
+                </button>
+              ))}
+            </div>
+
+            {loading && (
+              <div className="text-center py-4">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+                <p className="text-white mt-2">Gerando banner...</p>
+              </div>
+            )}
+
+            {/* Seletor de Plataformas */}
+            <div className="border-t border-gray-700 pt-4">
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                🎮 Plataformas que aparecerão no rodapé:
+              </label>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                {Object.entries(platformIcons).map(([key, platform]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      if (selectedPlatforms.includes(key)) {
+                        setSelectedPlatforms(selectedPlatforms.filter(p => p !== key))
+                      } else {
+                        setSelectedPlatforms([...selectedPlatforms, key])
+                      }
+                    }}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
+                      selectedPlatforms.includes(key)
+                        ? 'bg-primary text-white ring-2 ring-primary'
+                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="text-xl">{platform.icon}</span>
+                    <span className="text-xs">{platform.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Modal de Criação */}
+      {/* Modal de Criação Personalizada */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
           <div className="bg-card rounded-lg p-6 max-w-4xl w-full mx-4 my-8 border border-gray-800">
