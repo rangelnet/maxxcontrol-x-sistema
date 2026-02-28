@@ -5,6 +5,7 @@ import api from '../services/api'
 const BannerGenerator = () => {
   const [banners, setBanners] = useState([])
   const [contents, setContents] = useState([])
+  const [recentContents, setRecentContents] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [showContentList, setShowContentList] = useState(false)
   const [bannerType, setBannerType] = useState('movie')
@@ -35,6 +36,7 @@ const BannerGenerator = () => {
   useEffect(() => {
     loadBanners()
     loadContents()
+    loadRecentContents()
   }, [])
 
   const loadBanners = async () => {
@@ -52,6 +54,15 @@ const BannerGenerator = () => {
       setContents(response.data.conteudos || [])
     } catch (error) {
       console.error('Erro ao carregar conteúdos:', error)
+    }
+  }
+
+  const loadRecentContents = async () => {
+    try {
+      const response = await api.get('/api/content/list?limit=10')
+      setRecentContents(response.data.conteudos || [])
+    } catch (error) {
+      console.error('Erro ao carregar recentes:', error)
     }
   }
 
@@ -228,12 +239,49 @@ const BannerGenerator = () => {
             {/* Formulário de Filme */}
             {bannerType === 'movie' && (
               <div className="space-y-4">
+                {/* Últimos Adicionados */}
+                {recentContents.length > 0 && (
+                  <div className="bg-dark rounded-lg p-4 border border-gray-700">
+                    <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      ⚡ Últimos Adicionados
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      {recentContents.map((content) => (
+                        <button
+                          key={content.id}
+                          onClick={() => selectContent(content)}
+                          className="group relative overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all"
+                          title={content.titulo}
+                        >
+                          {content.poster_path ? (
+                            <img
+                              src={`https://image.tmdb.org/t/p/w200${content.poster_path}`}
+                              alt={content.titulo}
+                              className="w-full h-40 object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-40 bg-gray-800 flex items-center justify-center">
+                              <span className="text-gray-600">Sem imagem</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                            <p className="text-white text-xs font-semibold line-clamp-2">{content.titulo}</p>
+                          </div>
+                          <div className="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-yellow-500">
+                            ⭐ {content.nota?.toFixed(1)}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowContentList(!showContentList)}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    📋 Ver Conteúdos Cadastrados ({contents.length})
+                    📋 Ver Todos os Conteúdos ({contents.length})
                   </button>
                 </div>
 
