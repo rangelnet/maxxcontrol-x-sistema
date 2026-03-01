@@ -4,7 +4,7 @@ const pool = require('../../config/database');
 exports.obterBrandingAtivo = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM branding_settings WHERE ativo = 1 ORDER BY id DESC LIMIT 1'
+      'SELECT * FROM branding_settings WHERE ativo = true ORDER BY id DESC LIMIT 1'
     );
 
     if (result.rows.length === 0) {
@@ -35,21 +35,24 @@ exports.obterBranding = async (req, res) => {
 // Atualizar branding
 exports.atualizarBranding = async (req, res) => {
   const { id } = req.params;
-  const { banner_titulo, banner_subtitulo, banner_cor_fundo, banner_cor_texto, logo_url, splash_url, tema } = req.body;
+  const { app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE branding_settings 
-       SET banner_titulo = ?, 
-           banner_subtitulo = ?, 
-           banner_cor_fundo = ?,
-           banner_cor_texto = ?,
-           logo_url = ?,
-           splash_url = ?,
-           tema = ?,
-           atualizado_em = datetime('now')
-       WHERE id = ?`,
-      [banner_titulo, banner_subtitulo, banner_cor_fundo, banner_cor_texto, logo_url, splash_url, tema, id]
+       SET app_name = $1, 
+           logo_url = $2, 
+           logo_dark_url = $3,
+           primary_color = $4,
+           secondary_color = $5,
+           background_color = $6,
+           text_color = $7,
+           accent_color = $8,
+           splash_screen_url = $9,
+           hero_banner_url = $10,
+           atualizado_em = NOW()
+       WHERE id = $11`,
+      [app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url, id]
     );
 
     if (result.rowCount === 0) {
