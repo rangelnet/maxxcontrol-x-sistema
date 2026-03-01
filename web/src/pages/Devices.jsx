@@ -22,6 +22,13 @@ const Devices = () => {
 
   useEffect(() => {
     loadDevices()
+    
+    // Atualizar dispositivos a cada 5 segundos
+    const interval = setInterval(() => {
+      loadDevices()
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const loadDevices = async () => {
@@ -163,7 +170,17 @@ const Devices = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Dispositivos</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">Dispositivos</h1>
+        <button
+          onClick={loadDevices}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
+          title="Atualizar lista de dispositivos"
+        >
+          <RefreshCw size={18} />
+          Atualizar
+        </button>
+      </div>
 
       <div className="card">
         <div className="overflow-x-auto">

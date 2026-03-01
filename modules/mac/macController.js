@@ -133,6 +133,19 @@ exports.blockDevice = async (req, res) => {
   }
 };
 
+// Desbloquear dispositivo
+exports.unblockDevice = async (req, res) => {
+  const { device_id } = req.body;
+
+  try {
+    await pool.query('UPDATE devices SET status = $1 WHERE id = $2', ['ativo', device_id]);
+    res.json({ message: 'Dispositivo desbloqueado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao desbloquear dispositivo:', error);
+    res.status(500).json({ error: 'Erro ao desbloquear dispositivo' });
+  }
+};
+
 // Listar dispositivos do usuário
 exports.listDevices = async (req, res) => {
   const userId = req.userId;
