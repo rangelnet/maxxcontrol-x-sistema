@@ -153,7 +153,6 @@ exports.listAllDevices = async (req, res) => {
     const result = await pool.query(`
       SELECT 
         d.*,
-        u.username,
         u.email
       FROM devices d
       LEFT JOIN users u ON d.user_id = u.id
