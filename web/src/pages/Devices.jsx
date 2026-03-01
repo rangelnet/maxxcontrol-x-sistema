@@ -22,10 +22,11 @@ const Devices = () => {
 
   const loadDevices = async () => {
     try {
-      const response = await api.get('/api/device/list-all') // Lista TODOS os dispositivos
+      const response = await api.get('/api/mac/list-all') // Lista TODOS os dispositivos
       setDevices(response.data.devices)
     } catch (error) {
       console.error('Erro ao carregar dispositivos:', error)
+      setDevices([]) // Mostrar lista vazia se houver erro
     } finally {
       setLoading(false)
     }
@@ -35,7 +36,7 @@ const Devices = () => {
     if (!confirm('Deseja bloquear este dispositivo?')) return
 
     try {
-      await api.post('/api/device/block', { device_id: deviceId })
+      await api.post('/api/mac/block', { device_id: deviceId })
       loadDevices()
     } catch (error) {
       console.error('Erro ao bloquear dispositivo:', error)
@@ -94,7 +95,7 @@ const Devices = () => {
   const saveTestApiUrl = async () => {
     setSaving(true)
     try {
-      await api.post('/api/device/test-api-url', {
+      await api.post('/api/mac/test-api-url', {
         device_id: selectedDevice.id,
         test_api_url: testApiUrl.trim() || null
       })
