@@ -12,11 +12,7 @@ import Logs from './pages/Logs'
 import IptvServer from './pages/IptvServer'
 import BannerGenerator from './pages/BannerGenerator'
 import Layout from './components/Layout'
-
-const PrivateRoute = ({ children }) => {
-  const { token } = useAuth()
-  return token ? children : <Navigate to="/login" />
-}
+import PrivateRoute from './components/PrivateRoute'
 
 function App() {
   return (
