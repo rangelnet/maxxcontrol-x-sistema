@@ -4,27 +4,33 @@ const pool = require('../../config/database');
 exports.registerDevicePublic = async (req, res) => {
   const { mac_address, modelo, android_version, app_version, ip } = req.body;
 
+  console.log('📱 Registrando dispositivo público:', { mac_address, modelo, android_version, app_version, ip });
+
   try {
     const existing = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
 
     if (existing.rows.length > 0) {
       // Atualizar dispositivo existente - mantém connection_status como está
+      console.log('🔄 Dispositivo já existe, atualizando...');
       const result = await pool.query(
         'UPDATE devices SET modelo = $1, android_version = $2, app_version = $3, ip = $4, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $5 RETURNING *',
         [modelo, android_version, app_version, ip, mac_address]
       );
+      console.log('✅ Dispositivo atualizado:', result.rows[0]);
       return res.json({ device: result.rows[0], message: 'Dispositivo atualizado' });
     }
 
     // Criar novo dispositivo SEM user_id, connection_status = 'offline'
+    console.log('✨ Criando novo dispositivo...');
     const result = await pool.query(
       'INSERT INTO devices (mac_address, modelo, android_version, app_version, ip, status, connection_status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [mac_address, modelo, android_version, app_version, ip, 'ativo', 'offline']
     );
 
+    console.log('✅ Dispositivo criado:', result.rows[0]);
     res.status(201).json({ device: result.rows[0], message: 'Dispositivo registrado' });
   } catch (error) {
-    console.error('Erro ao registrar dispositivo público:', error);
+    console.error('❌ Erro ao registrar dispositivo público:', error);
     res.status(500).json({ error: 'Erro ao registrar dispositivo' });
   }
 };
@@ -143,6 +149,7 @@ exports.listDevices = async (req, res) => {
 // Listar TODOS os dispositivos (admin)
 exports.listAllDevices = async (req, res) => {
   try {
+    console.log('📱 Listando TODOS os dispositivos...');
     const result = await pool.query(`
       SELECT 
         d.*,
@@ -152,9 +159,11 @@ exports.listAllDevices = async (req, res) => {
       LEFT JOIN users u ON d.user_id = u.id
       ORDER BY d.ultimo_acesso DESC
     `);
+    console.log(`✅ Encontrados ${result.rows.length} dispositivos`);
+    console.log('Dispositivos:', result.rows.map(d => ({ mac: d.mac_address, modelo: d.modelo, user_id: d.user_id })));
     res.json({ devices: result.rows });
   } catch (error) {
-    console.error('Erro ao listar todos os dispositivos:', error);
+    console.error('❌ Erro ao listar todos os dispositivos:', error);
     res.status(500).json({ error: 'Erro ao listar dispositivos' });
   }
 };
