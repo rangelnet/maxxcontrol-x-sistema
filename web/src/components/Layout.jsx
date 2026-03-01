@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings, Palette, Server, Image } from 'lucide-react'
+import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings, Palette, Server, Image, Download } from 'lucide-react'
 import Logo from './Logo'
 
 const Layout = () => {
@@ -12,6 +12,7 @@ const Layout = () => {
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/devices', icon: Smartphone, label: 'Dispositivos' },
+    { path: '/apps', icon: Download, label: 'Gerenciar Apps' },
     { path: '/api-monitor', icon: Activity, label: 'Monitor de APIs' },
     { path: '/api-config', icon: Settings, label: 'Configurar APIs' },
     { path: '/branding', icon: Palette, label: 'Branding' },

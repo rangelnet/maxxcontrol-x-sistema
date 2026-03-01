@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Devices from './pages/Devices'
+import Apps from './pages/Apps'
 import APIMonitor from './pages/APIMonitor'
 import APIConfig from './pages/APIConfig'
 import Branding from './pages/Branding'
@@ -27,6 +28,7 @@ function App() {
           }>
             <Route index element={<Dashboard />} />
             <Route path="devices" element={<Devices />} />
+            <Route path="apps" element={<Apps />} />
             <Route path="api-monitor" element={<APIMonitor />} />
             <Route path="api-config" element={<APIConfig />} />
             <Route path="branding" element={<Branding />} />
