@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
       validateToken()
     } else {
       setLoading(false)
@@ -44,7 +43,6 @@ export const AuthProvider = ({ children }) => {
     setUser(userData)
     localStorage.setItem('token', newToken)
     localStorage.setItem('config', JSON.stringify(config))
-    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
     
     return { user: userData, config }
   }
@@ -61,7 +59,6 @@ export const AuthProvider = ({ children }) => {
       setUser(null)
       localStorage.removeItem('token')
       localStorage.removeItem('config')
-      delete api.defaults.headers.common['Authorization']
     }
   }
 
