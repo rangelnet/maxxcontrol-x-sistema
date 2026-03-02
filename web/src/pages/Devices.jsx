@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock } from 'lucide-react'
 
+// Versão 1.1 - Botões de bloquear/desbloquear e excluir dispositivos
 const Devices = () => {
   const [devices, setDevices] = useState([])
   const [loading, setLoading] = useState(true)
