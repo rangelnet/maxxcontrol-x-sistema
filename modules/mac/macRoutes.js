@@ -16,6 +16,7 @@ router.post('/register-public', macController.registerDevicePublic);
 router.post('/register', authMiddleware, macController.registerDevice);
 router.post('/check', macController.checkDevice);
 router.post('/block', authMiddleware, macController.blockDevice);
+router.post('/unblock', authMiddleware, macController.unblockDevice);
 router.get('/list', authMiddleware, macController.listDevices);
 router.get('/list-all', authMiddleware, macController.listAllDevices); // Lista TODOS (admin)
 

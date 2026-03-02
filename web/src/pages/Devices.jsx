@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle } from 'lucide-react'
+import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock } from 'lucide-react'
 
 const Devices = () => {
   const [devices, setDevices] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState(null)
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [showIptvModal, setShowIptvModal] = useState(false)
   const [showAppsModal, setShowAppsModal] = useState(false)
@@ -31,16 +33,39 @@ const Devices = () => {
     return () => clearInterval(interval)
   }, [])
 
-  const loadDevices = async () => {
+  const loadDevices = async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) {
+      setRefreshing(true)
+    }
+    
     try {
       const response = await api.get('/api/device/list-all')
       setDevices(response.data.devices)
+      setLastUpdate(new Date())
     } catch (error) {
       console.error('Erro ao carregar dispositivos:', error)
       setDevices([])
     } finally {
       setLoading(false)
+      if (showRefreshIndicator) {
+        setTimeout(() => setRefreshing(false), 500)
+      }
     }
+  }
+
+  const handleManualRefresh = () => {
+    loadDevices(true)
+  }
+
+  const formatLastUpdate = () => {
+    if (!lastUpdate) return ''
+    const now = new Date()
+    const diff = Math.floor((now - lastUpdate) / 1000)
+    
+    if (diff < 10) return 'agora mesmo'
+    if (diff < 60) return `há ${diff}s`
+    if (diff < 3600) return `há ${Math.floor(diff / 60)}min`
+    return lastUpdate.toLocaleTimeString('pt-BR')
   }
 
   const blockDevice = async (deviceId) => {
@@ -51,6 +76,17 @@ const Devices = () => {
       loadDevices()
     } catch (error) {
       console.error('Erro ao bloquear dispositivo:', error)
+    }
+  }
+
+  const unblockDevice = async (deviceId) => {
+    if (!confirm('Deseja desbloquear este dispositivo?')) return
+
+    try {
+      await api.post('/api/device/unblock', { device_id: deviceId })
+      loadDevices()
+    } catch (error) {
+      console.error('Erro ao desbloquear dispositivo:', error)
     }
   }
 
@@ -171,14 +207,22 @@ const Devices = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Dispositivos</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Dispositivos</h1>
+          {lastUpdate && (
+            <p className="text-sm text-gray-400 mt-1">
+              Última atualização: {formatLastUpdate()}
+            </p>
+          )}
+        </div>
         <button
-          onClick={loadDevices}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
-          title="Atualizar lista de dispositivos"
+          onClick={handleManualRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
+          title="Atualizar lista de dispositivos em tempo real"
         >
-          <RefreshCw size={18} />
-          Atualizar
+          <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+          {refreshing ? 'Atualizando...' : 'Atualizar'}
         </button>
       </div>
 
@@ -243,12 +287,23 @@ const Devices = () => {
                       >
                         <Package size={16} />
                       </button>
-                      {device.status === 'ativo' && (
+                      {device.status === 'ativo' ? (
                         <button
                           onClick={() => blockDevice(device.id)}
-                          className="text-red-500 hover:text-red-400"
+                          className="flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-500 rounded hover:bg-red-500/30 transition-colors"
+                          title="Bloquear dispositivo"
                         >
+                          <Ban size={14} />
                           Bloquear
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => unblockDevice(device.id)}
+                          className="flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-500 rounded hover:bg-green-500/30 transition-colors"
+                          title="Desbloquear dispositivo"
+                        >
+                          <Unlock size={14} />
+                          Desbloquear
                         </button>
                       )}
                     </div>
