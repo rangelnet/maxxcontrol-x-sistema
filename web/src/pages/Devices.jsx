@@ -25,10 +25,10 @@ const Devices = () => {
   useEffect(() => {
     loadDevices()
     
-    // Atualizar dispositivos a cada 5 segundos
+    // Atualizar dispositivos a cada 2 segundos (tempo real)
     const interval = setInterval(() => {
       loadDevices()
-    }, 5000)
+    }, 2000)
 
     return () => clearInterval(interval)
   }, [])
