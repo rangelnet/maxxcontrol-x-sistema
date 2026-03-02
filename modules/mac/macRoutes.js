@@ -26,4 +26,15 @@ router.post('/test-api-url', authMiddleware, macController.setTestApiUrl);
 // Buscar URL da API de teste grátis (público - para o app)
 router.get('/test-api-url/:mac_address', macController.getTestApiUrl);
 
+// ========== ROTAS ALTERNATIVAS QUE ACEITAM MAC ADDRESS ==========
+
+// Verificar status por MAC (para o app Android)
+router.get('/status/:mac_address', authMiddleware, macController.checkDeviceStatusByMac);
+
+// Bloquear por MAC (para o app Android)
+router.post('/block-by-mac', authMiddleware, macController.blockDeviceByMac);
+
+// Desbloquear por MAC (para o app Android)
+router.post('/unblock-by-mac', authMiddleware, macController.unblockDeviceByMac);
+
 module.exports = router;

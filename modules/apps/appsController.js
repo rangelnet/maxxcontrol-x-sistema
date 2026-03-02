@@ -145,3 +145,165 @@ exports.updateCommandStatus = async (req, res) => {
     res.status(500).json({ error: 'Erro ao atualizar comando' });
   }
 };
+
+// ========== ROTAS ALTERNATIVAS QUE ACEITAM MAC ADDRESS ==========
+
+// Listar apps por MAC
+exports.listInstalledAppsByMac = async (req, res) => {
+  const { mac_address } = req.params;
+
+  try {
+    console.log(`📱 Listando apps por MAC: ${mac_address}`);
+    
+    // Buscar device_id pelo MAC
+    const deviceResult = await pool.query(
+      'SELECT id FROM devices WHERE mac_address = $1',
+      [mac_address]
+    );
+    
+    if (deviceResult.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    const device_id = deviceResult.rows[0].id;
+    console.log(`✅ Device ID encontrado: ${device_id}`);
+    
+    // Buscar apps
+    const result = await pool.query(
+      `SELECT * FROM device_apps 
+       WHERE device_id = $1 
+       ORDER BY app_name ASC`,
+      [device_id]
+    );
+    
+    console.log(`✅ ${result.rows.length} apps encontrados`);
+    res.json({ apps: result.rows });
+  } catch (error) {
+    console.error('❌ Erro ao listar apps por MAC:', error);
+    res.status(500).json({ error: 'Erro ao listar apps' });
+  }
+};
+
+// Desinstalar app por MAC
+exports.uninstallAppByMac = async (req, res) => {
+  const { mac_address, package_name } = req.body;
+
+  try {
+    console.log(`🗑️ Desinstalando app por MAC: ${package_name} (${mac_address})`);
+    
+    // Buscar device_id pelo MAC
+    const deviceResult = await pool.query(
+      'SELECT id FROM devices WHERE mac_address = $1',
+      [mac_address]
+    );
+    
+    if (deviceResult.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    const device_id = deviceResult.rows[0].id;
+    console.log(`✅ Device ID encontrado: ${device_id}`);
+    
+    // Criar comando
+    const commandResult = await pool.query(
+      `INSERT INTO device_commands (device_id, command_type, command_data, status)
+       VALUES ($1, 'uninstall_app', $2, 'pending')
+       RETURNING *`,
+      [device_id, JSON.stringify({ package_name })]
+    );
+    
+    console.log('✅ Comando de desinstalação criado');
+    
+    // Remover do banco
+    await pool.query(
+      'DELETE FROM device_apps WHERE device_id = $1 AND package_name = $2',
+      [device_id, package_name]
+    );
+    
+    res.json({ 
+      command: commandResult.rows[0],
+      message: 'Comando de desinstalação enviado' 
+    });
+  } catch (error) {
+    console.error('❌ Erro ao desinstalar app por MAC:', error);
+    res.status(500).json({ error: 'Erro ao desinstalar app' });
+  }
+};
+
+// Enviar APK por MAC
+exports.sendApkByMac = async (req, res) => {
+  const { mac_address, app_name, app_url } = req.body;
+
+  try {
+    console.log(`📤 Enviando APK por MAC: ${app_name} (${mac_address})`);
+    
+    // Buscar device_id pelo MAC
+    const deviceResult = await pool.query(
+      'SELECT id FROM devices WHERE mac_address = $1',
+      [mac_address]
+    );
+    
+    if (deviceResult.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    const device_id = deviceResult.rows[0].id;
+    console.log(`✅ Device ID encontrado: ${device_id}`);
+    
+    // Criar comando
+    const commandResult = await pool.query(
+      `INSERT INTO device_commands (device_id, command_type, command_data, status)
+       VALUES ($1, 'install_app', $2, 'pending')
+       RETURNING *`,
+      [device_id, JSON.stringify({ app_name, app_url })]
+    );
+    
+    console.log('✅ Comando de instalação criado');
+    res.json({ 
+      command: commandResult.rows[0],
+      message: 'Comando de instalação enviado' 
+    });
+  } catch (error) {
+    console.error('❌ Erro ao enviar APK por MAC:', error);
+    res.status(500).json({ error: 'Erro ao enviar APK' });
+  }
+};
+
+// Comandos pendentes por MAC
+exports.getPendingCommandsByMac = async (req, res) => {
+  const { mac_address } = req.params;
+
+  try {
+    console.log(`📋 Buscando comandos pendentes por MAC: ${mac_address}`);
+    
+    // Buscar device_id pelo MAC
+    const deviceResult = await pool.query(
+      'SELECT id FROM devices WHERE mac_address = $1',
+      [mac_address]
+    );
+    
+    if (deviceResult.rows.length === 0) {
+      console.log('⚠️ Dispositivo não encontrado, retornando lista vazia');
+      return res.json({ commands: [] });
+    }
+    
+    const device_id = deviceResult.rows[0].id;
+    console.log(`✅ Device ID encontrado: ${device_id}`);
+    
+    const result = await pool.query(
+      `SELECT * FROM device_commands 
+       WHERE device_id = $1 AND status = 'pending'
+       ORDER BY created_at ASC`,
+      [device_id]
+    );
+    
+    console.log(`✅ ${result.rows.length} comandos pendentes encontrados`);
+    res.json({ commands: result.rows });
+  } catch (error) {
+    console.error('❌ Erro ao buscar comandos por MAC:', error);
+    res.status(500).json({ error: 'Erro ao buscar comandos' });
+  }
+};

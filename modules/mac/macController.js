@@ -191,3 +191,95 @@ exports.setTestApiUrl = async (req, res) => {
 exports.getTestApiUrl = async (req, res) => {
   res.status(501).json({ error: 'Funcionalidade não implementada ainda' });
 };
+
+// ========== ROTAS ALTERNATIVAS QUE ACEITAM MAC ADDRESS ==========
+
+// Verificar status por MAC
+exports.checkDeviceStatusByMac = async (req, res) => {
+  const { mac_address } = req.params;
+
+  try {
+    console.log(`🔍 Verificando status por MAC: ${mac_address}`);
+    
+    const result = await pool.query(
+      `SELECT id, mac_address, status, connection_status, modelo, 
+              android_version, app_version, ip, ultimo_acesso
+       FROM devices 
+       WHERE mac_address = $1`,
+      [mac_address]
+    );
+    
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    console.log('✅ Status do dispositivo:', result.rows[0]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Erro ao verificar status por MAC:', error);
+    res.status(500).json({ error: 'Erro ao verificar status' });
+  }
+};
+
+// Bloquear por MAC
+exports.blockDeviceByMac = async (req, res) => {
+  const { mac_address } = req.body;
+
+  try {
+    console.log(`🔒 Bloqueando dispositivo por MAC: ${mac_address}`);
+    
+    const result = await pool.query(
+      `UPDATE devices 
+       SET status = 'bloqueado' 
+       WHERE mac_address = $1 
+       RETURNING *`,
+      [mac_address]
+    );
+    
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    console.log('✅ Dispositivo bloqueado:', result.rows[0]);
+    res.json({ 
+      device: result.rows[0],
+      message: 'Dispositivo bloqueado com sucesso' 
+    });
+  } catch (error) {
+    console.error('❌ Erro ao bloquear dispositivo por MAC:', error);
+    res.status(500).json({ error: 'Erro ao bloquear dispositivo' });
+  }
+};
+
+// Desbloquear por MAC
+exports.unblockDeviceByMac = async (req, res) => {
+  const { mac_address } = req.body;
+
+  try {
+    console.log(`🔓 Desbloqueando dispositivo por MAC: ${mac_address}`);
+    
+    const result = await pool.query(
+      `UPDATE devices 
+       SET status = 'ativo' 
+       WHERE mac_address = $1 
+       RETURNING *`,
+      [mac_address]
+    );
+    
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    console.log('✅ Dispositivo desbloqueado:', result.rows[0]);
+    res.json({ 
+      device: result.rows[0],
+      message: 'Dispositivo desbloqueado com sucesso' 
+    });
+  } catch (error) {
+    console.error('❌ Erro ao desbloquear dispositivo por MAC:', error);
+    res.status(500).json({ error: 'Erro ao desbloquear dispositivo' });
+  }
+};

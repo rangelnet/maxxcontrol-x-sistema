@@ -22,4 +22,18 @@ router.get('/commands/:device_id', deviceAuthMiddleware, appsController.getPendi
 // Atualizar status do comando (do app Android)
 router.post('/commands/status', deviceAuthMiddleware, appsController.updateCommandStatus);
 
+// ========== ROTAS ALTERNATIVAS QUE ACEITAM MAC ADDRESS ==========
+
+// Listar apps por MAC (para o app Android)
+router.get('/device/mac/:mac_address', authMiddleware, appsController.listInstalledAppsByMac);
+
+// Desinstalar app por MAC (para o app Android)
+router.post('/uninstall-by-mac', authMiddleware, appsController.uninstallAppByMac);
+
+// Enviar APK por MAC (para o app Android)
+router.post('/send-apk-by-mac', authMiddleware, appsController.sendApkByMac);
+
+// Comandos pendentes por MAC (para o app Android)
+router.get('/commands/mac/:mac_address', deviceAuthMiddleware, appsController.getPendingCommandsByMac);
+
 module.exports = router;
