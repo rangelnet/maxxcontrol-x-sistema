@@ -26,6 +26,7 @@ app.use('/api/', limiter);
 // Rotas
 app.use('/api/auth', require('./modules/auth/authRoutes'));
 app.use('/api/device', require('./modules/mac/macRoutes'));
+app.use('/api/mac', require('./modules/mac/macRoutes')); // Alias para compatibilidade com app Android
 app.use('/api/apps', require('./modules/apps/appsRoutes'));
 app.use('/api/log', require('./modules/logs/logsRoutes'));
 app.use('/api/bug', require('./modules/bugs/bugsRoutes'));
