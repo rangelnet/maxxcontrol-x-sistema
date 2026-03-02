@@ -283,3 +283,41 @@ exports.unblockDeviceByMac = async (req, res) => {
     res.status(500).json({ error: 'Erro ao desbloquear dispositivo' });
   }
 };
+
+// Excluir dispositivo
+exports.deleteDevice = async (req, res) => {
+  const { device_id } = req.params;
+
+  try {
+    console.log(`🗑️ Excluindo dispositivo ID: ${device_id}`);
+    
+    // Deletar apps relacionados primeiro
+    await pool.query('DELETE FROM device_apps WHERE device_id = $1', [device_id]);
+    console.log('✅ Apps relacionados excluídos');
+    
+    // Deletar comandos relacionados
+    await pool.query('DELETE FROM device_commands WHERE device_id = $1', [device_id]);
+    console.log('✅ Comandos relacionados excluídos');
+    
+    // Deletar configuração IPTV relacionada
+    await pool.query('DELETE FROM device_iptv_config WHERE device_id = $1', [device_id]);
+    console.log('✅ Configuração IPTV excluída');
+    
+    // Deletar dispositivo
+    const result = await pool.query('DELETE FROM devices WHERE id = $1 RETURNING *', [device_id]);
+    
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    console.log('✅ Dispositivo excluído:', result.rows[0]);
+    res.json({ 
+      message: 'Dispositivo excluído com sucesso', 
+      device: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('❌ Erro ao excluir dispositivo:', error);
+    res.status(500).json({ error: 'Erro ao excluir dispositivo' });
+  }
+};

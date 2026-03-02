@@ -37,4 +37,7 @@ router.post('/block-by-mac', authMiddleware, macController.blockDeviceByMac);
 // Desbloquear por MAC (para o app Android)
 router.post('/unblock-by-mac', authMiddleware, macController.unblockDeviceByMac);
 
+// Excluir dispositivo
+router.delete('/delete/:device_id', authMiddleware, macController.deleteDevice);
+
 module.exports = router;

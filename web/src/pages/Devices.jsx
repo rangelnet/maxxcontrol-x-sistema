@@ -90,6 +90,19 @@ const Devices = () => {
     }
   }
 
+  const deleteDevice = async (deviceId, macAddress) => {
+    if (!confirm(`Deseja excluir o dispositivo ${macAddress}?\n\nEsta ação não pode ser desfeita e removerá:\n- Configurações IPTV\n- Apps instalados\n- Comandos pendentes\n- Todos os dados do dispositivo`)) return
+
+    try {
+      await api.delete(`/api/device/delete/${deviceId}`)
+      alert('Dispositivo excluído com sucesso!')
+      loadDevices()
+    } catch (error) {
+      console.error('Erro ao excluir dispositivo:', error)
+      alert('Erro ao excluir dispositivo')
+    }
+  }
+
   const openIptvModal = async (device) => {
     setSelectedDevice(device)
     setShowIptvModal(true)
@@ -306,6 +319,13 @@ const Devices = () => {
                           Desbloquear
                         </button>
                       )}
+                      <button
+                        onClick={() => deleteDevice(device.id, device.mac_address)}
+                        className="text-red-500 hover:text-red-400 flex items-center gap-1 p-2 hover:bg-red-500/10 rounded transition-colors"
+                        title="Excluir dispositivo permanentemente"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
