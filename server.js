@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const { initWebSocket } = require('./websocket/wsServer');
@@ -23,7 +24,10 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Rotas
+// Servir arquivos estáticos do frontend (build do Vite)
+app.use(express.static(path.join(__dirname, 'web/dist')));
+
+// Rotas da API
 app.use('/api/auth', require('./modules/auth/authRoutes'));
 app.use('/api/device', require('./modules/mac/macRoutes'));
 app.use('/api/mac', require('./modules/mac/macRoutes')); // Alias para compatibilidade com app Android
@@ -51,13 +55,20 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Rota raiz
-app.get('/', (req, res) => {
+// Rota raiz da API
+app.get('/api', (req, res) => {
   res.json({ 
     message: '🚀 MaxxControl X API',
     version: '1.0.0',
     status: 'running'
   });
+});
+
+// Servir index.html para todas as outras rotas (SPA)
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/banners')) {
+    res.sendFile(path.join(__dirname, 'web/dist/index.html'));
+  }
 });
 
 // Tratamento de erros
