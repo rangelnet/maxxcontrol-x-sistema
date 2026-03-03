@@ -11,6 +11,9 @@ const pool = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy (necessário para Render e outros proxies reversos)
+app.set('trust proxy', 1);
+
 // Middlewares
 app.use(helmet());
 app.use(cors());
