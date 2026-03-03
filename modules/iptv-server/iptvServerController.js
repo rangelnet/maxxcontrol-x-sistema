@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { broadcast } = require('../../websocket/wsServer');
 
 // GET /api/iptv-server/config - Buscar configuração global
 exports.getConfig = async (req, res) => {
@@ -93,6 +94,7 @@ exports.saveDeviceConfig = async (req, res) => {
   const { xtream_url, xtream_username, xtream_password } = req.body;
 
   try {
+    // Salvar configuração IPTV
     await pool.query(
       `INSERT INTO device_iptv_config (device_id, xtream_url, xtream_username, xtream_password, updated_at)
        VALUES ($1, $2, $3, $4, NOW())
@@ -104,8 +106,30 @@ exports.saveDeviceConfig = async (req, res) => {
       [deviceId, xtream_url, xtream_username, xtream_password]
     );
     
+    // Atualizar cache na tabela devices
+    await pool.query(
+      `UPDATE devices 
+       SET current_iptv_server_url = $1, 
+           current_iptv_username = $2 
+       WHERE id = $3`,
+      [xtream_url, xtream_username, deviceId]
+    );
+    
+    console.log(`✅ Configuração IPTV salva e cache atualizado para dispositivo ${deviceId}`);
+    
+    // Broadcast WebSocket para atualização em tempo real
+    broadcast({
+      type: 'device:iptv-updated',
+      data: {
+        device_id: parseInt(deviceId),
+        xtream_url: xtream_url,
+        xtream_username: xtream_username
+      }
+    });
+    
     res.json({ success: true, message: 'Configuração do dispositivo salva com sucesso' });
   } catch (err) {
+    console.error('❌ Erro ao salvar configuração IPTV:', err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -115,9 +139,33 @@ exports.deleteDeviceConfig = async (req, res) => {
   const { deviceId } = req.params;
 
   try {
+    // Deletar configuração IPTV
     await pool.query('DELETE FROM device_iptv_config WHERE device_id = $1', [deviceId]);
+    
+    // Limpar cache na tabela devices
+    await pool.query(
+      `UPDATE devices 
+       SET current_iptv_server_url = NULL, 
+           current_iptv_username = NULL 
+       WHERE id = $1`,
+      [deviceId]
+    );
+    
+    console.log(`✅ Configuração IPTV removida e cache limpo para dispositivo ${deviceId}`);
+    
+    // Broadcast WebSocket para atualização em tempo real
+    broadcast({
+      type: 'device:iptv-updated',
+      data: {
+        device_id: parseInt(deviceId),
+        xtream_url: null,
+        xtream_username: null
+      }
+    });
+    
     res.json({ success: true, message: 'Configuração removida. Dispositivo usará configuração global.' });
   } catch (err) {
+    console.error('❌ Erro ao remover configuração IPTV:', err);
     res.status(500).json({ error: err.message });
   }
 };

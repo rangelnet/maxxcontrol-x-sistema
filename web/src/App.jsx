@@ -6,7 +6,6 @@ import Devices from './pages/Devices'
 import APIMonitor from './pages/APIMonitor'
 import APIConfig from './pages/APIConfig'
 import Branding from './pages/Branding'
-import Bugs from './pages/Bugs'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
 import IptvServer from './pages/IptvServer'
@@ -30,9 +29,9 @@ function App() {
             <Route path="api-monitor" element={<APIMonitor />} />
             <Route path="api-config" element={<APIConfig />} />
             <Route path="branding" element={<Branding />} />
-            <Route path="bugs" element={<Bugs />} />
-            <Route path="versions" element={<Versions />} />
             <Route path="logs" element={<Logs />} />
+            <Route path="bugs" element={<Navigate to="/logs" replace />} />
+            <Route path="versions" element={<Versions />} />
             <Route path="iptv-server" element={<IptvServer />} />
             <Route path="banners" element={<BannerGenerator />} />
           </Route>

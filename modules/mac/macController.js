@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { broadcast } = require('../../websocket/wsServer');
 
 // Registrar dispositivo PÚBLICO (sem autenticação - para primeiro acesso)
 exports.registerDevicePublic = async (req, res) => {
@@ -166,13 +167,20 @@ exports.listAllDevices = async (req, res) => {
     const result = await pool.query(`
       SELECT 
         d.*,
-        u.email
+        u.email,
+        d.current_iptv_server_url,
+        d.current_iptv_username
       FROM devices d
       LEFT JOIN users u ON d.user_id = u.id
       ORDER BY d.ultimo_acesso DESC
     `);
     console.log(`✅ Encontrados ${result.rows.length} dispositivos`);
-    console.log('Dispositivos:', result.rows.map(d => ({ mac: d.mac_address, modelo: d.modelo, user_id: d.user_id })));
+    console.log('Dispositivos:', result.rows.map(d => ({ 
+      mac: d.mac_address, 
+      modelo: d.modelo, 
+      user_id: d.user_id,
+      iptv_server: d.current_iptv_server_url || 'não configurado'
+    })));
     res.json({ devices: result.rows });
   } catch (error) {
     console.error('❌ Erro ao listar todos os dispositivos:', error);
@@ -181,15 +189,127 @@ exports.listAllDevices = async (req, res) => {
 };
 
 // Configurar URL da API de teste grátis para um dispositivo
-// NOTA: Esta função será implementada após adicionar a coluna test_api_url no banco
 exports.setTestApiUrl = async (req, res) => {
-  res.status(501).json({ error: 'Funcionalidade não implementada ainda' });
+  const { mac_address, test_api_url } = req.body;
+
+  // Validar formato do MAC address
+  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+  if (!macRegex.test(mac_address)) {
+    return res.status(400).json({ error: 'Formato de MAC address inválido' });
+  }
+
+  // Se test_api_url não for null/vazio, validar formato
+  if (test_api_url !== null && test_api_url !== '') {
+    // Validar formato de URL (HTTP/HTTPS apenas)
+    try {
+      const url = new URL(test_api_url);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        return res.status(400).json({ error: 'URL deve usar protocolo HTTP ou HTTPS' });
+      }
+    } catch (error) {
+      return res.status(400).json({ error: 'Formato de URL inválido' });
+    }
+
+    // Verificar padrões de SQL injection
+    const sqlInjectionPatterns = [
+      /(\bUNION\b|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bCREATE\b|\bALTER\b)/i,
+      /(--|;|\/\*|\*\/|xp_|sp_)/i
+    ];
+    
+    for (const pattern of sqlInjectionPatterns) {
+      if (pattern.test(test_api_url)) {
+        console.warn(`⚠️ Tentativa de SQL injection detectada: ${test_api_url}`);
+        return res.status(400).json({ error: 'URL contém caracteres ou padrões não permitidos' });
+      }
+    }
+
+    // Verificar padrões de JavaScript injection
+    const xssPatterns = [
+      /<script[^>]*>.*?<\/script>/gi,
+      /javascript:/gi,
+      /on\w+\s*=/gi
+    ];
+    
+    for (const pattern of xssPatterns) {
+      if (pattern.test(test_api_url)) {
+        console.warn(`⚠️ Tentativa de XSS detectada: ${test_api_url}`);
+        return res.status(400).json({ error: 'URL contém caracteres ou padrões não permitidos' });
+      }
+    }
+  }
+
+  try {
+    console.log(`🔧 Configurando test_api_url para MAC: ${mac_address}`);
+    console.log(`   URL: ${test_api_url || 'null (limpar configuração)'}`);
+    
+    const result = await pool.query(
+      'UPDATE devices SET test_api_url = $1 WHERE mac_address = $2 RETURNING *',
+      [test_api_url || null, mac_address]
+    );
+    
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    console.log('✅ test_api_url configurado com sucesso');
+    
+    // Broadcast WebSocket para atualização em tempo real
+    broadcast({
+      type: 'device:test-api-updated',
+      data: {
+        device_id: result.rows[0].id,
+        mac_address: result.rows[0].mac_address,
+        test_api_url: result.rows[0].test_api_url
+      }
+    });
+    
+    res.json({
+      device: result.rows[0],
+      message: test_api_url ? 'URL configurada com sucesso' : 'Configuração removida com sucesso'
+    });
+  } catch (error) {
+    console.error('❌ Erro ao configurar test_api_url:', error);
+    res.status(500).json({ error: 'Erro ao configurar URL' });
+  }
 };
 
 // Buscar URL da API de teste grátis por MAC (público - sem autenticação)
-// NOTA: Esta função será implementada após adicionar a coluna test_api_url no banco
 exports.getTestApiUrl = async (req, res) => {
-  res.status(501).json({ error: 'Funcionalidade não implementada ainda' });
+  const { mac_address } = req.params;
+
+  // Validar formato do MAC address
+  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+  if (!macRegex.test(mac_address)) {
+    return res.status(400).json({ error: 'Formato de MAC address inválido' });
+  }
+
+  try {
+    console.log(`🔍 Buscando test_api_url para MAC: ${mac_address}`);
+    
+    const result = await pool.query(
+      'SELECT test_api_url FROM devices WHERE mac_address = $1',
+      [mac_address]
+    );
+    
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+    
+    const testApiUrl = result.rows[0].test_api_url;
+    const hasCustomUrl = testApiUrl !== null && testApiUrl !== '';
+    
+    console.log(`✅ test_api_url encontrado: ${testApiUrl || 'null'} (has_custom_url: ${hasCustomUrl})`);
+    
+    res.json({
+      test_api_url: testApiUrl,
+      has_custom_url: hasCustomUrl
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar test_api_url:', error);
+    res.status(500).json({ error: 'Erro ao buscar configuração' });
+  }
 };
 
 // ========== ROTAS ALTERNATIVAS QUE ACEITAM MAC ADDRESS ==========

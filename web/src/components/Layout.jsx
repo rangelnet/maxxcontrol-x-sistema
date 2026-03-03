@@ -17,9 +17,8 @@ const Layout = () => {
     { path: '/branding', icon: Palette, label: 'Branding' },
     { path: '/iptv-server', icon: Server, label: 'Servidor IPTV' },
     { path: '/banners', icon: Image, label: 'Banners' },
-    { path: '/bugs', icon: Bug, label: 'Bugs' },
-    { path: '/versions', icon: Package, label: 'Versões' },
     { path: '/logs', icon: FileText, label: 'Logs' },
+    { path: '/versions', icon: Package, label: 'Versões' },
   ]
 
   return (

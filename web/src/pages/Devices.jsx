@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock } from 'lucide-react'
+import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock, TestTube } from 'lucide-react'
+import TestApiModal from '../components/TestApiModal'
 
 // Versão 1.1 - Botões de bloquear/desbloquear e excluir dispositivos
 const Devices = () => {
@@ -10,6 +11,7 @@ const Devices = () => {
   const [lastUpdate, setLastUpdate] = useState(null)
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [showIptvModal, setShowIptvModal] = useState(false)
+  const [showTestApiModal, setShowTestApiModal] = useState(false)
   const [showAppsModal, setShowAppsModal] = useState(false)
   const [showSendApkModal, setShowSendApkModal] = useState(false)
   const [iptvConfig, setIptvConfig] = useState({
@@ -31,7 +33,68 @@ const Devices = () => {
       loadDevices()
     }, 2000)
 
-    return () => clearInterval(interval)
+    // WebSocket para atualizações em tempo real
+    const ws = new WebSocket(
+      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+    )
+
+    ws.onopen = () => {
+      console.log('🔌 WebSocket conectado')
+      // Autenticar WebSocket
+      const token = localStorage.getItem('token')
+      if (token) {
+        ws.send(JSON.stringify({ type: 'auth', token }))
+      }
+    }
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        
+        // Atualizar quando test_api_url for modificado
+        if (data.type === 'device:test-api-updated') {
+          console.log('📡 Test API atualizado:', data.data)
+          setDevices(prevDevices => 
+            prevDevices.map(device => 
+              device.id === data.data.device_id
+                ? { ...device, test_api_url: data.data.test_api_url }
+                : device
+            )
+          )
+        }
+        
+        // Atualizar quando IPTV for modificado
+        if (data.type === 'device:iptv-updated') {
+          console.log('📡 IPTV atualizado:', data.data)
+          setDevices(prevDevices => 
+            prevDevices.map(device => 
+              device.id === data.data.device_id
+                ? { 
+                    ...device, 
+                    current_iptv_server_url: data.data.xtream_url,
+                    current_iptv_username: data.data.xtream_username
+                  }
+                : device
+            )
+          )
+        }
+      } catch (error) {
+        console.error('Erro ao processar mensagem WebSocket:', error)
+      }
+    }
+
+    ws.onerror = (error) => {
+      console.error('❌ Erro no WebSocket:', error)
+    }
+
+    ws.onclose = () => {
+      console.log('🔌 WebSocket desconectado')
+    }
+
+    return () => {
+      clearInterval(interval)
+      ws.close()
+    }
   }, [])
 
   const loadDevices = async (showRefreshIndicator = false) => {
@@ -118,6 +181,11 @@ const Devices = () => {
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
     }
+  }
+
+  const openTestApiModal = (device) => {
+    setSelectedDevice(device)
+    setShowTestApiModal(true)
   }
 
   const saveIptvConfig = async () => {
@@ -211,6 +279,12 @@ const Devices = () => {
     return new Date(date).toLocaleString('pt-BR')
   }
 
+  const truncateUrl = (url, maxLength = 40) => {
+    if (!url) return 'Não Configurado'
+    if (url.length <= maxLength) return url
+    return url.substring(0, maxLength) + '...'
+  }
+
   const systemApps = apps.filter(app => app.is_system)
   const userApps = apps.filter(app => !app.is_system)
 
@@ -250,6 +324,7 @@ const Devices = () => {
                 <th className="text-left py-3 px-4">Android</th>
                 <th className="text-left py-3 px-4">App</th>
                 <th className="text-left py-3 px-4">IP</th>
+                <th className="text-left py-3 px-4">IPTV Server</th>
                 <th className="text-left py-3 px-4">Último Acesso</th>
                 <th className="text-left py-3 px-4">Conexão</th>
                 <th className="text-left py-3 px-4">Status</th>
@@ -264,6 +339,23 @@ const Devices = () => {
                   <td className="py-3 px-4">{device.android_version}</td>
                   <td className="py-3 px-4">{device.app_version}</td>
                   <td className="py-3 px-4">{device.ip}</td>
+                  <td 
+                    className="py-3 px-4 cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => openIptvModal(device)}
+                    title={device.current_iptv_server_url || 'Clique para configurar'}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Server size={14} className="text-gray-400" />
+                      <span className={device.current_iptv_server_url ? 'text-white' : 'text-gray-500'}>
+                        {truncateUrl(device.current_iptv_server_url)}
+                      </span>
+                    </div>
+                    {device.current_iptv_username && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Usuário: {device.current_iptv_username}
+                      </div>
+                    )}
+                  </td>
                   <td className="py-3 px-4 text-sm text-gray-400">{formatDate(device.ultimo_acesso)}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
@@ -287,6 +379,13 @@ const Devices = () => {
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => openTestApiModal(device)}
+                        className="text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                        title="Configurar API de Teste"
+                      >
+                        <TestTube size={16} />
+                      </button>
                       <button
                         onClick={() => openIptvModal(device)}
                         className="text-primary hover:text-primary/80 flex items-center gap-1"
@@ -590,6 +689,15 @@ const Devices = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Configuração Test API */}
+      {showTestApiModal && (
+        <TestApiModal
+          device={selectedDevice}
+          onClose={() => setShowTestApiModal(false)}
+          onSave={() => loadDevices(true)}
+        />
       )}
     </div>
   )
