@@ -49,7 +49,13 @@ exports.login = async (req, res) => {
       return res.status(403).json({ error: 'Usuário bloqueado' });
     }
 
-    const senhaValida = await bcrypt.compare(senha, user.senha_hash);
+    // Verificar senha usando crypt do PostgreSQL (compatível com gen_salt do Supabase)
+    const senhaCheck = await pool.query(
+      'SELECT senha_hash = crypt($1, senha_hash) as senha_valida FROM users WHERE id = $2',
+      [senha, user.id]
+    );
+    
+    const senhaValida = senhaCheck.rows[0]?.senha_valida;
     
     if (!senhaValida) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
