@@ -400,8 +400,6 @@ const Devices = () => {
                       >
                         <Package size={16} />
                       </button>
-                      {/* DEBUG: Mostrar status real do dispositivo */}
-                      {console.log(`Device ${device.mac_address}: status="${device.status}"`)}
                       {device.status === 'ativo' ? (
                         <button
                           onClick={() => blockDevice(device.id)}
