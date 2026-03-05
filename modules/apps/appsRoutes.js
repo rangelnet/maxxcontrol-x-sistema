@@ -36,4 +36,7 @@ router.post('/send-apk-by-mac', authMiddleware, appsController.sendApkByMac);
 // Comandos pendentes por MAC (para o app Android)
 router.get('/commands/mac/:mac_address', deviceAuthMiddleware, appsController.getPendingCommandsByMac);
 
+// Sincronizar lista completa de apps (do app Android)
+router.post('/sync', deviceAuthMiddleware, appsController.syncInstalledApps);
+
 module.exports = router;
