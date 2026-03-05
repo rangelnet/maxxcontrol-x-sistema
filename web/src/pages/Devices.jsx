@@ -158,15 +158,28 @@ const Devices = () => {
     if (!confirm(`Deseja excluir o dispositivo ${macAddress}?\n\nEsta ação não pode ser desfeita e removerá:\n- Configurações IPTV\n- Apps instalados\n- Comandos pendentes\n- Todos os dados do dispositivo`)) return
 
     try {
-      console.log('🗑️ Excluindo dispositivo:', deviceId)
+      console.log('🗑️ Iniciando exclusão do dispositivo...')
+      console.log('   Device ID:', deviceId)
+      console.log('   MAC Address:', macAddress)
+      console.log('   URL da requisição:', `/api/device/delete/${deviceId}`)
+      
       const response = await api.delete(`/api/device/delete/${deviceId}`)
-      console.log('✅ Resposta:', response.data)
+      
+      console.log('✅ Dispositivo excluído com sucesso!')
+      console.log('   Resposta do servidor:', response.data)
+      
       alert('Dispositivo excluído com sucesso!')
       loadDevices()
     } catch (error) {
-      console.error('❌ Erro ao excluir dispositivo:', error)
-      console.error('❌ Detalhes:', error.response?.data)
-      alert(`Erro ao excluir dispositivo: ${error.response?.data?.error || error.message}`)
+      console.error('❌ ERRO ao excluir dispositivo')
+      console.error('   Erro completo:', error)
+      console.error('   Status HTTP:', error.response?.status)
+      console.error('   Dados da resposta:', error.response?.data)
+      console.error('   Headers:', error.response?.headers)
+      console.error('   Config da requisição:', error.config)
+      
+      const errorMessage = error.response?.data?.error || error.message || 'Erro desconhecido'
+      alert(`Erro ao excluir dispositivo:\n\n${errorMessage}\n\nVerifique o console do navegador para mais detalhes.`)
     }
   }
 
