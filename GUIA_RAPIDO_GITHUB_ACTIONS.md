@@ -4,33 +4,30 @@
 
 Sempre que você fizer alterações em arquivos SQL dentro de `database/migrations/` e fizer push para o GitHub, as migrações serão **automaticamente aplicadas** no Supabase.
 
-## 🚀 Configuração em 3 Passos
+## 🚀 Configuração em 2 Passos
 
-### 1️⃣ Obter Credenciais do Supabase
+### 1️⃣ Obter Project Reference ID do Supabase
 
-Acesse seu projeto no Supabase e copie:
+Acesse seu projeto no Supabase:
 
 ```
-✅ Access Token: https://supabase.com/dashboard/account/tokens
-✅ Database Password: Settings → Database
-✅ Project ID: Settings → General → Reference ID
+✅ Settings → General → Reference ID
 ```
+
+Copie o Reference ID (exemplo: `abcdefghijklmnop`)
 
 ### 2️⃣ Adicionar Secrets no GitHub
 
-1. Vá em: **Repositório → Settings → Secrets and variables → Actions**
+1. Vá em: https://github.com/rangelnet/maxxcontrol-x-sistema/settings/secrets/actions
 2. Clique em **"New repository secret"**
-3. Adicione estes 3 secrets:
+3. Adicione estes 2 secrets:
 
 ```
 Nome: SUPABASE_ACCESS_TOKEN
-Valor: [seu token]
+Valor: sbp_8cbfe9e7c93bc9f9bfdd7d3de06147732eddaef0
 
-Nome: SUPABASE_DB_PASSWORD
-Valor: [sua senha do banco]
-
-Nome: SUPABASE_PROJECT_ID
-Valor: [seu project ID]
+Nome: SUPABASE_PROJECT_REF
+Valor: [seu project reference ID]
 ```
 
 ### 3️⃣ Testar
@@ -62,7 +59,7 @@ Você edita SQL → Commit → Push → GitHub Actions → Supabase atualizado!
 ## ⚠️ Importante
 
 - Configure os secrets **antes** de fazer push
-- Não compartilhe os secrets com ninguém
+- Não compartilhe o token de API publicamente
 - As migrações são aplicadas em ordem alfabética
 
 ## 📚 Documentação Completa

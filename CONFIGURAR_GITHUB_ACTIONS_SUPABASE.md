@@ -17,28 +17,24 @@ Você precisa ter:
 
 ## 🔑 Passo 1: Obter credenciais do Supabase
 
-### 1.1 Access Token (Token de Acesso)
+### 1.1 Access Token (Token de API)
 
-1. Acesse: https://supabase.com/dashboard/account/tokens
-2. Clique em "Generate new token"
-3. Dê um nome (ex: "GitHub Actions")
-4. Copie o token gerado (você só verá uma vez!)
+**Você já tem o token:**
+```
+sbp_8cbfe9e7c93bc9f9bfdd7d3de06147732eddaef0
+```
 
-### 1.2 Database Password (Senha do Banco)
+Este é o token de API do Supabase que permite ao GitHub Actions conectar e executar comandos.
+
+### 1.2 Project Reference ID
 
 1. Acesse seu projeto no Supabase
-2. Vá em: Settings → Database
-3. Procure por "Database password" ou "Connection string"
-4. Copie a senha do banco de dados
-
-### 1.3 Project ID (ID do Projeto)
-
-1. No dashboard do Supabase, vá em Settings → General
-2. Copie o "Reference ID" (ex: `abcdefghijklmnop`)
+2. Vá em: **Settings → General**
+3. Copie o **"Reference ID"** (exemplo: `abcdefghijklmnop`)
 
 ## 🔐 Passo 2: Configurar Secrets no GitHub
 
-1. Acesse seu repositório no GitHub
+1. Acesse seu repositório no GitHub: https://github.com/rangelnet/maxxcontrol-x-sistema
 2. Vá em: **Settings** → **Secrets and variables** → **Actions**
 3. Clique em **"New repository secret"**
 4. Adicione os seguintes secrets:
@@ -47,9 +43,8 @@ Você precisa ter:
 
 | Nome do Secret | Valor | Descrição |
 |----------------|-------|-----------|
-| `SUPABASE_ACCESS_TOKEN` | Token gerado no passo 1.1 | Token de acesso da sua conta |
-| `SUPABASE_DB_PASSWORD` | Senha do passo 1.2 | Senha do banco de dados |
-| `SUPABASE_PROJECT_ID` | ID do passo 1.3 | ID de referência do projeto |
+| `SUPABASE_ACCESS_TOKEN` | `sbp_8cbfe9e7c93bc9f9bfdd7d3de06147732eddaef0` | Token de API do Supabase |
+| `SUPABASE_PROJECT_REF` | [seu project reference ID] | ID de referência do projeto |
 
 ### Para Staging (branch develop) - OPCIONAL:
 
@@ -57,9 +52,8 @@ Se você tiver um projeto separado para staging:
 
 | Nome do Secret | Valor | Descrição |
 |----------------|-------|-----------|
-| `SUPABASE_ACCESS_TOKEN_STAGING` | Token do projeto staging | Token de acesso |
-| `SUPABASE_DB_PASSWORD_STAGING` | Senha do banco staging | Senha do banco |
-| `SUPABASE_PROJECT_ID_STAGING` | ID do projeto staging | ID de referência |
+| `SUPABASE_ACCESS_TOKEN_STAGING` | Token do projeto staging | Token de API |
+| `SUPABASE_PROJECT_REF_STAGING` | ID do projeto staging | ID de referência |
 
 ## 🎯 Passo 3: Como usar
 
@@ -77,16 +71,15 @@ Se você tiver um projeto separado para staging:
    ```
 4. O GitHub Actions irá **automaticamente**:
    - Detectar as mudanças em `database/migrations/`
-   - Conectar ao Supabase
+   - Conectar ao Supabase usando o token
    - Aplicar todas as migrações
    - Notificar sucesso ou falha
 
 ### Verificar execução:
 
-1. Acesse seu repositório no GitHub
-2. Vá na aba **Actions**
-3. Veja o status da execução (verde = sucesso, vermelho = erro)
-4. Clique na execução para ver logs detalhados
+1. Acesse: https://github.com/rangelnet/maxxcontrol-x-sistema/actions
+2. Veja o status da execução (verde = sucesso, vermelho = erro)
+3. Clique na execução para ver logs detalhados
 
 ## 📊 Estrutura dos Workflows
 
@@ -100,8 +93,8 @@ Se você tiver um projeto separado para staging:
 
 ## ⚠️ Importante
 
-- **Não compartilhe** os secrets com ninguém
-- **Não commite** os secrets no código
+- **Não compartilhe** o token de API publicamente
+- **Não commite** o token no código
 - As migrações são aplicadas **na ordem alfabética** dos arquivos
 - Recomenda-se nomear migrações com timestamp: `YYYYMMDD_descricao.sql`
 
@@ -115,12 +108,12 @@ Se você tiver um projeto separado para staging:
 ## 🐛 Troubleshooting
 
 ### Erro: "Authentication failed"
-- Verifique se o `SUPABASE_ACCESS_TOKEN` está correto
-- Gere um novo token se necessário
+- Verifique se o `SUPABASE_ACCESS_TOKEN` está correto no GitHub Secrets
+- Token atual: `sbp_8cbfe9e7c93bc9f9bfdd7d3de06147732eddaef0`
 
-### Erro: "Connection refused"
-- Verifique se o `SUPABASE_PROJECT_ID` está correto
-- Verifique se a senha do banco está correta
+### Erro: "Project not found"
+- Verifique se o `SUPABASE_PROJECT_REF` está correto
+- Confirme o Reference ID no dashboard do Supabase
 
 ### Erro: "SQL syntax error"
 - Verifique a sintaxe do arquivo SQL
@@ -134,10 +127,10 @@ Se você tiver um projeto separado para staging:
 
 ## ✅ Checklist de Configuração
 
-- [ ] Access Token obtido do Supabase
-- [ ] Database Password copiada
-- [ ] Project ID copiado
-- [ ] Secrets configurados no GitHub
+- [ ] Token de API copiado: `sbp_8cbfe9e7c93bc9f9bfdd7d3de06147732eddaef0`
+- [ ] Project Reference ID obtido do Supabase
+- [ ] Secret `SUPABASE_ACCESS_TOKEN` configurado no GitHub
+- [ ] Secret `SUPABASE_PROJECT_REF` configurado no GitHub
 - [ ] Primeiro push testado
 - [ ] Workflow executado com sucesso
 - [ ] Migrações aplicadas no Supabase
