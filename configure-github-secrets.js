@@ -1,6 +1,4 @@
 const https = require('https');
-const sodium = require('tweetnacl');
-const { decodeBase64, encodeBase64 } = require('tweetnacl-util');
 
 // Configurações
 const GITHUB_OWNER = 'rangelnet';
@@ -64,22 +62,33 @@ async function getPublicKey() {
 
 // Função para criptografar o secret usando libsodium
 function encryptSecret(publicKey, secretValue) {
-  // Converter a chave pública de base64 para Uint8Array
-  const publicKeyBytes = decodeBase64(publicKey);
+  // Usar a biblioteca nativa do Node.js para criptografia
+  const crypto = require('crypto');
   
-  // Converter o valor do secret para Uint8Array
-  const secretBytes = Buffer.from(secretValue);
+  // Converter a chave pública de base64 para Buffer
+  const publicKeyBytes = Buffer.from(publicKey, 'base64');
   
-  // Criptografar usando sealed box (libsodium)
-  const encryptedBytes = sodium.box.seal(secretBytes, publicKeyBytes);
+  // Converter o valor do secret para Buffer
+  const secretBytes = Buffer.from(secretValue, 'utf8');
   
-  // Retornar em base64
-  return encodeBase64(encryptedBytes);
+  // Usar libsodium-wrappers para sealed box
+  const sodium = require('libsodium-wrappers');
+  
+  // Aguardar inicialização do sodium
+  return new Promise((resolve) => {
+    sodium.ready.then(() => {
+      // Criptografar usando sealed box
+      const encryptedBytes = sodium.crypto_box_seal(secretBytes, publicKeyBytes);
+      
+      // Retornar em base64
+      resolve(Buffer.from(encryptedBytes).toString('base64'));
+    });
+  });
 }
 
 // Função para criar ou atualizar um secret
 async function createOrUpdateSecret(secretName, secretValue, publicKey) {
-  const encryptedValue = encryptSecret(publicKey.key, secretValue);
+  const encryptedValue = await encryptSecret(publicKey.key, secretValue);
   
   const options = {
     hostname: 'api.github.com',
