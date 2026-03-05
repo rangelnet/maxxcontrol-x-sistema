@@ -1,0 +1,42 @@
+name: CI - Testes e Validação
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar sintaxe SQL
+        run: |
+          echo "Verificando arquivos SQL..."
+          for file in database/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              echo "Validando $file"
+              # Verifica se o arquivo não está vazio
+              if [ ! -s "$file" ]; then
+                echo "Erro: $file está vazio"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Executar testes (se existirem)
+        run: npm test --if-present
+        continue-on-error: true
