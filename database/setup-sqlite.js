@@ -73,7 +73,7 @@ async function setup() {
       banner_titulo TEXT DEFAULT 'TV Maxx',
       banner_subtitulo TEXT DEFAULT 'Seu Entretenimento',
       banner_cor_fundo TEXT DEFAULT '#000000',
-      banner_cor_texto TEXT DEFAULT '#FF6A00',
+      banner_cor_texto TEXT DEFAULT '#F63012',
       logo_url TEXT,
       splash_url TEXT,
       tema TEXT DEFAULT 'dark',
@@ -172,7 +172,7 @@ async function setup() {
           db.run(
             `INSERT OR IGNORE INTO branding_settings (banner_titulo, banner_subtitulo, banner_cor_fundo, banner_cor_texto, tema, ativo)
              VALUES (?, ?, ?, ?, ?, ?)`,
-            ['TV Maxx', 'Seu Entretenimento', '#000000', '#FF6A00', 'dark', 1],
+            ['TV Maxx', 'Seu Entretenimento', '#000000', '#F63012', 'dark', 1],
             function(err) {
               if (err) {
                 console.error('❌ Erro ao criar branding:', err);

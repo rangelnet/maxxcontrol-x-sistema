@@ -75,7 +75,7 @@ exports.listarTemplates = async (req, res) => {
         nome: 'TV Maxx Padrão',
         descricao: 'Template padrão com cores da TV Maxx',
         banner_cor_fundo: '#000000',
-        banner_cor_texto: '#FF6A00',
+        banner_cor_texto: '#F63012',
         tema: 'dark'
       },
       {

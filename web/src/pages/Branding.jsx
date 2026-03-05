@@ -10,7 +10,7 @@ const Branding = () => {
     banner_titulo: '',
     banner_subtitulo: '',
     banner_cor_fundo: '#000000',
-    banner_cor_texto: '#FF6A00',
+    banner_cor_texto: '#F63012',
     logo_url: '',
     splash_url: '',
     tema: 'dark'
@@ -29,7 +29,7 @@ const Branding = () => {
         banner_titulo: response.data.banner_titulo || '',
         banner_subtitulo: response.data.banner_subtitulo || '',
         banner_cor_fundo: response.data.banner_cor_fundo || '#000000',
-        banner_cor_texto: response.data.banner_cor_texto || '#FF6A00',
+        banner_cor_texto: response.data.banner_cor_texto || '#F63012',
         logo_url: response.data.logo_url || '',
         splash_url: response.data.splash_url || '',
         tema: response.data.tema || 'dark'
@@ -160,7 +160,7 @@ const Branding = () => {
                         value={formData.banner_cor_texto}
                         onChange={(e) => setFormData({...formData, banner_cor_texto: e.target.value})}
                         className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm"
-                        placeholder="#FF6A00"
+                        placeholder="#F63012"
                       />
                     </div>
                   </div>
