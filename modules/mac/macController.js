@@ -411,17 +411,29 @@ exports.deleteDevice = async (req, res) => {
   try {
     console.log(`🗑️ Excluindo dispositivo ID: ${device_id}`);
     
-    // Deletar apps relacionados primeiro
-    await pool.query('DELETE FROM device_apps WHERE device_id = $1', [device_id]);
-    console.log('✅ Apps relacionados excluídos');
+    // Deletar apps relacionados (se a tabela existir)
+    try {
+      await pool.query('DELETE FROM device_apps WHERE device_id = $1', [device_id]);
+      console.log('✅ Apps relacionados excluídos');
+    } catch (error) {
+      console.log('⚠️ Tabela device_apps não existe ou erro ao deletar apps:', error.message);
+    }
     
-    // Deletar comandos relacionados
-    await pool.query('DELETE FROM device_commands WHERE device_id = $1', [device_id]);
-    console.log('✅ Comandos relacionados excluídos');
+    // Deletar comandos relacionados (se a tabela existir)
+    try {
+      await pool.query('DELETE FROM device_commands WHERE device_id = $1', [device_id]);
+      console.log('✅ Comandos relacionados excluídos');
+    } catch (error) {
+      console.log('⚠️ Tabela device_commands não existe ou erro ao deletar comandos:', error.message);
+    }
     
-    // Deletar configuração IPTV relacionada
-    await pool.query('DELETE FROM device_iptv_config WHERE device_id = $1', [device_id]);
-    console.log('✅ Configuração IPTV excluída');
+    // Deletar configuração IPTV relacionada (se a tabela existir)
+    try {
+      await pool.query('DELETE FROM device_iptv_config WHERE device_id = $1', [device_id]);
+      console.log('✅ Configuração IPTV excluída');
+    } catch (error) {
+      console.log('⚠️ Tabela device_iptv_config não existe ou erro ao deletar IPTV:', error.message);
+    }
     
     // Deletar dispositivo
     const result = await pool.query('DELETE FROM devices WHERE id = $1 RETURNING *', [device_id]);
@@ -431,13 +443,17 @@ exports.deleteDevice = async (req, res) => {
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
     
-    console.log('✅ Dispositivo excluído:', result.rows[0]);
+    console.log('✅ Dispositivo excluído com sucesso:', result.rows[0]);
     res.json({ 
       message: 'Dispositivo excluído com sucesso', 
       device: result.rows[0] 
     });
   } catch (error) {
     console.error('❌ Erro ao excluir dispositivo:', error);
-    res.status(500).json({ error: 'Erro ao excluir dispositivo' });
+    console.error('❌ Stack trace:', error.stack);
+    res.status(500).json({ 
+      error: 'Erro ao excluir dispositivo',
+      details: error.message 
+    });
   }
 };
