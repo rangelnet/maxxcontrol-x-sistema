@@ -37,6 +37,7 @@ router.post('/send-apk-by-mac', authMiddleware, appsController.sendApkByMac);
 router.get('/commands/mac/:mac_address', deviceAuthMiddleware, appsController.getPendingCommandsByMac);
 
 // Sincronizar lista completa de apps (do app Android)
-router.post('/sync', deviceAuthMiddleware, appsController.syncInstalledApps);
+// Aceita tanto authMiddleware (JWT) quanto deviceAuthMiddleware (token fixo)
+router.post('/sync', authMiddleware, appsController.syncInstalledApps);
 
 module.exports = router;
