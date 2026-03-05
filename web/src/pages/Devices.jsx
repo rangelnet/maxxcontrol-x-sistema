@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock, TestTube } from 'lucide-react'
+import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock, TestTube, Search } from 'lucide-react'
 import TestApiModal from '../components/TestApiModal'
 
 // Versão 1.1 - Botões de bloquear/desbloquear e excluir dispositivos
 const Devices = () => {
   const [devices, setDevices] = useState([])
+  const [filteredDevices, setFilteredDevices] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdate, setLastUpdate] = useState(null)
@@ -96,6 +98,23 @@ const Devices = () => {
       ws.close()
     }
   }, [])
+
+  // Filtrar dispositivos quando searchTerm ou devices mudar
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredDevices(devices)
+    } else {
+      const term = searchTerm.toLowerCase()
+      const filtered = devices.filter(device => 
+        device.mac_address?.toLowerCase().includes(term) ||
+        device.modelo?.toLowerCase().includes(term) ||
+        device.ip?.toLowerCase().includes(term) ||
+        device.current_iptv_server_url?.toLowerCase().includes(term) ||
+        device.current_iptv_username?.toLowerCase().includes(term)
+      )
+      setFilteredDevices(filtered)
+    }
+  }, [searchTerm, devices])
 
   const loadDevices = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) {
@@ -301,6 +320,17 @@ const Devices = () => {
     return url.substring(0, maxLength) + '...'
   }
 
+  const getServerName = (url) => {
+    if (!url) return 'Não Configurado'
+    try {
+      const urlObj = new URL(url)
+      return urlObj.hostname
+    } catch (error) {
+      // Se não for uma URL válida, retornar a string original truncada
+      return url.length > 30 ? url.substring(0, 30) + '...' : url
+    }
+  }
+
   const systemApps = apps.filter(app => app.is_system)
   const userApps = apps.filter(app => !app.is_system)
 
@@ -319,18 +349,59 @@ const Devices = () => {
             </p>
           )}
         </div>
-        <button
-          onClick={handleManualRefresh}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
-          title="Atualizar lista de dispositivos em tempo real"
-        >
-          <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-          {refreshing ? 'Atualizando...' : 'Atualizar'}
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por MAC, modelo, IP ou servidor..."
+              className="w-80 px-4 py-2 pl-10 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary"
+            />
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
+            title="Atualizar lista de dispositivos em tempo real"
+          >
+            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+            {refreshing ? 'Atualizando...' : 'Atualizar'}
+          </button>
+        </div>
       </div>
 
       <div className="card">
+        {searchTerm && (
+          <div className="px-4 py-3 border-b border-gray-800 bg-dark/50">
+            <p className="text-sm text-gray-400">
+              Mostrando {filteredDevices.length} de {devices.length} dispositivos
+            </p>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -348,7 +419,7 @@ const Devices = () => {
               </tr>
             </thead>
             <tbody>
-              {devices.map((device) => (
+              {filteredDevices.map((device) => (
                 <tr key={device.id} className="border-b border-gray-800 hover:bg-gray-900">
                   <td className="py-3 px-4 font-mono text-sm">{device.mac_address}</td>
                   <td className="py-3 px-4">{device.modelo}</td>
@@ -362,15 +433,17 @@ const Devices = () => {
                   >
                     <div className="flex items-center gap-2">
                       <Server size={14} className="text-gray-400" />
-                      <span className={device.current_iptv_server_url ? 'text-white' : 'text-gray-500'}>
-                        {truncateUrl(device.current_iptv_server_url)}
-                      </span>
-                    </div>
-                    {device.current_iptv_username && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        Usuário: {device.current_iptv_username}
+                      <div>
+                        <span className={device.current_iptv_server_url ? 'text-white font-medium' : 'text-gray-500'}>
+                          {getServerName(device.current_iptv_server_url)}
+                        </span>
+                        {device.current_iptv_username && (
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {device.current_iptv_username}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-400">{formatDate(device.ultimo_acesso)}</td>
                   <td className="py-3 px-4">
@@ -449,9 +522,12 @@ const Devices = () => {
             </tbody>
           </table>
 
-          {devices.length === 0 && (
+          {filteredDevices.length === 0 && !loading && (
             <div className="text-center py-8 text-gray-400">
-              Nenhum dispositivo encontrado
+              {searchTerm 
+                ? `Nenhum dispositivo encontrado para "${searchTerm}"`
+                : 'Nenhum dispositivo encontrado'
+              }
             </div>
           )}
         </div>
