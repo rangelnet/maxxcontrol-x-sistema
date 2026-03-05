@@ -13,3 +13,4 @@ INSERT INTO github_actions_test (test_message)
 VALUES ('GitHub Actions funcionando! Deploy automático ativado em ' || NOW());
 
 -- Comentário: Esta migração confirma que o GitHub Actions está aplicando migrações automaticamente
+-- Atualizado: Secrets configurados com sucesso!
