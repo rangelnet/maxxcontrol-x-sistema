@@ -158,12 +158,15 @@ const Devices = () => {
     if (!confirm(`Deseja excluir o dispositivo ${macAddress}?\n\nEsta ação não pode ser desfeita e removerá:\n- Configurações IPTV\n- Apps instalados\n- Comandos pendentes\n- Todos os dados do dispositivo`)) return
 
     try {
-      await api.delete(`/api/device/delete/${deviceId}`)
+      console.log('🗑️ Excluindo dispositivo:', deviceId)
+      const response = await api.delete(`/api/device/delete/${deviceId}`)
+      console.log('✅ Resposta:', response.data)
       alert('Dispositivo excluído com sucesso!')
       loadDevices()
     } catch (error) {
-      console.error('Erro ao excluir dispositivo:', error)
-      alert('Erro ao excluir dispositivo')
+      console.error('❌ Erro ao excluir dispositivo:', error)
+      console.error('❌ Detalhes:', error.response?.data)
+      alert(`Erro ao excluir dispositivo: ${error.response?.data?.error || error.message}`)
     }
   }
 
