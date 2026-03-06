@@ -36,6 +36,7 @@ app.use('/api/device', require('./modules/mac/macRoutes'));
 app.use('/api/mac', require('./modules/mac/macRoutes')); // Alias para compatibilidade com app Android
 app.use('/api/apps', require('./modules/apps/appsRoutes'));
 app.use('/api/log', require('./modules/logs/logsRoutes'));
+app.use('/api/logs', require('./modules/logs/logsRoutes')); // Alias para compatibilidade com painel web
 app.use('/api/bug', require('./modules/bugs/bugsRoutes'));
 app.use('/api/app', require('./modules/updates/updatesRoutes'));
 app.use('/api/monitor', require('./modules/monitoring/monitoringRoutes'));

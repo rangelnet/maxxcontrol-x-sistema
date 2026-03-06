@@ -20,19 +20,40 @@ exports.createLog = async (req, res) => {
 
 // Listar logs
 exports.getLogs = async (req, res) => {
-  const userId = req.userId;
-  const { limit = 100, tipo } = req.query;
+  const { limit = 100, tipo, severity } = req.query;
 
   try {
-    let query = 'SELECT l.*, d.mac_address, d.modelo FROM logs l LEFT JOIN devices d ON l.device_id = d.id WHERE l.user_id = $1';
-    const params = [userId];
+    let query = `
+      SELECT 
+        sl.id,
+        sl.device_id,
+        sl.tipo as type,
+        sl.descricao as message,
+        sl.severity,
+        sl.modelo,
+        sl.app_version,
+        sl.data as timestamp,
+        d.mac_address
+      FROM system_logs sl
+      LEFT JOIN devices d ON sl.device_id = d.id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramIndex = 1;
 
     if (tipo) {
-      query += ' AND l.tipo = $2';
+      query += ` AND sl.tipo = $${paramIndex}`;
       params.push(tipo);
+      paramIndex++;
+    }
+    
+    if (severity) {
+      query += ` AND sl.severity = $${paramIndex}`;
+      params.push(severity);
+      paramIndex++;
     }
 
-    query += ' ORDER BY l.data DESC LIMIT $' + (params.length + 1);
+    query += ` ORDER BY sl.data DESC LIMIT $${paramIndex}`;
     params.push(limit);
 
     const result = await pool.query(query, params);
