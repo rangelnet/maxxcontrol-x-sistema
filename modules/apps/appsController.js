@@ -313,14 +313,20 @@ exports.syncInstalledApps = async (req, res) => {
   const { mac_address, apps } = req.body;
 
   try {
+    console.log('');
+    console.log('🔄 ========== SINCRONIZAÇÃO DE APPS ==========');
+    console.log(`📱 MAC Address: ${mac_address}`);
+    console.log(`📦 Total de apps recebidos: ${apps ? apps.length : 0}`);
+    
     // 1. Validar entrada
     if (!mac_address || !apps || !Array.isArray(apps) || apps.length === 0) {
+      console.log('❌ Validação falhou: MAC ou apps inválidos');
       return res.status(400).json({ 
         error: 'MAC address e lista de apps são obrigatórios' 
       });
     }
 
-    console.log(`🔄 Sincronizando ${apps.length} apps do dispositivo ${mac_address}...`);
+    console.log(`✅ Validação OK`);
     
     // 2. Buscar device_id pelo MAC
     const deviceResult = await pool.query(
@@ -330,17 +336,26 @@ exports.syncInstalledApps = async (req, res) => {
     
     if (deviceResult.rows.length === 0) {
       console.log(`❌ Dispositivo não encontrado: ${mac_address}`);
+      console.log('🔄 ========== FIM DA SINCRONIZAÇÃO (ERRO) ==========');
+      console.log('');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
     
     const device_id = deviceResult.rows[0].id;
     console.log(`✅ Device ID encontrado: ${device_id}`);
     
+    // Separar apps do sistema e do usuário
+    const systemApps = apps.filter(app => app.is_system);
+    const userApps = apps.filter(app => !app.is_system);
+    console.log(`📊 Apps do sistema: ${systemApps.length}`);
+    console.log(`📊 Apps do usuário: ${userApps.length}`);
+    
     // 3. Iniciar transação
     const client = await pool.connect();
     
     try {
       await client.query('BEGIN');
+      console.log('🔄 Transação iniciada');
       
       // 4. Limpar apps antigos
       const deleteResult = await client.query(
@@ -377,6 +392,9 @@ exports.syncInstalledApps = async (req, res) => {
       // 6. Commit
       await client.query('COMMIT');
       console.log(`✅ ${insertedCount} apps sincronizados com sucesso`);
+      console.log('✅ Transação concluída');
+      console.log('🔄 ========== FIM DA SINCRONIZAÇÃO (SUCESSO) ==========');
+      console.log('');
       
       // 7. Resposta de sucesso
       res.json({ 
@@ -388,6 +406,7 @@ exports.syncInstalledApps = async (req, res) => {
       
     } catch (error) {
       await client.query('ROLLBACK');
+      console.log('❌ Erro na transação, rollback executado');
       throw error;
     } finally {
       client.release();
@@ -395,6 +414,8 @@ exports.syncInstalledApps = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Erro ao sincronizar apps:', error);
+    console.log('🔄 ========== FIM DA SINCRONIZAÇÃO (ERRO) ==========');
+    console.log('');
     res.status(500).json({ error: 'Erro ao sincronizar apps' });
   }
 };
