@@ -25,6 +25,7 @@ const Logs = () => {
 
   // Type icons mapping
   const typeIcons = {
+    AppSync: '📱',
     crash: '💥',
     navigation: '🧭',
     player: '▶️',
@@ -184,6 +185,7 @@ const Logs = () => {
             className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary"
           >
             <option value="">Todos Tipos</option>
+            <option value="AppSync">📱 AppSync</option>
             <option value="crash">Crash</option>
             <option value="navigation">Navigation</option>
             <option value="player">Player</option>
