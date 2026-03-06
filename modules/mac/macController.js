@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const { broadcast } = require('../../websocket/wsServer');
+const jwt = require('jsonwebtoken');
 
 // Registrar dispositivo PÚBLICO (sem autenticação - para primeiro acesso)
 exports.registerDevicePublic = async (req, res) => {
@@ -10,6 +11,7 @@ exports.registerDevicePublic = async (req, res) => {
   try {
     const existing = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
 
+    let device;
     if (existing.rows.length > 0) {
       // Atualizar dispositivo existente - mantém connection_status como está
       console.log('🔄 Dispositivo já existe, atualizando...');
@@ -17,19 +19,39 @@ exports.registerDevicePublic = async (req, res) => {
         'UPDATE devices SET modelo = $1, android_version = $2, app_version = $3, ip = $4, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $5 RETURNING *',
         [modelo, android_version, app_version, ip, mac_address]
       );
-      console.log('✅ Dispositivo atualizado:', result.rows[0]);
-      return res.json({ device: result.rows[0], message: 'Dispositivo atualizado' });
+      device = result.rows[0];
+      console.log('✅ Dispositivo atualizado:', device);
+    } else {
+      // Criar novo dispositivo SEM user_id, connection_status = 'offline'
+      console.log('✨ Criando novo dispositivo...');
+      const result = await pool.query(
+        'INSERT INTO devices (mac_address, modelo, android_version, app_version, ip, status, connection_status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [mac_address, modelo, android_version, app_version, ip, 'ativo', 'offline']
+      );
+      device = result.rows[0];
+      console.log('✅ Dispositivo criado:', device);
     }
 
-    // Criar novo dispositivo SEM user_id, connection_status = 'offline'
-    console.log('✨ Criando novo dispositivo...');
-    const result = await pool.query(
-      'INSERT INTO devices (mac_address, modelo, android_version, app_version, ip, status, connection_status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [mac_address, modelo, android_version, app_version, ip, 'ativo', 'offline']
+    // Gerar token JWT para o dispositivo
+    const token = jwt.sign(
+      { 
+        device_id: device.id, 
+        mac_address: device.mac_address,
+        type: 'device' // Identificar que é um token de dispositivo
+      }, 
+      process.env.JWT_SECRET, 
+      {
+        expiresIn: '365d' // Token válido por 1 ano
+      }
     );
 
-    console.log('✅ Dispositivo criado:', result.rows[0]);
-    res.status(201).json({ device: result.rows[0], message: 'Dispositivo registrado' });
+    console.log('🔑 Token JWT gerado para o dispositivo');
+
+    res.status(existing.rows.length > 0 ? 200 : 201).json({ 
+      device: device, 
+      token: token, // ✅ NOVO: Retornar token JWT
+      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado' 
+    });
   } catch (error) {
     console.error('❌ Erro ao registrar dispositivo público:', error);
     res.status(500).json({ error: 'Erro ao registrar dispositivo' });
@@ -72,22 +94,42 @@ exports.registerDevice = async (req, res) => {
   try {
     const existing = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
 
+    let device;
     if (existing.rows.length > 0) {
       // Atualizar dispositivo existente
       const result = await pool.query(
         'UPDATE devices SET user_id = $1, modelo = $2, android_version = $3, app_version = $4, ip = $5, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $6 RETURNING *',
         [userId, modelo, android_version, app_version, ip, mac_address]
       );
-      return res.json({ device: result.rows[0], message: 'Dispositivo atualizado' });
+      device = result.rows[0];
+    } else {
+      // Criar novo dispositivo
+      const result = await pool.query(
+        'INSERT INTO devices (user_id, mac_address, modelo, android_version, app_version, ip) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [userId, mac_address, modelo, android_version, app_version, ip]
+      );
+      device = result.rows[0];
     }
 
-    // Criar novo dispositivo
-    const result = await pool.query(
-      'INSERT INTO devices (user_id, mac_address, modelo, android_version, app_version, ip) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [userId, mac_address, modelo, android_version, app_version, ip]
+    // Gerar token JWT para o dispositivo
+    const token = jwt.sign(
+      { 
+        device_id: device.id, 
+        mac_address: device.mac_address,
+        user_id: userId,
+        type: 'device'
+      }, 
+      process.env.JWT_SECRET, 
+      {
+        expiresIn: '365d'
+      }
     );
 
-    res.status(201).json({ device: result.rows[0], message: 'Dispositivo registrado' });
+    res.status(existing.rows.length > 0 ? 200 : 201).json({ 
+      device: device, 
+      token: token, // ✅ NOVO: Retornar token JWT
+      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado' 
+    });
   } catch (error) {
     console.error('Erro ao registrar dispositivo:', error);
     res.status(500).json({ error: 'Erro ao registrar dispositivo' });
