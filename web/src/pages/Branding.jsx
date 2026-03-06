@@ -22,6 +22,7 @@ const Branding = () => {
   useEffect(() => {
     loadBranding()
     loadTemplates()
+    loadAppLogos()
   }, [])
 
   const loadBranding = async () => {
@@ -53,6 +54,23 @@ const Branding = () => {
       setTemplates(response.data)
     } catch (error) {
       console.error('Erro ao carregar templates:', error)
+    }
+  }
+
+  const loadAppLogos = async () => {
+    try {
+      // Buscar logos do projeto Android automaticamente
+      const logoUrl = `${api.defaults.baseURL}/api/branding/app-logos/logo`
+      const logoDarkUrl = `${api.defaults.baseURL}/api/branding/app-logos/logo_dark`
+      
+      // Atualizar formData com URLs das logos
+      setFormData(prev => ({
+        ...prev,
+        logo_url: prev.logo_url || logoUrl,
+        logo_dark_url: prev.logo_dark_url || logoDarkUrl
+      }))
+    } catch (error) {
+      console.error('Erro ao carregar logos do app:', error)
     }
   }
 

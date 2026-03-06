@@ -1,4 +1,6 @@
 const pool = require('../../config/database');
+const path = require('path');
+const fs = require('fs');
 
 // Obter branding ativo
 exports.obterBrandingAtivo = async (req, res) => {
@@ -106,5 +108,62 @@ exports.listarTemplates = async (req, res) => {
   } catch (error) {
     console.error('Erro ao listar templates:', error);
     res.status(500).json({ error: 'Erro ao listar templates' });
+  }
+};
+
+// Servir logos do projeto Android
+exports.getAppLogo = async (req, res) => {
+  const { type } = req.params;
+
+  // Mapeamento de tipos para arquivos
+  const logoMap = {
+    'logo': 'logo_move.png',
+    'logo_dark': 'logo_move.png', // Mesma logo para dark mode
+    'ic_launcher': 'ic_launcher.png',
+    'banner': 'ic_banner.png'
+  };
+
+  const filename = logoMap[type];
+  
+  if (!filename) {
+    return res.status(400).json({ error: 'Tipo de logo inválido. Use: logo, logo_dark, ic_launcher, banner' });
+  }
+
+  try {
+    // Caminho relativo do backend para o projeto Android
+    // Backend: r:\Users\Usuario\Documents\painel\maxxcontrol-x-sistema
+    // Android: r:\Users\Usuario\Documents\tv-maxx\TV-MAXX-PRO-Android
+    const androidResPath = path.resolve(__dirname, '../../..', 'tv-maxx', 'TV-MAXX-PRO-Android', 'app', 'src', 'main', 'res', 'drawable', filename);
+
+    // Verificar se o arquivo existe
+    if (!fs.existsSync(androidResPath)) {
+      return res.status(404).json({ error: 'Logo não encontrada no projeto Android' });
+    }
+
+    // Determinar content-type baseado na extensão
+    const ext = path.extname(filename).toLowerCase();
+    const contentTypeMap = {
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.webp': 'image/webp'
+    };
+
+    const contentType = contentTypeMap[ext] || 'application/octet-stream';
+
+    // Enviar arquivo
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache por 24 horas
+    
+    const fileStream = fs.createReadStream(androidResPath);
+    fileStream.pipe(res);
+    
+    fileStream.on('error', (error) => {
+      console.error('Erro ao ler arquivo:', error);
+      res.status(500).json({ error: 'Erro ao ler arquivo de logo' });
+    });
+  } catch (error) {
+    console.error('Erro ao servir logo:', error);
+    res.status(500).json({ error: 'Erro ao servir logo do app' });
   }
 };

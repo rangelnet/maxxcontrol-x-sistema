@@ -11,4 +11,7 @@ router.put('/:id', authMiddleware, brandingController.atualizarBranding);
 // Templates
 router.get('/templates', authMiddleware, brandingController.listarTemplates);
 
+// Logos do App Android
+router.get('/app-logos/:type', brandingController.getAppLogo);
+
 module.exports = router;
