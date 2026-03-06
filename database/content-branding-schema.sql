@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS branding_settings (
   app_name VARCHAR(100) DEFAULT 'TV Maxx',
   logo_url TEXT,
   logo_dark_url TEXT,
-  primary_color VARCHAR(7) DEFAULT '#FF6A00',
+  primary_color VARCHAR(7) DEFAULT '#F63012',
   secondary_color VARCHAR(7) DEFAULT '#FF0000',
   background_color VARCHAR(7) DEFAULT '#000000',
   text_color VARCHAR(7) DEFAULT '#FFFFFF',
@@ -66,7 +66,7 @@ INSERT INTO branding_settings (
   accent_color
 ) VALUES (
   'TV Maxx',
-  '#FF6A00',
+  '#F63012',
   '#FF0000',
   '#000000',
   '#FFFFFF',

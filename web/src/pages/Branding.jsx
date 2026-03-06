@@ -7,13 +7,16 @@ const Branding = () => {
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
-    banner_titulo: '',
-    banner_subtitulo: '',
-    banner_cor_fundo: '#000000',
-    banner_cor_texto: '#F63012',
+    app_name: 'TV Maxx',
     logo_url: '',
-    splash_url: '',
-    tema: 'dark'
+    logo_dark_url: '',
+    primary_color: '#F63012',
+    secondary_color: '#FF0000',
+    background_color: '#000000',
+    text_color: '#FFFFFF',
+    accent_color: '#FFA500',
+    splash_screen_url: '',
+    hero_banner_url: ''
   })
 
   useEffect(() => {
@@ -26,13 +29,16 @@ const Branding = () => {
       const response = await api.get('/api/branding/current')
       setBranding(response.data)
       setFormData({
-        banner_titulo: response.data.banner_titulo || '',
-        banner_subtitulo: response.data.banner_subtitulo || '',
-        banner_cor_fundo: response.data.banner_cor_fundo || '#000000',
-        banner_cor_texto: response.data.banner_cor_texto || '#F63012',
+        app_name: response.data.app_name || 'TV Maxx',
         logo_url: response.data.logo_url || '',
-        splash_url: response.data.splash_url || '',
-        tema: response.data.tema || 'dark'
+        logo_dark_url: response.data.logo_dark_url || '',
+        primary_color: response.data.primary_color || '#F63012',
+        secondary_color: response.data.secondary_color || '#FF0000',
+        background_color: response.data.background_color || '#000000',
+        text_color: response.data.text_color || '#FFFFFF',
+        accent_color: response.data.accent_color || '#FFA500',
+        splash_screen_url: response.data.splash_screen_url || '',
+        hero_banner_url: response.data.hero_banner_url || ''
       })
     } catch (error) {
       console.error('Erro ao carregar branding:', error)
@@ -71,9 +77,9 @@ const Branding = () => {
   const applyTemplate = (template) => {
     setFormData({
       ...formData,
-      banner_cor_fundo: template.banner_cor_fundo,
-      banner_cor_texto: template.banner_cor_texto,
-      tema: template.tema
+      primary_color: template.primary_color,
+      background_color: template.background_color,
+      text_color: template.text_color
     })
   }
 
@@ -95,30 +101,52 @@ const Branding = () => {
             <h2 className="text-2xl font-bold mb-6">Configurações de Branding</h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Textos */}
+              {/* Nome do App */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-300">Textos</h3>
+                <h3 className="text-lg font-semibold text-gray-300">Informações do App</h3>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Título do Banner</label>
+                  <label className="block text-sm font-medium mb-2">Nome do App</label>
                   <input
                     type="text"
-                    value={formData.banner_titulo}
-                    onChange={(e) => setFormData({...formData, banner_titulo: e.target.value})}
+                    value={formData.app_name}
+                    onChange={(e) => setFormData({...formData, app_name: e.target.value})}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"
                     placeholder="Ex: TV Maxx"
                   />
                 </div>
+              </div>
+
+              {/* Logos */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-300">Logos</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-2">URL do Logo (Claro)</label>
+                  <input
+                    type="url"
+                    value={formData.logo_url}
+                    onChange={(e) => setFormData({...formData, logo_url: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"
+                    placeholder="https://exemplo.com/logo.png"
+                  />
+                  {formData.logo_url && (
+                    <img src={formData.logo_url} alt="Logo Preview" className="mt-2 h-16 object-contain bg-white p-2 rounded" />
+                  )}
+                </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Subtítulo do Banner</label>
+                  <label className="block text-sm font-medium mb-2">URL do Logo (Escuro)</label>
                   <input
-                    type="text"
-                    value={formData.banner_subtitulo}
-                    onChange={(e) => setFormData({...formData, banner_subtitulo: e.target.value})}
+                    type="url"
+                    value={formData.logo_dark_url}
+                    onChange={(e) => setFormData({...formData, logo_dark_url: e.target.value})}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"
-                    placeholder="Ex: Seu Entretenimento"
+                    placeholder="https://exemplo.com/logo-dark.png"
                   />
+                  {formData.logo_dark_url && (
+                    <img src={formData.logo_dark_url} alt="Logo Dark Preview" className="mt-2 h-16 object-contain bg-gray-900 p-2 rounded" />
+                  )}
                 </div>
               </div>
 
@@ -128,18 +156,56 @@ const Branding = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Cor de Fundo</label>
+                    <label className="block text-sm font-medium mb-2">Cor Primária</label>
                     <div className="flex gap-2">
                       <input
                         type="color"
-                        value={formData.banner_cor_fundo}
-                        onChange={(e) => setFormData({...formData, banner_cor_fundo: e.target.value})}
+                        value={formData.primary_color}
+                        onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
                         className="w-12 h-10 rounded cursor-pointer"
                       />
                       <input
                         type="text"
-                        value={formData.banner_cor_fundo}
-                        onChange={(e) => setFormData({...formData, banner_cor_fundo: e.target.value})}
+                        value={formData.primary_color}
+                        onChange={(e) => setFormData({...formData, primary_color: e.target.value})}
+                        className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm"
+                        placeholder="#F63012"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cor Secundária</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={formData.secondary_color}
+                        onChange={(e) => setFormData({...formData, secondary_color: e.target.value})}
+                        className="w-12 h-10 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.secondary_color}
+                        onChange={(e) => setFormData({...formData, secondary_color: e.target.value})}
+                        className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm"
+                        placeholder="#FF0000"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cor de Fundo</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={formData.background_color}
+                        onChange={(e) => setFormData({...formData, background_color: e.target.value})}
+                        className="w-12 h-10 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.background_color}
+                        onChange={(e) => setFormData({...formData, background_color: e.target.value})}
                         className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm"
                         placeholder="#000000"
                       />
@@ -151,61 +217,72 @@ const Branding = () => {
                     <div className="flex gap-2">
                       <input
                         type="color"
-                        value={formData.banner_cor_texto}
-                        onChange={(e) => setFormData({...formData, banner_cor_texto: e.target.value})}
+                        value={formData.text_color}
+                        onChange={(e) => setFormData({...formData, text_color: e.target.value})}
                         className="w-12 h-10 rounded cursor-pointer"
                       />
                       <input
                         type="text"
-                        value={formData.banner_cor_texto}
-                        onChange={(e) => setFormData({...formData, banner_cor_texto: e.target.value})}
+                        value={formData.text_color}
+                        onChange={(e) => setFormData({...formData, text_color: e.target.value})}
                         className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm"
-                        placeholder="#F63012"
+                        placeholder="#FFFFFF"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cor de Destaque</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={formData.accent_color}
+                        onChange={(e) => setFormData({...formData, accent_color: e.target.value})}
+                        className="w-12 h-10 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.accent_color}
+                        onChange={(e) => setFormData({...formData, accent_color: e.target.value})}
+                        className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm"
+                        placeholder="#FFA500"
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* URLs */}
+              {/* Imagens */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-300">Mídia</h3>
+                <h3 className="text-lg font-semibold text-gray-300">Imagens</h3>
                 
-                <div>
-                  <label className="block text-sm font-medium mb-2">URL do Logo</label>
-                  <input
-                    type="url"
-                    value={formData.logo_url}
-                    onChange={(e) => setFormData({...formData, logo_url: e.target.value})}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"
-                    placeholder="https://exemplo.com/logo.png"
-                  />
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium mb-2">URL da Splash Screen</label>
                   <input
                     type="url"
-                    value={formData.splash_url}
-                    onChange={(e) => setFormData({...formData, splash_url: e.target.value})}
+                    value={formData.splash_screen_url}
+                    onChange={(e) => setFormData({...formData, splash_screen_url: e.target.value})}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"
                     placeholder="https://exemplo.com/splash.png"
                   />
+                  {formData.splash_screen_url && (
+                    <img src={formData.splash_screen_url} alt="Splash Preview" className="mt-2 h-32 object-contain bg-gray-900 p-2 rounded" />
+                  )}
                 </div>
-              </div>
 
-              {/* Tema */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Tema</label>
-                <select
-                  value={formData.tema}
-                  onChange={(e) => setFormData({...formData, tema: e.target.value})}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"
-                >
-                  <option value="dark">Escuro</option>
-                  <option value="light">Claro</option>
-                  <option value="auto">Automático</option>
-                </select>
+                <div>
+                  <label className="block text-sm font-medium mb-2">URL do Hero Banner</label>
+                  <input
+                    type="url"
+                    value={formData.hero_banner_url}
+                    onChange={(e) => setFormData({...formData, hero_banner_url: e.target.value})}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"
+                    placeholder="https://exemplo.com/hero.png"
+                  />
+                  {formData.hero_banner_url && (
+                    <img src={formData.hero_banner_url} alt="Hero Preview" className="mt-2 h-32 object-cover w-full rounded" />
+                  )}
+                </div>
               </div>
 
               {/* Preview */}
@@ -214,12 +291,24 @@ const Branding = () => {
                 <div 
                   className="p-6 rounded text-center"
                   style={{
-                    backgroundColor: formData.banner_cor_fundo,
-                    color: formData.banner_cor_texto
+                    backgroundColor: formData.background_color,
+                    color: formData.text_color
                   }}
                 >
-                  <h4 className="text-2xl font-bold mb-2">{formData.banner_titulo || 'Título'}</h4>
-                  <p className="text-sm">{formData.banner_subtitulo || 'Subtítulo'}</p>
+                  {formData.logo_url && (
+                    <img src={formData.logo_url} alt="Logo" className="h-12 mx-auto mb-4 object-contain" />
+                  )}
+                  <h4 className="text-2xl font-bold mb-2">{formData.app_name || 'Nome do App'}</h4>
+                  <button 
+                    type="button"
+                    className="px-6 py-2 rounded font-medium"
+                    style={{
+                      backgroundColor: formData.primary_color,
+                      color: formData.text_color
+                    }}
+                  >
+                    Botão Primário
+                  </button>
                 </div>
               </div>
 
@@ -247,8 +336,8 @@ const Branding = () => {
                     <div 
                       className="w-8 h-8 rounded"
                       style={{
-                        backgroundColor: template.banner_cor_fundo,
-                        border: `2px solid ${template.banner_cor_texto}`
+                        backgroundColor: template.background_color,
+                        border: `2px solid ${template.primary_color}`
                       }}
                     />
                     <div>
@@ -265,9 +354,10 @@ const Branding = () => {
           <div className="card mt-4">
             <h3 className="font-bold mb-3">Informações Atuais</h3>
             <div className="space-y-2 text-sm text-gray-400">
-              <p><strong>Tema:</strong> {formData.tema}</p>
-              <p><strong>Fundo:</strong> {formData.banner_cor_fundo}</p>
-              <p><strong>Texto:</strong> {formData.banner_cor_texto}</p>
+              <p><strong>App:</strong> {formData.app_name}</p>
+              <p><strong>Cor Primária:</strong> {formData.primary_color}</p>
+              <p><strong>Cor de Fundo:</strong> {formData.background_color}</p>
+              <p><strong>Cor do Texto:</strong> {formData.text_color}</p>
               {branding?.atualizado_em && (
                 <p><strong>Atualizado:</strong> {new Date(branding.atualizado_em).toLocaleString('pt-BR')}</p>
               )}

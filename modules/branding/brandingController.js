@@ -74,25 +74,31 @@ exports.listarTemplates = async (req, res) => {
         id: 1,
         nome: 'TV Maxx Padrão',
         descricao: 'Template padrão com cores da TV Maxx',
-        banner_cor_fundo: '#000000',
-        banner_cor_texto: '#F63012',
-        tema: 'dark'
+        primary_color: '#F63012',
+        secondary_color: '#FF0000',
+        background_color: '#000000',
+        text_color: '#FFFFFF',
+        accent_color: '#FFA500'
       },
       {
         id: 2,
         nome: 'Claro',
         descricao: 'Template com tema claro',
-        banner_cor_fundo: '#FFFFFF',
-        banner_cor_texto: '#000000',
-        tema: 'light'
+        primary_color: '#2196F3',
+        secondary_color: '#1976D2',
+        background_color: '#FFFFFF',
+        text_color: '#000000',
+        accent_color: '#FF9800'
       },
       {
         id: 3,
         nome: 'Azul Premium',
         descricao: 'Template premium com tons de azul',
-        banner_cor_fundo: '#001F3F',
-        banner_cor_texto: '#00D4FF',
-        tema: 'dark'
+        primary_color: '#00D4FF',
+        secondary_color: '#0099CC',
+        background_color: '#001F3F',
+        text_color: '#FFFFFF',
+        accent_color: '#00FFFF'
       }
     ];
 
