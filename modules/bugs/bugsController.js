@@ -24,7 +24,7 @@ exports.reportBug = async (req, res) => {
     }
     
     // Validate type
-    const validTypes = ['crash', 'navigation', 'player', 'api', 'ui', 'network'];
+    const validTypes = ['crash', 'navigation', 'player', 'api', 'ui', 'network', 'performance'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ 
         error: 'Invalid type', 
