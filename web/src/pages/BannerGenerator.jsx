@@ -658,15 +658,17 @@ const BannerGenerator = () => {
                   <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
                   <p className="text-gray-300 text-xs">{content.ano}</p>
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-yellow-500 text-xs">⭐ {content.nota?.toFixed(1)}</span>
+                    {content.nota && <span className="text-yellow-500 text-xs">⭐ {content.nota.toFixed(1)}</span>}
                     <span className="text-primary text-xs font-semibold">Clique para gerar</span>
                   </div>
                 </div>
 
                 {/* Badge de rating */}
-                <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
-                  ⭐ {content.nota?.toFixed(1)}
-                </div>
+                {content.nota && (
+                  <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
+                    ⭐ {content.nota.toFixed(1)}
+                  </div>
+                )}
               </button>
             ))}
           </div>
@@ -716,14 +718,16 @@ const BannerGenerator = () => {
                     <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
                     <p className="text-gray-300 text-xs">{content.ano}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-yellow-500 text-xs">⭐ {content.nota?.toFixed(1)}</span>
+                      {content.nota && <span className="text-yellow-500 text-xs">⭐ {content.nota.toFixed(1)}</span>}
                       <span className="text-primary text-xs font-semibold">Clique para gerar</span>
                     </div>
                   </div>
 
-                  <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
-                    ⭐ {content.nota?.toFixed(1)}
-                  </div>
+                  {content.nota && (
+                    <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
+                      ⭐ {content.nota.toFixed(1)}
+                    </div>
+                  )}
                 </button>
               ))}
           </div>
@@ -737,7 +741,7 @@ const BannerGenerator = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-white">{selectedContent.titulo}</h2>
-                <p className="text-gray-400">{selectedContent.ano} • ⭐ {selectedContent.nota?.toFixed(1)}</p>
+                <p className="text-gray-400">{selectedContent.ano}{selectedContent.nota && ` • ⭐ ${selectedContent.nota.toFixed(1)}`}</p>
               </div>
               <button 
                 onClick={() => {
@@ -945,7 +949,7 @@ const BannerGenerator = () => {
                             <p className="text-white text-xs font-semibold line-clamp-2">{content.titulo}</p>
                           </div>
                           <div className="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-yellow-500">
-                            ⭐ {content.nota?.toFixed(1)}
+                            ⭐ {content.nota ? content.nota.toFixed(1) : 'N/A'}
                           </div>
                         </button>
                       ))}
@@ -996,7 +1000,7 @@ const BannerGenerator = () => {
                                 {content.tipo === 'filme' ? '🎬 Filme' : '📺 Série'} • {content.ano}
                               </p>
                             </div>
-                            <span className="text-yellow-500">⭐ {content.nota?.toFixed(1)}</span>
+                            <span className="text-yellow-500">⭐ {content.nota ? content.nota.toFixed(1) : 'N/A'}</span>
                           </button>
                         ))}
                       </div>
