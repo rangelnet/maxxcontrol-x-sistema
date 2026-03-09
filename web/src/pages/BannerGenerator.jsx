@@ -13,6 +13,7 @@ const BannerGenerator = () => {
   const [selectedContent, setSelectedContent] = useState(null)
   const [bannerType, setBannerType] = useState('movie')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [preview, setPreview] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSize, setSelectedSize] = useState('banner')
@@ -68,18 +69,24 @@ const BannerGenerator = () => {
   const loadBanners = async () => {
     try {
       const response = await api.get('/api/banners/list')
-      setBanners(response.data.banners)
+      setBanners(response.data.banners || [])
     } catch (error) {
       console.error('Erro ao carregar banners:', error)
+      setError('Erro ao carregar banners: ' + (error.response?.data?.error || error.message))
     }
   }
 
   const loadContents = async () => {
     try {
+      setLoading(true)
       const response = await api.get('/api/content/list?limit=100')
       setContents(response.data.conteudos || [])
+      setError(null)
     } catch (error) {
       console.error('Erro ao carregar conteúdos:', error)
+      setError('Erro ao carregar conteúdos: ' + (error.response?.data?.error || error.message))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -89,6 +96,7 @@ const BannerGenerator = () => {
       setRecentContents(response.data.conteudos || [])
     } catch (error) {
       console.error('Erro ao carregar recentes:', error)
+      // Não mostra erro para recentes, apenas loga
     }
   }
 
@@ -626,6 +634,54 @@ const BannerGenerator = () => {
           Criar Personalizado
         </button>
       </div>
+
+      {/* Mensagem de Erro */}
+      {error && (
+        <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="text-red-500 text-xl">⚠️</div>
+            <div className="flex-1">
+              <h3 className="text-red-500 font-bold mb-1">Erro ao carregar dados</h3>
+              <p className="text-red-300 text-sm">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null)
+                  loadContents()
+                  loadBanners()
+                }}
+                className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
+              >
+                Tentar Novamente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Inicial */}
+      {loading && contents.length === 0 && !error && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mb-4"></div>
+          <p className="text-white text-lg">Carregando conteúdos...</p>
+        </div>
+      )}
+
+      {/* Mensagem quando não há conteúdos */}
+      {!loading && contents.length === 0 && recentContents.length === 0 && !error && (
+        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 text-center">
+          <div className="text-6xl mb-4">📦</div>
+          <h3 className="text-white font-bold text-xl mb-2">Nenhum conteúdo disponível</h3>
+          <p className="text-gray-400 mb-4">
+            Importe filmes e séries do TMDB para começar a gerar banners
+          </p>
+          <button
+            onClick={() => window.location.href = '/content'}
+            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
+          >
+            Ir para Conteúdos
+          </button>
+        </div>
+      )}
 
       {/* Galeria de Conteúdos - ÚLTIMAS SÉRIES ADICIONADAS */}
       {recentContents.length > 0 && (

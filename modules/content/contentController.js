@@ -14,7 +14,7 @@ exports.listarConteudos = async (req, res) => {
       query += ` AND tipo = $${params.length}`;
     }
 
-    query += ' ORDER BY criado_em DESC LIMIT $' + (params.length + 1);
+    query += ` ORDER BY criado_em DESC LIMIT $${params.length + 1}`;
     params.push(limit);
 
     const result = await pool.query(query, params);
@@ -173,3 +173,5 @@ exports.gerarBanners = async (req, res) => {
     res.status(500).json({ error: 'Erro ao gerar banners' });
   }
 };
+
+module.exports = exports;
