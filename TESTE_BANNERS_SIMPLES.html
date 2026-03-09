@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste API Banners</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .error {
+            color: #ff0000;
+        }
+        button {
+            background: #FF6A00;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #ff8533;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste de API - Gerador de Banners</h1>
+    
+    <div class="test-section">
+        <h2>1. Teste de Conexão com o Servidor</h2>
+        <button onclick="testHealth()">Testar /health</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Teste de Listagem de Conteúdos</h2>
+        <button onclick="testContentList()">Testar /api/content/list</button>
+        <div id="content-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Teste de Listagem de Banners</h2>
+        <button onclick="testBannerList()">Testar /api/banners/list</button>
+        <div id="banner-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Informações do Sistema</h2>
+        <div id="system-info">
+            <p><strong>URL Base:</strong> <span id="base-url"></span></p>
+            <p><strong>Navegador:</strong> <span id="browser"></span></p>
+            <p><strong>Token:</strong> <span id="token-status"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Configuração da URL base
+        const BASE_URL = 'http://localhost:3001';
+        
+        // Mostrar informações do sistema
+        document.getElementById('base-url').textContent = BASE_URL;
+        document.getElementById('browser').textContent = navigator.userAgent;
+        
+        const token = localStorage.getItem('token');
+        document.getElementById('token-status').textContent = token ? '✅ Token encontrado' : '❌ Sem token';
+
+        // Função auxiliar para fazer requisições
+        async function makeRequest(url, elementId) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.innerHTML = '<p>⏳ Carregando...</p>';
+            
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(url, { headers });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Sucesso! Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Erro! Status: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Erro de Conexão!</p>
+                    <p>${error.message}</p>
+                    <p><strong>Possíveis causas:</strong></p>
+                    <ul>
+                        <li>Servidor não está rodando</li>
+                        <li>Porta incorreta (esperado: 3001)</li>
+                        <li>CORS bloqueando requisição</li>
+                    </ul>
+                `;
+            }
+        }
+
+        // Testes
+        function testHealth() {
+            makeRequest(`${BASE_URL}/health`, 'health-result');
+        }
+
+        function testContentList() {
+            makeRequest(`${BASE_URL}/api/content/list?limit=10`, 'content-result');
+        }
+
+        function testBannerList() {
+            makeRequest(`${BASE_URL}/api/banners/list`, 'banner-result');
+        }
+
+        // Executar teste automático ao carregar
+        window.onload = () => {
+            console.log('🔍 Página de teste carregada');
+            console.log('Base URL:', BASE_URL);
+            console.log('Token:', token ? 'Presente' : 'Ausente');
+        };
+    </script>
+</body>
+</html>
