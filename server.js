@@ -45,6 +45,7 @@ app.use('/api/api-config', require('./modules/api-config/apiConfigRoutes'));
 app.use('/api/content', require('./modules/content/contentRoutes'));
 app.use('/api/branding', require('./modules/branding/brandingRoutes'));
 app.use('/api/iptv-server', require('./modules/iptv-server/iptvServerRoutes'));
+app.use('/api/iptv-tree', require('./modules/iptv-tree/iptvTreeRoutes'));
 app.use('/api/banners', require('./modules/banners/bannerRoutes'));
 
 // Servir arquivos estáticos (banners gerados)

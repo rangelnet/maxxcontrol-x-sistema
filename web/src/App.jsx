@@ -9,6 +9,7 @@ import Branding from './pages/Branding'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
 import IptvServer from './pages/IptvServer'
+import IptvTreeViewer from './pages/IptvTreeViewer'
 import BannerGenerator from './pages/BannerGenerator'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
@@ -33,6 +34,7 @@ function App() {
             <Route path="bugs" element={<Navigate to="/logs" replace />} />
             <Route path="versions" element={<Versions />} />
             <Route path="iptv-server" element={<IptvServer />} />
+            <Route path="iptv-tree" element={<IptvTreeViewer />} />
             <Route path="banners" element={<BannerGenerator />} />
           </Route>
         </Routes>
