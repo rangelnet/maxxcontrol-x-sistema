@@ -714,7 +714,7 @@ const BannerGenerator = () => {
                   <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
                   <p className="text-gray-300 text-xs">{content.ano}</p>
                   <div className="flex items-center gap-2 mt-2">
-                    {content.nota && <span className="text-yellow-500 text-xs">⭐ {(content.nota || 0).toFixed(1)}</span>}
+                    {content.nota && <span className="text-yellow-500 text-xs">⭐ {(parseFloat(content.nota) || 0).toFixed(1)}</span>}
                     <span className="text-primary text-xs font-semibold">Clique para gerar</span>
                   </div>
                 </div>
@@ -722,7 +722,7 @@ const BannerGenerator = () => {
                 {/* Badge de rating */}
                 {content.nota && (
                   <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
-                    ⭐ {(content.nota || 0).toFixed(1)}
+                    ⭐ {(parseFloat(content.nota) || 0).toFixed(1)}
                   </div>
                 )}
               </button>
@@ -774,14 +774,14 @@ const BannerGenerator = () => {
                     <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
                     <p className="text-gray-300 text-xs">{content.ano}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      {content.nota && <span className="text-yellow-500 text-xs">⭐ {(content.nota || 0).toFixed(1)}</span>}
+                      {content.nota && <span className="text-yellow-500 text-xs">⭐ {(parseFloat(content.nota) || 0).toFixed(1)}</span>}
                       <span className="text-primary text-xs font-semibold">Clique para gerar</span>
                     </div>
                   </div>
 
                   {content.nota && (
                     <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
-                      ⭐ {(content.nota || 0).toFixed(1)}
+                      ⭐ {(parseFloat(content.nota) || 0).toFixed(1)}
                     </div>
                   )}
                 </button>
