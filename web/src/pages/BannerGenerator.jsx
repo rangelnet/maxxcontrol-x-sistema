@@ -797,7 +797,7 @@ const BannerGenerator = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-white">{selectedContent.titulo}</h2>
-                <p className="text-gray-400">{selectedContent.ano}{selectedContent.nota && ` • ⭐ ${(selectedContent.nota || 0).toFixed(1)}`}</p>
+                <p className="text-gray-400">{selectedContent.ano}{selectedContent.nota && ` • ⭐ ${(parseFloat(selectedContent.nota) || 0).toFixed(1)}`}</p>
               </div>
               <button 
                 onClick={() => {
@@ -1005,7 +1005,7 @@ const BannerGenerator = () => {
                             <p className="text-white text-xs font-semibold line-clamp-2">{content.titulo}</p>
                           </div>
                           <div className="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-yellow-500">
-                            ⭐ {content.nota ? content.nota.toFixed(1) : 'N/A'}
+                            ⭐ {content.nota ? (parseFloat(content.nota) || 0).toFixed(1) : 'N/A'}
                           </div>
                         </button>
                       ))}
@@ -1056,7 +1056,7 @@ const BannerGenerator = () => {
                                 {content.tipo === 'filme' ? '🎬 Filme' : '📺 Série'} • {content.ano}
                               </p>
                             </div>
-                            <span className="text-yellow-500">⭐ {content.nota ? content.nota.toFixed(1) : 'N/A'}</span>
+                            <span className="text-yellow-500">⭐ {content.nota ? (parseFloat(content.nota) || 0).toFixed(1) : 'N/A'}</span>
                           </button>
                         ))}
                       </div>
