@@ -297,16 +297,18 @@ const IptvTreeViewer = () => {
 
   const handleTestList = async (testList) => {
     setTestingList(testList.id);
+    setShowTestLists(false);
     
     try {
-      const response = await api.post('/api/iptv-server/test', {
+      // Testar conexão primeiro
+      const testResponse = await api.post('/api/iptv-server/test', {
         xtream_url: testList.url,
         xtream_username: testList.username,
         xtream_password: testList.password
       });
       
-      if (response.data.success) {
-        // Salvar como configuração global temporária
+      if (testResponse.data.success) {
+        // Salvar como configuração global
         await api.post('/api/iptv-server/config', {
           xtream_url: testList.url,
           xtream_username: testList.username,
@@ -315,10 +317,13 @@ const IptvTreeViewer = () => {
         
         // Recarregar configuração
         await loadConfig();
-        setShowTestLists(false);
-        alert(`✅ Lista "${testList.name}" configurada com sucesso!`);
+        
+        // Carregar categorias automaticamente
+        await loadCategories(activeTab);
+        
+        alert(`✅ Lista "${testList.name}" configurada! Árvore carregada.`);
       } else {
-        alert(`❌ Falha ao conectar: ${response.data.message}`);
+        alert(`❌ Falha ao conectar: ${testResponse.data.message}`);
       }
     } catch (err) {
       console.error('Erro ao testar lista:', err);
