@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight, ChevronDown, X, Loader, List, CheckCircle } from 'lucide-react';
 
@@ -15,6 +15,12 @@ const IptvTreeViewer = () => {
   const [activeTab, setActiveTab] = useState('live');
   const [showTestLists, setShowTestLists] = useState(false);
   const [testingList, setTestingList] = useState(null);
+  const [manualConfig, setManualConfig] = useState({
+    url: '',
+    username: '',
+    password: ''
+  });
+  const [loadingManual, setLoadingManual] = useState(false);
 
   // Listas IPTV públicas de teste (Xtream Codes)
   const testLists = [
@@ -295,6 +301,47 @@ const IptvTreeViewer = () => {
     alert('URL copiado para área de transferência!');
   };
 
+  const handleLoadManualList = async () => {
+    setLoadingManual(true);
+    
+    try {
+      // Testar conexão primeiro
+      const testResponse = await api.post('/api/iptv-server/test', {
+        xtream_url: manualConfig.url,
+        xtream_username: manualConfig.username,
+        xtream_password: manualConfig.password
+      });
+      
+      if (testResponse.data.success) {
+        // Salvar como configuração global
+        await api.post('/api/iptv-server/config', {
+          xtream_url: manualConfig.url,
+          xtream_username: manualConfig.username,
+          xtream_password: manualConfig.password
+        });
+        
+        // Recarregar configuração
+        await loadConfig();
+        
+        // Carregar categorias automaticamente
+        await loadCategories(activeTab);
+        
+        alert('✅ Lista IPTV configurada! Árvore carregada com sucesso.');
+        
+        // Limpar campos
+        setManualConfig({ url: '', username: '', password: '' });
+      } else {
+        alert(`❌ Falha ao conectar: ${testResponse.data.message}`);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar lista:', err);
+      const errorMsg = err.response?.data?.message || 'Erro ao testar conexão com a lista';
+      alert(`❌ ${errorMsg}`);
+    } finally {
+      setLoadingManual(false);
+    }
+  };
+
   const handleTestList = async (testList) => {
     setTestingList(testList.id);
     setShowTestLists(false);
@@ -387,8 +434,6 @@ const IptvTreeViewer = () => {
     const hasChildren = node.children && node.children.length > 0;
     const canExpand = node.type === 'category' || (node.type === 'stream' && node.contentType === 'series') || node.type === 'season';
     
-    const filteredTree = filterTree(treeData, searchQuery);
-    
     return (
       <div>
         <div
@@ -464,6 +509,54 @@ const IptvTreeViewer = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Visualizar Árvore IPTV</h1>
         <p className="text-gray-600">Explore a estrutura de categorias e conteúdo do servidor Xtream Codes</p>
+      </div>
+
+      {/* Adicionar Lista Manualmente */}
+      <div className="mb-4 bg-white rounded-lg shadow p-4 border-2 border-blue-500">
+        <h3 className="text-lg font-bold text-gray-800 mb-3">Adicionar Lista IPTV</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input
+            type="text"
+            placeholder="URL do servidor (ex: http://exemplo.com:8080)"
+            value={manualConfig.url}
+            onChange={(e) => setManualConfig({ ...manualConfig, url: e.target.value })}
+            className="px-3 py-2 border rounded"
+          />
+          <input
+            type="text"
+            placeholder="Usuário"
+            value={manualConfig.username}
+            onChange={(e) => setManualConfig({ ...manualConfig, username: e.target.value })}
+            className="px-3 py-2 border rounded"
+          />
+          <input
+            type="text"
+            placeholder="Senha"
+            value={manualConfig.password}
+            onChange={(e) => setManualConfig({ ...manualConfig, password: e.target.value })}
+            className="px-3 py-2 border rounded"
+          />
+          <button
+            onClick={handleLoadManualList}
+            disabled={loadingManual || !manualConfig.url || !manualConfig.username || !manualConfig.password}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loadingManual ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Carregando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                Carregar
+              </>
+            )}
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          💡 Digite as credenciais da sua lista IPTV e clique em "Carregar" para visualizar a árvore automaticamente
+        </p>
       </div>
 
       {/* Controles */}
