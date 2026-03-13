@@ -36,12 +36,15 @@ const IptvTreeViewer = () => {
       
       // Buscar dispositivos
       const devicesRes = await api.get('/api/device/list-all');
-      setDevices(devicesRes.data || []);
+      const devicesList = Array.isArray(devicesRes.data) ? devicesRes.data : [];
+      setDevices(devicesList);
       
       setError(null);
     } catch (err) {
       console.error('Erro ao carregar configuração:', err);
       setError('Erro ao carregar configuração. Configure o servidor IPTV primeiro.');
+      setDevices([]);
+      setCredentials(null);
     } finally {
       setLoading(false);
     }
@@ -404,7 +407,7 @@ const IptvTreeViewer = () => {
           className="px-3 py-2 border rounded"
         >
           <option value="global">Configuração Global</option>
-          {devices.map(device => (
+          {Array.isArray(devices) && devices.map(device => (
             <option key={device.id} value={device.id}>
               {device.modelo || device.mac_address}
             </option>
