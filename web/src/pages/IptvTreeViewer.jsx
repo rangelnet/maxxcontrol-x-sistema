@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-import { Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight, ChevronDown, X, Loader } from 'lucide-react';
+import { Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight, ChevronDown, X, Loader, List, CheckCircle } from 'lucide-react';
 
 const IptvTreeViewer = () => {
   const [configSource, setConfigSource] = useState('global');
@@ -13,6 +13,36 @@ const IptvTreeViewer = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('live');
+  const [showTestLists, setShowTestLists] = useState(false);
+  const [testingList, setTestingList] = useState(null);
+
+  // Listas IPTV públicas de teste (Xtream Codes)
+  const testLists = [
+    {
+      id: 1,
+      name: 'Servidor Teste 1',
+      url: 'http://xtream.swiftiptv.com:8080',
+      username: 'test',
+      password: 'test',
+      description: 'Servidor público de teste com canais internacionais'
+    },
+    {
+      id: 2,
+      name: 'Servidor Teste 2',
+      url: 'http://pro.xviptv.com:25443',
+      username: 'test',
+      password: 'test',
+      description: 'Servidor de demonstração com múltiplas categorias'
+    },
+    {
+      id: 3,
+      name: 'Servidor Teste 3',
+      url: 'http://iptv.allkaicerteam.com:8080',
+      username: 'test',
+      password: 'test',
+      description: 'Servidor teste com VOD e séries'
+    }
+  ];
 
   // Carregar configuração e dispositivos
   useEffect(() => {
@@ -265,6 +295,39 @@ const IptvTreeViewer = () => {
     alert('URL copiado para área de transferência!');
   };
 
+  const handleTestList = async (testList) => {
+    setTestingList(testList.id);
+    
+    try {
+      const response = await api.post('/api/iptv-server/test', {
+        xtream_url: testList.url,
+        xtream_username: testList.username,
+        xtream_password: testList.password
+      });
+      
+      if (response.data.success) {
+        // Salvar como configuração global temporária
+        await api.post('/api/iptv-server/config', {
+          xtream_url: testList.url,
+          xtream_username: testList.username,
+          xtream_password: testList.password
+        });
+        
+        // Recarregar configuração
+        await loadConfig();
+        setShowTestLists(false);
+        alert(`✅ Lista "${testList.name}" configurada com sucesso!`);
+      } else {
+        alert(`❌ Falha ao conectar: ${response.data.message}`);
+      }
+    } catch (err) {
+      console.error('Erro ao testar lista:', err);
+      alert('❌ Erro ao testar conexão com a lista');
+    } finally {
+      setTestingList(null);
+    }
+  };
+
   const formatStreamUrl = (stream, credentials) => {
     if (!credentials) return '';
     
@@ -414,6 +477,15 @@ const IptvTreeViewer = () => {
           ))}
         </select>
 
+        {/* Botão Listas de Teste */}
+        <button
+          onClick={() => setShowTestLists(!showTestLists)}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
+        >
+          <List className="w-4 h-4" />
+          Listas de Teste
+        </button>
+
         {/* Search */}
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
@@ -443,6 +515,64 @@ const IptvTreeViewer = () => {
           Atualizar
         </button>
       </div>
+
+      {/* Modal Listas de Teste */}
+      {showTestLists && (
+        <div className="mb-4 bg-white rounded-lg shadow-lg p-4 border-2 border-green-500">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-800">Listas IPTV de Teste Públicas</h3>
+            <button onClick={() => setShowTestLists(false)}>
+              <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+            </button>
+          </div>
+          
+          <p className="text-sm text-gray-600 mb-4">
+            ⚠️ Estas são listas públicas de teste. Podem estar offline ou lentas.
+          </p>
+          
+          <div className="space-y-3">
+            {testLists.map(list => (
+              <div key={list.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-800">{list.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{list.description}</p>
+                    <div className="mt-2 text-xs text-gray-500 space-y-1">
+                      <div><span className="font-semibold">URL:</span> {list.url}</div>
+                      <div><span className="font-semibold">Usuário:</span> {list.username}</div>
+                      <div><span className="font-semibold">Senha:</span> {list.password}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleTestList(list)}
+                    disabled={testingList === list.id}
+                    className="ml-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {testingList === list.id ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Testando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Usar Esta Lista
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+            <p className="text-sm text-blue-800">
+              💡 <strong>Dica:</strong> Clique em "Usar Esta Lista" para testar e configurar automaticamente. 
+              A lista será salva como configuração global.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="mb-4 flex gap-2 border-b">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Server, Save, TestTube, AlertCircle, CheckCircle } from 'lucide-react'
+import { Server, Save, TestTube, AlertCircle, CheckCircle, List } from 'lucide-react'
 
 const IptvServer = () => {
   const [config, setConfig] = useState({
@@ -10,6 +10,32 @@ const IptvServer = () => {
   const [loading, setLoading] = useState(false)
   const [testing, setTesting] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const [showTestLists, setShowTestLists] = useState(false)
+
+  // Listas IPTV públicas de teste (Xtream Codes)
+  const testLists = [
+    {
+      name: 'Servidor Teste 1',
+      url: 'http://xtream.swiftiptv.com:8080',
+      username: 'test',
+      password: 'test',
+      description: 'Servidor público de teste com canais internacionais'
+    },
+    {
+      name: 'Servidor Teste 2',
+      url: 'http://pro.xviptv.com:25443',
+      username: 'test',
+      password: 'test',
+      description: 'Servidor de demonstração com múltiplas categorias'
+    },
+    {
+      name: 'Servidor Teste 3',
+      url: 'http://iptv.allkaicerteam.com:8080',
+      username: 'test',
+      password: 'test',
+      description: 'Servidor teste com VOD e séries'
+    }
+  ]
 
   useEffect(() => {
     fetchConfig()
@@ -76,6 +102,16 @@ const IptvServer = () => {
     } finally {
       setTesting(false)
     }
+  }
+
+  const loadTestList = (testList) => {
+    setConfig({
+      xtream_url: testList.url,
+      xtream_username: testList.username,
+      xtream_password: testList.password
+    })
+    setShowTestLists(false)
+    setMessage({ type: 'success', text: `Lista "${testList.name}" carregada. Clique em "Testar Conexão" para verificar.` })
   }
 
   return (
