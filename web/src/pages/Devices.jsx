@@ -331,6 +331,32 @@ const Devices = () => {
     }
   }
 
+  const formatPing = (ping) => {
+    if (!ping) return { text: 'N/A', color: 'text-gray-500' }
+    
+    const pingValue = parseInt(ping)
+    if (pingValue < 100) {
+      return { text: `${pingValue}ms`, color: 'text-green-500' }
+    } else if (pingValue < 300) {
+      return { text: `${pingValue}ms`, color: 'text-yellow-500' }
+    } else {
+      return { text: `${pingValue}ms`, color: 'text-red-500' }
+    }
+  }
+
+  const formatQuality = (quality) => {
+    if (!quality) return { stars: 0, text: 'N/A', color: 'text-gray-500' }
+    
+    const qualityMap = {
+      'excelente': { stars: 4, text: 'Excelente', color: 'text-green-500' },
+      'boa': { stars: 3, text: 'Boa', color: 'text-blue-500' },
+      'regular': { stars: 2, text: 'Regular', color: 'text-yellow-500' },
+      'ruim': { stars: 1, text: 'Ruim', color: 'text-red-500' }
+    }
+    
+    return qualityMap[quality] || { stars: 0, text: 'N/A', color: 'text-gray-500' }
+  }
+
   const systemApps = apps.filter(app => app.is_system)
   const userApps = apps.filter(app => !app.is_system)
 
@@ -411,7 +437,10 @@ const Devices = () => {
                 <th className="text-left py-3 px-4">Android</th>
                 <th className="text-left py-3 px-4">App</th>
                 <th className="text-left py-3 px-4">IP</th>
-                <th className="text-left py-3 px-4">IPTV Server</th>
+                <th className="text-left py-3 px-4">Servidor</th>
+                <th className="text-left py-3 px-4">Usuário</th>
+                <th className="text-left py-3 px-4">Ping</th>
+                <th className="text-left py-3 px-4">Qualidade</th>
                 <th className="text-left py-3 px-4">Último Acesso</th>
                 <th className="text-left py-3 px-4">Conexão</th>
                 <th className="text-left py-3 px-4">Status</th>
@@ -419,30 +448,46 @@ const Devices = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredDevices.map((device) => (
+              {filteredDevices.map((device) => {
+                const pingInfo = formatPing(device.ping)
+                const qualityInfo = formatQuality(device.quality)
+                
+                return (
                 <tr key={device.id} className="border-b border-gray-800 hover:bg-gray-900">
                   <td className="py-3 px-4 font-mono text-sm">{device.mac_address}</td>
                   <td className="py-3 px-4">{device.modelo}</td>
                   <td className="py-3 px-4">{device.android_version}</td>
                   <td className="py-3 px-4">{device.app_version}</td>
                   <td className="py-3 px-4">{device.ip}</td>
-                  <td 
-                    className="py-3 px-4 cursor-pointer hover:text-primary transition-colors"
-                    onClick={() => openIptvModal(device)}
-                    title={device.current_iptv_server_url || 'Clique para configurar'}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Server size={14} className="text-gray-400" />
-                      <div>
-                        <span className={device.current_iptv_server_url ? 'text-white font-medium' : 'text-gray-500'}>
-                          {getServerName(device.current_iptv_server_url)}
-                        </span>
-                        {device.current_iptv_username && (
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            {device.current_iptv_username}
-                          </div>
-                        )}
-                      </div>
+                  <td className="py-3 px-4">
+                    <span className={device.server ? 'text-white font-medium' : 'text-gray-500'}>
+                      {device.server || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={device.username ? 'text-white font-mono text-sm' : 'text-gray-500'}>
+                      {device.username || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={`font-semibold ${pingInfo.color}`}>
+                      {pingInfo.text}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-1">
+                      {qualityInfo.stars > 0 ? (
+                        <>
+                          {[...Array(qualityInfo.stars)].map((_, i) => (
+                            <span key={i} className={qualityInfo.color}>⭐</span>
+                          ))}
+                          <span className={`ml-1 text-xs ${qualityInfo.color}`}>
+                            {qualityInfo.text}
+                          </span>
+                        </>
+                      ) : (
+                        <span className={qualityInfo.color}>{qualityInfo.text}</span>
+                      )}
                     </div>
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-400">{formatDate(device.ultimo_acesso)}</td>
@@ -518,7 +563,8 @@ const Devices = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
+
             </tbody>
           </table>
 
