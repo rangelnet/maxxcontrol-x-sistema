@@ -48,6 +48,11 @@ app.use('/api/iptv-server', require('./modules/iptv-server/iptvServerRoutes'));
 app.use('/api/iptv-tree', require('./modules/iptv-tree/iptvTreeRoutes'));
 app.use('/api/banners', require('./modules/banners/bannerRoutes'));
 
+// Rotas do sistema multi-servidor IPTV
+app.use('/api/iptv', require('./modules/iptv-credentials/iptvCredentialsRoutes'));
+app.use('/api/iptv', require('./modules/iptv-servers/iptvServersRoutes'));
+app.use('/api/iptv', require('./modules/iptv-monitoring/iptvMonitoringRoutes'));
+
 // Servir arquivos estáticos (banners gerados)
 app.use('/banners', express.static('public/banners'));
 
