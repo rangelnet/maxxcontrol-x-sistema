@@ -26,6 +26,8 @@ const Devices = () => {
   const [newAppUrl, setNewAppUrl] = useState('')
   const [newAppName, setNewAppName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [itemsPerPage, setItemsPerPage] = useState(50)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     loadDevices()
@@ -357,6 +359,17 @@ const Devices = () => {
     return qualityMap[quality] || { stars: 0, text: 'N/A', color: 'text-gray-500' }
   }
 
+  // Paginação
+  const totalPages = Math.ceil(filteredDevices.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedDevices = filteredDevices.slice(startIndex, endIndex)
+
+  // Reset para página 1 quando filtro mudar
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
+
   const systemApps = apps.filter(app => app.is_system)
   const userApps = apps.filter(app => !app.is_system)
 
@@ -428,6 +441,29 @@ const Devices = () => {
             </p>
           </div>
         )}
+        <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Mostrar:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              className="px-3 py-1 bg-dark border border-gray-700 rounded text-white text-sm focus:outline-none focus:border-primary"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+            </select>
+            <span className="text-sm text-gray-400">dispositivos por página</span>
+          </div>
+          <div className="text-sm text-gray-400">
+            Página {currentPage} de {totalPages} ({filteredDevices.length} total)
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -448,7 +484,7 @@ const Devices = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredDevices.map((device) => {
+              {paginatedDevices.map((device) => {
                 const pingInfo = formatPing(device.ping)
                 const qualityInfo = formatQuality(device.quality)
                 
@@ -577,6 +613,57 @@ const Devices = () => {
             </div>
           )}
         </div>
+
+        {/* Controles de Paginação */}
+        {totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-gray-800 flex items-center justify-between">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-dark border border-gray-700 rounded text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+            >
+              Anterior
+            </button>
+            <div className="flex items-center gap-2">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1
+                // Mostrar apenas páginas próximas à atual
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 rounded ${
+                        currentPage === page
+                          ? 'bg-primary text-white'
+                          : 'bg-dark border border-gray-700 text-gray-400 hover:bg-gray-800'
+                      } transition-colors`}
+                    >
+                      {page}
+                    </button>
+                  )
+                } else if (
+                  page === currentPage - 3 ||
+                  page === currentPage + 3
+                ) {
+                  return <span key={page} className="text-gray-500">...</span>
+                }
+                return null
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-dark border border-gray-700 rounded text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+            >
+              Próxima
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modal de Configuração IPTV */}
