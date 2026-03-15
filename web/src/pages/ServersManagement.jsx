@@ -22,11 +22,25 @@ const ServersManagement = () => {
 
   const loadServers = async () => {
     try {
+      console.log('🔄 Carregando servidores...')
+      const token = localStorage.getItem('token')
+      console.log('🔑 Token presente:', !!token)
+      
       const response = await api.get('/api/iptv/servers/all')
+      console.log('✅ Servidores carregados:', response.data.length)
       setServers(response.data)
     } catch (error) {
-      console.error('Erro ao carregar servidores:', error)
-      alert('Erro ao carregar servidores')
+      console.error('❌ Erro ao carregar servidores:', error)
+      console.error('Detalhes:', error.response?.data)
+      console.error('Status:', error.response?.status)
+      
+      if (error.response?.status === 401) {
+        alert('Sessão expirada. Por favor, faça login novamente.')
+        window.location.href = '/login'
+      } else {
+        const errorMessage = error.response?.data?.error || 'Erro ao carregar servidores'
+        alert(errorMessage)
+      }
     } finally {
       setLoading(false)
     }
@@ -179,7 +193,13 @@ const ServersManagement = () => {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Carregando...</div>
+    return (
+      <div className="text-center py-8">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p className="text-gray-400">Carregando servidores...</p>
+        <p className="text-xs text-gray-500 mt-2">Verifique o console (F12) para mais detalhes</p>
+      </div>
+    )
   }
 
   return (
