@@ -16,6 +16,7 @@ const Layout = () => {
     { path: '/api-config', icon: Settings, label: 'Configurar APIs' },
     { path: '/branding', icon: Palette, label: 'Branding' },
     { path: '/iptv-server', icon: Server, label: 'Servidor IPTV' },
+    { path: '/iptv-servers', icon: Server, label: 'Servidores IPTV' },
     { path: '/iptv-tree', icon: Tv, label: 'Árvore IPTV' },
     { path: '/banners', icon: Image, label: 'Banners' },
     { path: '/logs', icon: FileText, label: 'Logs' },
