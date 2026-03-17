@@ -88,8 +88,9 @@ router.get('/servers', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao listar servidores:', error);
-    res.status(500).json({ error: 'Erro ao listar servidores' });
+    // Tabela pode não existir ainda - retornar lista vazia
+    console.error('⚠️ Tabela iptv_servers não encontrada ou erro:', error.message);
+    res.json({ success: true, servers: [] });
   }
 });
 
@@ -491,8 +492,9 @@ router.get('/qpanels', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao listar painéis qPanel:', error);
-    res.status(500).json({ error: 'Erro ao listar painéis qPanel' });
+    // Tabela pode não existir ainda - retornar lista vazia
+    console.error('⚠️ Tabela qpanel_panels não encontrada ou erro:', error.message);
+    res.json({ success: true, panels: [] });
   }
 });
 

@@ -59,17 +59,21 @@ const IptvServersManager = () => {
       setError(null);
     } catch (err) {
       console.error('Erro ao carregar servidores:', err);
-      setError('Erro ao carregar servidores');
+      // Não bloquear a tela - apenas mostrar lista vazia
+      setServers([]);
+      setError(null);
     } finally {
       setLoading(false);
     }
   };
+
   const loadQpanels = async () => {
     try {
       const response = await api.get('/api/iptv-plugin/qpanels');
       setQpanels(response.data.panels || []);
     } catch (err) {
       console.error('Erro ao carregar painéis qPanel:', err);
+      setQpanels([]);
     }
   };
 
