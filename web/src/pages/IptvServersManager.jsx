@@ -139,7 +139,7 @@ const IptvServersManager = () => {
       setShowAddQpanel(false);
       loadQpanels();
     } catch (err) {
-      alert('Erro ao adicionar painel qPanel: ' + err.response?.data?.error);
+      alert('Erro ao adicionar painel qPanel: ' + (err.response?.data?.error || err.response?.data?.detail || err.message));
     }
   };
 
