@@ -5,8 +5,11 @@ class WebSocketService {
   }
 
   connect(token) {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001'
-    this.ws = new WebSocket(wsUrl)
+    const backendUrl = import.meta.env.VITE_WS_URL || 
+      (import.meta.env.MODE === 'production'
+        ? 'wss://maxxcontrol-x-sistema.onrender.com'
+        : 'ws://localhost:3001')
+    this.ws = new WebSocket(backendUrl)
 
     this.ws.onopen = () => {
       console.log('🔌 WebSocket conectado')

@@ -1,12 +1,17 @@
 import axios from 'axios'
 
 // Configuração da API - usa URL relativa em produção
+const BACKEND_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' 
+    ? 'https://maxxcontrol-x-sistema.onrender.com' 
+    : 'http://localhost:3001')
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? '' : 'http://localhost:3001'),
+  baseURL: BACKEND_URL,
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 8000 // 8 segundos - evita travar infinitamente
+  timeout: 30000 // 30 segundos - tolerante ao cold start do Render
 })
 
 // Interceptor para adicionar token em cada requisição

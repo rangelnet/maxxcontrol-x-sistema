@@ -38,9 +38,10 @@ const Devices = () => {
     }, 2000)
 
     // WebSocket para atualizações em tempo real
-    const ws = new WebSocket(
-      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
-    )
+    const wsHost = import.meta.env.MODE === 'production'
+      ? 'wss://maxxcontrol-x-sistema.onrender.com'
+      : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+    const ws = new WebSocket(wsHost)
 
     ws.onopen = () => {
       console.log('🔌 WebSocket conectado')
