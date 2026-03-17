@@ -47,23 +47,16 @@ const IptvServersManager = () => {
 
   // Carregar dados iniciais
   useEffect(() => {
-    loadServers();
-    loadQpanels();
+    Promise.all([loadServers(), loadQpanels()]).finally(() => setLoading(false));
   }, []);
 
   const loadServers = async () => {
     try {
-      setLoading(true);
       const response = await api.get('/api/iptv-plugin/servers');
       setServers(response.data.servers || []);
-      setError(null);
     } catch (err) {
       console.error('Erro ao carregar servidores:', err);
-      // Não bloquear a tela - apenas mostrar lista vazia
       setServers([]);
-      setError(null);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -253,6 +246,131 @@ const IptvServersManager = () => {
             Painéis qPanel
           </button>
         </div>
+        {/* Tab Servidores IPTV */}
+        {activeTab === 'servers' && (
+          <div className="space-y-8">
+            <div className="bg-gray-800 rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold">Servidores IPTV</h2>
+                  <p className="text-gray-400 text-sm">Gerencie seus servidores Xtream Codes</p>
+                </div>
+                <button
+                  onClick={() => setShowAddServer(!showAddServer)}
+                  className="bg-blue-600 hover:bg-blue-700 p-2 rounded-lg transition flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Adicionar Servidor
+                </button>
+              </div>
+
+              {showAddServer && (
+                <form onSubmit={handleAddServer} className="mb-6 p-4 bg-gray-700 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      placeholder="Nome do servidor"
+                      value={serverForm.server_name}
+                      onChange={(e) => setServerForm({ ...serverForm, server_name: e.target.value })}
+                      className="bg-gray-600 text-white p-2 rounded placeholder-gray-400"
+                      required
+                    />
+                    <input
+                      type="url"
+                      placeholder="URL Xtream (ex: http://servidor.com)"
+                      value={serverForm.xtream_url}
+                      onChange={(e) => setServerForm({ ...serverForm, xtream_url: e.target.value })}
+                      className="bg-gray-600 text-white p-2 rounded placeholder-gray-400"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Usuário Xtream"
+                      value={serverForm.xtream_username}
+                      onChange={(e) => setServerForm({ ...serverForm, xtream_username: e.target.value })}
+                      className="bg-gray-600 text-white p-2 rounded placeholder-gray-400"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Senha Xtream"
+                      value={serverForm.xtream_password}
+                      onChange={(e) => setServerForm({ ...serverForm, xtream_password: e.target.value })}
+                      className="bg-gray-600 text-white p-2 rounded placeholder-gray-400"
+                    />
+                    <select
+                      value={serverForm.server_type}
+                      onChange={(e) => setServerForm({ ...serverForm, server_type: e.target.value })}
+                      className="bg-gray-600 text-white p-2 rounded col-span-2"
+                    >
+                      <option value="custom">Custom</option>
+                      <option value="ibopro">IboPro</option>
+                      <option value="ibocast">IboCast</option>
+                      <option value="vuplayer">VuPlayer</option>
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-green-600 hover:bg-green-700 p-2 rounded transition mt-4"
+                  >
+                    Adicionar Servidor
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {servers.length === 0 ? (
+                <div className="col-span-full bg-gray-800 rounded-lg p-12 text-center">
+                  <Settings size={48} className="mx-auto text-gray-500 mb-4" />
+                  <p className="text-gray-400">Nenhum servidor IPTV configurado</p>
+                  <p className="text-gray-500 text-sm mt-2">Adicione um servidor para começar</p>
+                </div>
+              ) : (
+                servers.map((server) => (
+                  <div
+                    key={server.id}
+                    className={`bg-gray-800 rounded-lg p-6 cursor-pointer border-2 transition ${
+                      selectedServer?.id === server.id ? 'border-blue-500' : 'border-transparent hover:border-gray-600'
+                    }`}
+                    onClick={() => { setSelectedServer(server); loadPlaylists(server.id); }}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold">{server.server_name}</h3>
+                        <p className="text-gray-400 text-sm truncate">{server.xtream_url}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleTestServer(server.id); }}
+                          className="bg-green-600 hover:bg-green-700 p-2 rounded-lg transition"
+                          title="Testar servidor"
+                        >
+                          <Play size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteServer(server.id); }}
+                          className="bg-red-600 hover:bg-red-700 p-2 rounded-lg transition"
+                          title="Deletar servidor"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      <span className="capitalize">{server.server_type}</span>
+                      {server.test_status && (
+                        <span className={`ml-2 font-semibold ${server.test_status === 'online' ? 'text-green-400' : 'text-red-400'}`}>
+                          • {server.test_status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tab qPanel - NOVA FUNCIONALIDADE */}
         {activeTab === 'qpanel' && (
           <div className="space-y-8">

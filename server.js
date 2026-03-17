@@ -3,10 +3,26 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const { initWebSocket } = require('./websocket/wsServer');
 const pool = require('./config/database');
+
+// Executar migrações pendentes automaticamente
+async function runPendingMigrations() {
+  try {
+    const sqlPath = path.join(__dirname, 'database/migrations/create-iptv-plugin-tables.sql');
+    if (fs.existsSync(sqlPath)) {
+      const sql = fs.readFileSync(sqlPath, 'utf8');
+      await pool.query(sql);
+      console.log('✅ Migração IPTV Plugin executada com sucesso');
+    }
+  } catch (err) {
+    // Ignorar erros de migração para não bloquear o startup
+    console.warn('⚠️ Aviso na migração IPTV Plugin:', err.message);
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -102,10 +118,11 @@ const server = app.listen(PORT, () => {
 // Iniciar WebSocket
 initWebSocket(server);
 
-// Testar conexão com banco
+// Testar conexão com banco e executar migrações
 if (process.env.USE_SQLITE === 'true') {
   pool.query('SELECT datetime("now") as now').then(res => {
     console.log('✅ Banco de dados SQLite conectado:', res.rows[0].now);
+    runPendingMigrations();
   }).catch(err => {
     console.error('❌ Erro ao conectar no banco de dados:', err.message);
   });
@@ -115,6 +132,7 @@ if (process.env.USE_SQLITE === 'true') {
       console.error('❌ Erro ao conectar no banco de dados:', err);
     } else {
       console.log('✅ Banco de dados PostgreSQL conectado:', res.rows[0].now);
+      runPendingMigrations();
     }
   });
 }
