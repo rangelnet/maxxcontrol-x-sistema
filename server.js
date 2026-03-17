@@ -11,6 +11,7 @@ const pool = require('./config/database');
 
 // Executar migrações pendentes automaticamente
 async function runPendingMigrations() {
+  // Migração: tabelas IPTV Plugin
   try {
     const sqlPath = path.join(__dirname, 'database/migrations/create-iptv-plugin-tables.sql');
     if (fs.existsSync(sqlPath)) {
@@ -19,8 +20,15 @@ async function runPendingMigrations() {
       console.log('✅ Migração IPTV Plugin executada com sucesso');
     }
   } catch (err) {
-    // Ignorar erros de migração para não bloquear o startup
     console.warn('⚠️ Aviso na migração IPTV Plugin:', err.message);
+  }
+
+  // Migração: coluna test_api_urls (múltiplas URLs de API de teste)
+  try {
+    await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_api_urls TEXT`);
+    console.log('✅ Coluna test_api_urls verificada/criada');
+  } catch (err) {
+    console.warn('⚠️ Aviso na migração test_api_urls:', err.message);
   }
 }
 

@@ -211,28 +211,37 @@ exports.listAllDevices = async (req, res) => {
         d.*,
         u.email,
         d.current_iptv_server_url,
-        d.current_iptv_username
+        d.current_iptv_username,
+        d.test_api_urls
       FROM devices d
       LEFT JOIN users u ON d.user_id = u.id
       ORDER BY d.ultimo_acesso DESC
     `);
     console.log(`✅ Encontrados ${result.rows.length} dispositivos`);
-    console.log('Dispositivos:', result.rows.map(d => ({ 
-      mac: d.mac_address, 
-      modelo: d.modelo, 
-      user_id: d.user_id,
-      iptv_server: d.current_iptv_server_url || 'não configurado'
-    })));
-    res.json({ devices: result.rows });
+    
+    // Parsear test_api_urls de JSON string para array
+    const devices = result.rows.map(d => {
+      let test_api_urls = null;
+      try {
+        if (d.test_api_urls) {
+          test_api_urls = typeof d.test_api_urls === 'string'
+            ? JSON.parse(d.test_api_urls)
+            : d.test_api_urls;
+        }
+      } catch { test_api_urls = null; }
+      return { ...d, test_api_urls };
+    });
+
+    res.json({ devices });
   } catch (error) {
     console.error('❌ Erro ao listar todos os dispositivos:', error);
     res.status(500).json({ error: 'Erro ao listar dispositivos' });
   }
 };
 
-// Configurar URL da API de teste grátis para um dispositivo
+// Configurar URL(s) da API de teste grátis para um dispositivo
 exports.setTestApiUrl = async (req, res) => {
-  const { mac_address, test_api_url } = req.body;
+  const { mac_address, test_api_url, test_api_urls } = req.body;
 
   // Validar formato do MAC address
   const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
@@ -240,78 +249,78 @@ exports.setTestApiUrl = async (req, res) => {
     return res.status(400).json({ error: 'Formato de MAC address inválido' });
   }
 
-  // Se test_api_url não for null/vazio, validar formato
-  if (test_api_url !== null && test_api_url !== '') {
-    // Validar formato de URL (HTTP/HTTPS apenas)
+  // Montar lista final de URLs (prioriza test_api_urls, fallback para test_api_url)
+  let urlList = [];
+  if (Array.isArray(test_api_urls) && test_api_urls.length > 0) {
+    urlList = test_api_urls.filter(u => u && u.trim() !== '');
+  } else if (test_api_url) {
+    urlList = [test_api_url];
+  }
+
+  // Validar cada URL
+  const validateUrl = (url) => {
     try {
-      const url = new URL(test_api_url);
-      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-        return res.status(400).json({ error: 'URL deve usar protocolo HTTP ou HTTPS' });
-      }
-    } catch (error) {
-      return res.status(400).json({ error: 'Formato de URL inválido' });
+      const u = new URL(url);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    } catch { return false; }
+    const sqlPatterns = [/(\bUNION\b|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b)/i, /(--|;|\/\*|\*\/)/i];
+    const xssPatterns = [/<script/gi, /javascript:/gi, /on\w+\s*=/gi];
+    for (const p of [...sqlPatterns, ...xssPatterns]) {
+      if (p.test(url)) return false;
     }
+    return true;
+  };
 
-    // Verificar padrões de SQL injection
-    const sqlInjectionPatterns = [
-      /(\bUNION\b|\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bCREATE\b|\bALTER\b)/i,
-      /(--|;|\/\*|\*\/|xp_|sp_)/i
-    ];
-    
-    for (const pattern of sqlInjectionPatterns) {
-      if (pattern.test(test_api_url)) {
-        console.warn(`⚠️ Tentativa de SQL injection detectada: ${test_api_url}`);
-        return res.status(400).json({ error: 'URL contém caracteres ou padrões não permitidos' });
-      }
-    }
-
-    // Verificar padrões de JavaScript injection
-    const xssPatterns = [
-      /<script[^>]*>.*?<\/script>/gi,
-      /javascript:/gi,
-      /on\w+\s*=/gi
-    ];
-    
-    for (const pattern of xssPatterns) {
-      if (pattern.test(test_api_url)) {
-        console.warn(`⚠️ Tentativa de XSS detectada: ${test_api_url}`);
-        return res.status(400).json({ error: 'URL contém caracteres ou padrões não permitidos' });
-      }
+  for (const url of urlList) {
+    if (!validateUrl(url)) {
+      return res.status(400).json({ error: `URL inválida ou não permitida: ${url}` });
     }
   }
 
   try {
-    console.log(`🔧 Configurando test_api_url para MAC: ${mac_address}`);
-    console.log(`   URL: ${test_api_url || 'null (limpar configuração)'}`);
-    
-    const result = await pool.query(
-      'UPDATE devices SET test_api_url = $1 WHERE mac_address = $2 RETURNING *',
-      [test_api_url || null, mac_address]
-    );
-    
+    const primaryUrl = urlList[0] || null;
+    const urlsJson = urlList.length > 0 ? JSON.stringify(urlList) : null;
+
+    console.log(`🔧 Configurando test_api_urls para MAC: ${mac_address}`, urlList);
+
+    // Tenta salvar com test_api_urls (nova coluna), com fallback se não existir
+    let result;
+    try {
+      result = await pool.query(
+        'UPDATE devices SET test_api_url = $1, test_api_urls = $2 WHERE mac_address = $3 RETURNING *',
+        [primaryUrl, urlsJson, mac_address]
+      );
+    } catch (colErr) {
+      // Coluna test_api_urls ainda não existe — salva só test_api_url
+      console.warn('⚠️ Coluna test_api_urls não existe, salvando apenas test_api_url');
+      result = await pool.query(
+        'UPDATE devices SET test_api_url = $1 WHERE mac_address = $2 RETURNING *',
+        [primaryUrl, mac_address]
+      );
+    }
+
     if (result.rows.length === 0) {
-      console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-    
-    console.log('✅ test_api_url configurado com sucesso');
-    
-    // Broadcast WebSocket para atualização em tempo real
+
+    console.log('✅ test_api_urls configurado com sucesso');
+
     broadcast({
       type: 'device:test-api-updated',
       data: {
         device_id: result.rows[0].id,
         mac_address: result.rows[0].mac_address,
-        test_api_url: result.rows[0].test_api_url
+        test_api_url: result.rows[0].test_api_url,
+        test_api_urls: urlList
       }
     });
-    
+
     res.json({
       device: result.rows[0],
-      message: test_api_url ? 'URL configurada com sucesso' : 'Configuração removida com sucesso'
+      message: urlList.length > 0 ? `${urlList.length} URL(s) configurada(s) com sucesso` : 'Configuração removida com sucesso'
     });
   } catch (error) {
-    console.error('❌ Erro ao configurar test_api_url:', error);
+    console.error('❌ Erro ao configurar test_api_urls:', error);
     res.status(500).json({ error: 'Erro ao configurar URL' });
   }
 };
@@ -330,7 +339,7 @@ exports.getTestApiUrl = async (req, res) => {
     console.log(`🔍 Buscando test_api_url para MAC: ${mac_address}`);
     
     const result = await pool.query(
-      'SELECT test_api_url FROM devices WHERE mac_address = $1',
+      'SELECT test_api_url, test_api_urls FROM devices WHERE mac_address = $1',
       [mac_address]
     );
     
@@ -339,13 +348,31 @@ exports.getTestApiUrl = async (req, res) => {
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
     
-    const testApiUrl = result.rows[0].test_api_url;
-    const hasCustomUrl = testApiUrl !== null && testApiUrl !== '';
-    
-    console.log(`✅ test_api_url encontrado: ${testApiUrl || 'null'} (has_custom_url: ${hasCustomUrl})`);
-    
+    const row = result.rows[0];
+    const testApiUrl = row.test_api_url;
+
+    // Parsear test_api_urls se existir
+    let testApiUrls = null;
+    try {
+      if (row.test_api_urls) {
+        testApiUrls = typeof row.test_api_urls === 'string'
+          ? JSON.parse(row.test_api_urls)
+          : row.test_api_urls;
+      }
+    } catch { testApiUrls = null; }
+
+    // Fallback: se só tem test_api_url, montar array com ela
+    if (!testApiUrls && testApiUrl) {
+      testApiUrls = [testApiUrl];
+    }
+
+    const hasCustomUrl = (testApiUrls && testApiUrls.length > 0) || (testApiUrl !== null && testApiUrl !== '');
+
+    console.log(`✅ test_api_urls encontrado:`, testApiUrls, `(has_custom_url: ${hasCustomUrl})`);
+
     res.json({
       test_api_url: testApiUrl,
+      test_api_urls: testApiUrls,
       has_custom_url: hasCustomUrl
     });
   } catch (error) {
