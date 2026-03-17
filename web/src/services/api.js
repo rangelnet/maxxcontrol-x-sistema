@@ -5,7 +5,8 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'production' ? '' : 'http://localhost:3001'),
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 15000 // 15 segundos - evita travar infinitamente
 })
 
 // Interceptor para adicionar token em cada requisição
