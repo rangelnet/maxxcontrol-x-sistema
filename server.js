@@ -53,6 +53,9 @@ app.use('/api/iptv', require('./modules/iptv-credentials/iptvCredentialsRoutes')
 app.use('/api/iptv', require('./modules/iptv-servers/iptvServersRoutes'));
 app.use('/api/iptv', require('./modules/iptv-monitoring/iptvMonitoringRoutes'));
 
+// Rotas do Playlist Manager 4-in-1
+app.use('/api/playlist-manager', require('./modules/playlist-manager/playlistManagerRoutes'));
+
 // Servir arquivos estáticos (banners gerados)
 app.use('/banners', express.static('public/banners'));
 

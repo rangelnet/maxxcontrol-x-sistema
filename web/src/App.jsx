@@ -12,6 +12,7 @@ import IptvServer from './pages/IptvServer'
 import ServersManagement from './pages/ServersManagement'
 import IptvTreeViewer from './pages/IptvTreeViewer'
 import BannerGenerator from './pages/BannerGenerator'
+import PlaylistManager from './pages/PlaylistManager'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 
@@ -37,6 +38,7 @@ function App() {
             <Route path="iptv-server" element={<IptvServer />} />
             <Route path="iptv-servers" element={<ServersManagement />} />
             <Route path="iptv-tree" element={<IptvTreeViewer />} />
+            <Route path="playlist-manager" element={<PlaylistManager />} />
             <Route path="banners" element={<BannerGenerator />} />
           </Route>
         </Routes>
