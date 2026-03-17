@@ -56,6 +56,9 @@ app.use('/api/iptv', require('./modules/iptv-monitoring/iptvMonitoringRoutes'));
 // Rotas do Playlist Manager 4-in-1
 app.use('/api/playlist-manager', require('./modules/playlist-manager/playlistManagerRoutes'));
 
+// Rotas do Plugin IPTV Unificado (integração com MaxxControl)
+app.use('/api/iptv-plugin', require('./modules/iptv-servers/iptv-plugin-unified'));
+
 // Servir arquivos estáticos (banners gerados)
 app.use('/banners', express.static('public/banners'));
 
