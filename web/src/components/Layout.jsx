@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings, Palette, Server, Image, Tv, List } from 'lucide-react'
+import { LayoutDashboard, Smartphone, Bug, Package, FileText, LogOut, Activity, Settings, Palette, Server, Image, Tv, List, Zap } from 'lucide-react'
 import Logo from './Logo'
 
 const Layout = () => {
@@ -17,6 +17,7 @@ const Layout = () => {
     { path: '/branding', icon: Palette, label: 'Branding' },
     { path: '/iptv-server', icon: Server, label: 'Servidor IPTV' },
     { path: '/iptv-servers', icon: Server, label: 'Servidores IPTV' },
+    { path: '/iptv-plugin', icon: Zap, label: 'Plugin IPTV Unificado' },
     { path: '/iptv-tree', icon: Tv, label: 'Árvore IPTV' },
     { path: '/playlist-manager', icon: List, label: 'Playlist Manager' },
     { path: '/banners', icon: Image, label: 'Banners' },
