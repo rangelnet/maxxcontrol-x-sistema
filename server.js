@@ -16,7 +16,21 @@ async function runPendingMigrations() {
     const sqlPath = path.join(__dirname, 'database/migrations/create-iptv-plugin-tables.sql');
     if (fs.existsSync(sqlPath)) {
       const sql = fs.readFileSync(sqlPath, 'utf8');
-      await pool.query(sql);
+      // Dividir em statements individuais (PostgreSQL não aceita múltiplos em pool.query)
+      const statements = sql
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !s.startsWith('--'));
+      for (const stmt of statements) {
+        try {
+          await pool.query(stmt);
+        } catch (stmtErr) {
+          // Ignorar erros de "já existe" (42P07 = duplicate_table, 42701 = duplicate_column)
+          if (!['42P07', '42701', '42P11'].includes(stmtErr.code)) {
+            console.warn('⚠️ Aviso em statement IPTV Plugin:', stmtErr.message);
+          }
+        }
+      }
       console.log('✅ Migração IPTV Plugin executada com sucesso');
     }
   } catch (err) {

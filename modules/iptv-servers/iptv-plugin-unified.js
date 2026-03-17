@@ -74,21 +74,13 @@ router.post('/add-server', async (req, res) => {
  */
 router.get('/servers', async (req, res) => {
   try {
-    const query = `
-      SELECT * FROM iptv_servers 
-      WHERE status = 'active'
-      ORDER BY created_at DESC
-    `;
+    const result = await Promise.race([
+      pool.query(`SELECT * FROM iptv_servers WHERE status = 'active' ORDER BY created_at DESC`),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
 
-    const result = await pool.query(query);
-
-    res.json({
-      success: true,
-      servers: result.rows
-    });
-
+    res.json({ success: true, servers: result.rows });
   } catch (error) {
-    // Tabela pode não existir ainda - retornar lista vazia
     console.error('⚠️ Tabela iptv_servers não encontrada ou erro:', error.message);
     res.json({ success: true, servers: [] });
   }
@@ -467,8 +459,8 @@ router.post('/add-qpanel', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao adicionar painel qPanel:', error);
-    res.status(500).json({ error: 'Erro ao adicionar painel qPanel' });
+    console.error('❌ Erro ao adicionar painel qPanel:', error.message, error.code);
+    res.status(500).json({ error: 'Erro ao adicionar painel qPanel', detail: error.message });
   }
 });
 
@@ -478,21 +470,13 @@ router.post('/add-qpanel', async (req, res) => {
  */
 router.get('/qpanels', async (req, res) => {
   try {
-    const query = `
-      SELECT * FROM qpanel_panels 
-      WHERE status = 'active'
-      ORDER BY created_at DESC
-    `;
+    const result = await Promise.race([
+      pool.query(`SELECT * FROM qpanel_panels WHERE status = 'active' ORDER BY created_at DESC`),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
 
-    const result = await pool.query(query);
-
-    res.json({
-      success: true,
-      panels: result.rows
-    });
-
+    res.json({ success: true, panels: result.rows });
   } catch (error) {
-    // Tabela pode não existir ainda - retornar lista vazia
     console.error('⚠️ Tabela qpanel_panels não encontrada ou erro:', error.message);
     res.json({ success: true, panels: [] });
   }
