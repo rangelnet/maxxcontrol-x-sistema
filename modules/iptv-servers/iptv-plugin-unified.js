@@ -1038,7 +1038,7 @@ router.post('/relay-command', async (req, res) => {
       return res.status(400).json({ error: 'command_type e payload são obrigatórios' });
     }
 
-    const validTypes = ['search_user', 'delete_user'];
+    const validTypes = ['search_user', 'delete_user', 'get_servers'];
     if (!validTypes.includes(command_type)) {
       return res.status(400).json({ error: `command_type inválido. Use: ${validTypes.join(', ')}` });
     }

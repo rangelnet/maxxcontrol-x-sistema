@@ -658,33 +658,40 @@ const IptvServersManager = () => {
 
   const handleLoadQpanelServers = async (qpanel) => {
     try {
-      let servers = [];
-      let fetchError = null;
-      try {
-        const response = await fetch(`${qpanel.panel_url.replace(/\/$/, '')}/api/servers`, {
-          headers: { 'Accept': 'application/json' },
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const raw = data.data || data.servers || [];
-          servers = raw.map(server => {
-            let dns = new URL(qpanel.panel_url).hostname;
-            if (server.dns) dns = server.dns;
-            else if (server.domain) dns = server.domain;
-            else if (server.url) { try { dns = new URL(server.url).hostname; } catch {} }
-            return { ...server, dns, packages: (server.packages || []).filter(p => !p.name?.toLowerCase().includes('test')) };
-          });
-        } else { fetchError = `HTTP ${response.status}`; }
-      } catch (e) { fetchError = e.message; }
+      // Enviar comando relay para o plugin Chrome buscar os servidores
+      const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
+        panel_id: qpanel.id,
+        command_type: 'get_servers',
+        payload: { panel_url: qpanel.panel_url }
+      });
 
-      if (fetchError && !servers.length) {
-        alert(`⚠️ Não foi possível buscar servidores automaticamente.\n\nMotivo: ${fetchError}\n\nO painel qPanel requer que você esteja logado nele no browser.\n\nO painel foi salvo e você pode usar "Criar Contas" normalmente.`);
+      const commandId = cmdRes.data.command_id;
+      alert(`⏳ Comando enviado! Aguardando o plugin Chrome buscar os servidores...\n\nCertifique-se que o plugin está aberto e o painel "${qpanel.panel_name}" está aberto no browser.`);
+
+      // Polling para aguardar resultado (até 30s)
+      const start = Date.now();
+      let relayResult = null;
+      while (Date.now() - start < 30000) {
+        await new Promise(r => setTimeout(r, 2000));
+        const res = await api.get(`/api/iptv-plugin/relay-result/${commandId}`);
+        const { status, result, error_message } = res.data;
+        if (status === 'done') { relayResult = result; break; }
+        if (status === 'error') { alert(`❌ Erro ao buscar servidores: ${error_message}`); return; }
+      }
+
+      if (!relayResult) {
+        alert('⏰ Timeout: o plugin Chrome não respondeu em 30s.\n\nVerifique se o plugin está aberto e conectado.');
+        return;
+      }
+
+      const servers = relayResult.servers || [];
+      if (servers.length === 0) {
+        alert('ℹ️ Nenhum servidor encontrado no painel.');
         return;
       }
 
       const saveResponse = await api.post('/api/iptv-plugin/qpanel-load-servers', { panel_id: qpanel.id, servers });
-      alert(`✅ ${saveResponse.data.total} servidor(es) carregado(s)!`);
+      alert(`✅ ${saveResponse.data.total} servidor(es) carregado(s) com sucesso!`);
     } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
   };
 
