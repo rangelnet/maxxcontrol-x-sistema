@@ -5,13 +5,12 @@ import Dashboard from './pages/Dashboard'
 import Devices from './pages/Devices'
 import APIMonitor from './pages/APIMonitor'
 import APIConfig from './pages/APIConfig'
-import Branding from './pages/Branding'
+import BrandingBanners from './pages/BrandingBanners'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
 import IptvServer from './pages/IptvServer'
 import ServersManagement from './pages/ServersManagement'
 import IptvTreeViewer from './pages/IptvTreeViewer'
-import BannerGenerator from './pages/BannerGenerator'
 import IptvServersManager from './pages/IptvServersManager'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
@@ -31,7 +30,7 @@ function App() {
             <Route path="devices" element={<Devices />} />
             <Route path="api-monitor" element={<APIMonitor />} />
             <Route path="api-config" element={<APIConfig />} />
-            <Route path="branding" element={<Branding />} />
+            <Route path="branding-banners" element={<BrandingBanners />} />
             <Route path="logs" element={<Logs />} />
             <Route path="bugs" element={<Navigate to="/logs" replace />} />
             <Route path="versions" element={<Versions />} />
@@ -39,7 +38,6 @@ function App() {
             <Route path="iptv-servers" element={<ServersManagement />} />
             <Route path="iptv-plugin" element={<IptvServersManager />} />
             <Route path="iptv-tree" element={<IptvTreeViewer />} />
-            <Route path="banners" element={<BannerGenerator />} />
           </Route>
         </Routes>
       </BrowserRouter>

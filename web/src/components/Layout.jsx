@@ -14,12 +14,11 @@ const Layout = () => {
     { path: '/devices', icon: Smartphone, label: 'Dispositivos' },
     { path: '/api-monitor', icon: Activity, label: 'Monitor de APIs' },
     { path: '/api-config', icon: Settings, label: 'Configurar APIs' },
-    { path: '/branding', icon: Palette, label: 'Branding' },
+    { path: '/branding-banners', icon: Palette, label: 'Branding & Banners' },
     { path: '/iptv-server', icon: Server, label: 'Servidor IPTV' },
     { path: '/iptv-servers', icon: Server, label: 'Servidores IPTV' },
     { path: '/iptv-plugin', icon: Zap, label: 'Plugin IPTV Unificado' },
     { path: '/iptv-tree', icon: Tv, label: 'Árvore IPTV' },
-    { path: '/banners', icon: Image, label: 'Banners' },
     { path: '/logs', icon: FileText, label: 'Logs' },
     { path: '/versions', icon: Package, label: 'Versões' },
   ]
