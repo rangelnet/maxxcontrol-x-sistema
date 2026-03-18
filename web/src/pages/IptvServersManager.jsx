@@ -1,6 +1,208 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Plus, Trash2, Play, AlertCircle, Globe, Users, Settings, Server, List, CheckCircle, Loader } from 'lucide-react';
+import { Plus, Trash2, Play, Globe, Users, Settings, Server, List, CheckCircle, Loader, Search, XCircle } from 'lucide-react';
+
+// ─── Tab: Limpar qPanel (Plugin 1) ───────────────────────────────────────────
+const CleanQpanelTab = () => {
+  const [searchUsername, setSearchUsername] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState([]);
+  const [selected, setSelected] = useState([]);
+  const [deleting, setDeleting] = useState(false);
+  const [activityLog, setActivityLog] = useState([]);
+  const [searched, setSearched] = useState(false);
+
+  const addLog = (message) => {
+    const time = new Date().toLocaleTimeString('pt-BR');
+    setActivityLog(prev => [{ time, message }, ...prev.slice(0, 49)]);
+  };
+
+  const handleSearch = async () => {
+    if (!searchUsername.trim()) { alert('Digite um username para buscar'); return; }
+    setSearching(true);
+    setResults([]);
+    setSelected([]);
+    setSearched(false);
+    addLog(`🔍 Buscando "${searchUsername}" em todos os painéis...`);
+    try {
+      const response = await api.post('/api/iptv-plugin/qpanel-search-user', { username: searchUsername.trim() });
+      const data = response.data;
+      setResults(data.results || []);
+      setSearched(true);
+      const found = (data.results || []).filter(r => !r.error);
+      const errors = (data.results || []).filter(r => r.error);
+      if (found.length > 0) addLog(`✅ Encontrado em ${found.length} painel(is)`);
+      if (errors.length > 0) addLog(`⚠️ ${errors.length} painel(is) com erro de conexão`);
+      if (found.length === 0 && errors.length === 0) addLog(`ℹ️ Usuário não encontrado em nenhum painel`);
+    } catch (err) {
+      addLog(`❌ Erro: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const toggleSelect = (key) => setSelected(prev =>
+    prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+  );
+
+  const selectAll = () => {
+    const validResults = results.filter(r => !r.error && r.customer_id);
+    const allKeys = validResults.map(r => `${r.panel_id}-${r.customer_id}`);
+    setSelected(selected.length === allKeys.length ? [] : allKeys);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selected.length) { alert('Selecione pelo menos um usuário para deletar'); return; }
+    if (!window.confirm(`Tem certeza que deseja deletar ${selected.length} usuário(s)? Esta ação não pode ser desfeita.`)) return;
+
+    setDeleting(true);
+    let success = 0;
+    let failed = 0;
+
+    for (const key of selected) {
+      const [panelId, customerId] = key.split('-');
+      const result = results.find(r => r.panel_id == panelId && r.customer_id == customerId);
+      if (!result) continue;
+
+      try {
+        await api.post('/api/iptv-plugin/qpanel-delete-user', {
+          panel_id: result.panel_id,
+          customer_id: result.customer_id,
+          username: result.username
+        });
+        addLog(`🗑️ Deletado: "${result.username}" do painel "${result.panel_name}"`);
+        success++;
+      } catch (err) {
+        addLog(`❌ Falha ao deletar de "${result.panel_name}": ${err.response?.data?.error || err.message}`);
+        failed++;
+      }
+      // Rate limiting
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    addLog(`🎉 Concluído! Deletados: ${success} | Falhas: ${failed}`);
+    // Remover os deletados com sucesso da lista
+    setResults(prev => prev.filter(r => !selected.includes(`${r.panel_id}-${r.customer_id}`) || failed > 0));
+    setSelected([]);
+    setDeleting(false);
+  };
+
+  const validResults = results.filter(r => !r.error && r.customer_id);
+  const errorResults = results.filter(r => r.error);
+
+  return (
+    <div className="space-y-6">
+      {/* Busca */}
+      <div className="bg-card rounded-lg p-6 border border-gray-800">
+        <h2 className="text-xl font-bold mb-2">Buscar Usuário nos Painéis</h2>
+        <p className="text-gray-400 text-sm mb-4">Busca o username em todos os painéis qPanel configurados e permite deletar em massa.</p>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={searchUsername}
+            onChange={e => setSearchUsername(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            placeholder="Digite o username para buscar..."
+            className="flex-1 px-4 py-2 bg-dark border border-gray-700 rounded-lg focus:outline-none focus:border-primary text-white"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={searching}
+            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition"
+          >
+            {searching ? <Loader className="animate-spin" size={18} /> : <Search size={18} />}
+            {searching ? 'Buscando...' : 'Buscar'}
+          </button>
+        </div>
+      </div>
+
+      {/* Resultados */}
+      {searched && (
+        <div className="bg-card rounded-lg p-6 border border-gray-800">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">
+              Resultados {validResults.length > 0 && <span className="text-primary">({validResults.length} encontrado{validResults.length !== 1 ? 's' : ''})</span>}
+            </h2>
+            {validResults.length > 0 && (
+              <div className="flex gap-3">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input type="checkbox" checked={selected.length === validResults.length && validResults.length > 0}
+                    onChange={selectAll} className="w-4 h-4" />
+                  Selecionar todos
+                </label>
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={!selected.length || deleting}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
+                >
+                  {deleting ? <Loader className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                  {deleting ? 'Deletando...' : `Deletar ${selected.length > 0 ? `(${selected.length})` : 'Selecionados'}`}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {validResults.length === 0 && errorResults.length === 0 && (
+            <div className="text-center py-8 text-gray-400">
+              <XCircle size={40} className="mx-auto mb-3 text-gray-600" />
+              <p>Usuário "<strong>{searchUsername}</strong>" não encontrado em nenhum painel.</p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            {validResults.map(r => {
+              const key = `${r.panel_id}-${r.customer_id}`;
+              return (
+                <div key={key}
+                  className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
+                    selected.includes(key) ? 'border-red-500 bg-red-500/10' : 'border-gray-800 hover:border-gray-700'
+                  }`}
+                >
+                  <input type="checkbox" checked={selected.includes(key)} onChange={() => toggleSelect(key)} className="w-5 h-5" />
+                  <Globe className="text-primary shrink-0" size={20} />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">{r.username}</div>
+                    <div className="text-sm text-gray-400">{r.panel_name} — ID: {r.customer_id}</div>
+                  </div>
+                  <div className="text-right text-sm text-gray-400 shrink-0">
+                    {r.expiry && <div>Expira: {r.expiry}</div>}
+                    <div className={r.status === 1 || r.status === 'active' ? 'text-green-400' : 'text-yellow-400'}>
+                      {r.status === 1 || r.status === 'active' ? 'Ativo' : String(r.status)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {errorResults.length > 0 && (
+            <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+              <p className="text-yellow-400 text-sm font-semibold mb-1">⚠️ Painéis com erro de conexão:</p>
+              {errorResults.map(r => (
+                <p key={r.panel_id} className="text-yellow-300 text-xs">{r.panel_name}: {r.error}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Log */}
+      <div className="bg-card rounded-lg p-6 border border-gray-800">
+        <h2 className="text-xl font-bold mb-4">Log de Atividades</h2>
+        <div className="bg-dark rounded-lg p-4 h-40 overflow-y-auto font-mono text-sm">
+          {activityLog.length === 0
+            ? <p className="text-gray-500">Nenhuma atividade ainda...</p>
+            : activityLog.map((log, i) => (
+              <div key={i} className="mb-1">
+                <span className="text-gray-500">[{log.time}]</span> <span>{log.message}</span>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ─── Tab: Playlist Manager (Plugin 4) ────────────────────────────────────────
 const PlaylistManagerTab = () => {
@@ -418,6 +620,7 @@ const IptvServersManager = () => {
     { id: 'servers', label: 'Servidores IPTV', icon: Settings },
     { id: 'qpanel', label: 'Painéis qPanel', icon: Globe },
     { id: 'playlist', label: 'Playlist Manager', icon: List },
+    { id: 'clean', label: 'Limpar qPanel', icon: Trash2 },
   ];
 
   if (loading) return <div className="p-8 text-center text-gray-400">Carregando...</div>;
@@ -638,6 +841,9 @@ const IptvServersManager = () => {
 
       {/* ── Tab: Playlist Manager ── */}
       {activeTab === 'playlist' && <PlaylistManagerTab />}
+
+      {/* ── Tab: Limpar qPanel ── */}
+      {activeTab === 'clean' && <CleanQpanelTab />}
     </div>
   );
 };

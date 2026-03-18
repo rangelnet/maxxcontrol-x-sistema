@@ -880,6 +880,147 @@ router.post('/sync-all', async (req, res) => {
   }
 });
 
+// ============================================
+// LIMPAR QPANEL (Plugin 1 functionality)
+// ============================================
+
+/**
+ * POST /api/iptv-plugin/qpanel-search-user
+ * Busca usuário por username em todos os painéis qPanel ativos
+ * Faz requisição direta para cada painel usando as credenciais salvas
+ */
+router.post('/qpanel-search-user', async (req, res) => {
+  try {
+    const { username } = req.body;
+
+    if (!username || !username.trim()) {
+      return res.status(400).json({ error: 'Username é obrigatório' });
+    }
+
+    // Buscar todos os painéis ativos
+    const panelsResult = await pool.query(
+      `SELECT * FROM qpanel_panels WHERE status = 'active' ORDER BY panel_name`
+    );
+
+    if (panelsResult.rows.length === 0) {
+      return res.json({ success: true, results: [], total: 0, message: 'Nenhum painel qPanel configurado' });
+    }
+
+    const results = [];
+
+    for (const panel of panelsResult.rows) {
+      try {
+        const baseUrl = panel.panel_url.replace(/\/$/, '');
+        const response = await axios.get(`${baseUrl}/api/customers`, {
+          params: { search: username.trim() },
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${panel.panel_username}`
+          },
+          timeout: 8000
+        });
+
+        const data = response.data;
+        const customers = data.data || data.customers || data.results || [];
+
+        // Filtrar apenas os que batem exatamente com o username
+        const matched = customers.filter(c =>
+          c.username?.toLowerCase() === username.trim().toLowerCase()
+        );
+
+        for (const customer of matched) {
+          results.push({
+            panel_id: panel.id,
+            panel_name: panel.panel_name,
+            panel_url: panel.panel_url,
+            customer_id: customer.id,
+            username: customer.username,
+            email: customer.email || '',
+            status: customer.status || customer.enabled || 'unknown',
+            expiry: customer.exp_date || customer.expiry || '',
+            connections: customer.max_connections || customer.connections || 1,
+            created_at: customer.created_at || ''
+          });
+        }
+      } catch (panelError) {
+        console.error(`⚠️ Erro ao buscar no painel ${panel.panel_name}:`, panelError.message);
+        // Continua para o próximo painel mesmo com erro
+        results.push({
+          panel_id: panel.id,
+          panel_name: panel.panel_name,
+          panel_url: panel.panel_url,
+          error: panelError.message,
+          customer_id: null
+        });
+      }
+    }
+
+    const found = results.filter(r => !r.error);
+    res.json({
+      success: true,
+      results,
+      total: found.length,
+      panels_searched: panelsResult.rows.length
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar usuário qPanel:', error);
+    res.status(500).json({ error: 'Erro ao buscar usuário', detail: error.message });
+  }
+});
+
+/**
+ * POST /api/iptv-plugin/qpanel-delete-user
+ * Deleta usuário por ID em um painel qPanel específico
+ */
+router.post('/qpanel-delete-user', async (req, res) => {
+  try {
+    const { panel_id, customer_id, username } = req.body;
+
+    if (!panel_id || !customer_id) {
+      return res.status(400).json({ error: 'panel_id e customer_id são obrigatórios' });
+    }
+
+    // Buscar painel
+    const panelResult = await pool.query(
+      `SELECT * FROM qpanel_panels WHERE id = $1 AND status = 'active'`,
+      [panel_id]
+    );
+
+    if (panelResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Painel qPanel não encontrado' });
+    }
+
+    const panel = panelResult.rows[0];
+    const baseUrl = panel.panel_url.replace(/\/$/, '');
+
+    const response = await axios.delete(`${baseUrl}/api/customers/${customer_id}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${panel.panel_username}`
+      },
+      timeout: 8000
+    });
+
+    console.log(`✅ Usuário ${username || customer_id} deletado do painel ${panel.panel_name}`);
+
+    res.json({
+      success: true,
+      message: `Usuário "${username || customer_id}" deletado do painel "${panel.panel_name}"`,
+      panel_name: panel.panel_name,
+      customer_id
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao deletar usuário qPanel:', error.message);
+    // Se o painel retornou 404, o usuário já não existe — tratar como sucesso
+    if (error.response?.status === 404) {
+      return res.json({ success: true, message: 'Usuário não encontrado no painel (já deletado)' });
+    }
+    res.status(500).json({ error: 'Erro ao deletar usuário', detail: error.message });
+  }
+});
+
 /**
  * GET /api/iptv-plugin/check-tables
  * Diagnóstico: verifica quais tabelas do plugin existem no banco
