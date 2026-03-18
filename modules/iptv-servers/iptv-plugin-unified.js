@@ -489,12 +489,22 @@ router.get('/qpanels', async (req, res) => {
            FROM qpanel_servers WHERE panel_id = $1 ORDER BY created_at DESC`,
           [panel.id]
         );
-        panel.servers = serversResult.rows.map(r => ({
-          id: r.id,
-          name: r.server_name,
-          dns: r.server_dns,
-          ...(r.server_data ? (typeof r.server_data === 'string' ? JSON.parse(r.server_data) : r.server_data) : {})
-        }));
+        panel.servers = serversResult.rows.map(r => {
+          const rawData = r.server_data
+            ? (typeof r.server_data === 'string' ? JSON.parse(r.server_data) : r.server_data)
+            : {};
+          const packages = rawData.packages || [];
+          return {
+            id: r.id,
+            name: r.server_name,
+            dns: r.server_dns,
+            packages,
+            server_data: rawData,
+            ...rawData,
+            // garantir que packages não seja sobrescrito pelo spread
+            packages,
+          };
+        });
       } catch (e) {
         panel.servers = [];
       }
@@ -578,6 +588,7 @@ router.post('/qpanel-load-servers', async (req, res) => {
     }
 
     // Salvar/atualizar servidores enviados pelo frontend
+    const seenDns = new Set();
     for (const server of servers) {
       const serverName = server.name || server.server_name || `Servidor ${server.id}`;
       const serverDns = server.dns || '';
@@ -588,6 +599,22 @@ router.post('/qpanel-load-servers', async (req, res) => {
         ON CONFLICT (panel_id, server_name) 
         DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
       `, [panel_id, serverName, serverDns, JSON.stringify(server)]);
+
+      // Sincronizar DNS na tabela servers (Gerenciamento de Servidores IPTV)
+      if (serverDns && !seenDns.has(serverDns)) {
+        seenDns.add(serverDns);
+        const serverUrl = `http://${serverDns}`;
+        try {
+          await pool.query(`
+            INSERT INTO servers (name, url, region, priority, status)
+            VALUES ($1, $2, 'Brasil', 100, 'ativo')
+            ON CONFLICT (url) DO UPDATE SET name = $1, updated_at = NOW()
+          `, [serverName, serverUrl]);
+        } catch (syncErr) {
+          // Ignorar silenciosamente se a tabela não tiver a constraint
+          console.warn(`⚠️ Não foi possível sincronizar DNS ${serverDns} em servers:`, syncErr.message);
+        }
+      }
     }
 
     res.json({
@@ -1175,12 +1202,19 @@ router.post('/relay-result', async (req, res) => {
       return res.status(400).json({ error: `status inválido. Use: ${validStatuses.join(', ')}` });
     }
 
+    // result pode chegar como objeto (do background.js via fetch JSON) ou já como string
+    // Normalizar para string JSON para salvar no banco
+    let resultStr = null;
+    if (result !== undefined && result !== null) {
+      resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+    }
+
     const updateResult = await pool.query(`
       UPDATE plugin_relay_commands
       SET status = $1, result = $2, error_message = $3, updated_at = NOW()
       WHERE id = $4
       RETURNING id, status
-    `, [status, result ? JSON.stringify(result) : null, error_message || null, command_id]);
+    `, [status, resultStr, error_message || null, command_id]);
 
     if (updateResult.rows.length === 0) {
       return res.status(404).json({ error: 'Comando não encontrado' });
@@ -1213,11 +1247,16 @@ router.get('/relay-result/:command_id', async (req, res) => {
     }
 
     const cmd = result.rows[0];
+    // Fazer parse do result se vier como string JSON do banco
+    let parsedResult = cmd.result;
+    if (parsedResult && typeof parsedResult === 'string') {
+      try { parsedResult = JSON.parse(parsedResult); } catch (e) { /* manter como string */ }
+    }
     res.json({
       success: true,
       command_id: cmd.id,
       status: cmd.status,
-      result: cmd.result,
+      result: parsedResult,
       error_message: cmd.error_message,
       created_at: cmd.created_at,
       updated_at: cmd.updated_at

@@ -595,6 +595,10 @@ const IptvServersManager = () => {
 
   const [loadingPanels, setLoadingPanels] = useState({}); // { [panelId]: 'idle' | 'waiting' | 'done' | 'error' }
   const [panelStatus, setPanelStatus] = useState({});     // { [panelId]: string } mensagem de status
+  const [selectedPackages, setSelectedPackages] = useState([]); // [{panel_id, panel_name, server_id, server_name, package_id, package_name}]
+  const [showCreateFromPackages, setShowCreateFromPackages] = useState(false);
+  const [createFromPkgForm, setCreateFromPkgForm] = useState({ username: '', password: '', device_mac: '' });
+  const [creatingAccounts, setCreatingAccounts] = useState(false);
 
   useEffect(() => {
     Promise.all([loadServers(), loadQpanels()]).finally(() => setLoading(false));
@@ -685,8 +689,8 @@ const IptvServersManager = () => {
         const res = await api.get(`/api/iptv-plugin/relay-result/${commandId}`);
         const { status, result, error_message } = res.data;
         if (status === 'done') {
-          // result pode vir como string JSON do banco — fazer parse se necessário
-          relayResult = typeof result === 'string' ? JSON.parse(result) : result;
+          // result já vem parseado do backend
+          relayResult = result;
           break;
         }
         if (status === 'error') {
@@ -705,6 +709,7 @@ const IptvServersManager = () => {
       }
 
       const fetchedServers = relayResult.servers || [];
+      console.log('[qPanel Debug] Servidores recebidos do relay:', JSON.stringify(fetchedServers, null, 2));
       if (fetchedServers.length === 0) {
         setStatus('ℹ️ Nenhum servidor encontrado no painel.');
         setLoadState('done');
@@ -723,6 +728,50 @@ const IptvServersManager = () => {
       setStatus('❌ Erro: ' + (err.response?.data?.error || err.message));
       setLoadState('error');
     }
+  };
+
+  const togglePackage = (pkg) => {
+    const key = `${pkg.panel_id}-${pkg.server_id}-${pkg.package_id}`;
+    setSelectedPackages(prev => {
+      const exists = prev.find(p => `${p.panel_id}-${p.server_id}-${p.package_id}` === key);
+      if (exists) return prev.filter(p => `${p.panel_id}-${p.server_id}-${p.package_id}` !== key);
+      return [...prev, pkg];
+    });
+  };
+
+  const isPackageSelected = (panel_id, server_id, package_id) => {
+    return selectedPackages.some(p => p.panel_id === panel_id && p.server_id === server_id && p.package_id === package_id);
+  };
+
+  const handleCreateFromPackages = async (e) => {
+    e.preventDefault();
+    const { username, password, device_mac } = createFromPkgForm;
+    if (password.length < 9) { alert('A senha deve ter no mínimo 9 caracteres'); return; }
+    setCreatingAccounts(true);
+    try {
+      const response = await api.post('/api/iptv-plugin/qpanel-create-accounts', {
+        username, password, device_mac,
+        selected_packages: selectedPackages.map(p => ({
+          panel_id: p.panel_id,
+          server_id: p.server_id,
+          package_id: p.package_id,
+          server_name: p.server_name
+        }))
+      });
+      if (response.data.success) {
+        alert(`✅ ${response.data.total_created} conta(s) criada(s)!`);
+        if (response.data.extracted_dns?.length > 0) {
+          await api.post('/api/iptv-plugin/register-dns-to-device', {
+            device_mac, dns_list: response.data.extracted_dns, username, password
+          });
+          alert(`✅ ${response.data.extracted_dns.length} DNS(s) registrada(s) no dispositivo!`);
+        }
+        setShowCreateFromPackages(false);
+        setSelectedPackages([]);
+        setCreateFromPkgForm({ username: '', password: '', device_mac: '' });
+      }
+    } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
+    finally { setCreatingAccounts(false); }
   };
 
   const handleCreateAccounts = async (e) => {
@@ -935,6 +984,58 @@ const IptvServersManager = () => {
             )}
           </div>
 
+          {/* Painel de pacotes selecionados */}
+          {selectedPackages.length > 0 && (
+            <div className="bg-green-900/30 border border-green-600 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-bold text-green-300">✅ {selectedPackages.length} pacote(s) selecionado(s)</h3>
+                  <p className="text-xs text-green-400 mt-0.5">
+                    {selectedPackages.map(p => `${p.panel_name} › ${p.server_name} › ${p.package_name}`).join(' | ')}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setSelectedPackages([])} className="text-xs px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded transition">
+                    Limpar
+                  </button>
+                  <button
+                    onClick={() => setShowCreateFromPackages(!showCreateFromPackages)}
+                    className="text-sm px-4 py-1.5 bg-green-600 hover:bg-green-700 rounded transition font-semibold flex items-center gap-2"
+                  >
+                    <Users size={16} /> Criar Contas
+                  </button>
+                </div>
+              </div>
+
+              {showCreateFromPackages && (
+                <form onSubmit={handleCreateFromPackages} className="mt-3 p-4 bg-gray-800 rounded-lg border border-gray-700">
+                  <h4 className="font-bold mb-3">🎯 Criar contas nos pacotes selecionados</h4>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <input type="text" placeholder="Usuário" value={createFromPkgForm.username}
+                      onChange={e => setCreateFromPkgForm({ ...createFromPkgForm, username: e.target.value })}
+                      className="bg-gray-700 text-white p-2 rounded placeholder-gray-400 text-sm" required />
+                    <input type="password" placeholder="Senha (mín. 9 caracteres)" value={createFromPkgForm.password}
+                      onChange={e => setCreateFromPkgForm({ ...createFromPkgForm, password: e.target.value })}
+                      className="bg-gray-700 text-white p-2 rounded placeholder-gray-400 text-sm" required />
+                  </div>
+                  <input type="text" placeholder="MAC do dispositivo (ex: AA:BB:CC:DD:EE:FF)" value={createFromPkgForm.device_mac}
+                    onChange={e => setCreateFromPkgForm({ ...createFromPkgForm, device_mac: e.target.value })}
+                    className="w-full bg-gray-700 text-white p-2 rounded placeholder-gray-400 text-sm mb-3" required />
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShowCreateFromPackages(false)}
+                      className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded transition text-sm">
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={creatingAccounts}
+                      className="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded transition text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                      {creatingAccounts ? <><Loader className="animate-spin" size={16} /> Criando...</> : '🎯 Criar Contas'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {qpanels.length === 0 ? (
               <div className="col-span-full bg-gray-800 rounded-lg p-12 text-center">
@@ -947,6 +1048,7 @@ const IptvServersManager = () => {
               const statusMsg = panelStatus[qpanel.id];
               const isLoading = panelLoadState === 'waiting';
               const loadedServers = qpanel.servers || [];
+              console.log(`[qPanel Debug] Painel "${qpanel.panel_name}" - servidores:`, loadedServers);
 
               return (
                 <div key={qpanel.id} className="bg-gray-800 rounded-lg p-6">
@@ -968,15 +1070,53 @@ const IptvServersManager = () => {
                   {/* Servidores já carregados */}
                   {loadedServers.length > 0 && (
                     <div className="mb-3 p-3 bg-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2 font-semibold">🖥️ {loadedServers.length} servidor(es) carregado(s):</p>
-                      <div className="space-y-1 max-h-28 overflow-y-auto">
-                        {loadedServers.map((s, i) => (
-                          <div key={i} className="text-xs text-gray-300 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
-                            <span className="truncate">{s.name || s.server_name}</span>
-                            {s.dns && <span className="text-gray-500 truncate">· {s.dns}</span>}
-                          </div>
-                        ))}
+                      <p className="text-xs text-gray-400 mb-2 font-semibold">🖥️ {loadedServers.length} servidor(es) — marque os pacotes desejados:</p>
+                      <div className="space-y-2 max-h-52 overflow-y-auto">
+                        {loadedServers.map((s, i) => {
+                          // server_data pode vir espalhado no objeto ou como campo separado
+                          const serverData = s.server_data
+                            ? (typeof s.server_data === 'string' ? JSON.parse(s.server_data) : s.server_data)
+                            : s;
+                          const packages = s.packages || serverData.packages || [];
+                          const serverId = s.id || serverData.id || i;
+                          return (
+                            <div key={i}>
+                              <div className="text-xs text-gray-300 flex items-center gap-2 font-semibold mb-1">
+                                <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
+                                <span className="truncate">{s.name || s.server_name}</span>
+                                {s.dns && <span className="text-gray-500 truncate">· {s.dns}</span>}
+                              </div>
+                              {packages.length > 0 ? (
+                                <div className="ml-4 space-y-1">
+                                  {packages.map((pkg, pi) => {
+                                    const pkgId = pkg.id || pkg.package_id || pi;
+                                    const selected = isPackageSelected(qpanel.id, serverId, pkgId);
+                                    return (
+                                      <label key={pi} className={`flex items-center gap-2 cursor-pointer rounded px-2 py-1 transition ${selected ? 'bg-primary/20 text-white' : 'hover:bg-gray-600 text-gray-400'}`}>
+                                        <input
+                                          type="checkbox"
+                                          checked={selected}
+                                          onChange={() => togglePackage({
+                                            panel_id: qpanel.id,
+                                            panel_name: qpanel.panel_name,
+                                            server_id: serverId,
+                                            server_name: s.name || s.server_name,
+                                            package_id: pkgId,
+                                            package_name: pkg.name
+                                          })}
+                                          className="w-3.5 h-3.5 accent-orange-500"
+                                        />
+                                        <span className="text-xs truncate">{pkg.name}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="ml-4 text-xs text-gray-600">Sem pacotes</div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
