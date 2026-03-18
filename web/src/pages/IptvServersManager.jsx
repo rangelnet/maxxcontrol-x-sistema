@@ -11,10 +11,29 @@ const CleanQpanelTab = () => {
   const [deleting, setDeleting] = useState(false);
   const [activityLog, setActivityLog] = useState([]);
   const [searched, setSearched] = useState(false);
+  const [relayMode, setRelayMode] = useState(false);
 
   const addLog = (message) => {
     const time = new Date().toLocaleTimeString('pt-BR');
     setActivityLog(prev => [{ time, message }, ...prev.slice(0, 49)]);
+  };
+
+  // Aguarda resultado de um comando relay com polling
+  const waitRelayResult = async (commandId, timeoutMs = 30000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        const res = await api.get(`/api/iptv-plugin/relay-result/${commandId}`);
+        const { status, result, error_message } = res.data;
+        if (status === 'done') return { success: true, result };
+        if (status === 'error') return { success: false, error: error_message };
+        // pending ou executing: continua aguardando
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
+    }
+    return { success: false, error: 'Timeout: plugin Chrome não respondeu em 30s. Verifique se o plugin está aberto e conectado.' };
   };
 
   const handleSearch = async () => {
@@ -23,22 +42,50 @@ const CleanQpanelTab = () => {
     setResults([]);
     setSelected([]);
     setSearched(false);
-    addLog(`🔍 Buscando "${searchUsername}" em todos os painéis...`);
-    try {
-      const response = await api.post('/api/iptv-plugin/qpanel-search-user', { username: searchUsername.trim() });
-      const data = response.data;
-      setResults(data.results || []);
-      setSearched(true);
-      const found = (data.results || []).filter(r => !r.error);
-      const errors = (data.results || []).filter(r => r.error);
-      if (found.length > 0) addLog(`✅ Encontrado em ${found.length} painel(is)`);
-      if (errors.length > 0) addLog(`⚠️ ${errors.length} painel(is) com erro de conexão`);
-      if (found.length === 0 && errors.length === 0) addLog(`ℹ️ Usuário não encontrado em nenhum painel`);
-    } catch (err) {
-      addLog(`❌ Erro: ${err.response?.data?.error || err.message}`);
-    } finally {
-      setSearching(false);
+
+    if (relayMode) {
+      // Modo relay: plugin Chrome executa no qPanel
+      addLog(`🔌 [Relay] Enviando busca de "${searchUsername}" para o plugin Chrome...`);
+      try {
+        const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
+          command_type: 'search_user',
+          payload: { username: searchUsername.trim() }
+        });
+        const commandId = cmdRes.data.command_id;
+        addLog(`⏳ Aguardando plugin Chrome executar (ID: ${commandId})...`);
+
+        const relayResult = await waitRelayResult(commandId);
+        if (relayResult.success) {
+          const data = relayResult.result;
+          setResults(data.results || []);
+          setSearched(true);
+          const found = (data.results || []).filter(r => !r.error);
+          addLog(found.length > 0 ? `✅ Encontrado em ${found.length} painel(is)` : `ℹ️ Usuário não encontrado`);
+        } else {
+          addLog(`❌ ${relayResult.error}`);
+          setSearched(true);
+        }
+      } catch (err) {
+        addLog(`❌ Erro: ${err.response?.data?.error || err.message}`);
+      }
+    } else {
+      // Modo direto (legado — pode falhar se qPanel exigir sessão do browser)
+      addLog(`🔍 Buscando "${searchUsername}" em todos os painéis...`);
+      try {
+        const response = await api.post('/api/iptv-plugin/qpanel-search-user', { username: searchUsername.trim() });
+        const data = response.data;
+        setResults(data.results || []);
+        setSearched(true);
+        const found = (data.results || []).filter(r => !r.error);
+        const errors = (data.results || []).filter(r => r.error);
+        if (found.length > 0) addLog(`✅ Encontrado em ${found.length} painel(is)`);
+        if (errors.length > 0) addLog(`⚠️ ${errors.length} painel(is) com erro de conexão`);
+        if (found.length === 0 && errors.length === 0) addLog(`ℹ️ Usuário não encontrado em nenhum painel`);
+      } catch (err) {
+        addLog(`❌ Erro: ${err.response?.data?.error || err.message}`);
+      }
     }
+    setSearching(false);
   };
 
   const toggleSelect = (key) => setSelected(prev =>
@@ -64,25 +111,47 @@ const CleanQpanelTab = () => {
       const result = results.find(r => r.panel_id == panelId && r.customer_id == customerId);
       if (!result) continue;
 
-      try {
-        await api.post('/api/iptv-plugin/qpanel-delete-user', {
-          panel_id: result.panel_id,
-          customer_id: result.customer_id,
-          username: result.username
-        });
-        addLog(`🗑️ Deletado: "${result.username}" do painel "${result.panel_name}"`);
-        success++;
-      } catch (err) {
-        addLog(`❌ Falha ao deletar de "${result.panel_name}": ${err.response?.data?.error || err.message}`);
-        failed++;
+      if (relayMode) {
+        // Modo relay
+        addLog(`🔌 [Relay] Deletando "${result.username}" via plugin Chrome...`);
+        try {
+          const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
+            panel_id: result.panel_id,
+            command_type: 'delete_user',
+            payload: { panel_id: result.panel_id, customer_id: result.customer_id, username: result.username, panel_url: result.panel_url }
+          });
+          const relayResult = await waitRelayResult(cmdRes.data.command_id, 20000);
+          if (relayResult.success) {
+            addLog(`🗑️ Deletado: "${result.username}" do painel "${result.panel_name}"`);
+            success++;
+          } else {
+            addLog(`❌ Falha ao deletar de "${result.panel_name}": ${relayResult.error}`);
+            failed++;
+          }
+        } catch (err) {
+          addLog(`❌ Erro relay: ${err.message}`);
+          failed++;
+        }
+      } else {
+        // Modo direto
+        try {
+          await api.post('/api/iptv-plugin/qpanel-delete-user', {
+            panel_id: result.panel_id,
+            customer_id: result.customer_id,
+            username: result.username
+          });
+          addLog(`🗑️ Deletado: "${result.username}" do painel "${result.panel_name}"`);
+          success++;
+        } catch (err) {
+          addLog(`❌ Falha ao deletar de "${result.panel_name}": ${err.response?.data?.error || err.message}`);
+          failed++;
+        }
+        await new Promise(r => setTimeout(r, 300));
       }
-      // Rate limiting
-      await new Promise(r => setTimeout(r, 300));
     }
 
     addLog(`🎉 Concluído! Deletados: ${success} | Falhas: ${failed}`);
-    // Remover os deletados com sucesso da lista
-    setResults(prev => prev.filter(r => !selected.includes(`${r.panel_id}-${r.customer_id}`) || failed > 0));
+    setResults(prev => prev.filter(r => !selected.includes(`${r.panel_id}-${r.customer_id}`)));
     setSelected([]);
     setDeleting(false);
   };
@@ -92,6 +161,31 @@ const CleanQpanelTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Modo de operação */}
+      <div className="bg-card rounded-lg p-4 border border-gray-800">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold">Modo de Operação</h3>
+            <p className="text-sm text-gray-400 mt-1">
+              {relayMode
+                ? '🔌 Relay via Plugin Chrome — o plugin executa as ações no qPanel usando a sessão do browser'
+                : '🌐 Direto — o backend tenta acessar o qPanel diretamente (pode falhar se exigir sessão)'}
+            </p>
+          </div>
+          <button
+            onClick={() => setRelayMode(!relayMode)}
+            className={`px-4 py-2 rounded-lg font-medium transition ${relayMode ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'}`}
+          >
+            {relayMode ? '✅ Relay Ativo' : '⚡ Ativar Relay'}
+          </button>
+        </div>
+        {relayMode && (
+          <div className="mt-3 p-3 bg-green-900/30 border border-green-700 rounded-lg text-sm text-green-300">
+            ℹ️ Com o relay ativo, o plugin Chrome precisa estar aberto e conectado ao painel. O plugin faz polling a cada 3s para buscar comandos.
+          </div>
+        )}
+      </div>
+
       {/* Busca */}
       <div className="bg-card rounded-lg p-6 border border-gray-800">
         <h2 className="text-xl font-bold mb-2">Buscar Usuário nos Painéis</h2>
@@ -111,7 +205,7 @@ const CleanQpanelTab = () => {
             className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition"
           >
             {searching ? <Loader className="animate-spin" size={18} /> : <Search size={18} />}
-            {searching ? 'Buscando...' : 'Buscar'}
+            {searching ? (relayMode ? 'Aguardando plugin...' : 'Buscando...') : 'Buscar'}
           </button>
         </div>
       </div>
@@ -136,7 +230,7 @@ const CleanQpanelTab = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
                 >
                   {deleting ? <Loader className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                  {deleting ? 'Deletando...' : `Deletar ${selected.length > 0 ? `(${selected.length})` : 'Selecionados'}`}
+                  {deleting ? (relayMode ? 'Aguardando plugin...' : 'Deletando...') : `Deletar ${selected.length > 0 ? `(${selected.length})` : 'Selecionados'}`}
                 </button>
               </div>
             )}

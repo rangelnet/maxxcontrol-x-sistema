@@ -1021,12 +1021,199 @@ router.post('/qpanel-delete-user', async (req, res) => {
   }
 });
 
+// ============================================
+// SISTEMA DE RELAY (Plugin Chrome ↔ Painel)
+// ============================================
+
+/**
+ * POST /api/iptv-plugin/relay-command
+ * Painel insere um comando na fila para o plugin Chrome executar
+ * Body: { panel_id, command_type, payload }
+ */
+router.post('/relay-command', async (req, res) => {
+  try {
+    const { panel_id, command_type, payload } = req.body;
+
+    if (!command_type || !payload) {
+      return res.status(400).json({ error: 'command_type e payload são obrigatórios' });
+    }
+
+    const validTypes = ['search_user', 'delete_user'];
+    if (!validTypes.includes(command_type)) {
+      return res.status(400).json({ error: `command_type inválido. Use: ${validTypes.join(', ')}` });
+    }
+
+    // Limpar comandos expirados antes de inserir
+    await pool.query(`DELETE FROM plugin_relay_commands WHERE expires_at < NOW()`).catch(() => {});
+
+    const result = await pool.query(`
+      INSERT INTO plugin_relay_commands (panel_id, command_type, payload, status, created_at, expires_at)
+      VALUES ($1, $2, $3, 'pending', NOW(), NOW() + INTERVAL '5 minutes')
+      RETURNING id, status, created_at
+    `, [panel_id || null, command_type, JSON.stringify(payload)]);
+
+    res.json({
+      success: true,
+      command_id: result.rows[0].id,
+      status: 'pending',
+      message: 'Comando inserido na fila. Aguardando plugin Chrome executar.'
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao inserir relay command:', error);
+    res.status(500).json({ error: 'Erro ao inserir comando', detail: error.message });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/relay-pending
+ * Plugin Chrome faz polling para buscar comandos pendentes
+ * Query: ?panel_url=http://meupainel.com (opcional, para filtrar por painel)
+ */
+router.get('/relay-pending', async (req, res) => {
+  try {
+    const { panel_url } = req.query;
+
+    let query;
+    let params;
+
+    if (panel_url) {
+      // Buscar comandos do painel específico (por URL)
+      query = `
+        SELECT rc.id, rc.panel_id, rc.command_type, rc.payload, rc.created_at,
+               qp.panel_url, qp.panel_name
+        FROM plugin_relay_commands rc
+        LEFT JOIN qpanel_panels qp ON rc.panel_id = qp.id
+        WHERE rc.status = 'pending'
+          AND rc.expires_at > NOW()
+          AND (rc.panel_id IS NULL OR qp.panel_url ILIKE $1)
+        ORDER BY rc.created_at ASC
+        LIMIT 10
+      `;
+      params = [`%${panel_url.replace(/\/$/, '')}%`];
+    } else {
+      // Buscar todos os comandos pendentes (plugin pega tudo)
+      query = `
+        SELECT rc.id, rc.panel_id, rc.command_type, rc.payload, rc.created_at,
+               qp.panel_url, qp.panel_name
+        FROM plugin_relay_commands rc
+        LEFT JOIN qpanel_panels qp ON rc.panel_id = qp.id
+        WHERE rc.status = 'pending'
+          AND rc.expires_at > NOW()
+        ORDER BY rc.created_at ASC
+        LIMIT 10
+      `;
+      params = [];
+    }
+
+    const result = await pool.query(query, params);
+
+    // Marcar como 'executing' para evitar que outro plugin pegue o mesmo
+    if (result.rows.length > 0) {
+      const ids = result.rows.map(r => r.id);
+      await pool.query(
+        `UPDATE plugin_relay_commands SET status = 'executing', updated_at = NOW() WHERE id = ANY($1)`,
+        [ids]
+      );
+    }
+
+    res.json({
+      success: true,
+      commands: result.rows.map(r => ({
+        id: r.id,
+        panel_id: r.panel_id,
+        panel_url: r.panel_url,
+        panel_name: r.panel_name,
+        command_type: r.command_type,
+        payload: r.payload
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar relay pending:', error);
+    // Retornar lista vazia em caso de erro (tabela pode não existir ainda)
+    res.json({ success: true, commands: [] });
+  }
+});
+
+/**
+ * POST /api/iptv-plugin/relay-result
+ * Plugin Chrome posta o resultado de um comando executado
+ * Body: { command_id, status, result, error_message }
+ */
+router.post('/relay-result', async (req, res) => {
+  try {
+    const { command_id, status, result, error_message } = req.body;
+
+    if (!command_id || !status) {
+      return res.status(400).json({ error: 'command_id e status são obrigatórios' });
+    }
+
+    const validStatuses = ['done', 'error'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: `status inválido. Use: ${validStatuses.join(', ')}` });
+    }
+
+    const updateResult = await pool.query(`
+      UPDATE plugin_relay_commands
+      SET status = $1, result = $2, error_message = $3, updated_at = NOW()
+      WHERE id = $4
+      RETURNING id, status
+    `, [status, result ? JSON.stringify(result) : null, error_message || null, command_id]);
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Comando não encontrado' });
+    }
+
+    res.json({ success: true, command_id, status });
+
+  } catch (error) {
+    console.error('❌ Erro ao salvar relay result:', error);
+    res.status(500).json({ error: 'Erro ao salvar resultado', detail: error.message });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/relay-result/:command_id
+ * Frontend do painel faz polling para ler o resultado de um comando
+ */
+router.get('/relay-result/:command_id', async (req, res) => {
+  try {
+    const { command_id } = req.params;
+
+    const result = await pool.query(
+      `SELECT id, status, result, error_message, created_at, updated_at
+       FROM plugin_relay_commands WHERE id = $1`,
+      [command_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Comando não encontrado' });
+    }
+
+    const cmd = result.rows[0];
+    res.json({
+      success: true,
+      command_id: cmd.id,
+      status: cmd.status,
+      result: cmd.result,
+      error_message: cmd.error_message,
+      created_at: cmd.created_at,
+      updated_at: cmd.updated_at
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar relay result:', error);
+    res.status(500).json({ error: 'Erro ao buscar resultado', detail: error.message });
+  }
+});
+
 /**
  * GET /api/iptv-plugin/check-tables
  * Diagnóstico: verifica quais tabelas do plugin existem no banco
  */
 router.get('/check-tables', async (req, res) => {
-  const tables = ['iptv_servers', 'iptv_playlists', 'device_iptv_sync', 'qpanel_panels', 'qpanel_servers', 'qpanel_accounts', 'smartone_registrations'];
+  const tables = ['iptv_servers', 'iptv_playlists', 'device_iptv_sync', 'qpanel_panels', 'qpanel_servers', 'qpanel_accounts', 'smartone_registrations', 'plugin_relay_commands'];
   const results = {};
 
   for (const table of tables) {
