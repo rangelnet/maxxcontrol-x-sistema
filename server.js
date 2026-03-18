@@ -167,6 +167,30 @@ async function runPendingMigrations() {
 
   console.log('✅ Tabelas IPTV Plugin verificadas/criadas');
 
+  // Migração: tabela plugin_relay_commands (Relay Plugin Chrome ↔ Painel)
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS plugin_relay_commands (
+      id SERIAL PRIMARY KEY,
+      panel_id INTEGER REFERENCES qpanel_panels(id) ON DELETE CASCADE,
+      command_type VARCHAR(50) NOT NULL,
+      payload JSONB NOT NULL DEFAULT '{}',
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      result JSONB,
+      error_message TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      expires_at TIMESTAMP DEFAULT (NOW() + INTERVAL '5 minutes')
+    )`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_relay_commands_status ON plugin_relay_commands(status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_relay_commands_panel ON plugin_relay_commands(panel_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_relay_commands_expires ON plugin_relay_commands(expires_at)`);
+    console.log('✅ Tabela plugin_relay_commands verificada/criada');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.warn('⚠️ Aviso migração plugin_relay_commands:', err.message);
+    }
+  }
+
   // Migração: tabela playlist_servers (Playlist Manager)
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS playlist_servers (
