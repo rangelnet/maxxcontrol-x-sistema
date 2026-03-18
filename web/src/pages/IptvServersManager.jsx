@@ -593,6 +593,9 @@ const IptvServersManager = () => {
     username: '', password: '', device_mac: '', selected_packages: []
   });
 
+  const [loadingPanels, setLoadingPanels] = useState({}); // { [panelId]: 'idle' | 'waiting' | 'done' | 'error' }
+  const [panelStatus, setPanelStatus] = useState({});     // { [panelId]: string } mensagem de status
+
   useEffect(() => {
     Promise.all([loadServers(), loadQpanels()]).finally(() => setLoading(false));
   }, []);
@@ -657,42 +660,69 @@ const IptvServersManager = () => {
   };
 
   const handleLoadQpanelServers = async (qpanel) => {
+    const id = qpanel.id;
+    const setStatus = (msg) => setPanelStatus(prev => ({ ...prev, [id]: msg }));
+    const setLoadState = (state) => setLoadingPanels(prev => ({ ...prev, [id]: state }));
+
     try {
-      // Enviar comando relay para o plugin Chrome buscar os servidores
+      setLoadState('waiting');
+      setStatus('⏳ Enviando comando para o plugin...');
+
       const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
-        panel_id: qpanel.id,
+        panel_id: id,
         command_type: 'get_servers',
         payload: { panel_url: qpanel.panel_url }
       });
 
       const commandId = cmdRes.data.command_id;
-      alert(`⏳ Comando enviado! Aguardando o plugin Chrome buscar os servidores...\n\nCertifique-se que o plugin está aberto e o painel "${qpanel.panel_name}" está aberto no browser.`);
+      setStatus('⏳ Aguardando o plugin Chrome buscar os servidores...');
 
-      // Polling para aguardar resultado (até 30s)
+      // Polling até 30s
       const start = Date.now();
       let relayResult = null;
       while (Date.now() - start < 30000) {
         await new Promise(r => setTimeout(r, 2000));
         const res = await api.get(`/api/iptv-plugin/relay-result/${commandId}`);
         const { status, result, error_message } = res.data;
-        if (status === 'done') { relayResult = result; break; }
-        if (status === 'error') { alert(`❌ Erro ao buscar servidores: ${error_message}`); return; }
+        if (status === 'done') {
+          // result pode vir como string JSON do banco — fazer parse se necessário
+          relayResult = typeof result === 'string' ? JSON.parse(result) : result;
+          break;
+        }
+        if (status === 'error') {
+          setStatus(`❌ Erro: ${error_message}`);
+          setLoadState('error');
+          return;
+        }
+        const elapsed = Math.round((Date.now() - start) / 1000);
+        setStatus(`⏳ Aguardando resposta do plugin... (${elapsed}s)`);
       }
 
       if (!relayResult) {
-        alert('⏰ Timeout: o plugin Chrome não respondeu em 30s.\n\nVerifique se o plugin está aberto e conectado.');
+        setStatus('⏰ Timeout: plugin não respondeu em 30s. Verifique se está aberto e conectado.');
+        setLoadState('error');
         return;
       }
 
-      const servers = relayResult.servers || [];
-      if (servers.length === 0) {
-        alert('ℹ️ Nenhum servidor encontrado no painel.');
+      const fetchedServers = relayResult.servers || [];
+      if (fetchedServers.length === 0) {
+        setStatus('ℹ️ Nenhum servidor encontrado no painel.');
+        setLoadState('done');
         return;
       }
 
-      const saveResponse = await api.post('/api/iptv-plugin/qpanel-load-servers', { panel_id: qpanel.id, servers });
-      alert(`✅ ${saveResponse.data.total} servidor(es) carregado(s) com sucesso!`);
-    } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
+      setStatus(`💾 Salvando ${fetchedServers.length} servidor(es)...`);
+      const saveResponse = await api.post('/api/iptv-plugin/qpanel-load-servers', { panel_id: id, servers: fetchedServers });
+      const total = saveResponse.data.total || fetchedServers.length;
+      setStatus(`✅ ${total} servidor(es) carregado(s) com sucesso!`);
+      setLoadState('done');
+
+      // Recarregar lista de painéis para refletir os servidores salvos
+      await loadQpanels();
+    } catch (err) {
+      setStatus('❌ Erro: ' + (err.response?.data?.error || err.message));
+      setLoadState('error');
+    }
   };
 
   const handleCreateAccounts = async (e) => {
@@ -912,26 +942,80 @@ const IptvServersManager = () => {
                 <p className="text-gray-400">Nenhum painel qPanel configurado</p>
                 <p className="text-gray-500 text-sm mt-2">Adicione um painel para começar</p>
               </div>
-            ) : qpanels.map(qpanel => (
-              <div key={qpanel.id} className="bg-gray-800 rounded-lg p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold">{qpanel.panel_name}</h3>
-                    <p className="text-gray-400 text-sm truncate">{qpanel.panel_url}</p>
+            ) : qpanels.map(qpanel => {
+              const panelLoadState = loadingPanels[qpanel.id];
+              const statusMsg = panelStatus[qpanel.id];
+              const isLoading = panelLoadState === 'waiting';
+              const loadedServers = qpanel.servers || [];
+
+              return (
+                <div key={qpanel.id} className="bg-gray-800 rounded-lg p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <h3 className="text-lg font-bold">{qpanel.panel_name}</h3>
+                      <p className="text-gray-400 text-sm truncate">{qpanel.panel_url}</p>
+                    </div>
+                    <button onClick={() => handleDeleteQpanel(qpanel.id)} className="bg-red-600 hover:bg-red-700 p-2 rounded-lg transition flex-shrink-0">
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <button onClick={() => handleDeleteQpanel(qpanel.id)} className="bg-red-600 hover:bg-red-700 p-2 rounded-lg transition">
-                    <Trash2 size={16} />
+
+                  <div className="text-sm text-gray-400 mb-3">
+                    <span>Status: </span><span className="text-green-400 font-semibold">{qpanel.status}</span>
+                    <span className="ml-4">Criado: {new Date(qpanel.created_at).toLocaleDateString('pt-BR')}</span>
+                  </div>
+
+                  {/* Servidores já carregados */}
+                  {loadedServers.length > 0 && (
+                    <div className="mb-3 p-3 bg-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2 font-semibold">🖥️ {loadedServers.length} servidor(es) carregado(s):</p>
+                      <div className="space-y-1 max-h-28 overflow-y-auto">
+                        {loadedServers.map((s, i) => (
+                          <div key={i} className="text-xs text-gray-300 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
+                            <span className="truncate">{s.name || s.server_name}</span>
+                            {s.dns && <span className="text-gray-500 truncate">· {s.dns}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status do carregamento */}
+                  {statusMsg && (
+                    <div className={`mb-3 p-2 rounded text-xs font-medium ${
+                      panelLoadState === 'error' ? 'bg-red-900/50 text-red-300' :
+                      panelLoadState === 'done'  ? 'bg-green-900/50 text-green-300' :
+                                                   'bg-blue-900/50 text-blue-300'
+                    }`}>
+                      {statusMsg}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handleLoadQpanelServers(qpanel)}
+                    disabled={isLoading}
+                    className={`w-full p-2 rounded transition text-sm flex items-center justify-center gap-2 ${
+                      isLoading
+                        ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                        : 'bg-primary hover:bg-orange-600 text-white'
+                    }`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                        Carregando...
+                      </>
+                    ) : (
+                      <>🔄 {loadedServers.length > 0 ? 'Recarregar Servidores' : 'Carregar Servidores'}</>
+                    )}
                   </button>
                 </div>
-                <div className="text-sm text-gray-400 mb-4">
-                  <span>Status: </span><span className="text-green-400 font-semibold">{qpanel.status}</span>
-                  <span className="ml-4">Criado: {new Date(qpanel.created_at).toLocaleDateString('pt-BR')}</span>
-                </div>
-                <button onClick={() => handleLoadQpanelServers(qpanel)}
-                  className="w-full bg-primary hover:bg-orange-600 p-2 rounded transition text-sm">
-                  🔄 Carregar Servidores
-                </button>
-              </div>
+              );
+            })}
             ))}
           </div>
         </div>

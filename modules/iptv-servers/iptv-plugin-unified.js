@@ -470,16 +470,37 @@ router.post('/add-qpanel', async (req, res) => {
 
 /**
  * GET /api/iptv-plugin/qpanels
- * Lista todos os painéis qPanel
+ * Lista todos os painéis qPanel com seus servidores carregados
  */
 router.get('/qpanels', async (req, res) => {
   try {
-    const result = await Promise.race([
+    const panelsResult = await Promise.race([
       pool.query(`SELECT * FROM qpanel_panels WHERE status = 'active' ORDER BY created_at DESC`),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
     ]);
 
-    res.json({ success: true, panels: result.rows });
+    const panels = panelsResult.rows;
+
+    // Para cada painel, buscar os servidores salvos
+    for (const panel of panels) {
+      try {
+        const serversResult = await pool.query(
+          `SELECT id, server_name, server_dns, server_data, created_at
+           FROM qpanel_servers WHERE panel_id = $1 ORDER BY created_at DESC`,
+          [panel.id]
+        );
+        panel.servers = serversResult.rows.map(r => ({
+          id: r.id,
+          name: r.server_name,
+          dns: r.server_dns,
+          ...(r.server_data ? (typeof r.server_data === 'string' ? JSON.parse(r.server_data) : r.server_data) : {})
+        }));
+      } catch (e) {
+        panel.servers = [];
+      }
+    }
+
+    res.json({ success: true, panels });
   } catch (error) {
     console.error('⚠️ Tabela qpanel_panels não encontrada ou erro:', error.message);
     res.json({ success: true, panels: [] });
