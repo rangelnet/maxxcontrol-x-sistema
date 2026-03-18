@@ -257,6 +257,7 @@ app.use('/api/branding', require('./modules/branding/brandingRoutes'));
 app.use('/api/iptv-server', require('./modules/iptv-server/iptvServerRoutes'));
 app.use('/api/iptv-tree', require('./modules/iptv-tree/iptvTreeRoutes'));
 app.use('/api/banners', require('./modules/banners/bannerRoutes'));
+app.use('/api/resale', require('./modules/resale/resaleRoutes'));
 
 // Rotas do sistema multi-servidor IPTV
 app.use('/api/iptv', require('./modules/iptv-credentials/iptvCredentialsRoutes'));
