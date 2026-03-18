@@ -1156,7 +1156,6 @@ const IptvServersManager = () => {
                 </div>
               );
             })}
-            ))}
           </div>
         </div>
       )}
