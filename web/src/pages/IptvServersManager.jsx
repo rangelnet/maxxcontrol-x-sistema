@@ -586,7 +586,7 @@ const IptvServersManager = () => {
   });
 
   const [qpanelForm, setQpanelForm] = useState({
-    panel_name: '', panel_url: '', panel_username: '', panel_password: ''
+    panel_name: '', panel_url: ''
   });
 
   const [accountForm, setAccountForm] = useState({
@@ -642,7 +642,7 @@ const IptvServersManager = () => {
     try {
       await api.post('/api/iptv-plugin/add-qpanel', qpanelForm);
       alert('Painel qPanel adicionado!');
-      setQpanelForm({ panel_name: '', panel_url: '', panel_username: '', panel_password: '' });
+      setQpanelForm({ panel_name: '', panel_url: '' });
       setShowAddQpanel(false);
       loadQpanels();
     } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
@@ -856,16 +856,13 @@ const IptvServersManager = () => {
                   <input type="text" placeholder="Nome do painel" value={qpanelForm.panel_name}
                     onChange={e => setQpanelForm({ ...qpanelForm, panel_name: e.target.value })}
                     className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
-                  <input type="url" placeholder="URL do painel" value={qpanelForm.panel_url}
+                  <input type="url" placeholder="URL do painel (ex: http://meupainel.com)" value={qpanelForm.panel_url}
                     onChange={e => setQpanelForm({ ...qpanelForm, panel_url: e.target.value })}
                     className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
-                  <input type="text" placeholder="Usuário (opcional)" value={qpanelForm.panel_username}
-                    onChange={e => setQpanelForm({ ...qpanelForm, panel_username: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" />
-                  <input type="password" placeholder="Senha (opcional)" value={qpanelForm.panel_password}
-                    onChange={e => setQpanelForm({ ...qpanelForm, panel_password: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" />
                 </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  ℹ️ O plugin Chrome usa a sessão do seu browser para autenticar — não é necessário usuário/senha aqui.
+                </p>
                 <button type="submit" className="w-full bg-green-600 hover:bg-green-700 p-2 rounded transition mt-4">
                   Adicionar Painel qPanel
                 </button>
