@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./iptvServersController');
-const { authMiddleware } = require('../../middlewares/auth');
+const authMiddleware = require('../../middlewares/auth');
 
 /**
  * Rotas para gerenciamento de servidores IPTV

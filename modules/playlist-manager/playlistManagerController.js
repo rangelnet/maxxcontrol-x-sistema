@@ -343,4 +343,4 @@ async function registerVUPlayer(data) {
   }
 }
 
-module.exports = exports;
+// exports já está configurado corretamente via exports.xxx = ...

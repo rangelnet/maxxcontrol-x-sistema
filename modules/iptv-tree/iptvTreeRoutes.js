@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./iptvTreeController');
-const { authMiddleware } = require('../../middlewares/auth');
+const authMiddleware = require('../../middlewares/auth');
 
 // Todas as rotas requerem autenticação
 router.get('/categories/:type', authMiddleware, controller.getCategories);

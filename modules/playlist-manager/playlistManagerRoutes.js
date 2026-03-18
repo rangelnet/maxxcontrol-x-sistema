@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./playlistManagerController');
-const { authMiddleware } = require('../../middlewares/auth');
+const authMiddleware = require('../../middlewares/auth');
 
 /**
  * Rotas do Playlist Manager 4-in-1

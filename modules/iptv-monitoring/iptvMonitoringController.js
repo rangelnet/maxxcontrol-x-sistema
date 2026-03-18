@@ -227,4 +227,4 @@ exports.getMonitoringStats = async (req, res) => {
   }
 };
 
-module.exports = exports;
+// exports já está configurado corretamente via exports.xxx = ...
