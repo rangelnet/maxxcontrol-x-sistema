@@ -1,10 +1,11 @@
 import axios from 'axios'
 
-// Configuração da API - usa URL relativa em produção
+// Configuração da API
+// Em dev: usa proxy do Vite (localhost:3001) via VITE_API_URL ou string vazia
+// Em produção: sempre aponta para o backend no Render
+const isDev = import.meta.env.DEV
 const BACKEND_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.MODE === 'production' 
-    ? 'https://maxxcontrol-x-sistema.onrender.com' 
-    : 'http://localhost:3001')
+  (isDev ? 'http://localhost:3001' : 'https://maxxcontrol-x-sistema.onrender.com')
 
 const api = axios.create({
   baseURL: BACKEND_URL,

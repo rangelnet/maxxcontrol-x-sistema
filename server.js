@@ -13,106 +13,158 @@ async function runPendingMigrations() {
   const IGNORE_CODES = ['42P07', '42701', '42P11', '42710']; // duplicate table/column/index/object
 
   // Migração: tabelas IPTV Plugin (executar cada CREATE individualmente)
-  const iptvStatements = [
-    `CREATE TABLE IF NOT EXISTS iptv_servers (
-      id SERIAL PRIMARY KEY,
-      server_name VARCHAR(255) NOT NULL,
-      xtream_url VARCHAR(500) NOT NULL,
-      xtream_username VARCHAR(255),
-      xtream_password VARCHAR(255),
-      server_type VARCHAR(50) DEFAULT 'custom',
-      status VARCHAR(50) DEFAULT 'active',
-      last_tested_at TIMESTAMP,
-      test_status VARCHAR(50),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS iptv_playlists (
-      id SERIAL PRIMARY KEY,
-      server_id INTEGER NOT NULL REFERENCES iptv_servers(id) ON DELETE CASCADE,
-      playlist_name VARCHAR(255) NOT NULL,
-      playlist_url VARCHAR(500) NOT NULL,
-      playlist_type VARCHAR(50) DEFAULT 'custom',
-      status VARCHAR(50) DEFAULT 'active',
-      channels_count INTEGER DEFAULT 0,
-      last_synced_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS device_iptv_sync (
-      id SERIAL PRIMARY KEY,
-      device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
-      server_id INTEGER NOT NULL REFERENCES iptv_servers(id) ON DELETE CASCADE,
-      playlist_id INTEGER REFERENCES iptv_playlists(id) ON DELETE SET NULL,
-      sync_status VARCHAR(50) DEFAULT 'pending',
-      last_sync_at TIMESTAMP,
-      sync_error TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS qpanel_panels (
-      id SERIAL PRIMARY KEY,
-      panel_name VARCHAR(255) NOT NULL,
-      panel_url VARCHAR(500) NOT NULL,
-      panel_username VARCHAR(255),
-      panel_password VARCHAR(255),
-      status VARCHAR(50) DEFAULT 'active',
-      last_sync_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS qpanel_servers (
-      id SERIAL PRIMARY KEY,
-      panel_id INTEGER NOT NULL REFERENCES qpanel_panels(id) ON DELETE CASCADE,
-      server_name VARCHAR(255) NOT NULL,
-      server_dns VARCHAR(255) NOT NULL,
-      server_data JSONB,
-      status VARCHAR(50) DEFAULT 'active',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS qpanel_accounts (
-      id SERIAL PRIMARY KEY,
-      panel_id INTEGER NOT NULL REFERENCES qpanel_panels(id) ON DELETE CASCADE,
-      server_id INTEGER NOT NULL,
-      package_id INTEGER NOT NULL,
-      username VARCHAR(255) NOT NULL,
-      password VARCHAR(255) NOT NULL,
-      device_mac VARCHAR(17) NOT NULL,
-      m3u_url VARCHAR(500),
-      status VARCHAR(50) DEFAULT 'active',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS smartone_registrations (
-      id SERIAL PRIMARY KEY,
-      device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
-      device_mac VARCHAR(17) NOT NULL,
-      server_name VARCHAR(255) NOT NULL,
-      dns VARCHAR(255) NOT NULL,
-      username VARCHAR(255) NOT NULL,
-      password VARCHAR(255) NOT NULL,
-      m3u_url VARCHAR(500) NOT NULL,
-      status VARCHAR(50) DEFAULT 'active',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_smartone_device_dns ON smartone_registrations(device_mac, dns)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_qpanel_servers_panel_name ON qpanel_servers(panel_id, server_name)`,
-    `CREATE INDEX IF NOT EXISTS idx_iptv_servers_status ON iptv_servers(status)`,
-    `CREATE INDEX IF NOT EXISTS idx_qpanel_panels_status ON qpanel_panels(status)`,
-    `CREATE INDEX IF NOT EXISTS idx_qpanel_accounts_device ON qpanel_accounts(device_mac)`
+  // Tabelas sem dependências externas primeiro
+  const iptvStatementsPhase1 = [
+    {
+      name: 'iptv_servers',
+      sql: `CREATE TABLE IF NOT EXISTS iptv_servers (
+        id SERIAL PRIMARY KEY,
+        server_name VARCHAR(255) NOT NULL,
+        xtream_url VARCHAR(500) NOT NULL,
+        xtream_username VARCHAR(255),
+        xtream_password VARCHAR(255),
+        server_type VARCHAR(50) DEFAULT 'custom',
+        status VARCHAR(50) DEFAULT 'active',
+        last_tested_at TIMESTAMP,
+        test_status VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'qpanel_panels',
+      sql: `CREATE TABLE IF NOT EXISTS qpanel_panels (
+        id SERIAL PRIMARY KEY,
+        panel_name VARCHAR(255) NOT NULL,
+        panel_url VARCHAR(500) NOT NULL,
+        panel_username VARCHAR(255),
+        panel_password VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'active',
+        last_sync_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    }
   ];
 
-  for (const stmt of iptvStatements) {
+  // Tabelas com FKs (dependem das tabelas acima e de 'devices')
+  const iptvStatementsPhase2 = [
+    {
+      name: 'iptv_playlists',
+      sql: `CREATE TABLE IF NOT EXISTS iptv_playlists (
+        id SERIAL PRIMARY KEY,
+        server_id INTEGER NOT NULL REFERENCES iptv_servers(id) ON DELETE CASCADE,
+        playlist_name VARCHAR(255) NOT NULL,
+        playlist_url VARCHAR(500) NOT NULL,
+        playlist_type VARCHAR(50) DEFAULT 'custom',
+        status VARCHAR(50) DEFAULT 'active',
+        channels_count INTEGER DEFAULT 0,
+        last_synced_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'device_iptv_sync',
+      sql: `CREATE TABLE IF NOT EXISTS device_iptv_sync (
+        id SERIAL PRIMARY KEY,
+        device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+        server_id INTEGER NOT NULL REFERENCES iptv_servers(id) ON DELETE CASCADE,
+        playlist_id INTEGER REFERENCES iptv_playlists(id) ON DELETE SET NULL,
+        sync_status VARCHAR(50) DEFAULT 'pending',
+        last_sync_at TIMESTAMP,
+        sync_error TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'qpanel_servers',
+      sql: `CREATE TABLE IF NOT EXISTS qpanel_servers (
+        id SERIAL PRIMARY KEY,
+        panel_id INTEGER NOT NULL REFERENCES qpanel_panels(id) ON DELETE CASCADE,
+        server_name VARCHAR(255) NOT NULL,
+        server_dns VARCHAR(255) NOT NULL,
+        server_data JSONB,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'qpanel_accounts',
+      sql: `CREATE TABLE IF NOT EXISTS qpanel_accounts (
+        id SERIAL PRIMARY KEY,
+        panel_id INTEGER NOT NULL REFERENCES qpanel_panels(id) ON DELETE CASCADE,
+        server_id INTEGER NOT NULL,
+        package_id INTEGER NOT NULL,
+        username VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        device_mac VARCHAR(17) NOT NULL,
+        m3u_url VARCHAR(500),
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'smartone_registrations',
+      sql: `CREATE TABLE IF NOT EXISTS smartone_registrations (
+        id SERIAL PRIMARY KEY,
+        device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+        device_mac VARCHAR(17) NOT NULL,
+        server_name VARCHAR(255) NOT NULL,
+        dns VARCHAR(255) NOT NULL,
+        username VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        m3u_url VARCHAR(500) NOT NULL,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    }
+  ];
+
+  const iptvIndexes = [
+    { name: 'idx_smartone_device_dns', sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_smartone_device_dns ON smartone_registrations(device_mac, dns)` },
+    { name: 'idx_qpanel_servers_panel_name', sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_qpanel_servers_panel_name ON qpanel_servers(panel_id, server_name)` },
+    { name: 'idx_iptv_servers_status', sql: `CREATE INDEX IF NOT EXISTS idx_iptv_servers_status ON iptv_servers(status)` },
+    { name: 'idx_qpanel_panels_status', sql: `CREATE INDEX IF NOT EXISTS idx_qpanel_panels_status ON qpanel_panels(status)` },
+    { name: 'idx_qpanel_accounts_device', sql: `CREATE INDEX IF NOT EXISTS idx_qpanel_accounts_device ON qpanel_accounts(device_mac)` }
+  ];
+
+  for (const { name, sql } of iptvStatementsPhase1) {
     try {
-      await pool.query(stmt);
+      await pool.query(sql);
+      console.log(`  ✅ Tabela ${name} OK`);
     } catch (err) {
       if (!IGNORE_CODES.includes(err.code)) {
-        console.warn('⚠️ Aviso migração IPTV Plugin:', err.message);
+        console.warn(`  ⚠️ Falha ao criar ${name}:`, err.message);
       }
     }
   }
+
+  for (const { name, sql } of iptvStatementsPhase2) {
+    try {
+      await pool.query(sql);
+      console.log(`  ✅ Tabela ${name} OK`);
+    } catch (err) {
+      if (!IGNORE_CODES.includes(err.code)) {
+        console.warn(`  ⚠️ Falha ao criar ${name}:`, err.message);
+      }
+    }
+  }
+
+  for (const { name, sql } of iptvIndexes) {
+    try {
+      await pool.query(sql);
+    } catch (err) {
+      if (!IGNORE_CODES.includes(err.code)) {
+        console.warn(`  ⚠️ Falha ao criar índice ${name}:`, err.message);
+      }
+    }
+  }
+
   console.log('✅ Tabelas IPTV Plugin verificadas/criadas');
 
   // Migração: tabela playlist_servers (Playlist Manager)

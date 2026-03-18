@@ -459,8 +459,12 @@ router.post('/add-qpanel', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao adicionar painel qPanel:', error.message, error.code);
-    res.status(500).json({ error: 'Erro ao adicionar painel qPanel', detail: error.message });
+    console.error('❌ Erro ao adicionar painel qPanel:', error.message, 'code:', error.code, 'detail:', error.detail);
+    res.status(500).json({ 
+      error: 'Erro ao adicionar painel qPanel', 
+      detail: error.message,
+      code: error.code
+    });
   }
 });
 
@@ -906,6 +910,26 @@ router.post('/sync-all', async (req, res) => {
     console.error('❌ Erro ao sincronizar:', error);
     res.status(500).json({ error: 'Erro ao sincronizar' });
   }
+});
+
+/**
+ * GET /api/iptv-plugin/check-tables
+ * Diagnóstico: verifica quais tabelas do plugin existem no banco
+ */
+router.get('/check-tables', async (req, res) => {
+  const tables = ['iptv_servers', 'iptv_playlists', 'device_iptv_sync', 'qpanel_panels', 'qpanel_servers', 'qpanel_accounts', 'smartone_registrations'];
+  const results = {};
+
+  for (const table of tables) {
+    try {
+      const r = await pool.query(`SELECT COUNT(*) FROM ${table}`);
+      results[table] = { exists: true, count: parseInt(r.rows[0].count) };
+    } catch (err) {
+      results[table] = { exists: false, error: err.message };
+    }
+  }
+
+  res.json({ success: true, tables: results });
 });
 
 module.exports = router;
