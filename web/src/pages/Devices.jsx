@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock, TestTube, Search } from 'lucide-react'
+import { Ban, CheckCircle, Server, X, Save, Trash2, Download, RefreshCw, Package, AlertCircle, Unlock, TestTube, Search, Eye, EyeOff, Copy } from 'lucide-react'
 import TestApiModal from '../components/TestApiModal'
 
 // Versão 1.1 - Botões de bloquear/desbloquear e excluir dispositivos
@@ -28,6 +28,7 @@ const Devices = () => {
   const [saving, setSaving] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(50)
   const [currentPage, setCurrentPage] = useState(1)
+  const [visiblePasswords, setVisiblePasswords] = useState({})
 
   useEffect(() => {
     loadDevices()
@@ -476,6 +477,7 @@ const Devices = () => {
                 <th className="text-left py-3 px-4">IP</th>
                 <th className="text-left py-3 px-4">Servidor</th>
                 <th className="text-left py-3 px-4">Usuário</th>
+                <th className="text-left py-3 px-4">Senha</th>
                 <th className="text-left py-3 px-4">Ping</th>
                 <th className="text-left py-3 px-4">Qualidade</th>
                 <th className="text-left py-3 px-4">Último Acesso</th>
@@ -505,6 +507,33 @@ const Devices = () => {
                     <span className={device.username ? 'text-white font-mono text-sm' : 'text-gray-500'}>
                       {device.username || 'N/A'}
                     </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    {device.current_iptv_password ? (
+                      <div className="flex items-center gap-1">
+                        <span className="font-mono text-sm text-white">
+                          {visiblePasswords[device.id] ? device.current_iptv_password : '••••••••'}
+                        </span>
+                        <button
+                          onClick={() => setVisiblePasswords(prev => ({ ...prev, [device.id]: !prev[device.id] }))}
+                          className="text-gray-400 hover:text-white p-1"
+                          title={visiblePasswords[device.id] ? 'Ocultar senha' : 'Mostrar senha'}
+                        >
+                          {visiblePasswords[device.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(device.current_iptv_password)
+                          }}
+                          className="text-gray-400 hover:text-white p-1"
+                          title="Copiar senha"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">N/A</span>
+                    )}
                   </td>
                   <td className="py-3 px-4">
                     <span className={`font-semibold ${pingInfo.color}`}>

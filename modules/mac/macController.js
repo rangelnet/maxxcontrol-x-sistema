@@ -212,9 +212,11 @@ exports.listAllDevices = async (req, res) => {
         u.email,
         d.current_iptv_server_url,
         d.current_iptv_username,
-        d.test_api_urls
+        d.test_api_urls,
+        ic.xtream_password AS current_iptv_password
       FROM devices d
       LEFT JOIN users u ON d.user_id = u.id
+      LEFT JOIN device_iptv_config ic ON ic.device_id = d.id
       ORDER BY d.ultimo_acesso DESC
     `);
     console.log(`✅ Encontrados ${result.rows.length} dispositivos`);
