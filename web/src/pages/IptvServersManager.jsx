@@ -155,12 +155,64 @@ const IptvServersManager = () => {
     }
   };
 
-  const handleLoadQpanelServers = async (qpanelId) => {
+  const handleLoadQpanelServers = async (qpanel) => {
     try {
-      const response = await api.post('/api/iptv-plugin/qpanel-load-servers', { panel_id: qpanelId });
-      alert(`✅ ${response.data.total} servidores carregados do painel qPanel!`);
+      // Buscar servidores diretamente do painel qPanel via browser (como o Plugin 3 faz)
+      // O token é extraído do localStorage da aba do painel aberta no browser
+      let servers = [];
+      let fetchError = null;
+
+      try {
+        // Tentar buscar diretamente do painel (funciona se o painel estiver aberto na mesma origem ou sem CORS)
+        const response = await fetch(`${qpanel.panel_url.replace(/\/$/, '')}/api/servers`, {
+          headers: {
+            'Accept': 'application/json',
+            // Sem Authorization aqui — o token precisa vir do localStorage do painel
+            // Para funcionar, o usuário precisa estar logado no painel na mesma aba/sessão
+          },
+          credentials: 'include' // Envia cookies de sessão
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const rawServers = data.data || data.servers || [];
+
+          // Processar servidores: extrair DNS e filtrar pacotes de teste
+          servers = rawServers.map(server => {
+            let dns = new URL(qpanel.panel_url).hostname;
+            if (server.dns) dns = server.dns;
+            else if (server.domain) dns = server.domain;
+            else if (server.url) { try { dns = new URL(server.url).hostname; } catch {} }
+
+            const filteredPackages = (server.packages || []).filter(pkg =>
+              !pkg.name?.toLowerCase().includes('teste') &&
+              !pkg.name?.toLowerCase().includes('test')
+            );
+
+            return { ...server, dns, packages: filteredPackages };
+          });
+        } else {
+          fetchError = `HTTP ${response.status}`;
+        }
+      } catch (e) {
+        fetchError = e.message;
+      }
+
+      if (fetchError && servers.length === 0) {
+        // Não conseguiu buscar do painel — salvar sem servidores para pelo menos registrar o painel
+        alert(`⚠️ Não foi possível buscar servidores automaticamente do painel.\n\nMotivo: ${fetchError}\n\nIsso é normal — o painel qPanel requer que você esteja logado nele no browser.\n\nO painel foi salvo e você pode usar a funcionalidade "Criar Contas" normalmente.`);
+        return;
+      }
+
+      // Enviar servidores para o backend salvar
+      const saveResponse = await api.post('/api/iptv-plugin/qpanel-load-servers', {
+        panel_id: qpanel.id,
+        servers
+      });
+
+      alert(`✅ ${saveResponse.data.total} servidor(es) carregado(s) do painel qPanel!`);
     } catch (err) {
-      alert('Erro ao carregar servidores do qPanel: ' + err.response?.data?.error);
+      alert('Erro ao carregar servidores do qPanel: ' + (err.response?.data?.error || err.message));
     }
   };
 
@@ -529,7 +581,7 @@ const IptvServersManager = () => {
 
                     <div className="mt-4 flex gap-2">
                       <button
-                        onClick={() => handleLoadQpanelServers(qpanel.id)}
+                        onClick={() => handleLoadQpanelServers(qpanel)}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 p-2 rounded transition text-sm"
                       >
                         🔄 Carregar Servidores

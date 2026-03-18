@@ -520,18 +520,19 @@ router.delete('/qpanel/:id', async (req, res) => {
 
 /**
  * POST /api/iptv-plugin/qpanel-load-servers
- * Carrega servidores e pacotes de um painel qPanel
- * Simula a funcionalidade do Plugin 3
+ * Salva servidores e pacotes de um painel qPanel (enviados pelo frontend)
+ * O frontend busca os dados diretamente do painel qPanel via browser
+ * e envia para o backend salvar no banco
  */
 router.post('/qpanel-load-servers', async (req, res) => {
   try {
-    const { panel_id } = req.body;
+    const { panel_id, servers } = req.body;
 
     if (!panel_id) {
       return res.status(400).json({ error: 'panel_id é obrigatório' });
     }
 
-    // Buscar painel
+    // Verificar se painel existe
     const panelResult = await pool.query(
       'SELECT * FROM qpanel_panels WHERE id = $1 AND status = $2',
       [panel_id, 'active']
@@ -541,76 +542,43 @@ router.post('/qpanel-load-servers', async (req, res) => {
       return res.status(404).json({ error: 'Painel qPanel não encontrado' });
     }
 
-    const panel = panelResult.rows[0];
-
-    try {
-      // Simular requisição para API do painel qPanel
-      // Na implementação real, faria requisição para panel.panel_url + '/api/servers'
-      const response = await axios.get(`${panel.panel_url}/api/servers`, {
-        headers: {
-          'Authorization': `Bearer ${panel.panel_username}`, // Token seria extraído dinamicamente
-          'Accept': 'application/json'
-        },
-        timeout: 10000
-      });
-
-      const servers = response.data.data || [];
-      
-      // Processar servidores e extrair DNS
-      const processedServers = servers.map(server => {
-        let dns = new URL(panel.panel_url).hostname; // DNS base do painel
-        
-        // Tentar extrair DNS específico do servidor
-        if (server.dns) {
-          dns = server.dns;
-        } else if (server.domain) {
-          dns = server.domain;
-        } else if (server.url) {
-          dns = new URL(server.url).hostname;
-        }
-
-        // Filtrar pacotes de teste
-        const filteredPackages = (server.packages || []).filter(pkg => 
-          !pkg.name.toLowerCase().includes('teste') && 
-          !pkg.name.toLowerCase().includes('test')
-        );
-
-        return {
-          ...server,
-          dns: dns,
-          packages: filteredPackages
-        };
-      });
-
-      // Salvar servidores no banco
-      for (const server of processedServers) {
-        await pool.query(`
-          INSERT INTO qpanel_servers (
-            panel_id, server_name, server_dns, server_data, created_at
-          ) VALUES ($1, $2, $3, $4, NOW())
-          ON CONFLICT (panel_id, server_name) 
-          DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
-        `, [panel_id, server.name, server.dns, JSON.stringify(server)]);
-      }
-
-      res.json({
+    // Se não vieram servidores, apenas retornar os salvos no banco
+    if (!servers || servers.length === 0) {
+      const saved = await pool.query(
+        'SELECT * FROM qpanel_servers WHERE panel_id = $1 AND status = $2 ORDER BY created_at DESC',
+        [panel_id, 'active']
+      );
+      return res.json({
         success: true,
-        message: 'Servidores carregados com sucesso',
-        servers: processedServers,
-        total: processedServers.length
-      });
-
-    } catch (apiError) {
-      console.error('Erro ao conectar com painel qPanel:', apiError);
-      res.status(500).json({ 
-        error: 'Erro ao conectar com painel qPanel',
-        details: apiError.message 
+        message: 'Servidores carregados do banco',
+        servers: saved.rows.map(r => ({ ...r.server_data, id: r.id, server_name: r.server_name, dns: r.server_dns })),
+        total: saved.rows.length
       });
     }
 
+    // Salvar/atualizar servidores enviados pelo frontend
+    for (const server of servers) {
+      const serverName = server.name || server.server_name || `Servidor ${server.id}`;
+      const serverDns = server.dns || '';
+      await pool.query(`
+        INSERT INTO qpanel_servers (
+          panel_id, server_name, server_dns, server_data, created_at
+        ) VALUES ($1, $2, $3, $4, NOW())
+        ON CONFLICT (panel_id, server_name) 
+        DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
+      `, [panel_id, serverName, serverDns, JSON.stringify(server)]);
+    }
+
+    res.json({
+      success: true,
+      message: `${servers.length} servidor(es) salvo(s) com sucesso`,
+      servers,
+      total: servers.length
+    });
+
   } catch (error) {
-    console.error('❌ Erro ao carregar servidores qPanel:', error);
-    res.status(500).json({ error: 'Erro ao carregar servidores qPanel' });
+    console.error('❌ Erro ao salvar servidores qPanel:', error);
+    res.status(500).json({ error: 'Erro ao salvar servidores qPanel', detail: error.message });
   }
 });
 
