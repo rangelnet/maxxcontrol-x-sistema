@@ -3,8 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Devices from './pages/Devices'
-import APIMonitor from './pages/APIMonitor'
-import APIConfig from './pages/APIConfig'
+import APIPanel from './pages/APIPanel'
 import BrandingBanners from './pages/BrandingBanners'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
@@ -29,8 +28,8 @@ function App() {
           }>
             <Route index element={<Dashboard />} />
             <Route path="devices" element={<Devices />} />
-            <Route path="api-monitor" element={<APIMonitor />} />
-            <Route path="api-config" element={<APIConfig />} />
+            <Route path="api-monitor" element={<Navigate to="/api-config" replace />} />
+            <Route path="api-config" element={<APIPanel />} />
             <Route path="branding-banners" element={<BrandingBanners />} />
             <Route path="logs" element={<Logs />} />
             <Route path="bugs" element={<Navigate to="/logs" replace />} />
