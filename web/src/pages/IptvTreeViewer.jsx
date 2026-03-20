@@ -517,21 +517,21 @@ const IptvTreeViewer = () => {
             placeholder="URL do servidor (ex: http://exemplo.com:8080)"
             value={manualConfig.url}
             onChange={(e) => setManualConfig({ ...manualConfig, url: e.target.value })}
-            className="px-3 py-2 border rounded"
+            className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
           />
           <input
             type="text"
             placeholder="Usuário"
             value={manualConfig.username}
             onChange={(e) => setManualConfig({ ...manualConfig, username: e.target.value })}
-            className="px-3 py-2 border rounded"
+            className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
           />
           <input
             type="text"
             placeholder="Senha"
             value={manualConfig.password}
             onChange={(e) => setManualConfig({ ...manualConfig, password: e.target.value })}
-            className="px-3 py-2 border rounded"
+            className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
           />
           <button
             onClick={handleLoadManualList}
@@ -562,7 +562,7 @@ const IptvTreeViewer = () => {
         <select
           value={configSource}
           onChange={(e) => handleConfigChange(e.target.value)}
-          className="px-3 py-2 border rounded"
+          className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
         >
           <option value="global">Configuração Global</option>
           {Array.isArray(devices) && devices.map(device => (
@@ -589,7 +589,7 @@ const IptvTreeViewer = () => {
             placeholder="Buscar..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 border rounded"
+            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
           />
           {searchQuery && (
             <button
@@ -779,7 +779,7 @@ const IptvTreeViewer = () => {
                     type="text"
                     value={formatStreamUrl(selectedStream, credentials)}
                     readOnly
-                    className="flex-1 px-2 py-1 border rounded text-xs bg-gray-50"
+                    className="flex-1 px-2 py-1 border rounded text-xs bg-gray-50 text-gray-900"
                   />
                   <button
                     onClick={() => handleCopyUrl(formatStreamUrl(selectedStream, credentials))}
