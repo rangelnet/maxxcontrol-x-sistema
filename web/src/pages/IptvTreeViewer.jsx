@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight, ChevronDown, X, Loader, List, CheckCircle } from 'lucide-react';
+import { Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight, ChevronDown, X, Loader, List, CheckCircle, ClipboardList } from 'lucide-react';
 
 const IptvTreeViewer = () => {
   const [configSource, setConfigSource] = useState('global');
@@ -306,6 +306,57 @@ const IptvTreeViewer = () => {
   const handleCopyUrl = (url) => {
     navigator.clipboard.writeText(url);
     alert('URL copiado para área de transferência!');
+  };
+
+  // Expande todas as categorias (só o primeiro nível para não travar)
+  const handleExpandAll = async () => {
+    const newExpanded = new Set(expandedNodes);
+    const toLoad = [];
+
+    const collectCategories = (nodes) => {
+      nodes.forEach(node => {
+        newExpanded.add(node.id);
+        if (!node.loaded && node.type === 'category') {
+          toLoad.push(node);
+        }
+        if (node.children && node.children.length > 0) {
+          collectCategories(node.children);
+        }
+      });
+    };
+
+    collectCategories(treeData);
+    setExpandedNodes(newExpanded);
+
+    // Carregar streams das categorias ainda não carregadas
+    for (const node of toLoad) {
+      await loadStreams(node);
+    }
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedNodes(new Set());
+  };
+
+  // Coleta todos os nomes visíveis na árvore (expandidos)
+  const collectAllNames = (nodes, expanded, result = []) => {
+    nodes.forEach(node => {
+      result.push(node.name || '(sem nome)');
+      if (expanded.has(node.id) && node.children && node.children.length > 0) {
+        collectAllNames(node.children, expanded, result);
+      }
+    });
+    return result;
+  };
+
+  const handleCopyAll = () => {
+    const names = collectAllNames(filteredTree, expandedNodes);
+    if (names.length === 0) {
+      alert('Nenhum item para copiar.');
+      return;
+    }
+    navigator.clipboard.writeText(names.join('\n'));
+    alert(`✅ ${names.length} itens copiados para a área de transferência!`);
   };
 
   const handleLoadManualList = async () => {
@@ -614,6 +665,36 @@ const IptvTreeViewer = () => {
         >
           <RefreshCw className="w-4 h-4" />
           Atualizar
+        </button>
+
+        {/* Expandir Tudo */}
+        <button
+          onClick={handleExpandAll}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2"
+          title="Expande todas as pastas"
+        >
+          <ChevronDown className="w-4 h-4" />
+          Expandir Tudo
+        </button>
+
+        {/* Recolher Tudo */}
+        <button
+          onClick={handleCollapseAll}
+          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2"
+          title="Recolhe todas as pastas"
+        >
+          <ChevronRight className="w-4 h-4" />
+          Recolher
+        </button>
+
+        {/* Copiar Tudo */}
+        <button
+          onClick={handleCopyAll}
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
+          title="Copia todos os nomes visíveis na árvore"
+        >
+          <ClipboardList className="w-4 h-4" />
+          Copiar Tudo
         </button>
       </div>
 
