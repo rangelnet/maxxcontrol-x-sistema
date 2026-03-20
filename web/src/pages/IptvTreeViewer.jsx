@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight, ChevronDown, X, Loader, List, CheckCircle, ClipboardList } from 'lucide-react';
 
@@ -269,16 +269,21 @@ const IptvTreeViewer = () => {
       // Lazy loading
       if (!node.loaded && node.type === 'category') {
         if (node.contentType === 'series') {
-          // Para séries, carregar lista de séries
           await loadStreams(node);
         } else {
-          // Para live e vod, carregar streams
           await loadStreams(node);
         }
       } else if (!node.loaded && node.type === 'stream' && node.contentType === 'series') {
-        // Carregar temporadas e episódios
         await loadSeriesInfo(node);
       }
+
+      // Scroll para mostrar o conteúdo expandido (de baixo para cima)
+      setTimeout(() => {
+        const el = document.querySelector(`[data-node-id="${node.id}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
     }
     
     setExpandedNodes(newExpanded);
@@ -356,10 +361,12 @@ const IptvTreeViewer = () => {
     setExpandedNodes(new Set());
   };
 
-  // Coleta todos os nomes visíveis na árvore (expandidos)
+  // Coleta todos os nomes + IDs visíveis na árvore (expandidos)
   const collectAllNames = (nodes, expanded, result = []) => {
     nodes.forEach(node => {
-      result.push(node.name || '(sem nome)');
+      const id = node.metadata?.stream_id || node.metadata?.series_id || node.metadata?.id || null;
+      const label = id ? `${node.name || '(sem nome)'} | ID: ${id}` : (node.name || '(sem nome)');
+      result.push(label);
       if (expanded.has(node.id) && node.children && node.children.length > 0) {
         collectAllNames(node.children, expanded, result);
       }
@@ -517,6 +524,7 @@ const IptvTreeViewer = () => {
         <div
           className={'flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 cursor-pointer ' + (selectedStream?.id === node.id ? 'bg-blue-50' : '')}
           style={{ paddingLeft: `${level * 20 + 12}px` }}
+          data-node-id={node.id}
           onClick={() => {
             if (canExpand) {
               handleToggle(node);
