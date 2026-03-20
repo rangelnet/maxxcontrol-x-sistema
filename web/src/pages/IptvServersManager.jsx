@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Plus, Trash2, Play, Globe, Users, Settings, Server, List, CheckCircle, Loader, Search, XCircle } from 'lucide-react';
+import { Plus, Trash2, Play, Globe, Users, Settings, Server, List, CheckCircle, Loader, Search, XCircle, TreePine } from 'lucide-react';
+import IptvTreeViewer from './IptvTreeViewer';
 
 // ─── Tab: Limpar qPanel (Plugin 1) ───────────────────────────────────────────
 const CleanQpanelTab = () => {
@@ -878,6 +879,7 @@ const IptvServersManager = () => {
     { id: 'servers', label: 'Servidores IPTV', icon: Settings },
     { id: 'qpanel', label: 'Painéis qPanel', icon: Globe },
     { id: 'playlist', label: 'Playlist Manager', icon: List },
+    { id: 'tree', label: 'Árvore IPTV', icon: TreePine },
     { id: 'clean', label: 'Limpar qPanel', icon: Trash2 },
   ];
 
@@ -1273,6 +1275,9 @@ const IptvServersManager = () => {
 
       {/* ── Tab: Playlist Manager ── */}
       {activeTab === 'playlist' && <PlaylistManagerTab />}
+
+      {/* ── Tab: Árvore IPTV ── */}
+      {activeTab === 'tree' && <IptvTreeViewer />}
 
       {/* ── Tab: Limpar qPanel ── */}
       {activeTab === 'clean' && <CleanQpanelTab />}
