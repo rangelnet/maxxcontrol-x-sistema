@@ -593,16 +593,27 @@ const IptvServersManager = () => {
     username: '', password: '', device_mac: '', selected_packages: []
   });
 
+  // Log de atividades para debug
+  const [debugLog, setDebugLog] = useState([]);
+  
+  const addDebugLog = (message, type = 'info') => {
+    const time = new Date().toLocaleTimeString('pt-BR');
+    setDebugLog(prev => [{ time, message, type }, ...prev.slice(0, 49)]);
+  };
+
   // Função para buscar dispositivo pelo MAC e preencher credenciais
   const handleMacLookup = async (mac, setForm) => {
+    addDebugLog(`🔍 Buscando dispositivo com MAC: ${mac}`, 'info');
     console.log('🔍 handleMacLookup chamada com MAC:', mac);
     
     if (!mac || mac.length < 17) {
+      addDebugLog('⚠️ MAC incompleto ou vazio, ignorando busca', 'warning');
       console.log('⚠️ MAC incompleto ou vazio, ignorando busca');
       return;
     }
     
     try {
+      addDebugLog('📡 Buscando dispositivos na API...', 'info');
       console.log('📡 Buscando dispositivos...');
       const response = await api.get(`/api/device/list-all`);
       console.log('📦 Resposta da API:', response.data);
@@ -611,6 +622,7 @@ const IptvServersManager = () => {
       console.log('🔎 Dispositivo encontrado:', device);
       
       if (device && device.current_iptv_username && device.current_iptv_password) {
+        addDebugLog(`✅ Dispositivo encontrado! Usuário: ${device.current_iptv_username}`, 'success');
         console.log('✅ Preenchendo credenciais:', {
           username: device.current_iptv_username,
           password: '***'
@@ -624,10 +636,12 @@ const IptvServersManager = () => {
         
         alert(`✅ Credenciais preenchidas automaticamente!\nUsuário: ${device.current_iptv_username}`);
       } else {
+        addDebugLog('⚠️ Dispositivo não encontrado ou sem credenciais IPTV', 'warning');
         console.log('⚠️ Dispositivo não encontrado ou sem credenciais IPTV');
         alert('⚠️ Dispositivo não encontrado ou não possui credenciais IPTV cadastradas');
       }
     } catch (err) {
+      addDebugLog(`❌ Erro ao buscar dispositivo: ${err.message}`, 'error');
       console.error('❌ Erro ao buscar dispositivo:', err);
       alert('❌ Erro ao buscar dispositivo: ' + err.message);
     }
@@ -1198,6 +1212,37 @@ const IptvServersManager = () => {
                 </div>
               );
             })}
+          </div>
+
+          {/* Log de Debug */}
+          <div className="bg-card rounded-lg p-6 border border-gray-800 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                📋 Log de Atividades
+              </h2>
+              <button
+                onClick={() => setDebugLog([])}
+                className="text-sm px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded transition"
+              >
+                Limpar Log
+              </button>
+            </div>
+            <div className="bg-dark rounded-lg p-4 h-48 overflow-y-auto font-mono text-sm">
+              {debugLog.length === 0 ? (
+                <p className="text-gray-500">Nenhuma atividade ainda...</p>
+              ) : (
+                debugLog.map((log, i) => (
+                  <div key={i} className={`mb-1 ${
+                    log.type === 'error' ? 'text-red-400' :
+                    log.type === 'warning' ? 'text-yellow-400' :
+                    log.type === 'success' ? 'text-green-400' :
+                    'text-gray-300'
+                  }`}>
+                    <span className="text-gray-500">[{log.time}]</span> <span>{log.message}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
