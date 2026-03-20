@@ -595,22 +595,41 @@ const IptvServersManager = () => {
 
   // Função para buscar dispositivo pelo MAC e preencher credenciais
   const handleMacLookup = async (mac, setForm) => {
-    if (!mac || mac.length < 17) return; // MAC completo tem 17 chars (AA:BB:CC:DD:EE:FF)
+    console.log('🔍 handleMacLookup chamada com MAC:', mac);
+    
+    if (!mac || mac.length < 17) {
+      console.log('⚠️ MAC incompleto ou vazio, ignorando busca');
+      return;
+    }
     
     try {
+      console.log('📡 Buscando dispositivos...');
       const response = await api.get(`/api/device/list-all`);
+      console.log('📦 Resposta da API:', response.data);
+      
       const device = response.data.devices?.find(d => d.mac_address === mac);
+      console.log('🔎 Dispositivo encontrado:', device);
       
       if (device && device.current_iptv_username && device.current_iptv_password) {
+        console.log('✅ Preenchendo credenciais:', {
+          username: device.current_iptv_username,
+          password: '***'
+        });
+        
         setForm(prev => ({
           ...prev,
           username: device.current_iptv_username,
           password: device.current_iptv_password
         }));
-        console.log('✅ Credenciais preenchidas automaticamente do dispositivo');
+        
+        alert(`✅ Credenciais preenchidas automaticamente!\nUsuário: ${device.current_iptv_username}`);
+      } else {
+        console.log('⚠️ Dispositivo não encontrado ou sem credenciais IPTV');
+        alert('⚠️ Dispositivo não encontrado ou não possui credenciais IPTV cadastradas');
       }
     } catch (err) {
-      console.error('Erro ao buscar dispositivo:', err);
+      console.error('❌ Erro ao buscar dispositivo:', err);
+      alert('❌ Erro ao buscar dispositivo: ' + err.message);
     }
   };
 
