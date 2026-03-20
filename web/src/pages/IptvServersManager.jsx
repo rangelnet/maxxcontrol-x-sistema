@@ -593,6 +593,27 @@ const IptvServersManager = () => {
     username: '', password: '', device_mac: '', selected_packages: []
   });
 
+  // Função para buscar dispositivo pelo MAC e preencher credenciais
+  const handleMacLookup = async (mac, setForm) => {
+    if (!mac || mac.length < 17) return; // MAC completo tem 17 chars (AA:BB:CC:DD:EE:FF)
+    
+    try {
+      const response = await api.get(`/api/device/list-all`);
+      const device = response.data.devices?.find(d => d.mac_address === mac);
+      
+      if (device && device.current_iptv_username && device.current_iptv_password) {
+        setForm(prev => ({
+          ...prev,
+          username: device.current_iptv_username,
+          password: device.current_iptv_password
+        }));
+        console.log('✅ Credenciais preenchidas automaticamente do dispositivo');
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dispositivo:', err);
+    }
+  };
+
   const [loadingPanels, setLoadingPanels] = useState({}); // { [panelId]: 'idle' | 'waiting' | 'done' | 'error' }
   const [panelStatus, setPanelStatus] = useState({});     // { [panelId]: string } mensagem de status
   const [selectedPackages, setSelectedPackages] = useState([]); // [{panel_id, panel_name, server_id, server_name, package_id, package_name}]
@@ -968,6 +989,7 @@ const IptvServersManager = () => {
                 </div>
                 <input type="text" placeholder="MAC do dispositivo (ex: AA:BB:CC:DD:EE:FF)" value={accountForm.device_mac}
                   onChange={e => setAccountForm({ ...accountForm, device_mac: e.target.value })}
+                  onBlur={e => handleMacLookup(e.target.value, setAccountForm)}
                   className="w-full bg-gray-600 text-white p-2 rounded placeholder-gray-400 mb-4" required />
                 <div className="bg-blue-900/50 border border-blue-700 rounded p-3 mb-4 text-sm">
                   <h4 className="font-bold mb-2">🚀 Como funciona:</h4>
@@ -1020,6 +1042,7 @@ const IptvServersManager = () => {
                   </div>
                   <input type="text" placeholder="MAC do dispositivo (ex: AA:BB:CC:DD:EE:FF)" value={createFromPkgForm.device_mac}
                     onChange={e => setCreateFromPkgForm({ ...createFromPkgForm, device_mac: e.target.value })}
+                    onBlur={e => handleMacLookup(e.target.value, setCreateFromPkgForm)}
                     className="w-full bg-gray-700 text-white p-2 rounded placeholder-gray-400 text-sm mb-3" required />
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setShowCreateFromPackages(false)}
