@@ -230,12 +230,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
+// Rate limiting geral
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100 // limite de requisições
+  max: 500 // aumentado para suportar uso intenso do painel
 });
 app.use('/api/', limiter);
+
+// Rate limiting específico para árvore IPTV (Expandir Tudo dispara muitas requisições)
+const iptvTreeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5000 // suporta expandir centenas de categorias
+});
+app.use('/api/iptv-tree/', iptvTreeLimiter);
 
 // Servir arquivos estáticos do frontend (build do Vite)
 app.use(express.static(path.join(__dirname, 'web/dist')));
