@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Server, Save, TestTube, AlertCircle, CheckCircle, Plus, Edit, Trash2, Settings, Users, X } from 'lucide-react'
+import { Server, Save, TestTube, AlertCircle, CheckCircle, Plus, Edit, Trash2, Settings, Users, X, Eye, EyeOff } from 'lucide-react'
 
 const IptvPanel = () => {
   const [activeTab, setActiveTab] = useState('global')
@@ -9,6 +9,7 @@ const IptvPanel = () => {
   const [loadingConfig, setLoadingConfig] = useState(false)
   const [testing, setTesting] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+  const [showPassword, setShowPassword] = useState(false)
 
   const [servers, setServers] = useState([])
   const [loadingServers, setLoadingServers] = useState(true)
@@ -24,9 +25,14 @@ const IptvPanel = () => {
 
   const fetchConfig = async () => {
     try {
-      const response = await fetch('/api/iptv-server/config')
-      const data = await response.json()
-      if (data.xtream_url) setConfig(data)
+      const response = await api.get('/api/iptv-server/config')
+      if (response.data && response.data.xtream_url) {
+        setConfig({
+          xtream_url: response.data.xtream_url || '',
+          xtream_username: response.data.xtream_username || '',
+          xtream_password: response.data.xtream_password || ''
+        })
+      }
     } catch (error) {
       console.error('Erro ao buscar configuracao:', error)
     }
@@ -37,19 +43,12 @@ const IptvPanel = () => {
     setLoadingConfig(true)
     setMessage({ type: '', text: '' })
     try {
-      const response = await fetch('/api/iptv-server/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      })
-      const data = await response.json()
-      if (response.ok) {
+      const response = await api.post('/api/iptv-server/config', config)
+      if (response.data) {
         setMessage({ type: 'success', text: 'Configuracao salva com sucesso!' })
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Erro ao salvar' })
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Erro ao salvar configuracao' })
+      setMessage({ type: 'error', text: error.response?.data?.error || 'Erro ao salvar configuracao' })
     } finally {
       setLoadingConfig(false)
     }
@@ -59,19 +58,14 @@ const IptvPanel = () => {
     setTesting(true)
     setMessage({ type: '', text: '' })
     try {
-      const response = await fetch('/api/iptv-server/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      })
-      const data = await response.json()
-      if (data.success) {
-        setMessage({ type: 'success', text: 'Conexao bem-sucedida! ' + (data.channels || 0) + ' canais disponiveis' })
+      const response = await api.post('/api/iptv-server/test', config)
+      if (response.data.success) {
+        setMessage({ type: 'success', text: 'Conexao bem-sucedida! ' + (response.data.channels || 0) + ' canais disponiveis' })
       } else {
-        setMessage({ type: 'error', text: data.message || 'Falha na conexao' })
+        setMessage({ type: 'error', text: response.data.message || 'Falha na conexao' })
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Erro ao testar conexao' })
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Erro ao testar conexao' })
     } finally {
       setTesting(false)
     }
@@ -215,7 +209,12 @@ const IptvPanel = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Senha</label>
-                <input type="password" value={config.xtream_password} onChange={(e) => setConfig({ ...config, xtream_password: e.target.value })} placeholder="senha" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary" required />
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} value={config.xtream_password} onChange={(e) => setConfig({ ...config, xtream_password: e.target.value })} placeholder="senha" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary pr-10" required />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-white">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               {message.text && (
                 <div className={'flex items-center gap-2 p-4 rounded-lg ' + (message.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500')}>
