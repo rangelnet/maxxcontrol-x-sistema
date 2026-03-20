@@ -801,6 +801,10 @@ const IptvServersManager = () => {
     e.preventDefault();
     const { username, password, device_mac } = createFromPkgForm;
     if (password.length < 9) { alert('A senha deve ter no mínimo 9 caracteres'); return; }
+    
+    addDebugLog(`🚀 Iniciando criação de contas em ${selectedPackages.length} pacote(s) selecionado(s)`, 'info');
+    addDebugLog(`👤 Usuário: ${username} | MAC: ${device_mac}`, 'info');
+    
     setCreatingAccounts(true);
     try {
       const response = await api.post('/api/iptv-plugin/qpanel-create-accounts', {
@@ -813,41 +817,61 @@ const IptvServersManager = () => {
         }))
       });
       if (response.data.success) {
-        alert(`✅ ${response.data.total_created} conta(s) criada(s)!`);
+        const totalCreated = response.data.total_created || 0;
+        addDebugLog(`✅ Sucesso! ${totalCreated} conta(s) criada(s) nos pacotes selecionados`, 'success');
+        alert(`✅ ${totalCreated} conta(s) criada(s)!`);
+        
         if (response.data.extracted_dns?.length > 0) {
+          addDebugLog(`📡 Registrando ${response.data.extracted_dns.length} DNS(s) no dispositivo...`, 'info');
           await api.post('/api/iptv-plugin/register-dns-to-device', {
             device_mac, dns_list: response.data.extracted_dns, username, password
           });
+          addDebugLog(`✅ ${response.data.extracted_dns.length} DNS(s) registrada(s) com sucesso!`, 'success');
           alert(`✅ ${response.data.extracted_dns.length} DNS(s) registrada(s) no dispositivo!`);
         }
         setShowCreateFromPackages(false);
         setSelectedPackages([]);
         setCreateFromPkgForm({ username: '', password: '', device_mac: '' });
       }
-    } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
+    } catch (err) {
+      addDebugLog(`❌ Erro ao criar contas: ${err.response?.data?.error || err.message}`, 'error');
+      alert('Erro: ' + (err.response?.data?.error || err.message));
+    }
     finally { setCreatingAccounts(false); }
   };
 
   const handleCreateAccounts = async (e) => {
     e.preventDefault();
     if (accountForm.password.length < 9) { alert('A senha deve ter no mínimo 9 caracteres'); return; }
+    
+    addDebugLog(`🚀 Iniciando criação de contas em TODOS os painéis qPanel`, 'info');
+    addDebugLog(`👤 Usuário: ${accountForm.username} | MAC: ${accountForm.device_mac}`, 'info');
+    
     try {
       const response = await api.post('/api/iptv-plugin/qpanel-create-accounts', accountForm);
       if (response.data.success) {
-        alert(`✅ ${response.data.total_created} conta(s) criada(s)!`);
+        const totalCreated = response.data.total_created || 0;
+        addDebugLog(`✅ Sucesso! ${totalCreated} conta(s) criada(s) em todos os painéis`, 'success');
+        alert(`✅ ${totalCreated} conta(s) criada(s)!`);
+        
         if (response.data.extracted_dns?.length > 0) {
+          addDebugLog(`📡 Registrando ${response.data.extracted_dns.length} DNS(s) no dispositivo...`, 'info');
           await api.post('/api/iptv-plugin/register-dns-to-device', {
             device_mac: accountForm.device_mac,
             dns_list: response.data.extracted_dns,
             username: accountForm.username,
             password: accountForm.password
           });
+          addDebugLog(`✅ ${response.data.extracted_dns.length} DNS(s) registrada(s) com sucesso!`, 'success');
           alert(`✅ ${response.data.extracted_dns.length} DNS(s) registrada(s) no dispositivo!`);
         }
         setShowCreateAccounts(false);
         setAccountForm({ username: '', password: '', device_mac: '', selected_packages: [] });
       }
-    } catch (err) { alert('Erro: ' + err.response?.data?.error); }
+    } catch (err) {
+      addDebugLog(`❌ Erro ao criar contas: ${err.response?.data?.error || err.message}`, 'error');
+      alert('Erro: ' + err.response?.data?.error);
+    }
   };
 
   const tabs = [
