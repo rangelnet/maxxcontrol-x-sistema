@@ -125,11 +125,12 @@ const IptvTreeViewer = () => {
     
     // Criar mapa de categorias
     categories.forEach(cat => {
+      const name = cat.category_name || cat.name || cat.title || cat.category_id || 'Sem nome'
       const node = {
         id: `${contentType}-category-${cat.category_id}`,
         type: 'category',
         contentType: contentType,
-        name: cat.category_name,
+        name: String(name),
         parent_id: cat.parent_id,
         category_id: cat.category_id,
         children: [],
@@ -170,10 +171,10 @@ const IptvTreeViewer = () => {
         
         // Criar nós de stream
         const streamNodes = streams.map(stream => ({
-          id: `${type}-stream-${stream.stream_id}`,
+          id: `${type}-stream-${stream.stream_id || stream.series_id}`,
           type: 'stream',
           contentType: type,
-          name: stream.name,
+          name: stream.name || stream.title || stream.stream_display_name || String(stream.stream_id || stream.series_id),
           parent_id: node.id,
           children: null,
           loaded: true,
@@ -404,7 +405,7 @@ const IptvTreeViewer = () => {
     const lowerQuery = query.toLowerCase();
     
     const filter = (node) => {
-      const nameMatch = node.name.toLowerCase().includes(lowerQuery);
+      const nameMatch = (node.name || '').toLowerCase().includes(lowerQuery);
       
       if (node.children && node.children.length > 0) {
         const filteredChildren = node.children.map(filter).filter(Boolean);
@@ -423,9 +424,10 @@ const IptvTreeViewer = () => {
   };
 
   const getIcon = (node) => {
-    if (node.contentType === 'live') return <Tv className="w-4 h-4" />;
-    if (node.contentType === 'vod') return <Film className="w-4 h-4" />;
-    if (node.contentType === 'series') return <Clapperboard className="w-4 h-4" />;
+    if (node.type === 'category') return <span className="text-blue-500 text-base">📁</span>;
+    if (node.contentType === 'live') return <Tv className="w-4 h-4 text-green-600" />;
+    if (node.contentType === 'vod') return <Film className="w-4 h-4 text-purple-600" />;
+    if (node.contentType === 'series') return <Clapperboard className="w-4 h-4 text-orange-600" />;
     return <Tv className="w-4 h-4" />;
   };
 
@@ -433,13 +435,12 @@ const IptvTreeViewer = () => {
     const isExpanded = expandedNodes.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
     const canExpand = node.type === 'category' || (node.type === 'stream' && node.contentType === 'series') || node.type === 'season';
+    const displayName = node.name || node.metadata?.category_name || node.metadata?.name || '(sem nome)';
     
     return (
       <div>
         <div
-          className={`flex items-center gap-2 px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-            selectedStream?.id === node.id ? 'bg-blue-50' : ''
-          }`}
+          className={'flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 cursor-pointer ' + (selectedStream?.id === node.id ? 'bg-blue-50' : '')}
           style={{ paddingLeft: `${level * 20 + 12}px` }}
           onClick={() => {
             if (canExpand) {
@@ -449,39 +450,35 @@ const IptvTreeViewer = () => {
             }
           }}
         >
-          {canExpand && (
-            <span className="flex-shrink-0">
-              {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </span>
-          )}
+          <span className="flex-shrink-0 w-4">
+            {canExpand ? (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : null}
+          </span>
           
-          {!canExpand && <span className="w-4" />}
-          
-          <span className={node.type === 'category' ? 'text-blue-600' : 'text-gray-700'}>
+          <span className="flex-shrink-0">
             {getIcon(node)}
           </span>
           
-          <span className="flex-1 text-sm">
-            {searchQuery && node.name.toLowerCase().includes(searchQuery.toLowerCase()) ? (
+          <span className="flex-1 text-sm text-gray-800 truncate">
+            {searchQuery && displayName.toLowerCase().includes(searchQuery.toLowerCase()) ? (
               <span dangerouslySetInnerHTML={{
-                __html: node.name.replace(
-                  new RegExp(`(${searchQuery})`, 'gi'),
+                __html: displayName.replace(
+                  new RegExp('(' + searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
                   '<mark class="bg-yellow-200">$1</mark>'
                 )
               }} />
             ) : (
-              node.name
+              displayName
             )}
           </span>
           
           {node.type === 'category' && hasChildren && (
-            <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs rounded-full">
+            <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs rounded-full flex-shrink-0">
               {node.children.length}
             </span>
           )}
           
-          {node.type === 'stream' && node.metadata.num && (
-            <span className="text-xs text-gray-500">#{node.metadata.num}</span>
+          {node.type === 'stream' && node.metadata?.num && (
+            <span className="text-xs text-gray-500 flex-shrink-0">#{node.metadata.num}</span>
           )}
         </div>
         
@@ -494,7 +491,7 @@ const IptvTreeViewer = () => {
         )}
         
         {isExpanded && !hasChildren && node.loaded && (
-          <div className="text-gray-500 italic text-sm" style={{ paddingLeft: `${(level + 1) * 20 + 12}px` }}>
+          <div className="text-gray-500 italic text-sm py-1" style={{ paddingLeft: `${(level + 1) * 20 + 12}px` }}>
             Nenhum conteúdo disponível
           </div>
         )}
