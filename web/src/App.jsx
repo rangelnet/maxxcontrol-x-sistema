@@ -7,8 +7,7 @@ import APIPanel from './pages/APIPanel'
 import BrandingBanners from './pages/BrandingBanners'
 import Versions from './pages/Versions'
 import Logs from './pages/Logs'
-import IptvServer from './pages/IptvServer'
-import ServersManagement from './pages/ServersManagement'
+import IptvPanel from './pages/IptvPanel'
 import IptvTreeViewer from './pages/IptvTreeViewer'
 import IptvServersManager from './pages/IptvServersManager'
 import Resale from './pages/Resale'
@@ -34,8 +33,8 @@ function App() {
             <Route path="logs" element={<Logs />} />
             <Route path="bugs" element={<Navigate to="/logs" replace />} />
             <Route path="versions" element={<Versions />} />
-            <Route path="iptv-server" element={<IptvServer />} />
-            <Route path="iptv-servers" element={<ServersManagement />} />
+            <Route path="iptv-server" element={<IptvPanel />} />
+            <Route path="iptv-servers" element={<Navigate to="/iptv-server" replace />} />
             <Route path="iptv-plugin" element={<IptvServersManager />} />
             <Route path="iptv-tree" element={<IptvTreeViewer />} />
             <Route path="resale" element={<Resale />} />
