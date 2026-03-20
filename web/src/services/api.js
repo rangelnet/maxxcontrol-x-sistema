@@ -12,7 +12,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 30000 // 30 segundos - tolerante ao cold start do Render
+  timeout: 300000 // 5 minutos - suporta listas IPTV grandes (até 500.000 itens)
 })
 
 // Interceptor para adicionar token em cada requisição

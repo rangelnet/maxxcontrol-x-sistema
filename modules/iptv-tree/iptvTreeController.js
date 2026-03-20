@@ -80,7 +80,7 @@ const buildXtreamUrl = (config, action, params = {}) => {
  */
 const fetchFromXtream = async (url) => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 min timeout para listas grandes
   
   try {
     const response = await fetch(url, {
