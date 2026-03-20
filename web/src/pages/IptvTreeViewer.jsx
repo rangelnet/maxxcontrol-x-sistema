@@ -641,6 +641,18 @@ const IptvTreeViewer = () => {
 
       {/* Controles */}
       <div className="mb-4 flex gap-4 items-center">
+        {/* Informação do Servidor Carregado */}
+        {credentials && credentials.xtream_url && (
+          <div className="px-4 py-2 bg-green-50 border border-green-300 rounded-lg flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <div className="text-sm">
+              <span className="font-semibold text-green-800">Servidor:</span>
+              <span className="text-green-700 ml-2">{credentials.xtream_url}</span>
+              <span className="text-green-600 ml-2">({credentials.xtream_username})</span>
+            </div>
+          </div>
+        )}
+        
         {/* Config Selector */}
         <select
           value={configSource}
