@@ -528,3 +528,61 @@ exports.deleteDevice = async (req, res) => {
     });
   }
 };
+
+// Salvar credenciais de teste grátis (público - para o app)
+exports.saveTestCredentials = async (req, res) => {
+  const { mac_address, server, username, password, ping, quality } = req.body;
+
+  // Validar formato do MAC address
+  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+  if (!macRegex.test(mac_address)) {
+    return res.status(400).json({ error: 'Formato de MAC address inválido' });
+  }
+
+  try {
+    console.log(`💾 Salvando credenciais de teste para MAC: ${mac_address}`);
+    console.log(`   Server: ${server}`);
+    console.log(`   Username: ${username}`);
+    console.log(`   Ping: ${ping}`);
+    console.log(`   Quality: ${quality}`);
+
+    // Atualizar dispositivo com as credenciais de teste
+    const result = await pool.query(
+      `UPDATE devices 
+       SET server = $1, username = $2, password = $3, ping = $4, quality = $5, ultimo_acesso = CURRENT_TIMESTAMP
+       WHERE mac_address = $6 
+       RETURNING id, mac_address, server, username, ping, quality`,
+      [server, username, password, ping, quality, mac_address]
+    );
+
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+
+    const device = result.rows[0];
+    console.log('✅ Credenciais de teste salvas com sucesso');
+
+    // Broadcast WebSocket para atualizar painel em tempo real
+    broadcast({
+      type: 'device:test-credentials-updated',
+      data: {
+        device_id: device.id,
+        mac_address: device.mac_address,
+        server: device.server,
+        username: device.username,
+        ping: device.ping,
+        quality: device.quality
+      }
+    });
+
+    res.json({
+      success: true,
+      device: device,
+      message: 'Credenciais de teste salvas com sucesso'
+    });
+  } catch (error) {
+    console.error('❌ Erro ao salvar credenciais de teste:', error);
+    res.status(500).json({ error: 'Erro ao salvar credenciais' });
+  }
+};

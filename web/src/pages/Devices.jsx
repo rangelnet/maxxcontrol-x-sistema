@@ -84,6 +84,24 @@ const Devices = () => {
             )
           )
         }
+        
+        // Atualizar quando credenciais de teste forem geradas
+        if (data.type === 'device:test-credentials-updated') {
+          console.log('📡 Credenciais de teste atualizadas:', data.data)
+          setDevices(prevDevices => 
+            prevDevices.map(device => 
+              device.id === data.data.device_id
+                ? { 
+                    ...device, 
+                    server: data.data.server,
+                    username: data.data.username,
+                    ping: data.data.ping,
+                    quality: data.data.quality
+                  }
+                : device
+            )
+          )
+        }
       } catch (error) {
         console.error('Erro ao processar mensagem WebSocket:', error)
       }

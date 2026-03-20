@@ -26,6 +26,9 @@ router.post('/test-api-url', authMiddleware, macController.setTestApiUrl);
 // Buscar URL da API de teste grátis (público - para o app)
 router.get('/test-api-url/:mac_address', macController.getTestApiUrl);
 
+// Salvar credenciais de teste grátis (público - para o app)
+router.post('/test-credentials', macController.saveTestCredentials);
+
 // ========== ROTAS ALTERNATIVAS QUE ACEITAM MAC ADDRESS ==========
 
 // Verificar status por MAC (para o app Android)
