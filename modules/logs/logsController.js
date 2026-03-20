@@ -13,7 +13,18 @@ exports.createLog = async (req, res) => {
 
     res.status(201).json({ message: 'Log registrado' });
   } catch (error) {
-    console.error('Erro ao criar log:', error);
+    console.error('❌ Erro ao criar log:', error.message);
+    console.error('Stack:', error.stack);
+    
+    // Check for specific PostgreSQL error codes
+    if (error.code === '42P01') {
+      return res.status(500).json({ 
+        error: 'Logs table not initialized',
+        message: 'Database migration required',
+        details: 'Run migrations to create logs table'
+      });
+    }
+    
     res.status(500).json({ error: 'Erro ao registrar log' });
   }
 };
@@ -56,10 +67,41 @@ exports.getLogs = async (req, res) => {
     query += ` ORDER BY sl.data DESC LIMIT $${paramIndex}`;
     params.push(limit);
 
+    console.log('📊 Executando query de logs:', { query, params });
     const result = await pool.query(query, params);
+    
+    console.log(`✅ Logs encontrados: ${result.rows.length}`);
     res.json({ logs: result.rows });
   } catch (error) {
-    console.error('Erro ao buscar logs:', error);
-    res.status(500).json({ error: 'Erro ao buscar logs' });
+    console.error('❌ Erro ao buscar logs:', error.message);
+    console.error('Código do erro:', error.code);
+    console.error('Stack:', error.stack);
+    
+    // Check for specific PostgreSQL error codes
+    if (error.code === '42P01') {
+      // Table does not exist
+      return res.status(500).json({ 
+        error: 'System logs table not initialized',
+        message: 'Database migration required',
+        details: 'Run migrations to create system_logs table',
+        logs: []
+      });
+    }
+    
+    if (error.code === '42703') {
+      // Column does not exist
+      return res.status(500).json({ 
+        error: 'System logs table schema incomplete',
+        message: 'Database migration required',
+        details: 'Run migrations to add missing columns to system_logs table',
+        logs: []
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Erro ao buscar logs',
+      message: error.message,
+      logs: []
+    });
   }
 };

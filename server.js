@@ -216,6 +216,51 @@ async function runPendingMigrations() {
       console.warn('⚠️ Aviso na migração test_api_urls:', err.message);
     }
   }
+
+  // Migração: Fix Logs & Bugs Tables (system_logs + colunas bugs)
+  console.log('🔧 Executando migration: Fix Logs & Bugs Tables...');
+  try {
+    // Criar tabela system_logs
+    await pool.query(`CREATE TABLE IF NOT EXISTS system_logs (
+      id SERIAL PRIMARY KEY,
+      device_id INTEGER REFERENCES devices(id) ON DELETE SET NULL,
+      tipo VARCHAR(50) NOT NULL,
+      descricao TEXT,
+      severity VARCHAR(20) DEFAULT 'info',
+      modelo VARCHAR(100),
+      app_version VARCHAR(20),
+      data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela system_logs verificada/criada');
+
+    // Criar índices para system_logs
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_logs_tipo ON system_logs(tipo)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_logs_data ON system_logs(data DESC)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_logs_device_id ON system_logs(device_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_system_logs_severity ON system_logs(severity)`);
+    console.log('  ✅ Índices de system_logs verificados/criados');
+
+    // Adicionar colunas faltantes em bugs
+    await pool.query(`ALTER TABLE bugs ADD COLUMN IF NOT EXISTS severity VARCHAR(20) DEFAULT 'error'`);
+    await pool.query(`ALTER TABLE bugs ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'crash'`);
+    await pool.query(`ALTER TABLE bugs ADD COLUMN IF NOT EXISTS context JSONB DEFAULT '{}'`);
+    await pool.query(`ALTER TABLE bugs ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'open'`);
+    console.log('  ✅ Colunas de bugs verificadas/criadas');
+
+    // Criar índices para novas colunas de bugs
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_bugs_severity ON bugs(severity)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_bugs_type ON bugs(type)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_bugs_status ON bugs(status)`);
+    console.log('  ✅ Índices de bugs verificados/criados');
+
+    console.log('✅ Migration Fix Logs & Bugs Tables concluída com sucesso');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration Fix Logs & Bugs Tables:', err.message);
+      console.error('Stack:', err.stack);
+    }
+  }
 }
 
 const app = express();
