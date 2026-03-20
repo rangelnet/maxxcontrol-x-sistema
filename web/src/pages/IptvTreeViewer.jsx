@@ -161,8 +161,13 @@ const IptvTreeViewer = () => {
     try {
       const type = node.contentType;
       const categoryId = node.category_id;
-      
-      const response = await api.get(`/api/iptv-tree/streams/${type}/${categoryId}`, {
+
+      // Séries usam endpoint próprio
+      const endpoint = type === 'series'
+        ? `/api/iptv-tree/series/${categoryId}`
+        : `/api/iptv-tree/streams/${type}/${categoryId}`;
+
+      const response = await api.get(endpoint, {
         params: { source: configSource }
       });
       
@@ -172,12 +177,13 @@ const IptvTreeViewer = () => {
         // Criar nós de stream
         const streamNodes = streams.map(stream => ({
           id: `${type}-stream-${stream.stream_id || stream.series_id}`,
-          type: 'stream',
+          type: type === 'series' ? 'stream' : 'stream',
           contentType: type,
           name: stream.name || stream.title || stream.stream_display_name || String(stream.stream_id || stream.series_id),
           parent_id: node.id,
-          children: null,
-          loaded: true,
+          // Séries têm filhos (temporadas), live/vod não
+          children: type === 'series' ? [] : null,
+          loaded: type !== 'series',
           metadata: stream
         }));
         
