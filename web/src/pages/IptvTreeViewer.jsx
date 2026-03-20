@@ -21,6 +21,7 @@ const IptvTreeViewer = () => {
     password: ''
   });
   const [loadingManual, setLoadingManual] = useState(false);
+  const [expandingAll, setExpandingAll] = useState(false);
 
   // Listas IPTV públicas de teste (Xtream Codes)
   const testLists = [
@@ -308,29 +309,46 @@ const IptvTreeViewer = () => {
     alert('URL copiado para área de transferência!');
   };
 
-  // Expande todas as categorias (só o primeiro nível para não travar)
+  // Expande todas as categorias sem travar — carrega em background com concorrência limitada
   const handleExpandAll = async () => {
-    const newExpanded = new Set(expandedNodes);
-    const toLoad = [];
+    setExpandingAll(true);
+    try {
+      // 1. Expande tudo imediatamente (o que já está carregado aparece na hora)
+      const newExpanded = new Set(expandedNodes);
+      const toLoad = [];
 
-    const collectCategories = (nodes) => {
-      nodes.forEach(node => {
-        newExpanded.add(node.id);
-        if (!node.loaded && node.type === 'category') {
-          toLoad.push(node);
-        }
-        if (node.children && node.children.length > 0) {
-          collectCategories(node.children);
-        }
-      });
-    };
+      const collectCategories = (nodes) => {
+        nodes.forEach(node => {
+          newExpanded.add(node.id);
+          if (!node.loaded && node.type === 'category') {
+            toLoad.push(node);
+          }
+          if (node.children && node.children.length > 0) {
+            collectCategories(node.children);
+          }
+        });
+      };
 
-    collectCategories(treeData);
-    setExpandedNodes(newExpanded);
+      collectCategories(treeData);
+      setExpandedNodes(new Set(newExpanded));
 
-    // Carregar streams das categorias ainda não carregadas
-    for (const node of toLoad) {
-      await loadStreams(node);
+      if (toLoad.length === 0) return;
+
+      // 2. Carrega streams em background com no máximo 3 requisições simultâneas
+      const CONCURRENCY = 3;
+      let index = 0;
+
+      const runNext = async () => {
+        if (index >= toLoad.length) return;
+        const node = toLoad[index++];
+        await loadStreams(node);
+        await runNext();
+      };
+
+      const workers = Array.from({ length: Math.min(CONCURRENCY, toLoad.length) }, runNext);
+      await Promise.all(workers);
+    } finally {
+      setExpandingAll(false);
     }
   };
 
@@ -670,11 +688,21 @@ const IptvTreeViewer = () => {
         {/* Expandir Tudo */}
         <button
           onClick={handleExpandAll}
-          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center gap-2"
+          disabled={expandingAll}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           title="Expande todas as pastas"
         >
-          <ChevronDown className="w-4 h-4" />
-          Expandir Tudo
+          {expandingAll ? (
+            <>
+              <Loader className="w-4 h-4 animate-spin" />
+              Expandindo...
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-4 h-4" />
+              Expandir Tudo
+            </>
+          )}
         </button>
 
         {/* Recolher Tudo */}
