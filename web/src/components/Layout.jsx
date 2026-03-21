@@ -18,7 +18,6 @@ const Layout = () => {
     { path: '/iptv-server', icon: Server, label: 'IPTV' },
     { path: '/iptv-plugin', icon: Zap, label: 'Plugin IPTV Unificado' },
     { path: '/iptv-tree', icon: Tv, label: 'Árvore IPTV' },
-    { path: '/logs', icon: FileText, label: 'Logs' },
     { path: '/versions', icon: Package, label: 'Versões' },
   ]
 
