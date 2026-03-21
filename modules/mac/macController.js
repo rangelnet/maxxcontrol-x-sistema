@@ -213,7 +213,15 @@ exports.listAllDevices = async (req, res) => {
         d.current_iptv_server_url,
         d.current_iptv_username,
         d.test_api_urls,
-        ic.xtream_password AS current_iptv_password
+        ic.xtream_password AS current_iptv_password,
+        d.server,
+        d.username,
+        d.password,
+        d.ping,
+        d.quality,
+        d.stream_status,
+        d.server_mode,
+        d.api_test_url
       FROM devices d
       LEFT JOIN users u ON d.user_id = u.id
       LEFT JOIN device_iptv_config ic ON ic.device_id = d.id
