@@ -2,11 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
-import Devices from './pages/Devices'
+import DevicesWithLogs from './pages/DevicesWithLogs'
 import APIPanel from './pages/APIPanel'
 import BrandingBanners from './pages/BrandingBanners'
 import Versions from './pages/Versions'
-import Logs from './pages/Logs'
 import IptvPanel from './pages/IptvPanel'
 import IptvTreeViewer from './pages/IptvTreeViewer'
 import IptvServersManager from './pages/IptvServersManager'
@@ -26,12 +25,12 @@ function App() {
             </PrivateRoute>
           }>
             <Route index element={<Dashboard />} />
-            <Route path="devices" element={<Devices />} />
+            <Route path="devices" element={<DevicesWithLogs />} />
             <Route path="api-monitor" element={<Navigate to="/api-config" replace />} />
             <Route path="api-config" element={<APIPanel />} />
             <Route path="branding-banners" element={<BrandingBanners />} />
-            <Route path="logs" element={<Logs />} />
-            <Route path="bugs" element={<Navigate to="/logs" replace />} />
+            <Route path="logs" element={<Navigate to="/devices" replace />} />
+            <Route path="bugs" element={<Navigate to="/devices" replace />} />
             <Route path="versions" element={<Versions />} />
             <Route path="iptv-server" element={<IptvPanel />} />
             <Route path="iptv-servers" element={<Navigate to="/iptv-server" replace />} />
