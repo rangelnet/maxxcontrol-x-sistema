@@ -9,8 +9,15 @@ const cache = require('./cache');
 const getXtreamConfig = async (source) => {
   try {
     if (source === 'global') {
-      // Buscar configuração global
-      const result = await pool.query('SELECT * FROM iptv_server_config LIMIT 1');
+      // Buscar configuração global com nome do servidor (se existir)
+      const result = await pool.query(`
+        SELECT 
+          isc.*,
+          s.name as server_name
+        FROM iptv_server_config isc
+        LEFT JOIN servers s ON s.url = isc.xtream_url
+        LIMIT 1
+      `);
       
       if (result.rows.length === 0) {
         return null;
@@ -26,17 +33,28 @@ const getXtreamConfig = async (source) => {
       }
       
       // Primeiro tenta configuração específica do dispositivo
-      const deviceResult = await pool.query(
-        'SELECT * FROM device_iptv_config WHERE device_id = $1',
-        [deviceId]
-      );
+      const deviceResult = await pool.query(`
+        SELECT 
+          dic.*,
+          s.name as server_name
+        FROM device_iptv_config dic
+        LEFT JOIN servers s ON s.url = dic.xtream_url
+        WHERE dic.device_id = $1
+      `, [deviceId]);
       
       if (deviceResult.rows.length > 0) {
         return deviceResult.rows[0];
       }
       
       // Fallback para configuração global
-      const globalResult = await pool.query('SELECT * FROM iptv_server_config LIMIT 1');
+      const globalResult = await pool.query(`
+        SELECT 
+          isc.*,
+          s.name as server_name
+        FROM iptv_server_config isc
+        LEFT JOIN servers s ON s.url = isc.xtream_url
+        LIMIT 1
+      `);
       
       if (globalResult.rows.length === 0) {
         return null;

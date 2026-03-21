@@ -647,7 +647,9 @@ const IptvTreeViewer = () => {
             <CheckCircle className="w-4 h-4 text-green-600" />
             <div className="text-sm">
               <span className="font-semibold text-green-800">Servidor:</span>
-              <span className="text-green-700 ml-2">{credentials.xtream_url}</span>
+              <span className="text-green-700 ml-2">
+                {credentials.server_name || credentials.xtream_url}
+              </span>
               <span className="text-green-600 ml-2">({credentials.xtream_username})</span>
             </div>
           </div>
