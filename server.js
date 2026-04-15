@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const http = require('http');
 require('dotenv').config();
 
 const { initWebSocket } = require('./websocket/wsServer');
@@ -105,6 +106,30 @@ async function runPendingMigrations() {
         status VARCHAR(50) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'whatsapp_flows',
+      sql: `CREATE TABLE IF NOT EXISTS whatsapp_flows (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        content JSONB NOT NULL,
+        is_active BOOLEAN DEFAULT false,
+        is_default BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'whatsapp_chatbot_sessions',
+      sql: `CREATE TABLE IF NOT EXISTS whatsapp_chatbot_sessions (
+        id SERIAL PRIMARY KEY,
+        contact_id VARCHAR(100) NOT NULL,
+        flow_id INTEGER REFERENCES whatsapp_flows(id) ON DELETE CASCADE,
+        current_node_id VARCHAR(100),
+        variables JSONB DEFAULT '{}',
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(contact_id)
       )`
     },
     {
@@ -261,6 +286,190 @@ async function runPendingMigrations() {
       console.error('Stack:', err.stack);
     }
   }
+
+  // Migração: tabela banner_templates (Fábrica de Temas)
+  console.log('🎨 Executando migration: Banner Templates...');
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS banner_templates (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      type VARCHAR(50) DEFAULT 'movie',
+      bg_url VARCHAR(500),
+      overlay_url VARCHAR(500),
+      config JSONB DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela banner_templates verificada/criada');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration banner_templates:', err.message);
+    }
+  }
+
+  // Migração: tabela global_settings (Configurações Gerais)
+  console.log('⚙️ Executando migration: Global Settings...');
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS global_settings (
+      key VARCHAR(255) PRIMARY KEY,
+      value JSONB NOT NULL DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela global_settings verificada/criada');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration global_settings:', err.message);
+    }
+  }
+
+  // ── Migração: MaxxChat — Live Chat Enterprise ──────────────────────────────
+  console.log('💬 Executando migration: MaxxChat Live Chat...');
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_conversations (
+      id SERIAL PRIMARY KEY,
+      jid VARCHAR(100) NOT NULL UNIQUE,
+      name VARCHAR(255),
+      phone VARCHAR(30),
+      avatar_url TEXT,
+      is_group BOOLEAN DEFAULT false,
+      status VARCHAR(20) DEFAULT 'open',
+      label_id INTEGER,
+      unread_count INTEGER DEFAULT 0,
+      last_message TEXT,
+      last_message_at TIMESTAMP,
+      assigned_to VARCHAR(100),
+      bot_active BOOLEAN DEFAULT true,
+      notes TEXT,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela whatsapp_conversations OK');
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_messages (
+      id SERIAL PRIMARY KEY,
+      conversation_id INTEGER REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
+      jid VARCHAR(100) NOT NULL,
+      message_id VARCHAR(100) UNIQUE,
+      from_me BOOLEAN DEFAULT false,
+      sender_name VARCHAR(255),
+      content TEXT,
+      media_type VARCHAR(30) DEFAULT 'text',
+      media_url TEXT,
+      quoted_message_id VARCHAR(100),
+      status VARCHAR(20) DEFAULT 'sent',
+      is_bot_reply BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela whatsapp_messages OK');
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_labels (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      color VARCHAR(7) NOT NULL DEFAULT '#FFA500',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela whatsapp_labels OK');
+
+    // Inserir labels padrão se tabela estiver vazia
+    const labelCount = await pool.query('SELECT COUNT(*) as cnt FROM whatsapp_labels');
+    if (parseInt(labelCount.rows[0].cnt) === 0) {
+      await pool.query(`INSERT INTO whatsapp_labels (name, color) VALUES ('Venda', '#FF6B35'), ('Renovação', '#FFB800'), ('Suporte', '#3B82F6'), ('VIP', '#A855F7'), ('Spam', '#EF4444')`);
+      console.log('  ✅ Labels padrão inseridas');
+    }
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_quick_replies (
+      id SERIAL PRIMARY KEY,
+      shortcut VARCHAR(50) NOT NULL UNIQUE,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela whatsapp_quick_replies OK');
+
+    // Inserir respostas rápidas padrão se tabela estiver vazia
+    const qrCount = await pool.query('SELECT COUNT(*) as cnt FROM whatsapp_quick_replies');
+    if (parseInt(qrCount.rows[0].cnt) === 0) {
+      await pool.query(`INSERT INTO whatsapp_quick_replies (shortcut, content) VALUES ('/ola', 'Olá! Tudo bem? Em que posso ajudar?'), ('/preco', 'Nossos planos começam a partir de R$ XX,XX! Qual plano te interessa?'), ('/pix', 'Chave PIX: seuemail@email.com - Após o pagamento, envie o comprovante aqui!'), ('/teste', 'Claro! Vou ativar um teste gratuito de 3 horas para você agora!'), ('/mac', 'Para ativar, preciso do MAC Address do seu aparelho. Você encontra em Configurações > Sobre > MAC WiFi.')`);
+      console.log('  ✅ Respostas rápidas padrão inseridas');
+    }
+
+    // Índices para performance
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_wa_messages_conv ON whatsapp_messages(conversation_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_wa_messages_jid ON whatsapp_messages(jid)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_wa_conversations_status ON whatsapp_conversations(status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_wa_conversations_last_msg ON whatsapp_conversations(last_message_at DESC)`);
+
+    console.log('✅ Migration MaxxChat Live Chat concluída!');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration MaxxChat:', err.message);
+    }
+  }
+
+  // Migração: tabela mp_transactions (Histórico de Pix)
+  console.log('💸 Executando migration: MP Transactions...');
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS mp_transactions (
+      id SERIAL PRIMARY KEY,
+      payment_id VARCHAR(255) UNIQUE, -- Agora opcional para transações manuais
+      reseller_id INTEGER NOT NULL,
+      package_id INTEGER, -- Opcional para transferências manuais
+      credits INTEGER NOT NULL,
+      amount DECIMAL(10, 2) NOT NULL,
+      status VARCHAR(50) DEFAULT 'pending',
+      type VARCHAR(20) DEFAULT 'pix', -- 'pix' ou 'manual'
+      qr_code_base64 TEXT,
+      qr_code TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    
+    // Garantir que a coluna 'type' existe caso a tabela já tenha sido criada antes
+    await pool.query(`ALTER TABLE mp_transactions ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'pix'`);
+    await pool.query(`ALTER TABLE mp_transactions ALTER COLUMN payment_id DROP NOT NULL`);
+    await pool.query(`ALTER TABLE mp_transactions ALTER COLUMN package_id DROP NOT NULL`);
+    console.log('  ✅ Tabela mp_transactions verificada/criada');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration mp_transactions:', err.message);
+    }
+  }
+
+  // Migração: 2FA via Telegram
+  console.log('🛡️ Executando migration: 2FA Security...');
+  try {
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR(255)`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tfa_enabled BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tfa_code VARCHAR(10)`);
+    console.log('  ✅ Colunas 2FA verificadas/criadas');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration 2FA:', err.message);
+    }
+  }
+
+  // Migração: Integração Google OAuth2
+  console.log('🔗 Executando migration: Google Configs...');
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS google_configs (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      access_token TEXT,
+      refresh_token TEXT,
+      expiry_date BIGINT,
+      enabled BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id)
+    )`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_google_configs_user ON google_configs(user_id)`);
+    console.log('  ✅ Tabela google_configs verificada/criada');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration google_configs:', err.message);
+    }
+  }
 }
 
 const app = express();
@@ -309,7 +518,12 @@ app.use('/api/branding', require('./modules/branding/brandingRoutes'));
 app.use('/api/iptv-server', require('./modules/iptv-server/iptvServerRoutes'));
 app.use('/api/iptv-tree', require('./modules/iptv-tree/iptvTreeRoutes'));
 app.use('/api/banners', require('./modules/banners/bannerRoutes'));
+app.use('/api/banner-templates', require('./modules/banners/templateRoutes'));
 app.use('/api/resale', require('./modules/resale/resaleRoutes'));
+app.use('/api/settings', require('./modules/settings/settingsRoutes'));
+app.use('/api/payments',   require('./modules/payments/paymentRoutes'));
+app.use('/api/whatsapp',   require('./modules/whatsapp/whatsappRoutes'));
+app.use('/api/integrations/google', require('./modules/integrations/google/googleRoutes'));
 
 // Rotas do sistema multi-servidor IPTV
 app.use('/api/iptv', require('./modules/iptv-credentials/iptvCredentialsRoutes'));
@@ -322,8 +536,9 @@ app.use('/api/playlist-manager', require('./modules/playlist-manager/playlistMan
 // Rotas do Plugin IPTV Unificado (integração com MaxxControl)
 app.use('/api/iptv-plugin', require('./modules/iptv-servers/iptv-plugin-unified'));
 
-// Servir arquivos estáticos (banners gerados)
+// Servir arquivos estáticos (banners gerados e mídias do whatsapp)
 app.use('/banners', express.static('public/banners'));
+app.use('/media', express.static('public/media'));
 
 // Rota de health check
 app.get('/health', (req, res) => {
@@ -356,14 +571,38 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
+// Criar HTTP server para Socket.IO + Express
+const server = http.createServer(app);
+
+// ── Socket.IO (MaxxChat Live Chat) ─────────────────────────────────────────
+let io;
+try {
+  const { Server } = require('socket.io');
+  io = new Server(server, { cors: { origin: '*' } });
+  io.on('connection', (socket) => {
+    console.log('🔌 [Socket.IO] Cliente conectado:', socket.id);
+    socket.on('join_chat', (jid) => { socket.join(`chat_${jid}`); });
+    socket.on('disconnect', () => { /* silêncio */ });
+  });
+  // Exportar io globalmente para o whatsappClient poder emitir
+  global.__maxxchat_io = io;
+  console.log('🔌 [Socket.IO] MaxxChat Live Chat pronto!');
+} catch (e) {
+  console.warn('⚠️ socket.io não instalado. Live Chat desabilitado. Rode: npm install socket.io');
+}
+
 // Iniciar servidor
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 MaxxControl X API rodando na porta ${PORT}`);
   console.log(`🌐 http://localhost:${PORT}`);
 });
 
-// Iniciar WebSocket
+// Iniciar WebSocket (existente)
 initWebSocket(server);
+
+// Iniciar Bot do Telegram para 2FA
+const { initBot } = require('./modules/telegram/telegramBot');
+initBot();
 
 // Testar conexão com banco e executar migrações
 if (process.env.USE_SQLITE === 'true') {
