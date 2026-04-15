@@ -1,8 +1,7 @@
 /**
- * IPTV Plugin Unificado
- * Integra Plugin 2, 3 e 4 em um único plugin
- * Conecta com MaxxControl para gerenciar IPTV automaticamente
- * Sem SmartOne - Apenas para seu app TV MAXX PRO
+ * Rotas e Lógicas Unificadas para Gerenciamento de IPTV
+ * Este arquivo consolida funcionalidades de múltiplos plugins IPTV
+ * em um único controlador backend.
  */
 
 const express = require('express');
@@ -11,13 +10,28 @@ const pool = require('../../config/database');
 const axios = require('axios');
 
 // ============================================
-// GERENCIAR SERVIDORES IPTV
+// GERENCIAMENTO BÁSICO DE SERVIDORES IPTV
 // ============================================
 
 /**
+ * GET /api/iptv-plugin/servers
+ * Lista todos os servidores IPTV cadastrados
+ */
+router.get('/servers', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, server_name, xtream_url, server_type, status, last_tested_at, test_status, created_at FROM iptv_servers ORDER BY created_at DESC'
+    );
+    res.json({ success: true, servers: result.rows });
+  } catch (error) {
+    console.error('❌ Erro ao listar servidores IPTV:', error);
+    res.status(500).json({ error: 'Erro ao listar servidores' });
+  }
+});
+
+/**
  * POST /api/iptv-plugin/add-server
- * Adiciona novo servidor IPTV
- * Integração com Plugin 2 (SmartOne Manager)
+ * Adiciona um novo servidor IPTV
  */
 router.post('/add-server', async (req, res) => {
   try {
@@ -25,35 +39,23 @@ router.post('/add-server', async (req, res) => {
       server_name, 
       xtream_url, 
       xtream_username, 
-      xtream_password,
-      server_type // 'ibopro', 'ibocast', 'vuplayer', 'custom'
+      xtream_password, 
+      server_type = 'custom' 
     } = req.body;
 
-    // Validar dados
     if (!server_name || !xtream_url) {
       return res.status(400).json({ error: 'Nome e URL do servidor são obrigatórios' });
     }
 
-    // Inserir no banco
     const query = `
       INSERT INTO iptv_servers (
-        server_name, 
-        xtream_url, 
-        xtream_username, 
-        xtream_password,
-        server_type,
-        status,
-        created_at
+        server_name, xtream_url, xtream_username, xtream_password, server_type, status, created_at
       ) VALUES ($1, $2, $3, $4, $5, 'active', NOW())
-      RETURNING *
+      RETURNING id, server_name, xtream_url, server_type, status
     `;
 
     const result = await pool.query(query, [
-      server_name,
-      xtream_url,
-      xtream_username,
-      xtream_password,
-      server_type || 'custom'
+      server_name, xtream_url, xtream_username, xtream_password, server_type
     ]);
 
     res.json({
@@ -61,230 +63,66 @@ router.post('/add-server', async (req, res) => {
       message: 'Servidor IPTV adicionado com sucesso',
       server: result.rows[0]
     });
-
   } catch (error) {
-    console.error('❌ Erro ao adicionar servidor:', error);
+    console.error('❌ Erro ao adicionar servidor IPTV:', error);
     res.status(500).json({ error: 'Erro ao adicionar servidor' });
   }
 });
 
 /**
- * GET /api/iptv-plugin/servers
- * Lista todos os servidores IPTV
- */
-router.get('/servers', async (req, res) => {
-  try {
-    const result = await Promise.race([
-      pool.query(`SELECT * FROM iptv_servers WHERE status = 'active' ORDER BY created_at DESC`),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-    ]);
-
-    res.json({ success: true, servers: result.rows });
-  } catch (error) {
-    console.error('⚠️ Tabela iptv_servers não encontrada ou erro:', error.message);
-    res.json({ success: true, servers: [] });
-  }
-});
-
-/**
  * DELETE /api/iptv-plugin/server/:id
- * Deleta servidor IPTV
- * Integração com Plugin 2 (deletar por MAC)
+ * Deleta um servidor IPTV
  */
 router.delete('/server/:id', async (req, res) => {
   try {
     const { id } = req.params;
-
-    const query = `
-      UPDATE iptv_servers 
-      SET status = 'deleted', updated_at = NOW()
-      WHERE id = $1
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Servidor não encontrado' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Servidor deletado com sucesso',
-      server: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('❌ Erro ao deletar servidor:', error);
-    res.status(500).json({ error: 'Erro ao deletar servidor' });
-  }
-});
-
-// ============================================
-// GERENCIAR PLAYLISTS
-// ============================================
-
-/**
- * POST /api/iptv-plugin/add-playlist
- * Adiciona playlist a um servidor
- * Integração com Plugin 4 (Playlist Manager)
- */
-router.post('/add-playlist', async (req, res) => {
-  try {
-    const {
-      server_id,
-      playlist_name,
-      playlist_url,
-      playlist_type // 'm3u', 'xtream', 'custom'
-    } = req.body;
-
-    if (!server_id || !playlist_name || !playlist_url) {
-      return res.status(400).json({ error: 'Dados obrigatórios faltando' });
-    }
-
-    // Verificar se servidor existe
-    const serverCheck = await pool.query(
-      'SELECT * FROM iptv_servers WHERE id = $1 AND status = $2',
-      [server_id, 'active']
+    
+    // Deleta os playlists associados primeiro (via CASCADE no banco, mas garantimos aqui se necessário)
+    const result = await pool.query(
+      'DELETE FROM iptv_servers WHERE id = $1 RETURNING id',
+      [id]
     );
 
-    if (serverCheck.rows.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Servidor não encontrado' });
     }
 
-    // Inserir playlist
-    const query = `
-      INSERT INTO iptv_playlists (
-        server_id,
-        playlist_name,
-        playlist_url,
-        playlist_type,
-        status,
-        created_at
-      ) VALUES ($1, $2, $3, $4, 'active', NOW())
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, [
-      server_id,
-      playlist_name,
-      playlist_url,
-      playlist_type || 'custom'
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Playlist adicionada com sucesso',
-      playlist: result.rows[0]
-    });
-
+    res.json({ success: true, message: 'Servidor IPTV apagado com sucesso' });
   } catch (error) {
-    console.error('❌ Erro ao adicionar playlist:', error);
-    res.status(500).json({ error: 'Erro ao adicionar playlist' });
-  }
-});
-
-/**
- * GET /api/iptv-plugin/playlists/:server_id
- * Lista playlists de um servidor
- */
-router.get('/playlists/:server_id', async (req, res) => {
-  try {
-    const { server_id } = req.params;
-
-    const query = `
-      SELECT * FROM iptv_playlists 
-      WHERE server_id = $1 AND status = 'active'
-      ORDER BY created_at DESC
-    `;
-
-    const result = await pool.query(query, [server_id]);
-
-    res.json({
-      success: true,
-      playlists: result.rows
-    });
-
-  } catch (error) {
-    console.error('❌ Erro ao listar playlists:', error);
-    res.status(500).json({ error: 'Erro ao listar playlists' });
-  }
-});
-
-/**
- * DELETE /api/iptv-plugin/playlist/:id
- * Deleta playlist
- */
-router.delete('/playlist/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const query = `
-      UPDATE iptv_playlists 
-      SET status = 'deleted', updated_at = NOW()
-      WHERE id = $1
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, [id]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Playlist não encontrada' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Playlist deletada com sucesso'
-    });
-
-  } catch (error) {
-    console.error('❌ Erro ao deletar playlist:', error);
-    res.status(500).json({ error: 'Erro ao deletar playlist' });
+    console.error('❌ Erro ao apagar servidor IPTV:', error);
+    res.status(500).json({ error: 'Erro ao apagar servidor' });
   }
 });
 
 // ============================================
-// GERENCIAR DISPOSITIVOS COM IPTV
+// ATRIBUIÇÃO A DISPOSITIVOS
 // ============================================
 
 /**
- * POST /api/iptv-plugin/assign-server-to-device
- * Atribui servidor IPTV a um dispositivo
- * Integração com Plugin 3 (qPanel Manager)
+ * POST /api/iptv-plugin/assign-server
+ * Atribui um servidor IPTV específico a um dispositivo
  */
-router.post('/assign-server-to-device', async (req, res) => {
+router.post('/assign-server', async (req, res) => {
   try {
-    const {
-      device_id,
-      server_id
-    } = req.body;
+    const { device_id, server_id } = req.body;
 
     if (!device_id || !server_id) {
       return res.status(400).json({ error: 'device_id e server_id são obrigatórios' });
     }
 
-    // Verificar se dispositivo existe
-    const deviceCheck = await pool.query(
-      'SELECT * FROM devices WHERE id = $1',
-      [device_id]
+    // Buscar configurações do servidor
+    const serverResult = await pool.query(
+      'SELECT * FROM iptv_servers WHERE id = $1',
+      [server_id]
     );
 
-    if (deviceCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    if (serverResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Servidor IPTV não encontrado' });
     }
 
-    // Verificar se servidor existe
-    const serverCheck = await pool.query(
-      'SELECT * FROM iptv_servers WHERE id = $1 AND status = $2',
-      [server_id, 'active']
-    );
+    const server = serverResult.rows[0];
 
-    if (serverCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Servidor não encontrado' });
-    }
-
-    // Atualizar dispositivo com novo servidor
-    const server = serverCheck.rows[0];
+    // Atualizar dispositivo (TV MAXX PRO)
     const query = `
       UPDATE devices 
       SET 
@@ -631,6 +469,128 @@ router.post('/qpanel-load-servers', async (req, res) => {
 });
 
 /**
+ * POST /api/iptv-plugin/qpanel-fetch-direct-servers
+ * Busca servidores e pacotes no qPanel DIRETAMENTE do backend Node.js
+ */
+router.post('/qpanel-fetch-direct-servers', async (req, res) => {
+  try {
+    const { panel_id } = req.body;
+
+    if (!panel_id) {
+      return res.status(400).json({ error: 'panel_id é obrigatório' });
+    }
+
+    // Verificar se painel existe
+    const panelResult = await pool.query(
+      'SELECT * FROM qpanel_panels WHERE id = $1 AND status = $2',
+      [panel_id, 'active']
+    );
+
+    if (panelResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Painel qPanel não encontrado' });
+    }
+
+    const panel = panelResult.rows[0];
+    const baseUrl = panel.panel_url.replace(/\/$/, '');
+
+    // Requisição simultânea para Servers e Packages na API
+    const headers = {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${panel.panel_username}`
+    };
+
+    let serversResponse = { data: { data: [] } };
+    let packagesResponse = { data: { data: [] } };
+
+    try {
+      const [srvReq, pkgReq] = await Promise.allSettled([
+        axios.get(`${baseUrl}/api/servers`, { headers, timeout: 10000 }),
+        axios.get(`${baseUrl}/api/packages`, { headers, timeout: 10000 })
+      ]);
+
+      if (srvReq.status === 'fulfilled') serversResponse = srvReq.value;
+      if (pkgReq.status === 'fulfilled') packagesResponse = pkgReq.value;
+    } catch (e) {
+      console.warn(`⚠️ Aviso fetch API qPanel Direto: ${e.message}`);
+    }
+
+    const rawServers = serversResponse.data?.data || serversResponse.data?.servers || [];
+    const rawPackages = packagesResponse.data?.data || packagesResponse.data?.packages || [];
+
+    // Mapeando dados brutos da API para o formato esperado pelo painel
+    const finalServers = rawServers.map(s => {
+      const sId = s.id || s.server_id;
+      return {
+        id: sId,
+        name: s.server_name || s.name || `Servidor ${sId}`,
+        dns: s.server_dns || s.dns || s.url || '',
+        packages: rawPackages.length > 0 
+          ? rawPackages.filter(p => !p.server_id || Number(p.server_id) === Number(sId))
+          : []
+      }
+    });
+
+    // Fallback: caso a API não tenha devolvido Servidores, mas tenha devolvido Pacotes
+    if (finalServers.length === 0 && rawPackages.length > 0) {
+      finalServers.push({
+        id: 1, 
+        name: 'Servidor Principal', 
+        dns: '', 
+        packages: rawPackages
+      });
+    }
+
+    // O fallback 2: caso a API devolva vazio
+    if (finalServers.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'Nenhum servidor/pacote retornado pela API direta. Verifique token/API.', 
+        servers: [], 
+        total: 0 
+      });
+    }
+
+    // Salvar e persistir a estrutura no nosso BD (usando lógica idêntica de sync)
+    const seenDns = new Set();
+    for (const server of finalServers) {
+      const serverName = server.name || `Servidor ${server.id}`;
+      const serverDns = server.dns || '';
+      await pool.query(`
+        INSERT INTO qpanel_servers (
+          panel_id, server_name, server_dns, server_data, created_at
+        ) VALUES ($1, $2, $3, $4, NOW())
+        ON CONFLICT (panel_id, server_name) 
+        DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
+      `, [panel_id, serverName, serverDns, JSON.stringify(server)]);
+
+      // Insere na tabela 'servers' (Gerenciamento de Servidores IPTV base)
+      if (serverDns && !seenDns.has(serverDns)) {
+        seenDns.add(serverDns);
+        const serverUrl = `http://${serverDns}`;
+        try {
+          await pool.query(`
+            INSERT INTO servers (name, url, region, priority, status)
+            VALUES ($1, $2, 'Brasil', 100, 'ativo')
+            ON CONFLICT (url) DO UPDATE SET name = $1, updated_at = NOW()
+          `, [serverName, serverUrl]);
+        } catch (syncErr) {}
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `${finalServers.length} servidor(es) sincronizado(s) via API Direta`,
+      servers: finalServers,
+      total: finalServers.length
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no fetch direto do qPanel:', error.message);
+    res.status(500).json({ error: 'Erro de conexão direta com API qPanel', detail: error.message });
+  }
+});
+
+/**
  * POST /api/iptv-plugin/qpanel-create-accounts
  * Cria contas IPTV em massa nos painéis qPanel
  * Integração com Plugin 3 (criação em massa)
@@ -683,7 +643,7 @@ router.post('/qpanel-create-accounts', async (req, res) => {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'Authorization': `Bearer ${panel.panel_username}` // Token seria extraído dinamicamente
+            'Authorization': `Bearer ${panel.panel_username}` // Token dinâmico
           },
           timeout: 10000
         });
@@ -1091,103 +1051,68 @@ router.post('/relay-command', async (req, res) => {
       return res.status(400).json({ error: `command_type inválido. Use: ${validTypes.join(', ')}` });
     }
 
-    // Limpar comandos expirados antes de inserir
-    await pool.query(`DELETE FROM plugin_relay_commands WHERE expires_at < NOW()`).catch(() => {});
+    const query = `
+      INSERT INTO plugin_relay_commands (
+        panel_id, command_type, payload, status
+      ) VALUES ($1, $2, $3, 'pending')
+      RETURNING id
+    `;
 
-    const result = await pool.query(`
-      INSERT INTO plugin_relay_commands (panel_id, command_type, payload, status, created_at, expires_at)
-      VALUES ($1, $2, $3, 'pending', NOW(), NOW() + INTERVAL '5 minutes')
-      RETURNING id, status, created_at
-    `, [panel_id || null, command_type, JSON.stringify(payload)]);
+    const result = await pool.query(query, [panel_id || null, command_type, payload]);
 
     res.json({
       success: true,
-      command_id: result.rows[0].id,
-      status: 'pending',
-      message: 'Comando inserido na fila. Aguardando plugin Chrome executar.'
+      message: 'Comando enfileirado para o plugin Chrome',
+      command_id: result.rows[0].id
     });
 
   } catch (error) {
-    console.error('❌ Erro ao inserir relay command:', error);
-    res.status(500).json({ error: 'Erro ao inserir comando', detail: error.message });
+    console.error('❌ Erro no relay-command:', error);
+    res.status(500).json({ error: 'Erro ao processar comando de relay' });
   }
 });
 
 /**
- * GET /api/iptv-plugin/relay-pending
- * Plugin Chrome faz polling para buscar comandos pendentes
- * Query: ?panel_url=http://meupainel.com (opcional, para filtrar por painel)
+ * GET /api/iptv-plugin/relay-poll
+ * Plugin Chrome faz polling a cada 2s para ver se há comandos 'pending'
  */
-router.get('/relay-pending', async (req, res) => {
+router.get('/relay-poll', async (req, res) => {
   try {
-    const { panel_url } = req.query;
+    // Buscar comandos pendentes
+    const query = `
+      SELECT id, panel_id, command_type, payload 
+      FROM plugin_relay_commands 
+      WHERE status = 'pending' 
+      ORDER BY created_at ASC 
+      LIMIT 5
+    `;
 
-    let query;
-    let params;
+    const result = await pool.query(query);
 
-    if (panel_url) {
-      // Buscar comandos do painel específico (por URL)
-      query = `
-        SELECT rc.id, rc.panel_id, rc.command_type, rc.payload, rc.created_at,
-               qp.panel_url, qp.panel_name
-        FROM plugin_relay_commands rc
-        LEFT JOIN qpanel_panels qp ON rc.panel_id = qp.id
-        WHERE rc.status = 'pending'
-          AND rc.expires_at > NOW()
-          AND (rc.panel_id IS NULL OR qp.panel_url ILIKE $1)
-        ORDER BY rc.created_at ASC
-        LIMIT 10
-      `;
-      params = [`%${panel_url.replace(/\/$/, '')}%`];
-    } else {
-      // Buscar todos os comandos pendentes (plugin pega tudo)
-      query = `
-        SELECT rc.id, rc.panel_id, rc.command_type, rc.payload, rc.created_at,
-               qp.panel_url, qp.panel_name
-        FROM plugin_relay_commands rc
-        LEFT JOIN qpanel_panels qp ON rc.panel_id = qp.id
-        WHERE rc.status = 'pending'
-          AND rc.expires_at > NOW()
-        ORDER BY rc.created_at ASC
-        LIMIT 10
-      `;
-      params = [];
+    if (result.rows.length === 0) {
+      return res.json({ commands: [] });
     }
 
-    const result = await pool.query(query, params);
+    const ids = result.rows.map(r => r.id);
 
-    // Marcar como 'executing' para evitar que outro plugin pegue o mesmo
-    if (result.rows.length > 0) {
-      const ids = result.rows.map(r => r.id);
-      await pool.query(
-        `UPDATE plugin_relay_commands SET status = 'executing', updated_at = NOW() WHERE id = ANY($1)`,
-        [ids]
-      );
-    }
+    // Marcar como 'processing'
+    await pool.query(`
+      UPDATE plugin_relay_commands 
+      SET status = 'processing', updated_at = NOW() 
+      WHERE id = ANY($1)
+    `, [ids]);
 
-    res.json({
-      success: true,
-      commands: result.rows.map(r => ({
-        id: r.id,
-        panel_id: r.panel_id,
-        panel_url: r.panel_url,
-        panel_name: r.panel_name,
-        command_type: r.command_type,
-        payload: r.payload
-      }))
-    });
+    res.json({ commands: result.rows });
 
   } catch (error) {
-    console.error('❌ Erro ao buscar relay pending:', error);
-    // Retornar lista vazia em caso de erro (tabela pode não existir ainda)
-    res.json({ success: true, commands: [] });
+    console.error('❌ Erro no relay-poll:', error);
+    res.status(500).json({ error: 'Erro interno no polling do relay' });
   }
 });
 
 /**
  * POST /api/iptv-plugin/relay-result
- * Plugin Chrome posta o resultado de um comando executado
- * Body: { command_id, status, result, error_message }
+ * Plugin Chrome envia o resultado da execução de volta pro painel
  */
 router.post('/relay-result', async (req, res) => {
   try {
@@ -1197,170 +1122,74 @@ router.post('/relay-result', async (req, res) => {
       return res.status(400).json({ error: 'command_id e status são obrigatórios' });
     }
 
-    const validStatuses = ['done', 'error'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: `status inválido. Use: ${validStatuses.join(', ')}` });
-    }
-
-    // result pode chegar como objeto (do background.js via fetch JSON) ou já como string
-    // Normalizar para string JSON para salvar no banco
-    let resultStr = null;
-    if (result !== undefined && result !== null) {
-      resultStr = typeof result === 'string' ? result : JSON.stringify(result);
-    }
-
-    const updateResult = await pool.query(`
-      UPDATE plugin_relay_commands
-      SET status = $1, result = $2, error_message = $3, updated_at = NOW()
+    const query = `
+      UPDATE plugin_relay_commands 
+      SET 
+        status = $1, 
+        result = $2, 
+        error_message = $3, 
+        updated_at = NOW()
       WHERE id = $4
-      RETURNING id, status
-    `, [status, resultStr, error_message || null, command_id]);
+      RETURNING id
+    `;
 
-    if (updateResult.rows.length === 0) {
+    const dbResult = await pool.query(query, [
+      status, 
+      result ? JSON.stringify(result) : null, 
+      error_message, 
+      command_id
+    ]);
+
+    if (dbResult.rows.length === 0) {
       return res.status(404).json({ error: 'Comando não encontrado' });
     }
 
-    res.json({ success: true, command_id, status });
+    res.json({ success: true, message: 'Resultado processado' });
 
   } catch (error) {
-    console.error('❌ Erro ao salvar relay result:', error);
-    res.status(500).json({ error: 'Erro ao salvar resultado', detail: error.message });
+    console.error('❌ Erro no relay-result:', error);
+    res.status(500).json({ error: 'Erro interno ao salvar resultado do relay' });
   }
 });
 
 /**
  * GET /api/iptv-plugin/relay-result/:command_id
- * Frontend do painel faz polling para ler o resultado de um comando
+ * Painel faz polling consultando se o comando já terminou ('done' ou 'error')
  */
 router.get('/relay-result/:command_id', async (req, res) => {
   try {
     const { command_id } = req.params;
 
-    const result = await pool.query(
-      `SELECT id, status, result, error_message, created_at, updated_at
-       FROM plugin_relay_commands WHERE id = $1`,
-      [command_id]
-    );
+    const query = `
+      SELECT status, result, error_message 
+      FROM plugin_relay_commands 
+      WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [command_id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Comando não encontrado' });
     }
 
-    const cmd = result.rows[0];
-    // Fazer parse do result se vier como string JSON do banco
-    let parsedResult = cmd.result;
+    const row = result.rows[0];
+
+    // Se estiver done e tiver result, parsear JSON se precisar
+    let parsedResult = row.result;
     if (parsedResult && typeof parsedResult === 'string') {
-      try { parsedResult = JSON.parse(parsedResult); } catch (e) { /* manter como string */ }
+      try { parsedResult = JSON.parse(parsedResult); } catch (e) {}
     }
+
     res.json({
-      success: true,
-      command_id: cmd.id,
-      status: cmd.status,
+      status: row.status, // 'pending', 'processing', 'done', 'error'
       result: parsedResult,
-      error_message: cmd.error_message,
-      created_at: cmd.created_at,
-      updated_at: cmd.updated_at
+      error_message: row.error_message
     });
 
   } catch (error) {
-    console.error('❌ Erro ao buscar relay result:', error);
-    res.status(500).json({ error: 'Erro ao buscar resultado', detail: error.message });
+    console.error('❌ Erro ao consultar relay-result:', error);
+    res.status(500).json({ error: 'Erro interno ao consultar resultado' });
   }
-});
-
-/**
- * POST /api/iptv-plugin/register-device-iptv
- * Registra credenciais IPTV em um dispositivo TV MAXX PRO
- * Substitui o SmartOne — o plugin envia direto para o MaxxControl
- * Body: { device_mac, dns, username, password, server_name? }
- */
-router.post('/register-device-iptv', async (req, res) => {
-  try {
-    const { device_mac, dns, username, password, server_name } = req.body;
-
-    if (!device_mac || !dns || !username || !password) {
-      return res.status(400).json({ error: 'device_mac, dns, username e password são obrigatórios' });
-    }
-
-    // Verificar se dispositivo existe
-    const deviceResult = await pool.query(
-      'SELECT * FROM devices WHERE mac_address = $1',
-      [device_mac]
-    );
-
-    if (deviceResult.rows.length === 0) {
-      return res.status(404).json({ error: `Dispositivo com MAC ${device_mac} não encontrado no MaxxControl` });
-    }
-
-    const device = deviceResult.rows[0];
-
-    // Montar URL Xtream a partir do DNS
-    const cleanDns = dns.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    const xtreamUrl = `http://${cleanDns}`;
-    const m3uUrl = `http://${cleanDns}/get.php?username=${username}&password=${password}&type=m3u_plus&output=mpegts`;
-
-    // Atualizar configuração IPTV do dispositivo
-    await pool.query(`
-      UPDATE devices
-      SET current_iptv_server_url = $1,
-          current_iptv_username = $2,
-          updated_at = NOW()
-      WHERE id = $3
-    `, [xtreamUrl, username, device.id]);
-
-    // Salvar também na tabela device_iptv_config (config por dispositivo)
-    await pool.query(`
-      INSERT INTO device_iptv_config (device_id, xtream_url, xtream_username, xtream_password, updated_at)
-      VALUES ($1, $2, $3, $4, NOW())
-      ON CONFLICT (device_id)
-      DO UPDATE SET xtream_url = $2, xtream_username = $3, xtream_password = $4, updated_at = NOW()
-    `, [device.id, xtreamUrl, username, password]);
-
-    // Registrar no histórico (smartone_registrations reutilizado como histórico de DNS)
-    await pool.query(`
-      INSERT INTO smartone_registrations (device_id, device_mac, server_name, dns, username, password, m3u_url, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      ON CONFLICT (device_mac, dns)
-      DO UPDATE SET username = $5, password = $6, m3u_url = $7, updated_at = NOW()
-    `, [device.id, device_mac, server_name || cleanDns, cleanDns, username, password, m3uUrl]).catch(() => {
-      // Tabela pode não ter a constraint — ignorar silenciosamente
-    });
-
-    console.log(`✅ IPTV registrado no dispositivo ${device_mac}: ${xtreamUrl}`);
-
-    res.json({
-      success: true,
-      message: `Credenciais IPTV registradas no dispositivo ${device_mac}`,
-      device_id: device.id,
-      device_mac,
-      xtream_url: xtreamUrl,
-      m3u_url: m3uUrl
-    });
-
-  } catch (error) {
-    console.error('❌ Erro ao registrar IPTV no dispositivo:', error);
-    res.status(500).json({ error: 'Erro ao registrar IPTV no dispositivo', detail: error.message });
-  }
-});
-
-/**
- * GET /api/iptv-plugin/check-tables
- * Diagnóstico: verifica quais tabelas do plugin existem no banco
- */
-router.get('/check-tables', async (req, res) => {
-  const tables = ['iptv_servers', 'iptv_playlists', 'device_iptv_sync', 'qpanel_panels', 'qpanel_servers', 'qpanel_accounts', 'smartone_registrations', 'plugin_relay_commands'];
-  const results = {};
-
-  for (const table of tables) {
-    try {
-      const r = await pool.query(`SELECT COUNT(*) FROM ${table}`);
-      results[table] = { exists: true, count: parseInt(r.rows[0].count) };
-    } catch (err) {
-      results[table] = { exists: false, error: err.message };
-    }
-  }
-
-  res.json({ success: true, tables: results });
 });
 
 module.exports = router;

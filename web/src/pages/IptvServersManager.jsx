@@ -1,357 +1,402 @@
-import { useState, useEffect } from 'react';
-import api from '../services/api';
-import { Plus, Trash2, Play, Globe, Users, Settings, Server, List, CheckCircle, Loader, Search, XCircle, TreePine } from 'lucide-react';
-import IptvTreeViewer from './IptvTreeViewer';
+import React, { useState, useEffect } from 'react';
+import { Settings, Server, Plus, Trash2, Globe, CheckCircle, RefreshCcw, Loader, Tv, MonitorPlay, Box, Cast, RadioGroup, List, Play, TreePine, Users } from 'lucide-react';
+import api from '../../api/axios';
 
 // ─── Tab: Limpar qPanel (Plugin 1) ───────────────────────────────────────────
 const CleanQpanelTab = () => {
   const [searchUsername, setSearchUsername] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [results, setResults] = useState([]);
-  const [selected, setSelected] = useState([]);
-  const [deleting, setDeleting] = useState(false);
-  const [activityLog, setActivityLog] = useState([]);
-  const [searched, setSearched] = useState(false);
-  const [relayMode, setRelayMode] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchStatus, setSearchStatus] = useState('');
+  const [useRelay, setUseRelay] = useState(false); // Alternar entre API Direta ou Plugin de Navegador
 
-  const addLog = (message) => {
-    const time = new Date().toLocaleTimeString('pt-BR');
-    setActivityLog(prev => [{ time, message }, ...prev.slice(0, 49)]);
-  };
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchUsername.trim()) return;
 
-  // Aguarda resultado de um comando relay com polling
-  const waitRelayResult = async (commandId, timeoutMs = 30000) => {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      await new Promise(r => setTimeout(r, 1500));
-      try {
-        const res = await api.get(`/api/iptv-plugin/relay-result/${commandId}`);
-        const { status, result, error_message } = res.data;
-        if (status === 'done') return { success: true, result };
-        if (status === 'error') return { success: false, error: error_message };
-        // pending ou executing: continua aguardando
-      } catch (e) {
-        return { success: false, error: e.message };
-      }
-    }
-    return { success: false, error: 'Timeout: plugin Chrome não respondeu em 30s. Verifique se o plugin está aberto e conectado.' };
-  };
+    setIsSearching(true);
+    setSearchResults([]);
+    setSearchStatus('⏳ Iniciando busca em todos os painéis...');
 
-  const handleSearch = async () => {
-    if (!searchUsername.trim()) { alert('Digite um username para buscar'); return; }
-    setSearching(true);
-    setResults([]);
-    setSelected([]);
-    setSearched(false);
-
-    if (relayMode) {
-      // Modo relay: plugin Chrome executa no qPanel
-      addLog(`🔌 [Relay] Enviando busca de "${searchUsername}" para o plugin Chrome...`);
-      try {
+    try {
+      if (useRelay) {
+        // Modo relay: plugin Chrome executa no qPanel
+        setSearchStatus('⏳ Enviando comando para o plugin Chrome...');
         const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
           command_type: 'search_user',
           payload: { username: searchUsername.trim() }
         });
+
         const commandId = cmdRes.data.command_id;
-        addLog(`⏳ Aguardando plugin Chrome executar (ID: ${commandId})...`);
+        setSearchStatus('⏳ Aguardando plugin pesquisar nos painéis...');
 
-        const relayResult = await waitRelayResult(commandId);
-        if (relayResult.success) {
-          const data = relayResult.result;
-          setResults(data.results || []);
-          setSearched(true);
-          const found = (data.results || []).filter(r => !r.error);
-          addLog(found.length > 0 ? `✅ Encontrado em ${found.length} painel(is)` : `ℹ️ Usuário não encontrado`);
-        } else {
-          addLog(`❌ ${relayResult.error}`);
-          setSearched(true);
-        }
-      } catch (err) {
-        addLog(`❌ Erro: ${err.response?.data?.error || err.message}`);
-      }
-    } else {
-      // Modo direto (legado — pode falhar se qPanel exigir sessão do browser)
-      addLog(`🔍 Buscando "${searchUsername}" em todos os painéis...`);
-      try {
-        const response = await api.post('/api/iptv-plugin/qpanel-search-user', { username: searchUsername.trim() });
-        const data = response.data;
-        setResults(data.results || []);
-        setSearched(true);
-        const found = (data.results || []).filter(r => !r.error);
-        const errors = (data.results || []).filter(r => r.error);
-        if (found.length > 0) addLog(`✅ Encontrado em ${found.length} painel(is)`);
-        if (errors.length > 0) addLog(`⚠️ ${errors.length} painel(is) com erro de conexão`);
-        if (found.length === 0 && errors.length === 0) addLog(`ℹ️ Usuário não encontrado em nenhum painel`);
-      } catch (err) {
-        addLog(`❌ Erro: ${err.response?.data?.error || err.message}`);
-      }
-    }
-    setSearching(false);
-  };
-
-  const toggleSelect = (key) => setSelected(prev =>
-    prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-  );
-
-  const selectAll = () => {
-    const validResults = results.filter(r => !r.error && r.customer_id);
-    const allKeys = validResults.map(r => `${r.panel_id}-${r.customer_id}`);
-    setSelected(selected.length === allKeys.length ? [] : allKeys);
-  };
-
-  const handleDeleteSelected = async () => {
-    if (!selected.length) { alert('Selecione pelo menos um usuário para deletar'); return; }
-    if (!window.confirm(`Tem certeza que deseja deletar ${selected.length} usuário(s)? Esta ação não pode ser desfeita.`)) return;
-
-    setDeleting(true);
-    let success = 0;
-    let failed = 0;
-
-    for (const key of selected) {
-      const [panelId, customerId] = key.split('-');
-      const result = results.find(r => r.panel_id == panelId && r.customer_id == customerId);
-      if (!result) continue;
-
-      if (relayMode) {
-        // Modo relay
-        addLog(`🔌 [Relay] Deletando "${result.username}" via plugin Chrome...`);
-        try {
-          const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
-            panel_id: result.panel_id,
-            command_type: 'delete_user',
-            payload: { panel_id: result.panel_id, customer_id: result.customer_id, username: result.username, panel_url: result.panel_url }
-          });
-          const relayResult = await waitRelayResult(cmdRes.data.command_id, 20000);
-          if (relayResult.success) {
-            addLog(`🗑️ Deletado: "${result.username}" do painel "${result.panel_name}"`);
-            success++;
-          } else {
-            addLog(`❌ Falha ao deletar de "${result.panel_name}": ${relayResult.error}`);
-            failed++;
+        let attempts = 0;
+        const maxAttempts = 30; // 60 segundos
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          try {
+            const res = await api.get(`/api/iptv-plugin/relay-result/${commandId}`);
+            if (res.data.status === 'done' || res.data.status === 'error') {
+              clearInterval(pollInterval);
+              setIsSearching(false);
+              
+              if (res.data.status === 'error') {
+                setSearchStatus(`❌ Erro no plugin: ${res.data.error_message}`);
+              } else {
+                const results = res.data.result?.results || [];
+                setSearchResults(results);
+                setSearchStatus(results.length > 0 
+                  ? `✅ Encontrado em ${results.length} painel(is).` 
+                  : `ℹ️ Usuário '${searchUsername}' não encontrado em nenhum painel.`);
+              }
+            }
+          } catch (pollErr) {
+            console.error('Erro no polling', pollErr);
           }
-        } catch (err) {
-          addLog(`❌ Erro relay: ${err.message}`);
-          failed++;
-        }
+
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setIsSearching(false);
+            setSearchStatus('⏰ Timeout: plugin não respondeu.');
+          }
+        }, 2000);
+
       } else {
-        // Modo direto
+        // Modo direto (legado — pode falhar se qPanel exigir sessão do browser)
+        setSearchStatus('⏳ Buscando diretamente via servidor...');
+        const response = await api.post('/api/iptv-plugin/qpanel-search-user', { username: searchUsername.trim() });
+        setSearchResults(response.data.results || []);
+        setIsSearching(false);
+        setSearchStatus(response.data.results.length > 0 
+          ? `✅ Encontrado em ${response.data.results.length} painel(is).` 
+          : `ℹ️ Usuário '${searchUsername}' não encontrado em nenhum painel.`);
+      }
+
+    } catch (err) {
+      setIsSearching(false);
+      setSearchStatus(`❌ Erro: ${err.response?.data?.error || err.message}`);
+    }
+  };
+
+  const handleDelete = async (panelId, customerId, panelName) => {
+    if (!window.confirm(`Tem certeza que deseja apagar ${searchUsername} de ${panelName}?`)) return;
+
+    try {
+      if (useRelay) {
+        alert('Modo plugin: o comando de apagar ainda precisa ser processado pelo painel.');
+        // Opcional: implementar delete_user no relay
+        const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
+          panel_id: panelId,
+          command_type: 'delete_user',
+          payload: { customer_id: customerId, username: searchUsername }
+        });
+        alert('Comando enviado para o plugin Chrome! Verifique no qPanel depois.');
+      } else {
+        const btn = document.getElementById(`btn-del-${panelId}`);
+        if(btn) btn.innerHTML = 'Apagando...';
+        
         try {
           await api.post('/api/iptv-plugin/qpanel-delete-user', {
-            panel_id: result.panel_id,
-            customer_id: result.customer_id,
-            username: result.username
+            panel_id: panelId,
+            customer_id: customerId,
+            username: searchUsername
           });
-          addLog(`🗑️ Deletado: "${result.username}" do painel "${result.panel_name}"`);
-          success++;
-        } catch (err) {
-          addLog(`❌ Falha ao deletar de "${result.panel_name}": ${err.response?.data?.error || err.message}`);
-          failed++;
+          alert(`✅ Apagado com sucesso de ${panelName}`);
+          setSearchResults(prev => prev.filter(r => r.panel_id !== panelId));
+        } catch (delErr) {
+          alert(`❌ Erro ao apagar em ${panelName}: ${delErr.response?.data?.error || delErr.message}`);
+          if(btn) btn.innerHTML = 'Deletar';
         }
-        await new Promise(r => setTimeout(r, 300));
       }
+    } catch (err) {
+      alert(`Erro geral: ${err.message}`);
     }
-
-    addLog(`🎉 Concluído! Deletados: ${success} | Falhas: ${failed}`);
-    setResults(prev => prev.filter(r => !selected.includes(`${r.panel_id}-${r.customer_id}`)));
-    setSelected([]);
-    setDeleting(false);
   };
 
-  const validResults = results.filter(r => !r.error && r.customer_id);
-  const errorResults = results.filter(r => r.error);
+  const btnSt  = { padding:'10px 20px', background:'linear-gradient(135deg,#ef4444,#dc2626)', border:'none', borderRadius:10, color:'#fff', fontWeight:700, cursor:'pointer' };
+  const inputSt = { width:'100%', padding:'12px 16px', background:'rgba(5,5,5,0.6)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#fff', outline:'none' };
 
   return (
-    <div className="space-y-6">
-      {/* Modo de operação */}
-      <div className="bg-card rounded-lg p-4 border border-gray-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold">Modo de Operação</h3>
-            <p className="text-sm text-gray-400 mt-1">
-              {relayMode
-                ? '🔌 Relay via Plugin Chrome — o plugin executa as ações no qPanel usando a sessão do browser'
-                : '🌐 Direto — o backend tenta acessar o qPanel diretamente (pode falhar se exigir sessão)'}
-            </p>
-          </div>
-          <button
-            onClick={() => setRelayMode(!relayMode)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${relayMode ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-700 hover:bg-gray-600'}`}
-          >
-            {relayMode ? '✅ Relay Ativo' : '⚡ Ativar Relay'}
-          </button>
-        </div>
-        {relayMode && (
-          <div className="mt-3 p-3 bg-green-900/30 border border-green-700 rounded-lg text-sm text-green-300">
-            ℹ️ Com o relay ativo, o plugin Chrome precisa estar aberto e conectado ao painel. O plugin faz polling a cada 3s para buscar comandos.
-          </div>
-        )}
-      </div>
-
-      {/* Busca */}
-      <div className="bg-card rounded-lg p-6 border border-gray-800">
-        <h2 className="text-xl font-bold mb-2">Buscar Usuário nos Painéis</h2>
+    <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:16, padding:24 }}>
+      <div style={{ marginBottom:20 }}>
+        <h2 style={{ fontSize:18, fontWeight:800, color:'#f87171', display:'flex', alignItems:'center', gap:8 }}>
+          <Trash2 size={24}/> Limpar Acesso no qPanel
+        </h2>
         <p className="text-gray-400 text-sm mb-4">Busca o username em todos os painéis qPanel configurados e permite deletar em massa.</p>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={searchUsername}
-            onChange={e => setSearchUsername(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Digite o username para buscar..."
-            className="flex-1 px-4 py-2 bg-dark border border-gray-700 rounded-lg focus:outline-none focus:border-primary text-white"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={searching}
-            className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition"
-          >
-            {searching ? <Loader className="animate-spin" size={18} /> : <Search size={18} />}
-            {searching ? (relayMode ? 'Aguardando plugin...' : 'Buscando...') : 'Buscar'}
-          </button>
+        
+        {/* Toggle para Relay Chrome */}
+        <div style={{ padding:12, background:'rgba(59,130,246,0.1)', border:'1px solid rgba(59,130,246,0.2)', borderRadius:10, marginBottom:20, display:'inline-block' }}>
+          <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', color:'#93c5fd', fontSize:13 }}>
+            <input type="checkbox" checked={useRelay} onChange={(e)=>setUseRelay(e.target.checked)} style={{ width:16, height:16, accentColor:'#3b82f6' }}/>
+            Usar Relay via Plugin do Chrome
+          </label>
         </div>
       </div>
 
-      {/* Resultados */}
-      {searched && (
-        <div className="bg-card rounded-lg p-6 border border-gray-800">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">
-              Resultados {validResults.length > 0 && <span className="text-primary">({validResults.length} encontrado{validResults.length !== 1 ? 's' : ''})</span>}
-            </h2>
-            {validResults.length > 0 && (
-              <div className="flex gap-3">
-                <label className="flex items-center gap-2 cursor-pointer text-sm">
-                  <input type="checkbox" checked={selected.length === validResults.length && validResults.length > 0}
-                    onChange={selectAll} className="w-4 h-4" />
-                  Selecionar todos
-                </label>
-                <button
-                  onClick={handleDeleteSelected}
-                  disabled={!selected.length || deleting}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
-                >
-                  {deleting ? <Loader className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                  {deleting ? (relayMode ? 'Aguardando plugin...' : 'Deletando...') : `Deletar ${selected.length > 0 ? `(${selected.length})` : 'Selecionados'}`}
-                </button>
-              </div>
-            )}
-          </div>
+      <form onSubmit={handleSearch} style={{ display:'flex', gap:12, marginBottom:20 }}>
+        <input style={inputSt} type="text" placeholder="Digite o username exato do cliente" value={searchUsername} onChange={e=>setSearchUsername(e.target.value)} required />
+        <button type="submit" disabled={isSearching} style={{ ...btnSt, background:isSearching?'#52525b':'linear-gradient(135deg,#34d399,#10b981)', opacity:isSearching?0.7:1, display:'flex', alignItems:'center', gap:8 }}>
+          {isSearching ? <><Loader size={16} style={{animation:'spin 1s linear infinite'}}/> Buscando...</> : 'Buscar em Todos'}
+        </button>
+      </form>
 
-          {validResults.length === 0 && errorResults.length === 0 && (
-            <div className="text-center py-8 text-gray-400">
-              <XCircle size={40} className="mx-auto mb-3 text-gray-600" />
-              <p>Usuário "<strong>{searchUsername}</strong>" não encontrado em nenhum painel.</p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {validResults.map(r => {
-              const key = `${r.panel_id}-${r.customer_id}`;
-              return (
-                <div key={key}
-                  className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
-                    selected.includes(key) ? 'border-red-500 bg-red-500/10' : 'border-gray-800 hover:border-gray-700'
-                  }`}
-                >
-                  <input type="checkbox" checked={selected.includes(key)} onChange={() => toggleSelect(key)} className="w-5 h-5" />
-                  <Globe className="text-primary shrink-0" size={20} />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold">{r.username}</div>
-                    <div className="text-sm text-gray-400">{r.panel_name} — ID: {r.customer_id}</div>
-                  </div>
-                  <div className="text-right text-sm text-gray-400 shrink-0">
-                    {r.expiry && <div>Expira: {r.expiry}</div>}
-                    <div className={r.status === 1 || r.status === 'active' ? 'text-green-400' : 'text-yellow-400'}>
-                      {r.status === 1 || r.status === 'active' ? 'Ativo' : String(r.status)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {errorResults.length > 0 && (
-            <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
-              <p className="text-yellow-400 text-sm font-semibold mb-1">⚠️ Painéis com erro de conexão:</p>
-              {errorResults.map(r => (
-                <p key={r.panel_id} className="text-yellow-300 text-xs">{r.panel_name}: {r.error}</p>
-              ))}
-            </div>
-          )}
+      {searchStatus && (
+        <div style={{ padding:14, background:'rgba(255,255,255,0.05)', borderRadius:10, color:'#e4e4e7', fontSize:13, marginBottom:20, borderLeft:'4px solid #FFA500' }}>
+          {searchStatus}
         </div>
       )}
 
-      {/* Log */}
-      <div className="bg-card rounded-lg p-6 border border-gray-800">
-        <h2 className="text-xl font-bold mb-4">Log de Atividades</h2>
-        <div className="bg-dark rounded-lg p-4 h-40 overflow-y-auto font-mono text-sm">
-          {activityLog.length === 0
-            ? <p className="text-gray-500">Nenhuma atividade ainda...</p>
-            : activityLog.map((log, i) => (
-              <div key={i} className="mb-1">
-                <span className="text-gray-500">[{log.time}]</span> <span>{log.message}</span>
+      {searchResults.length > 0 && (
+        <div>
+          <h3 style={{ fontSize:14, fontWeight:700, color:'#34d399', marginBottom:12 }}>Resultados ({searchResults.length}):</h3>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {searchResults.map((res, i) => (
+              <div key={i} style={{ padding:16, background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div>
+                  <p style={{ fontSize:15, fontWeight:800, color:'#fff' }}>{res.panel_name}</p>
+                  <p style={{ fontSize:12, color:'#a1a1aa', marginTop:4 }}>
+                    <span style={{ color:'#34d399' }}>● Encontrado: {res.username}</span> | 
+                    Status: <strong style={{ color:res.status==='Active'?'#34d399':'#fbbf24' }}>{res.status}</strong> | 
+                    Expira: {res.expiry}
+                  </p>
+                  {res.error && <p style={{ color:'#f87171', fontSize:11, mt:4 }}>Erro nesta API: {res.error}</p>}
+                </div>
+                {!res.error && (
+                  <button 
+                    id={`btn-del-${res.panel_id}`}
+                    onClick={()=>handleDelete(res.panel_id, res.customer_id, res.panel_name)}
+                    style={{ padding:'8px 16px', background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:8, color:'#f87171', fontSize:12, fontWeight:700, cursor:'pointer' }}
+                    onMouseOver={e=>e.currentTarget.style.background='rgba(239,68,68,0.25)'}
+                    onMouseOut={e=>e.currentTarget.style.background='rgba(239,68,68,0.15)'}>
+                    Deletar Usuário
+                  </button>
+                )}
               </div>
-            ))
-          }
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-// ─── Tab: Playlist Manager (Plugin 4) ────────────────────────────────────────
-const PlaylistManagerTab = () => {
+// ─── Novo Tab: Gerenciador de Árvore IPTV (Categorias) ─────────────────────────
+const IptvTreeTab = () => {
   const [servers, setServers] = useState([]);
-  const [selectedServers, setSelectedServers] = useState([]);
-  const [currentPlatform, setCurrentPlatform] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [registering, setRegistering] = useState(false);
-  const [serverForm, setServerForm] = useState({ name: '', dns: '' });
-  const [registerForm, setRegisterForm] = useState({ mac: '', username: '', password: '' });
-  const [activityLog, setActivityLog] = useState([]);
-  const [stats, setStats] = useState({ total: 0, success: 0, error: 0 });
+  const [selectedServer, setSelectedServer] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [channels, setChannels] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [expandedCats, setExpandedCats] = useState({});
+  const [loadingCats, setLoadingCats] = useState({});
 
-  const platforms = [
-    { id: 'smartone', name: 'SmartOne', icon: '📺', color: 'bg-blue-500' },
-    { id: 'ibocast', name: 'IBOCast', icon: '🎥', color: 'bg-purple-500' },
-    { id: 'ibopro', name: 'IBOPro', icon: '⚡', color: 'bg-green-500' },
-    { id: 'vuplayer', name: 'VU Player', icon: '🎬', color: 'bg-red-500' },
-  ];
-
-  useEffect(() => { loadServers(); }, []);
+  useEffect(() => {
+    loadServers();
+  }, []);
 
   const loadServers = async () => {
     try {
+      const response = await api.get('/api/iptv-tree/servers');
+      setServers(response.data.servers || []);
+    } catch (err) { console.error('Erro ao listar servidores na árvore', err); }
+  };
+
+  const handleServerSelect = async (e) => {
+    const srvId = e.target.value;
+    setSelectedServer(srvId);
+    setCategories([]);
+    setChannels({});
+    setExpandedCats({});
+    
+    if (!srvId) return;
+    
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/iptv-tree/categories/${srvId}`);
+      setCategories(response.data.categories || []);
+    } catch (err) {
+      alert('Erro ao carregar categorias: ' + (err.response?.data?.error || err.message));
+    }
+    setLoading(false);
+  };
+
+  const toggleCategory = async (categoryId) => {
+    const isExpanded = !!expandedCats[categoryId];
+    
+    setExpandedCats(prev => ({ ...prev, [categoryId]: !isExpanded }));
+
+    // Se vai expandir e ainda não tem os canais em memória, busca na API
+    if (!isExpanded && !channels[categoryId]) {
+      setLoadingCats(prev => ({ ...prev, [categoryId]: true }));
+      try {
+        const res = await api.get(`/api/iptv-tree/channels/${selectedServer}/${categoryId}`);
+        setChannels(prev => ({ ...prev, [categoryId]: res.data.channels }));
+      } catch (err) {
+        alert('Erro ao carregar canais desta categoria.');
+        setExpandedCats(prev => ({ ...prev, [categoryId]: false }));
+      }
+      setLoadingCats(prev => ({ ...prev, [categoryId]: false }));
+    }
+  };
+
+  const inputSt = { width:'100%', padding:'12px 16px', background:'rgba(5,5,5,0.6)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#fff', outline:'none', fontSize:14 };
+
+  return (
+    <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.2)', borderRadius:16, padding:24 }}>
+      <h2 style={{ fontSize:18, fontWeight:800, color:'#fff', display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
+        <TreePine size={24} color="#FFA500"/> Explorador de Árvore IPTV
+      </h2>
+      <p style={{ color:'#a1a1aa', fontSize:13, marginBottom:24 }}>Explore as categorias e visualize todos os canais, filmes e séries contidos em cada servidor.</p>
+
+      <div style={{ marginBottom:20 }}>
+        <select style={inputSt} value={selectedServer} onChange={handleServerSelect}>
+          <option value="">Selecione um Servidor IPTV...</option>
+          {servers.map(s => (
+             <option key={s.id} value={s.id}>{s.server_name} ({s.xtream_url})</option>
+          ))}
+        </select>
+      </div>
+
+      {loading && (
+        <div style={{ padding:20, textAlign:'center', color:'#FFA500' }}>
+          <Loader size={24} style={{ animation:'spin 1s linear infinite', margin:'0 auto 10px' }}/>
+          <p>Buscando lista na API do servidor...</p>
+        </div>
+      )}
+
+      {!loading && selectedServer && categories.length > 0 && (
+        <div style={{ background:'rgba(5,5,5,0.4)', borderRadius:12, padding:16, border:'1px solid rgba(255,255,255,0.05)' }}>
+          <h3 style={{ fontSize:15, fontWeight:700, color:'#34d399', marginBottom:16 }}>📁 {categories.length} Categorias encontradas</h3>
+          
+          <div style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'500px', overflowY:'auto', paddingRight:10 }}>
+            {categories.map(cat => (
+              <div key={cat.category_id} style={{ border:'1px solid rgba(255,255,255,0.05)', borderRadius:8, overflow:'hidden' }}>
+                {/* Header (Categoria) */}
+                <div 
+                  onClick={() => toggleCategory(cat.category_id)}
+                  style={{ 
+                    padding:'12px 16px', background:'rgba(255,255,255,0.02)', cursor:'pointer',
+                    display:'flex', alignItems:'center', justifyContent:'space-between'
+                  }}
+                  onMouseOver={e=>e.currentTarget.style.background='rgba(255,165,0,0.1)'}
+                  onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.02)'}
+                >
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <span style={{ fontSize:16 }}>{expandedCats[cat.category_id] ? '📂' : '📁'}</span>
+                    <span style={{ fontSize:14, fontWeight:700, color:'#e4e4e7' }}>{cat.category_name}</span>
+                  </div>
+                  {loadingCats[cat.category_id] ? (
+                    <Loader size={14} color="#FFA500" style={{ animation:'spin 1s linear infinite' }}/>
+                  ) : (
+                    <span style={{ fontSize:11, color:'#71717a' }}>ID {cat.category_id}</span>
+                  )}
+                </div>
+
+                {/* Body (Canais) */}
+                {expandedCats[cat.category_id] && (
+                  <div style={{ padding:'10px 16px', background:'rgba(0,0,0,0.3)', borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+                    {channels[cat.category_id] ? (
+                      channels[cat.category_id].length > 0 ? (
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:8 }}>
+                          {channels[cat.category_id].map(ch => (
+                            <div key={ch.stream_id} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:'rgba(255,255,255,0.03)', borderRadius:6 }}>
+                              {ch.stream_icon ? (
+                                <img src={ch.stream_icon} alt="" style={{ width:24, height:24, borderRadius:4, objectFit:'cover', background:'#000' }} onError={e=>{e.target.src='https://via.placeholder.com/24?text=TV'}}/>
+                              ) : (
+                                <div style={{ width:24, height:24, borderRadius:4, background:'#27272a', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10 }}>📺</div>
+                              )}
+                              <div style={{ flex:1, minWidth:0 }}>
+                                <div style={{ fontSize:12, fontWeight:600, color:'#d4d4d8', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }} title={ch.name}>{ch.name}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ fontSize:12, color:'#71717a', padding:'8px 0' }}>Nenhum canal ativo nesta categoria.</p>
+                      )
+                    ) : (
+                      <p style={{ fontSize:12, color:'#71717a', padding:'8px 0' }}>Aguardando...</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && selectedServer && categories.length === 0 && (
+         <div style={{ padding:20, textAlign:'center', color:'#f87171', background:'rgba(239,68,68,0.1)', borderRadius:10 }}>
+           Nenhuma categoria encontrada ou erro na conexão com a API.
+         </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Componente do Playlist Manager ───────────────────────────────────────────
+const PlaylistManagerComponent = () => {
+  const [platforms, setPlatforms] = useState([
+    { id: 'iboplro', name: 'IBO Pro', icon: '📺', color: 'bg-blue-500' },
+    { id: 'smartone', name: 'SmartOne', icon: '🖥️', color: 'bg-purple-500' },
+    { id: 'ibocast', name: 'IboCast', icon: '📱', color: 'bg-indigo-500' },
+    { id: 'vuplayer', name: 'VuPlayer', icon: '🎮', color: 'bg-orange-500' }
+  ]);
+  const [currentPlatform, setCurrentPlatform] = useState('');
+  
+  const [servers, setServers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [selectedServers, setSelectedServers] = useState([]);
+  
+  const [serverForm, setServerForm] = useState({ name: '', dns: '' });
+  const [registerForm, setRegisterForm] = useState({ mac: '', username: '', password: '' });
+  
+  const [activityLog, setActivityLog] = useState([]);
+  const [stats, setStats] = useState({ total: 0, success: 0, error: 0 });
+  const [registering, setRegistering] = useState(false);
+
+  useEffect(() => {
+    fetchServers();
+  }, []);
+
+  const fetchServers = async () => {
+    try {
       const response = await api.get('/api/playlist-manager/servers');
-      setServers(response.data);
+      setServers(response.data.servers || []);
     } catch (error) {
-      addLog('❌ Erro ao carregar servidores');
+      console.error('Erro ao buscar servidores:', error);
+      addLog('❌ Falha ao carregar servidores.');
     } finally {
       setLoading(false);
     }
   };
 
   const addServer = async () => {
-    if (!serverForm.name.trim() || !serverForm.dns.trim()) { alert('Nome e DNS são obrigatórios'); return; }
+    if (!serverForm.name || !serverForm.dns) { alert('Preencha nome e DNS'); return; }
     try {
-      await api.post('/api/playlist-manager/servers', serverForm);
-      addLog(`✅ Servidor "${serverForm.name}" adicionado`);
+      await api.post('/api/playlist-manager/add-server', serverForm);
+      addLog(`Servidor adicionado: ${serverForm.name} (${serverForm.dns})`);
       setServerForm({ name: '', dns: '' });
       setShowAddModal(false);
-      loadServers();
-    } catch { alert('Erro ao adicionar servidor'); }
+      fetchServers();
+    } catch (error) {
+      alert('Erro ao adicionar servidor');
+    }
   };
 
   const deleteServer = async (id, name) => {
-    if (!confirm(`Deseja remover o servidor "${name}"?`)) return;
+    if (!window.confirm(`Deseja deletar ${name}?`)) return;
     try {
-      await api.delete(`/api/playlist-manager/servers/${id}`);
-      addLog(`🗑️ Servidor "${name}" removido`);
+      await api.delete(`/api/playlist-manager/server/${id}`);
+      addLog(`🗑️ Servidor deletado: ${name}`);
+      fetchServers();
       setSelectedServers(prev => prev.filter(sid => sid !== id));
-      loadServers();
-    } catch { alert('Erro ao deletar servidor'); }
+    } catch (error) {
+      alert('Erro ao deletar servidor');
+    }
   };
 
   const toggleServer = (id) => setSelectedServers(prev =>
@@ -587,7 +632,7 @@ const IptvServersManager = () => {
   });
 
   const [qpanelForm, setQpanelForm] = useState({
-    panel_name: '', panel_url: ''
+    panel_name: '', panel_url: '', panel_username: ''
   });
 
   const [accountForm, setAccountForm] = useState({
@@ -704,7 +749,7 @@ const IptvServersManager = () => {
     try {
       await api.post('/api/iptv-plugin/add-qpanel', qpanelForm);
       alert('Painel qPanel adicionado!');
-      setQpanelForm({ panel_name: '', panel_url: '' });
+      setQpanelForm({ panel_name: '', panel_url: '', panel_username: '' });
       setShowAddQpanel(false);
       loadQpanels();
     } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
@@ -725,61 +770,26 @@ const IptvServersManager = () => {
 
     try {
       setLoadState('waiting');
-      setStatus('⏳ Enviando comando para o plugin...');
+      setStatus('⏳ Conectando diretamente ao qPanel...');
 
-      const cmdRes = await api.post('/api/iptv-plugin/relay-command', {
-        panel_id: id,
-        command_type: 'get_servers',
-        payload: { panel_url: qpanel.panel_url }
+      const saveResponse = await api.post('/api/iptv-plugin/qpanel-fetch-direct-servers', { 
+        panel_id: id 
       });
+      
+      const { servers, total, message } = saveResponse.data;
 
-      const commandId = cmdRes.data.command_id;
-      setStatus('⏳ Aguardando o plugin Chrome buscar os servidores...');
-
-      // Polling até 30s
-      const start = Date.now();
-      let relayResult = null;
-      while (Date.now() - start < 30000) {
-        await new Promise(r => setTimeout(r, 2000));
-        const res = await api.get(`/api/iptv-plugin/relay-result/${commandId}`);
-        const { status, result, error_message } = res.data;
-        if (status === 'done') {
-          // result já vem parseado do backend
-          relayResult = result;
-          break;
-        }
-        if (status === 'error') {
-          setStatus(`❌ Erro: ${error_message}`);
-          setLoadState('error');
-          return;
-        }
-        const elapsed = Math.round((Date.now() - start) / 1000);
-        setStatus(`⏳ Aguardando resposta do plugin... (${elapsed}s)`);
-      }
-
-      if (!relayResult) {
-        setStatus('⏰ Timeout: plugin não respondeu em 30s. Verifique se está aberto e conectado.');
-        setLoadState('error');
-        return;
-      }
-
-      const fetchedServers = relayResult.servers || [];
-      console.log('[qPanel Debug] Servidores recebidos do relay:', JSON.stringify(fetchedServers, null, 2));
-      if (fetchedServers.length === 0) {
-        setStatus('ℹ️ Nenhum servidor encontrado no painel.');
+      if (total === 0) {
+        setStatus(`ℹ️ ${message || 'Nenhum servidor encontrado no painel.'}`);
         setLoadState('done');
-        return;
+      } else {
+        setStatus(`✅ ${total} servidor(es) carregado(s) com sucesso!`);
+        setLoadState('done');
       }
-
-      setStatus(`💾 Salvando ${fetchedServers.length} servidor(es)...`);
-      const saveResponse = await api.post('/api/iptv-plugin/qpanel-load-servers', { panel_id: id, servers: fetchedServers });
-      const total = saveResponse.data.total || fetchedServers.length;
-      setStatus(`✅ ${total} servidor(es) carregado(s) com sucesso!`);
-      setLoadState('done');
 
       // Recarregar lista de painéis para refletir os servidores salvos
       await loadQpanels();
     } catch (err) {
+      console.error(err);
       setStatus('❌ Erro: ' + (err.response?.data?.error || err.message));
       setLoadState('error');
     }
@@ -883,110 +893,98 @@ const IptvServersManager = () => {
     { id: 'clean', label: 'Limpar qPanel', icon: Trash2 },
   ];
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Carregando...</div>;
+  const inputSt = { width:'100%', padding:'10px 14px', background:'rgba(5,5,5,0.6)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#fff', fontSize:13, outline:'none', boxSizing:'border-box' };
+  const btnPri  = { display:'inline-flex', alignItems:'center', gap:7, padding:'9px 18px', background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(255,165,0,0.3)' };
+  const btnGh   = { display:'inline-flex', alignItems:'center', gap:7, padding:'9px 14px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#a1a1aa', fontSize:13, fontWeight:600, cursor:'pointer' };
+  const cardSt  = { background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:24, boxShadow:'0 8px 32px rgba(0,0,0,0.35)' };
+  const logColor = (type) => ({ error:'#f87171', warning:'#facc15', success:'#34d399', info:'#a1a1aa' }[type]||'#a1a1aa');
+
+  if (loading) return (
+    <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
+      <Loader size={28} color='#FFA500' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
+      Carregando...
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen text-white">
+    <div>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Plugin IPTV Unificado</h1>
-        <p className="text-gray-400">Gerencie servidores IPTV, painéis qPanel e playlists em um só lugar</p>
+      <div style={{ marginBottom:24 }}>
+        <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+          <Settings size={26} color='#FFA500'/> Plugin IPTV Unificado
+        </h1>
+        <p style={{ fontSize:12, color:'#52525b' }}>Gerenciar servidores IPTV, painéis qPanel e playlists em um só lugar</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-8 border-b border-gray-800">
+      <div style={{ display:'flex', gap:4, marginBottom:24, background:'rgba(17,17,17,0.6)', padding:5, borderRadius:14, flexWrap:'wrap', border:'1px solid rgba(255,255,255,0.06)', width:'fit-content' }}>
         {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`px-6 py-3 rounded-t-lg font-medium transition flex items-center gap-2 ${
-              activeTab === id
-                ? 'bg-primary text-white'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
-            }`}
-          >
-            <Icon size={18} />
-            {label}
+          <button key={id} onClick={() => setActiveTab(id)}
+            style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 16px', borderRadius:10, border:'none', cursor:'pointer', fontSize:12, fontWeight:700, transition:'all .2s', background:activeTab===id?'rgba(255,165,0,0.15)':'transparent', color:activeTab===id?'#FFA500':'#71717a', boxShadow:activeTab===id?'0 2px 10px rgba(255,165,0,0.15)':'none' }}>
+            <Icon size={14}/> {label}
           </button>
         ))}
       </div>
 
       {/* ── Tab: Servidores IPTV ── */}
       {activeTab === 'servers' && (
-        <div className="space-y-6">
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
+        <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+          <div style={cardSt}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
               <div>
-                <h2 className="text-2xl font-bold">Servidores IPTV</h2>
-                <p className="text-gray-400 text-sm">Gerencie seus servidores Xtream Codes</p>
+                <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', marginBottom:2 }}>Servidores IPTV</h2>
+                <p style={{ fontSize:12, color:'#52525b' }}>Gerencie seus servidores Xtream Codes</p>
               </div>
-              <button
-                onClick={() => setShowAddServer(!showAddServer)}
-                className="bg-primary hover:bg-orange-600 px-4 py-2 rounded-lg transition flex items-center gap-2"
-              >
-                <Plus size={20} /> Adicionar Servidor
-              </button>
+              <button onClick={() => setShowAddServer(!showAddServer)} style={btnPri}><Plus size={15}/> Adicionar Servidor</button>
             </div>
 
             {showAddServer && (
-              <form onSubmit={handleAddServer} className="mb-6 p-4 bg-gray-700 rounded-lg">
-                <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="Nome do servidor" value={serverForm.server_name}
-                    onChange={e => setServerForm({ ...serverForm, server_name: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
-                  <input type="url" placeholder="URL Xtream (ex: http://servidor.com)" value={serverForm.xtream_url}
-                    onChange={e => setServerForm({ ...serverForm, xtream_url: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
-                  <input type="text" placeholder="Usuário Xtream" value={serverForm.xtream_username}
-                    onChange={e => setServerForm({ ...serverForm, xtream_username: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" />
-                  <input type="password" placeholder="Senha Xtream" value={serverForm.xtream_password}
-                    onChange={e => setServerForm({ ...serverForm, xtream_password: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" />
-                  <select value={serverForm.server_type} onChange={e => setServerForm({ ...serverForm, server_type: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded col-span-2">
-                    <option value="custom">Custom</option>
-                    <option value="ibopro">IboPro</option>
-                    <option value="ibocast">IboCast</option>
-                    <option value="vuplayer">VuPlayer</option>
+              <form onSubmit={handleAddServer} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:20, marginBottom:16 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+                  <input style={inputSt} type='text' placeholder='Nome do servidor' value={serverForm.server_name} onChange={e=>setServerForm({...serverForm,server_name:e.target.value})} required/>
+                  <input style={inputSt} type='url' placeholder='URL Xtream (http://...)' value={serverForm.xtream_url} onChange={e=>setServerForm({...serverForm,xtream_url:e.target.value})} required/>
+                  <input style={inputSt} type='text' placeholder='Usuário Xtream' value={serverForm.xtream_username} onChange={e=>setServerForm({...serverForm,xtream_username:e.target.value})}/>
+                  <input style={inputSt} type='password' placeholder='Senha Xtream' value={serverForm.xtream_password} onChange={e=>setServerForm({...serverForm,xtream_password:e.target.value})}/>
+                  <select style={{ ...inputSt, gridColumn:'span 2' }} value={serverForm.server_type} onChange={e=>setServerForm({...serverForm,server_type:e.target.value})}>
+                    <option value='custom'>Custom</option><option value='ibopro'>IboPro</option><option value='ibocast'>IboCast</option><option value='vuplayer'>VuPlayer</option>
                   </select>
                 </div>
-                <button type="submit" className="w-full bg-green-600 hover:bg-green-700 p-2 rounded transition mt-4">
-                  Adicionar Servidor
-                </button>
+                <button type='submit' style={{ ...btnPri, width:'100%', justifyContent:'center' }}>Adicionar Servidor</button>
               </form>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:14 }}>
             {servers.length === 0 ? (
-              <div className="col-span-full bg-gray-800 rounded-lg p-12 text-center">
-                <Settings size={48} className="mx-auto text-gray-500 mb-4" />
-                <p className="text-gray-400">Nenhum servidor IPTV configurado</p>
-                <p className="text-gray-500 text-sm mt-2">Adicione um servidor para começar</p>
+              <div style={{ gridColumn:'1/-1', textAlign:'center', padding:48, background:'rgba(17,17,17,0.5)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:14, color:'#52525b' }}>
+                <Settings size={40} color='#27272a' style={{ display:'block', margin:'0 auto 12px' }}/>
+                <p>Nenhum servidor IPTV configurado</p>
               </div>
             ) : servers.map(server => (
-              <div key={server.id} className="bg-gray-800 rounded-lg p-6 border-2 border-transparent hover:border-gray-600 transition">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold">{server.server_name}</h3>
-                    <p className="text-gray-400 text-sm truncate">{server.xtream_url}</p>
+              <div key={server.id} style={{ ...cardSt, padding:18, transition:'border-color .2s' }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(255,165,0,0.2)'}
+                onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,165,0,0.1)'}>
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <h3 style={{ fontSize:14, fontWeight:700, color:'#e4e4e7', marginBottom:3 }}>{server.server_name}</h3>
+                    <p style={{ fontFamily:'monospace', fontSize:11, color:'#52525b', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{server.xtream_url}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleTestServer(server.id)} className="bg-green-600 hover:bg-green-700 p-2 rounded-lg transition" title="Testar">
-                      <Play size={16} />
+                  <div style={{ display:'flex', gap:6, marginLeft:8 }}>
+                    <button onClick={()=>handleTestServer(server.id)} title='Testar'
+                      style={{ width:30, height:30, borderRadius:8, background:'rgba(34,197,94,0.12)', border:'1px solid rgba(34,197,94,0.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#34d399' }}>
+                      <Play size={13}/>
                     </button>
-                    <button onClick={() => handleDeleteServer(server.id)} className="bg-red-600 hover:bg-red-700 p-2 rounded-lg transition" title="Deletar">
-                      <Trash2 size={16} />
+                    <button onClick={()=>handleDeleteServer(server.id)} title='Deletar'
+                      style={{ width:30, height:30, borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#f87171' }}>
+                      <Trash2 size={13}/>
                     </button>
                   </div>
                 </div>
-                <div className="text-sm text-gray-400">
-                  <span className="capitalize">{server.server_type}</span>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ fontSize:11, color:'#52525b', textTransform:'capitalize' }}>{server.server_type}</span>
                   {server.test_status && (
-                    <span className={`ml-2 font-semibold ${server.test_status === 'online' ? 'text-green-400' : 'text-red-400'}`}>
-                      • {server.test_status}
-                    </span>
+                    <span style={{ fontSize:11, fontWeight:700, color:server.test_status==='online'?'#34d399':'#f87171' }}>● {server.test_status}</span>
                   )}
                 </div>
               </div>
@@ -997,120 +995,75 @@ const IptvServersManager = () => {
 
       {/* ── Tab: qPanel ── */}
       {activeTab === 'qpanel' && (
-        <div className="space-y-6">
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
+        <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+          <div style={cardSt}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
               <div>
-                <h2 className="text-2xl font-bold">Painéis qPanel</h2>
-                <p className="text-gray-400 text-sm">Gerencie múltiplos painéis e crie contas IPTV em massa</p>
+                <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', marginBottom:2 }}>Painéis qPanel</h2>
+                <p style={{ fontSize:12, color:'#52525b' }}>Gerencie múltiplos painéis e crie contas IPTV em massa</p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setShowAddQpanel(!showAddQpanel)}
-                  className="bg-primary hover:bg-orange-600 px-4 py-2 rounded-lg transition flex items-center gap-2">
-                  <Plus size={20} /> Adicionar Painel
-                </button>
-                <button onClick={() => setShowCreateAccounts(!showCreateAccounts)}
-                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-                  <Users size={20} /> Criar Contas
-                </button>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={()=>setShowAddQpanel(!showAddQpanel)} style={btnPri}><Plus size={15}/> Adicionar Painel</button>
+                <button onClick={()=>setShowCreateAccounts(!showCreateAccounts)} style={{ ...btnGh, color:'#34d399', borderColor:'rgba(16,185,129,0.25)' }}><Users size={15}/> Criar Contas</button>
               </div>
             </div>
 
             {showAddQpanel && (
-              <form onSubmit={handleAddQpanel} className="mb-6 p-4 bg-gray-700 rounded-lg">
-                <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="Nome do painel" value={qpanelForm.panel_name}
-                    onChange={e => setQpanelForm({ ...qpanelForm, panel_name: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
-                  <input type="url" placeholder="URL do painel (ex: http://meupainel.com)" value={qpanelForm.panel_url}
-                    onChange={e => setQpanelForm({ ...qpanelForm, panel_url: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
+              <form onSubmit={handleAddQpanel} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:18, marginBottom:16 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+                  <input style={inputSt} type='text' placeholder='Nome do painel' value={qpanelForm.panel_name} onChange={e=>setQpanelForm({...qpanelForm,panel_name:e.target.value})} required/>
+                  <input style={inputSt} type='url' placeholder='URL do painel (http://...)' value={qpanelForm.panel_url} onChange={e=>setQpanelForm({...qpanelForm,panel_url:e.target.value})} required/>
+                  <input style={{ ...inputSt, gridColumn:'span 2' }} type='text' placeholder='Token API / Chave de Acesso (Ex: NDM4NTh12...)' value={qpanelForm.panel_username} onChange={e=>setQpanelForm({...qpanelForm,panel_username:e.target.value})} title="Necessário para acessar o painel via backend sem plugin"/>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  ℹ️ O plugin Chrome usa a sessão do seu browser para autenticar — não é necessário usuário/senha aqui.
-                </p>
-                <button type="submit" className="w-full bg-green-600 hover:bg-green-700 p-2 rounded transition mt-4">
-                  Adicionar Painel qPanel
-                </button>
+                <p style={{ fontSize:11, color:'#52525b', marginBottom:10 }}>ℹ️ Conexão direta segura API-to-API sem necessidade de Plugins locais.</p>
+                <button type='submit' style={{ ...btnPri, width:'100%', justifyContent:'center' }}>Adicionar Painel qPanel</button>
               </form>
             )}
 
             {showCreateAccounts && (
-              <form onSubmit={handleCreateAccounts} className="mb-6 p-4 bg-gray-700 rounded-lg">
-                <h3 className="text-lg font-bold mb-4">🎯 Criar Contas IPTV em Massa</h3>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <input type="text" placeholder="Nome de usuário" value={accountForm.username}
-                    onChange={e => setAccountForm({ ...accountForm, username: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
-                  <input type="password" placeholder="Senha (mín. 9 caracteres)" value={accountForm.password}
-                    onChange={e => setAccountForm({ ...accountForm, password: e.target.value })}
-                    className="bg-gray-600 text-white p-2 rounded placeholder-gray-400" required />
+              <form onSubmit={handleCreateAccounts} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:18, marginBottom:16 }}>
+                <h3 style={{ fontSize:14, fontWeight:800, color:'#fff', marginBottom:14 }}>🎯 Criar Contas IPTV em Massa</h3>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+                  <input style={inputSt} type='text' placeholder='Nome de usuário' value={accountForm.username} onChange={e=>setAccountForm({...accountForm,username:e.target.value})} required/>
+                  <input style={inputSt} type='password' placeholder='Senha (mín. 9 caracteres)' value={accountForm.password} onChange={e=>setAccountForm({...accountForm,password:e.target.value})} required/>
                 </div>
-                <input type="text" placeholder="MAC do dispositivo (ex: AA:BB:CC:DD:EE:FF)" value={accountForm.device_mac}
-                  onChange={e => setAccountForm({ ...accountForm, device_mac: e.target.value })}
-                  onBlur={e => handleMacLookup(e.target.value, setAccountForm)}
-                  className="w-full bg-gray-600 text-white p-2 rounded placeholder-gray-400 mb-4" required />
-                <div className="bg-blue-900/50 border border-blue-700 rounded p-3 mb-4 text-sm">
-                  <h4 className="font-bold mb-2">🚀 Como funciona:</h4>
-                  <ul className="space-y-1 text-blue-200">
-                    <li>• Cria contas em TODOS os painéis qPanel configurados</li>
-                    <li>• Extrai DNS automaticamente das respostas</li>
-                    <li>• Registra DNS no dispositivo TV MAXX PRO</li>
-                  </ul>
+                <input style={{ ...inputSt, marginBottom:10 }} type='text' placeholder='MAC do dispositivo (AA:BB:CC:DD:EE:FF)' value={accountForm.device_mac} onChange={e=>setAccountForm({...accountForm,device_mac:e.target.value})} onBlur={e=>handleMacLookup(e.target.value,setAccountForm)} required/>
+                <div style={{ background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.2)', borderRadius:10, padding:'10px 14px', marginBottom:12, fontSize:12, color:'#93c5fd' }}>
+                  <strong>🚀 Como funciona:</strong><br/>
+                  • Cria contas em TODOS os painéis qPanel configurados<br/>
+                  • Extrai DNS automaticamente • Registra no dispositivo TV MAXX PRO
                 </div>
-                <button type="submit" className="w-full bg-green-600 hover:bg-green-700 p-3 rounded transition font-bold">
-                  🎯 Criar Contas + Registrar no App TV MAXX PRO
-                </button>
+                <button type='submit' style={{ ...btnPri, width:'100%', justifyContent:'center' }}>🎯 Criar Contas + Registrar no App</button>
               </form>
             )}
           </div>
 
-          {/* Painel de pacotes selecionados */}
+          {/* Pacotes selecionados */}
           {selectedPackages.length > 0 && (
-            <div className="bg-green-900/30 border border-green-600 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
+            <div style={{ background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:14, padding:18 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12, flexWrap:'wrap', gap:8 }}>
                 <div>
-                  <h3 className="font-bold text-green-300">✅ {selectedPackages.length} pacote(s) selecionado(s)</h3>
-                  <p className="text-xs text-green-400 mt-0.5">
-                    {selectedPackages.map(p => `${p.panel_name} › ${p.server_name} › ${p.package_name}`).join(' | ')}
-                  </p>
+                  <h3 style={{ fontSize:14, fontWeight:800, color:'#34d399', marginBottom:3 }}>✅ {selectedPackages.length} pacote(s) selecionado(s)</h3>
+                  <p style={{ fontSize:11, color:'#94a3b8' }}>{selectedPackages.map(p=>`${p.panel_name} › ${p.server_name} › ${p.package_name}`).join(' | ')}</p>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setSelectedPackages([])} className="text-xs px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded transition">
-                    Limpar
-                  </button>
-                  <button
-                    onClick={() => setShowCreateFromPackages(!showCreateFromPackages)}
-                    className="text-sm px-4 py-1.5 bg-green-600 hover:bg-green-700 rounded transition font-semibold flex items-center gap-2"
-                  >
-                    <Users size={16} /> Criar Contas
-                  </button>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={()=>setSelectedPackages([])} style={btnGh}>Limpar</button>
+                  <button onClick={()=>setShowCreateFromPackages(!showCreateFromPackages)} style={{ ...btnGh, color:'#34d399', borderColor:'rgba(16,185,129,0.25)' }}><Users size={14}/> Criar Contas</button>
                 </div>
               </div>
 
               {showCreateFromPackages && (
-                <form onSubmit={handleCreateFromPackages} className="mt-3 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                  <h4 className="font-bold mb-3">🎯 Criar contas nos pacotes selecionados</h4>
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <input type="text" placeholder="Usuário" value={createFromPkgForm.username}
-                      onChange={e => setCreateFromPkgForm({ ...createFromPkgForm, username: e.target.value })}
-                      className="bg-gray-700 text-white p-2 rounded placeholder-gray-400 text-sm" required />
-                    <input type="password" placeholder="Senha (mín. 9 caracteres)" value={createFromPkgForm.password}
-                      onChange={e => setCreateFromPkgForm({ ...createFromPkgForm, password: e.target.value })}
-                      className="bg-gray-700 text-white p-2 rounded placeholder-gray-400 text-sm" required />
+                <form onSubmit={handleCreateFromPackages} style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:16, marginTop:10 }}>
+                  <h4 style={{ fontSize:13, fontWeight:800, color:'#fff', marginBottom:12 }}>🎯 Criar contas nos pacotes selecionados</h4>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+                    <input style={inputSt} type='text' placeholder='Usuário' value={createFromPkgForm.username} onChange={e=>setCreateFromPkgForm({...createFromPkgForm,username:e.target.value})} required/>
+                    <input style={inputSt} type='password' placeholder='Senha (mín. 9 caracteres)' value={createFromPkgForm.password} onChange={e=>setCreateFromPkgForm({...createFromPkgForm,password:e.target.value})} required/>
                   </div>
-                  <input type="text" placeholder="MAC do dispositivo (ex: AA:BB:CC:DD:EE:FF)" value={createFromPkgForm.device_mac}
-                    onChange={e => setCreateFromPkgForm({ ...createFromPkgForm, device_mac: e.target.value })}
-                    onBlur={e => handleMacLookup(e.target.value, setCreateFromPkgForm)}
-                    className="w-full bg-gray-700 text-white p-2 rounded placeholder-gray-400 text-sm mb-3" required />
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setShowCreateFromPackages(false)}
-                      className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded transition text-sm">
-                      Cancelar
-                    </button>
-                    <button type="submit" disabled={creatingAccounts}
-                      className="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded transition text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
-                      {creatingAccounts ? <><Loader className="animate-spin" size={16} /> Criando...</> : '🎯 Criar Contas'}
+                  <input style={{ ...inputSt, marginBottom:12 }} type='text' placeholder='MAC do dispositivo' value={createFromPkgForm.device_mac} onChange={e=>setCreateFromPkgForm({...createFromPkgForm,device_mac:e.target.value})} onBlur={e=>handleMacLookup(e.target.value,setCreateFromPkgForm)} required/>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button type='button' onClick={()=>setShowCreateFromPackages(false)} style={{ ...btnGh, flex:1, justifyContent:'center' }}>Cancelar</button>
+                    <button type='submit' disabled={creatingAccounts} style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:7, padding:'10px', background:'linear-gradient(135deg,#22c55e,#16a34a)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:creatingAccounts?0.7:1 }}>
+                      {creatingAccounts ? <><Loader size={14} style={{animation:'spin 1s linear infinite'}}/> Criando...</> : '🎯 Criar Contas'}
                     </button>
                   </div>
                 </form>
@@ -1118,166 +1071,108 @@ const IptvServersManager = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
             {qpanels.length === 0 ? (
-              <div className="col-span-full bg-gray-800 rounded-lg p-12 text-center">
-                <Globe size={48} className="mx-auto text-gray-500 mb-4" />
-                <p className="text-gray-400">Nenhum painel qPanel configurado</p>
-                <p className="text-gray-500 text-sm mt-2">Adicione um painel para começar</p>
+              <div style={{ gridColumn:'1/-1', textAlign:'center', padding:48, background:'rgba(17,17,17,0.5)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:14, color:'#52525b' }}>
+                <Globe size={40} color='#27272a' style={{ display:'block', margin:'0 auto 12px' }}/>
+                <p>Nenhum painel qPanel configurado</p>
               </div>
             ) : qpanels.map(qpanel => {
               const panelLoadState = loadingPanels[qpanel.id];
               const statusMsg = panelStatus[qpanel.id];
               const isLoading = panelLoadState === 'waiting';
               const loadedServers = qpanel.servers || [];
-              console.log(`[qPanel Debug] Painel "${qpanel.panel_name}" - servidores:`, loadedServers);
-
+              const stColor = panelLoadState==='error'?'rgba(239,68,68,0.1)':panelLoadState==='done'?'rgba(16,185,129,0.1)':'rgba(59,130,246,0.1)';
+              const stTxt   = panelLoadState==='error'?'#f87171':panelLoadState==='done'?'#34d399':'#60a5fa';
               return (
-                <div key={qpanel.id} className="bg-gray-800 rounded-lg p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1 min-w-0 mr-2">
-                      <h3 className="text-lg font-bold">{qpanel.panel_name}</h3>
-                      <p className="text-gray-400 text-sm truncate">{qpanel.panel_url}</p>
+                <div key={qpanel.id} style={{ ...cardSt, padding:18 }}>
+                  <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <h3 style={{ fontSize:14, fontWeight:700, color:'#e4e4e7', marginBottom:3 }}>{qpanel.panel_name}</h3>
+                      <p style={{ fontFamily:'monospace', fontSize:11, color:'#52525b', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{qpanel.panel_url}</p>
                     </div>
-                    <button onClick={() => handleDeleteQpanel(qpanel.id)} className="bg-red-600 hover:bg-red-700 p-2 rounded-lg transition flex-shrink-0">
-                      <Trash2 size={16} />
-                    </button>
+                    <button onClick={()=>handleDeleteQpanel(qpanel.id)} style={{ width:28, height:28, borderRadius:7, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#f87171', flexShrink:0, marginLeft:8 }}><Trash2 size={12}/></button>
                   </div>
 
-                  <div className="text-sm text-gray-400 mb-3">
-                    <span>Status: </span><span className="text-green-400 font-semibold">{qpanel.status}</span>
-                    <span className="ml-4">Criado: {new Date(qpanel.created_at).toLocaleDateString('pt-BR')}</span>
+                  <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+                    <span style={{ fontSize:11, color:'#52525b' }}>Status: <strong style={{ color:'#34d399' }}>{qpanel.status}</strong></span>
+                    <span style={{ fontSize:11, color:'#52525b' }}>· {new Date(qpanel.created_at).toLocaleDateString('pt-BR')}</span>
                   </div>
 
-                  {/* Servidores já carregados */}
                   {loadedServers.length > 0 && (
-                    <div className="mb-3 p-3 bg-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2 font-semibold">🖥️ {loadedServers.length} servidor(es) — marque os pacotes desejados:</p>
-                      <div className="space-y-2 max-h-52 overflow-y-auto">
-                        {loadedServers.map((s, i) => {
-                          // server_data pode vir espalhado no objeto ou como campo separado
-                          const serverData = s.server_data
-                            ? (typeof s.server_data === 'string' ? JSON.parse(s.server_data) : s.server_data)
-                            : s;
-                          const packages = s.packages || serverData.packages || [];
-                          const serverId = s.id || serverData.id || i;
-                          return (
-                            <div key={i}>
-                              <div className="text-xs text-gray-300 flex items-center gap-2 font-semibold mb-1">
-                                <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
-                                <span className="truncate">{s.name || s.server_name}</span>
-                                {s.dns && <span className="text-gray-500 truncate">· {s.dns}</span>}
-                              </div>
-                              {packages.length > 0 ? (
-                                <div className="ml-4 space-y-1">
-                                  {packages.map((pkg, pi) => {
-                                    const pkgId = pkg.id || pkg.package_id || pi;
-                                    const selected = isPackageSelected(qpanel.id, serverId, pkgId);
-                                    return (
-                                      <label key={pi} className={`flex items-center gap-2 cursor-pointer rounded px-2 py-1 transition ${selected ? 'bg-primary/20 text-white' : 'hover:bg-gray-600 text-gray-400'}`}>
-                                        <input
-                                          type="checkbox"
-                                          checked={selected}
-                                          onChange={() => togglePackage({
-                                            panel_id: qpanel.id,
-                                            panel_name: qpanel.panel_name,
-                                            server_id: serverId,
-                                            server_name: s.name || s.server_name,
-                                            package_id: pkgId,
-                                            package_name: pkg.name
-                                          })}
-                                          className="w-3.5 h-3.5 accent-orange-500"
-                                        />
-                                        <span className="text-xs truncate">{pkg.name}</span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div className="ml-4 text-xs text-gray-600">Sem pacotes</div>
-                              )}
+                    <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:10, marginBottom:10, maxHeight:210, overflowY:'auto' }}>
+                      <p style={{ fontSize:10, color:'#71717a', fontWeight:700, marginBottom:8 }}>🖥️ {loadedServers.length} servidor(es):</p>
+                      {loadedServers.map((s, i) => {
+                        const serverData = s.server_data ? (typeof s.server_data==='string'?JSON.parse(s.server_data):s.server_data) : s;
+                        const packages = s.packages || serverData.packages || [];
+                        const serverId = s.id || serverData.id || i;
+                        return (
+                          <div key={i} style={{ marginBottom:8 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                              <span style={{ width:6, height:6, borderRadius:'50%', background:'#34d399', flexShrink:0 }}/>
+                              <span style={{ fontSize:11, fontWeight:700, color:'#a1a1aa', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.name||s.server_name}</span>
+                              {s.dns && <span style={{ fontSize:10, color:'#52525b' }}>· {s.dns}</span>}
                             </div>
-                          );
-                        })}
-                      </div>
+                            {packages.length > 0 ? (
+                              <div style={{ paddingLeft:14 }}>
+                                {packages.map((pkg, pi) => {
+                                  const pkgId = pkg.id || pkg.package_id || pi;
+                                  const sel = isPackageSelected(qpanel.id, serverId, pkgId);
+                                  return (
+                                    <label key={pi} style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', padding:'3px 6px', borderRadius:6, background:sel?'rgba(255,165,0,0.1)':'transparent', marginBottom:2 }}>
+                                      <input type='checkbox' checked={sel}
+                                        onChange={()=>togglePackage({ panel_id:qpanel.id, panel_name:qpanel.panel_name, server_id:serverId, server_name:s.name||s.server_name, package_id:pkgId, package_name:pkg.name })}
+                                        style={{ accentColor:'#FFA500', width:12, height:12 }}/>
+                                      <span style={{ fontSize:11, color:sel?'#FFA500':'#71717a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{pkg.name}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : <p style={{ paddingLeft:14, fontSize:10, color:'#3f3f46' }}>Sem pacotes</p>}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
-                  {/* Status do carregamento */}
                   {statusMsg && (
-                    <div className={`mb-3 p-2 rounded text-xs font-medium ${
-                      panelLoadState === 'error' ? 'bg-red-900/50 text-red-300' :
-                      panelLoadState === 'done'  ? 'bg-green-900/50 text-green-300' :
-                                                   'bg-blue-900/50 text-blue-300'
-                    }`}>
-                      {statusMsg}
-                    </div>
+                    <div style={{ marginBottom:10, padding:'8px 12px', borderRadius:9, background:stColor, fontSize:11, fontWeight:600, color:stTxt }}>{statusMsg}</div>
                   )}
 
-                  <button
-                    onClick={() => handleLoadQpanelServers(qpanel)}
-                    disabled={isLoading}
-                    className={`w-full p-2 rounded transition text-sm flex items-center justify-center gap-2 ${
-                      isLoading
-                        ? 'bg-gray-600 cursor-not-allowed text-gray-400'
-                        : 'bg-primary hover:bg-orange-600 text-white'
-                    }`}
-                  >
-                    {isLoading ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                        </svg>
-                        Carregando...
-                      </>
-                    ) : (
-                      <>🔄 {loadedServers.length > 0 ? 'Recarregar Servidores' : 'Carregar Servidores'}</>
-                    )}
+                  <button onClick={()=>handleLoadQpanelServers(qpanel)} disabled={isLoading}
+                    style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:7, padding:'9px', background:isLoading?'rgba(255,255,255,0.04)':'linear-gradient(135deg,#FFA500,#FF6B00)', border:isLoading?'1px solid rgba(255,255,255,0.08)':'none', borderRadius:10, color:isLoading?'#52525b':'#fff', fontSize:12, fontWeight:700, cursor:isLoading?'not-allowed':'pointer', opacity:isLoading?0.7:1 }}>
+                    {isLoading ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Carregando...</> : <>🔄 {loadedServers.length>0?'Recarregar':'Carregar'} Servidores</>}
                   </button>
                 </div>
               );
             })}
           </div>
 
-          {/* Log de Debug */}
-          <div className="bg-card rounded-lg p-6 border border-gray-800 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                📋 Log de Atividades
-              </h2>
-              <button
-                onClick={() => setDebugLog([])}
-                className="text-sm px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded transition"
-              >
-                Limpar Log
-              </button>
+          {/* Log */}
+          <div style={{ ...cardSt, marginTop:4 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+              <p style={{ fontSize:14, fontWeight:800, color:'#fff' }}>📋 Log de Atividades</p>
+              <button onClick={()=>setDebugLog([])} style={btnGh}>Limpar Log</button>
             </div>
-            <div className="bg-dark rounded-lg p-4 h-48 overflow-y-auto font-mono text-sm">
-              {debugLog.length === 0 ? (
-                <p className="text-gray-500">Nenhuma atividade ainda...</p>
-              ) : (
-                debugLog.map((log, i) => (
-                  <div key={i} className={`mb-1 ${
-                    log.type === 'error' ? 'text-red-400' :
-                    log.type === 'warning' ? 'text-yellow-400' :
-                    log.type === 'success' ? 'text-green-400' :
-                    'text-gray-300'
-                  }`}>
-                    <span className="text-gray-500">[{log.time}]</span> <span>{log.message}</span>
+            <div style={{ background:'rgba(5,5,5,0.7)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:10, padding:'12px 14px', maxHeight:200, overflowY:'auto', fontFamily:'monospace', fontSize:11 }}>
+              {debugLog.length===0
+                ? <p style={{ color:'#3f3f46' }}>Nenhuma atividade ainda...</p>
+                : debugLog.map((log,i) => (
+                  <div key={i} style={{ marginBottom:4, color:logColor(log.type) }}>
+                    <span style={{ color:'#52525b' }}>[{log.time}]</span> {log.message}
                   </div>
                 ))
-              )}
+              }
             </div>
           </div>
         </div>
       )}
 
       {/* ── Tab: Playlist Manager ── */}
-      {activeTab === 'playlist' && <PlaylistManagerTab />}
+      {activeTab === 'playlist' && <PlaylistManagerComponent />}
 
       {/* ── Tab: Árvore IPTV ── */}
-      {activeTab === 'tree' && <IptvTreeViewer />}
+      {activeTab === 'tree' && <IptvTreeTab />}
 
       {/* ── Tab: Limpar qPanel ── */}
       {activeTab === 'clean' && <CleanQpanelTab />}
