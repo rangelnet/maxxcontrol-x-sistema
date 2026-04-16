@@ -19,6 +19,19 @@ services:
         generateValue: true
       - key: USE_SQLITE
         value: "false"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: /api/*
+      - type: rewrite
+        source: /banners/*
+        destination: /banners/*
+      - type: rewrite
+        source: /media/*
+        destination: /media/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
 
 databases:
   - name: maxxcontrol-db
