@@ -1,0 +1,18 @@
+{
+  "verbose": true,
+  "ignore": [
+    ".wpp-session",
+    ".wpp-session/*",
+    "**/.wpp-session/**",
+    "web",
+    "node_modules",
+    "public/banners",
+    "*.log"
+  ],
+  "watch": [
+    "server.js",
+    "modules"
+  ],
+  "ext": "js,json",
+  "delay": "3000"
+}

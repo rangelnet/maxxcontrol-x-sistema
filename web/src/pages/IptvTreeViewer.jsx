@@ -1,582 +1,295 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight, ChevronDown, X, Loader, List, CheckCircle, ClipboardList } from 'lucide-react';
+import {
+  Tv, Film, Clapperboard, RefreshCw, Search, Copy, ChevronRight,
+  ChevronDown, X, Loader, List, CheckCircle, ClipboardList
+} from 'lucide-react';
+
+// ─── Estilos base ───────────────────────────────────────────
+const inputStyle = {
+  padding:'9px 14px', background:'rgba(5,5,5,0.6)',
+  border:'1px solid rgba(255,255,255,0.08)', borderRadius:10,
+  color:'#fff', fontSize:13, outline:'none', boxSizing:'border-box',
+};
 
 const IptvTreeViewer = () => {
   const [configSource, setConfigSource] = useState('global');
-  const [devices, setDevices] = useState([]);
-  const [credentials, setCredentials] = useState(null);
-  const [treeData, setTreeData] = useState([]);
+  const [devices, setDevices]           = useState([]);
+  const [credentials, setCredentials]   = useState(null);
+  const [treeData, setTreeData]         = useState([]);
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const [selectedStream, setSelectedStream] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('live');
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState(null);
+  const [activeTab, setActiveTab]       = useState('live');
   const [showTestLists, setShowTestLists] = useState(false);
-  const [testingList, setTestingList] = useState(null);
-  const [manualConfig, setManualConfig] = useState({
-    url: '',
-    username: '',
-    password: ''
-  });
+  const [testingList, setTestingList]   = useState(null);
+  const [manualConfig, setManualConfig] = useState({ url:'', username:'', password:'' });
   const [loadingManual, setLoadingManual] = useState(false);
   const [expandingAll, setExpandingAll] = useState(false);
+  const [copied, setCopied]             = useState(false);
 
-  // Listas IPTV públicas de teste (Xtream Codes)
   const testLists = [
-    {
-      id: 1,
-      name: 'Servidor Teste 1',
-      url: 'http://xtream.swiftiptv.com:8080',
-      username: 'test',
-      password: 'test',
-      description: 'Servidor público de teste com canais internacionais'
-    },
-    {
-      id: 2,
-      name: 'Servidor Teste 2',
-      url: 'http://pro.xviptv.com:25443',
-      username: 'test',
-      password: 'test',
-      description: 'Servidor de demonstração com múltiplas categorias'
-    },
-    {
-      id: 3,
-      name: 'Servidor Teste 3',
-      url: 'http://iptv.allkaicerteam.com:8080',
-      username: 'test',
-      password: 'test',
-      description: 'Servidor teste com VOD e séries'
-    }
+    { id:1, name:'Servidor Teste 1', url:'http://xtream.swiftiptv.com:8080',    username:'test', password:'test', description:'Servidor público de teste com canais internacionais' },
+    { id:2, name:'Servidor Teste 2', url:'http://pro.xviptv.com:25443',         username:'test', password:'test', description:'Servidor de demonstração com múltiplas categorias' },
+    { id:3, name:'Servidor Teste 3', url:'http://iptv.allkaicerteam.com:8080',  username:'test', password:'test', description:'Servidor teste com VOD e séries' },
   ];
 
-  // Carregar configuração e dispositivos
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  // Carregar categorias quando fonte ou tab mudar
-  useEffect(() => {
-    if (credentials) {
-      loadCategories(activeTab);
-    }
-  }, [configSource, activeTab, credentials]);
+  useEffect(() => { loadConfig(); }, []);
+  useEffect(() => { if (credentials) loadCategories(activeTab); }, [configSource, activeTab, credentials]);
 
   const loadConfig = async () => {
     try {
       setLoading(true);
-      
-      // Buscar configuração global
-      const configRes = await api.get('/api/iptv-server/config');
+      const configRes  = await api.get('/api/iptv-server/config');
       setCredentials(configRes.data);
-      
-      // Buscar dispositivos
       const devicesRes = await api.get('/api/device/list-all');
-      const devicesList = Array.isArray(devicesRes.data) ? devicesRes.data : [];
-      setDevices(devicesList);
-      
+      setDevices(Array.isArray(devicesRes.data) ? devicesRes.data : []);
       setError(null);
     } catch (err) {
-      console.error('Erro ao carregar configuração:', err);
       setError('Erro ao carregar configuração. Configure o servidor IPTV primeiro.');
-      setDevices([]);
-      setCredentials(null);
-    } finally {
-      setLoading(false);
-    }
+      setDevices([]); setCredentials(null);
+    } finally { setLoading(false); }
   };
 
   const loadCategories = async (type) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await api.get(`/api/iptv-tree/categories/${type}`, {
-        params: { source: configSource }
-      });
-      
-      if (response.data.success) {
-        const categories = response.data.data || [];
-        
-        // Construir hierarquia
-        const tree = buildHierarchy(categories, type);
-        setTreeData(tree);
-      }
+      setLoading(true); setError(null);
+      const response = await api.get(`/api/iptv-tree/categories/${type}`, { params:{ source:configSource } });
+      if (response.data.success) setTreeData(buildHierarchy(response.data.data || [], type));
     } catch (err) {
-      console.error('Erro ao carregar categorias:', err);
-      
-      if (err.response?.status === 401) {
-        setError('Credenciais inválidas. Verifique a configuração do servidor IPTV.');
-      } else if (err.response?.status === 400) {
-        setError('Configure o servidor IPTV primeiro na página de configurações.');
-      } else if (err.response?.status === 504) {
-        setError('Timeout na conexão. Verifique o servidor IPTV.');
-      } else {
-        setError('Erro ao carregar categorias. Tente novamente.');
-      }
-    } finally {
-      setLoading(false);
-    }
+      if (err.response?.status===401)      setError('Credenciais inválidas. Verifique a configuração.');
+      else if (err.response?.status===400) setError('Configure o servidor IPTV primeiro.');
+      else if (err.response?.status===504) setError('Timeout na conexão.');
+      else                                 setError('Erro ao carregar categorias. Tente novamente.');
+    } finally { setLoading(false); }
   };
 
   const buildHierarchy = (categories, contentType) => {
-    const map = new Map();
-    const roots = [];
-    
-    // Criar mapa de categorias
+    const map = new Map(); const roots = [];
     categories.forEach(cat => {
-      const name = cat.category_name || cat.name || cat.title || cat.category_id || 'Sem nome'
-      const node = {
-        id: `${contentType}-category-${cat.category_id}`,
-        type: 'category',
-        contentType: contentType,
-        name: String(name),
-        parent_id: cat.parent_id,
-        category_id: cat.category_id,
-        children: [],
-        loaded: false,
-        metadata: cat
-      };
+      const name = cat.category_name || cat.name || cat.title || cat.category_id || 'Sem nome';
+      const node = { id:`${contentType}-cat-${cat.category_id}`, type:'category', contentType, name:String(name), parent_id:cat.parent_id, category_id:cat.category_id, children:[], loaded:false, metadata:cat };
       map.set(cat.category_id, node);
     });
-    
-    // Construir hierarquia
     map.forEach(node => {
-      if (node.parent_id === 0 || node.parent_id === '0') {
-        roots.push(node);
-      } else {
-        const parent = map.get(node.parent_id) || map.get(String(node.parent_id));
-        if (parent) {
-          parent.children.push(node);
-        } else {
-          roots.push(node);
-        }
-      }
+      if (node.parent_id===0 || node.parent_id==='0') roots.push(node);
+      else { const parent = map.get(node.parent_id) || map.get(String(node.parent_id)); if (parent) parent.children.push(node); else roots.push(node); }
     });
-    
     return roots;
   };
 
   const loadStreams = async (node) => {
     try {
       const type = node.contentType;
-      const categoryId = node.category_id;
-
-      // Séries usam endpoint próprio
-      const endpoint = type === 'series'
-        ? `/api/iptv-tree/series/${categoryId}`
-        : `/api/iptv-tree/streams/${type}/${categoryId}`;
-
-      const response = await api.get(endpoint, {
-        params: { source: configSource }
-      });
-      
+      const endpoint = type==='series' ? `/api/iptv-tree/series/${node.category_id}` : `/api/iptv-tree/streams/${type}/${node.category_id}`;
+      const response = await api.get(endpoint, { params:{ source:configSource } });
       if (response.data.success) {
-        const streams = response.data.data || [];
-        
-        // Criar nós de stream
-        const streamNodes = streams.map(stream => ({
-          id: `${type}-stream-${stream.stream_id || stream.series_id}`,
-          type: type === 'series' ? 'stream' : 'stream',
-          contentType: type,
-          name: stream.name || stream.title || stream.stream_display_name || String(stream.stream_id || stream.series_id),
-          parent_id: node.id,
-          // Séries têm filhos (temporadas), live/vod não
-          children: type === 'series' ? [] : null,
-          loaded: type !== 'series',
-          metadata: stream
+        const streamNodes = (response.data.data||[]).map(stream => ({
+          id:`${type}-stream-${stream.stream_id||stream.series_id}`, type:'stream', contentType:type,
+          name:stream.name||stream.title||stream.stream_display_name||String(stream.stream_id||stream.series_id),
+          parent_id:node.id, children:type==='series'?[]:null, loaded:type!=='series', metadata:stream
         }));
-        
-        // Atualizar árvore
         updateNodeChildren(node.id, streamNodes);
       }
-    } catch (err) {
-      console.error('Erro ao carregar streams:', err);
-      setError('Erro ao carregar conteúdo da categoria.');
-    }
+    } catch { setError('Erro ao carregar conteúdo da categoria.'); }
   };
 
   const loadSeriesInfo = async (node) => {
     try {
-      const seriesId = node.metadata.series_id;
-      
-      const response = await api.get(`/api/iptv-tree/series-info/${seriesId}`, {
-        params: { source: configSource }
-      });
-      
+      const response = await api.get(`/api/iptv-tree/series-info/${node.metadata.series_id}`, { params:{ source:configSource } });
       if (response.data.success) {
-        const data = response.data.data;
-        const seasons = data.seasons || [];
-        
-        // Criar nós de temporadas e episódios
-        const seasonNodes = seasons.map(season => {
-          const episodes = (season.episodes || []).map(ep => ({
-            id: `series-episode-${ep.id}`,
-            type: 'episode',
-            contentType: 'series',
-            name: `${ep.episode_num}. ${ep.title}`,
-            parent_id: `series-season-${season.season_number}`,
-            children: null,
-            loaded: true,
-            metadata: ep
-          }));
-          
-          return {
-            id: `series-season-${season.season_number}`,
-            type: 'season',
-            contentType: 'series',
-            name: season.name || `Temporada ${season.season_number}`,
-            parent_id: node.id,
-            children: episodes,
-            loaded: true,
-            metadata: season
-          };
-        });
-        
+        const seasonNodes = (response.data.data.seasons||[]).map(season => ({
+          id:`series-season-${season.season_number}`, type:'season', contentType:'series',
+          name:season.name||`Temporada ${season.season_number}`, parent_id:node.id,
+          children:(season.episodes||[]).map(ep => ({
+            id:`series-ep-${ep.id}`, type:'episode', contentType:'series',
+            name:`${ep.episode_num}. ${ep.title}`, parent_id:`series-season-${season.season_number}`,
+            children:null, loaded:true, metadata:ep
+          })), loaded:true, metadata:season
+        }));
         updateNodeChildren(node.id, seasonNodes);
       }
-    } catch (err) {
-      console.error('Erro ao carregar informações da série:', err);
-      setError('Erro ao carregar episódios da série.');
-    }
+    } catch { setError('Erro ao carregar episódios.'); }
   };
 
   const updateNodeChildren = (nodeId, children) => {
-    const updateTree = (nodes) => {
-      return nodes.map(node => {
-        if (node.id === nodeId) {
-          return { ...node, children, loaded: true };
-        }
-        if (node.children && node.children.length > 0) {
-          return { ...node, children: updateTree(node.children) };
-        }
-        return node;
-      });
-    };
-    
+    const updateTree = nodes => nodes.map(node => {
+      if (node.id===nodeId) return { ...node, children, loaded:true };
+      if (node.children?.length>0) return { ...node, children:updateTree(node.children) };
+      return node;
+    });
     setTreeData(prev => updateTree(prev));
   };
 
   const handleToggle = async (node) => {
     const newExpanded = new Set(expandedNodes);
-    
-    if (newExpanded.has(node.id)) {
-      newExpanded.delete(node.id);
-    } else {
+    if (newExpanded.has(node.id)) { newExpanded.delete(node.id); }
+    else {
       newExpanded.add(node.id);
-      
-      // Lazy loading
-      if (!node.loaded && node.type === 'category') {
-        if (node.contentType === 'series') {
-          await loadStreams(node);
-        } else {
-          await loadStreams(node);
-        }
-      } else if (!node.loaded && node.type === 'stream' && node.contentType === 'series') {
-        await loadSeriesInfo(node);
-      }
-
-      // Scroll para mostrar o conteúdo expandido (de baixo para cima)
-      setTimeout(() => {
-        const el = document.querySelector(`[data-node-id="${node.id}"]`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
+      if (!node.loaded && node.type==='category') await loadStreams(node);
+      else if (!node.loaded && node.type==='stream' && node.contentType==='series') await loadSeriesInfo(node);
+      setTimeout(() => { const el = document.querySelector(`[data-node-id="${node.id}"]`); el?.scrollIntoView({ behavior:'smooth', block:'start' }); }, 100);
     }
-    
     setExpandedNodes(newExpanded);
   };
 
   const handleConfigChange = (newSource) => {
-    setConfigSource(newSource);
-    setTreeData([]);
-    setExpandedNodes(new Set());
-    setSelectedStream(null);
-    setSearchQuery('');
+    setConfigSource(newSource); setTreeData([]); setExpandedNodes(new Set());
+    setSelectedStream(null); setSearchQuery('');
   };
 
   const handleRefresh = async () => {
-    try {
-      await api.post('/api/iptv-tree/clear-cache', { source: configSource });
-      setTreeData([]);
-      setExpandedNodes(new Set());
-      await loadCategories(activeTab);
-    } catch (err) {
-      console.error('Erro ao atualizar:', err);
-      setError('Erro ao atualizar cache.');
-    }
+    try { await api.post('/api/iptv-tree/clear-cache', { source:configSource }); setTreeData([]); setExpandedNodes(new Set()); await loadCategories(activeTab); }
+    catch { setError('Erro ao atualizar cache.'); }
   };
 
-  const handleCopyUrl = (url) => {
-    navigator.clipboard.writeText(url);
-    alert('URL copiado para área de transferência!');
+  const handleCopyUrl = async (url) => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
   };
 
-  // Expande todas as categorias sem travar — carrega em background com concorrência limitada
   const handleExpandAll = async () => {
     setExpandingAll(true);
     try {
-      // 1. Expande tudo imediatamente (o que já está carregado aparece na hora)
-      const newExpanded = new Set(expandedNodes);
-      const toLoad = [];
-
-      const collectCategories = (nodes) => {
-        nodes.forEach(node => {
-          newExpanded.add(node.id);
-          if (!node.loaded && node.type === 'category') {
-            toLoad.push(node);
-          }
-          if (node.children && node.children.length > 0) {
-            collectCategories(node.children);
-          }
-        });
-      };
-
-      collectCategories(treeData);
-      setExpandedNodes(new Set(newExpanded));
-
-      if (toLoad.length === 0) return;
-
-      // 2. Carrega streams em background com no máximo 3 requisições simultâneas
-      const CONCURRENCY = 3;
-      let index = 0;
-
-      const runNext = async () => {
-        if (index >= toLoad.length) return;
-        const node = toLoad[index++];
-        await loadStreams(node);
-        await runNext();
-      };
-
-      const workers = Array.from({ length: Math.min(CONCURRENCY, toLoad.length) }, runNext);
-      await Promise.all(workers);
-    } finally {
-      setExpandingAll(false);
-    }
+      const newExpanded = new Set(expandedNodes); const toLoad = [];
+      const collect = (nodes) => { nodes.forEach(node => { newExpanded.add(node.id); if (!node.loaded && node.type==='category') toLoad.push(node); if (node.children?.length>0) collect(node.children); }); };
+      collect(treeData); setExpandedNodes(new Set(newExpanded));
+      if (toLoad.length===0) return;
+      const CONCURRENCY=3; let index=0;
+      const runNext = async () => { if (index>=toLoad.length) return; const node=toLoad[index++]; await loadStreams(node); await runNext(); };
+      await Promise.all(Array.from({ length:Math.min(CONCURRENCY,toLoad.length) }, runNext));
+    } finally { setExpandingAll(false); }
   };
 
-  const handleCollapseAll = () => {
-    setExpandedNodes(new Set());
-  };
+  const handleCollapseAll = () => setExpandedNodes(new Set());
 
-  // Coleta todos os nomes + IDs visíveis na árvore (expandidos)
-  const collectAllNames = (nodes, expanded, result = []) => {
+  const collectAllNames = (nodes, expanded, result=[]) => {
     nodes.forEach(node => {
       const id = node.metadata?.stream_id || node.metadata?.series_id || node.metadata?.id || null;
-      const label = id ? `${node.name || '(sem nome)'} | ID: ${id}` : (node.name || '(sem nome)');
-      result.push(label);
-      if (expanded.has(node.id) && node.children && node.children.length > 0) {
-        collectAllNames(node.children, expanded, result);
-      }
+      result.push(id ? `${node.name||'(sem nome)'} | ID: ${id}` : (node.name||'(sem nome)'));
+      if (expanded.has(node.id) && node.children?.length>0) collectAllNames(node.children, expanded, result);
     });
     return result;
   };
 
-  const handleCopyAll = () => {
+  const handleCopyAll = async () => {
     const names = collectAllNames(filteredTree, expandedNodes);
-    if (names.length === 0) {
-      alert('Nenhum item para copiar.');
-      return;
-    }
-    navigator.clipboard.writeText(names.join('\n'));
-    alert(`✅ ${names.length} itens copiados para a área de transferência!`);
+    if (!names.length) return;
+    await navigator.clipboard.writeText(names.join('\n'));
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
   };
 
   const handleLoadManualList = async () => {
     setLoadingManual(true);
-    
     try {
-      // Testar conexão primeiro
-      const testResponse = await api.post('/api/iptv-server/test', {
-        xtream_url: manualConfig.url,
-        xtream_username: manualConfig.username,
-        xtream_password: manualConfig.password
-      });
-      
+      const testResponse = await api.post('/api/iptv-server/test', { xtream_url:manualConfig.url, xtream_username:manualConfig.username, xtream_password:manualConfig.password });
       if (testResponse.data.success) {
-        // Salvar como configuração global
-        await api.post('/api/iptv-server/config', {
-          xtream_url: manualConfig.url,
-          xtream_username: manualConfig.username,
-          xtream_password: manualConfig.password
-        });
-        
-        // Recarregar configuração
-        await loadConfig();
-        
-        // Carregar categorias automaticamente
-        await loadCategories(activeTab);
-        
-        alert('✅ Lista IPTV configurada! Árvore carregada com sucesso.');
-        
-        // Limpar campos
-        setManualConfig({ url: '', username: '', password: '' });
-      } else {
-        alert(`❌ Falha ao conectar: ${testResponse.data.message}`);
-      }
-    } catch (err) {
-      console.error('Erro ao carregar lista:', err);
-      const errorMsg = err.response?.data?.message || 'Erro ao testar conexão com a lista';
-      alert(`❌ ${errorMsg}`);
-    } finally {
-      setLoadingManual(false);
-    }
+        await api.post('/api/iptv-server/config', { xtream_url:manualConfig.url, xtream_username:manualConfig.username, xtream_password:manualConfig.password });
+        await loadConfig(); await loadCategories(activeTab);
+        setManualConfig({ url:'', username:'', password:'' });
+      } else { alert(`❌ ${testResponse.data.message}`); }
+    } catch (err) { alert(`❌ ${err.response?.data?.message||'Erro ao testar conexão'}`); }
+    finally { setLoadingManual(false); }
   };
 
   const handleTestList = async (testList) => {
-    setTestingList(testList.id);
-    setShowTestLists(false);
-    
+    setTestingList(testList.id); setShowTestLists(false);
     try {
-      // Testar conexão primeiro
-      const testResponse = await api.post('/api/iptv-server/test', {
-        xtream_url: testList.url,
-        xtream_username: testList.username,
-        xtream_password: testList.password
-      });
-      
-      if (testResponse.data.success) {
-        // Salvar como configuração global
-        await api.post('/api/iptv-server/config', {
-          xtream_url: testList.url,
-          xtream_username: testList.username,
-          xtream_password: testList.password
-        });
-        
-        // Recarregar configuração
-        await loadConfig();
-        
-        // Carregar categorias automaticamente
-        await loadCategories(activeTab);
-        
-        alert(`✅ Lista "${testList.name}" configurada! Árvore carregada.`);
-      } else {
-        alert(`❌ Falha ao conectar: ${testResponse.data.message}`);
-      }
-    } catch (err) {
-      console.error('Erro ao testar lista:', err);
-      alert('❌ Erro ao testar conexão com a lista');
-    } finally {
-      setTestingList(null);
-    }
+      const r = await api.post('/api/iptv-server/test', { xtream_url:testList.url, xtream_username:testList.username, xtream_password:testList.password });
+      if (r.data.success) {
+        await api.post('/api/iptv-server/config', { xtream_url:testList.url, xtream_username:testList.username, xtream_password:testList.password });
+        await loadConfig(); await loadCategories(activeTab);
+      } else { alert(`❌ ${r.data.message}`); }
+    } catch { alert('❌ Erro ao testar conexão'); }
+    finally { setTestingList(null); }
   };
 
-  const formatStreamUrl = (stream, credentials) => {
-    if (!credentials) return '';
-    
-    const { xtream_url, xtream_username, xtream_password } = credentials;
-    
-    if (stream.contentType === 'live') {
-      return `${xtream_url}/${xtream_username}/${xtream_password}/${stream.metadata.stream_id}`;
-    } else if (stream.contentType === 'vod') {
-      const ext = stream.metadata.container_extension || 'mp4';
-      return `${xtream_url}/movie/${xtream_username}/${xtream_password}/${stream.metadata.stream_id}.${ext}`;
-    } else if (stream.type === 'episode') {
-      const ext = stream.metadata.container_extension || 'mkv';
-      return `${xtream_url}/series/${xtream_username}/${xtream_password}/${stream.metadata.id}.${ext}`;
-    }
-    
+  const formatStreamUrl = (stream, creds) => {
+    if (!creds) return '';
+    const { xtream_url, xtream_username, xtream_password } = creds;
+    if (stream.contentType==='live') return `${xtream_url}/${xtream_username}/${xtream_password}/${stream.metadata.stream_id}`;
+    if (stream.contentType==='vod')  return `${xtream_url}/movie/${xtream_username}/${xtream_password}/${stream.metadata.stream_id}.${stream.metadata.container_extension||'mp4'}`;
+    if (stream.type==='episode')     return `${xtream_url}/series/${xtream_username}/${xtream_password}/${stream.metadata.id}.${stream.metadata.container_extension||'mkv'}`;
     return '';
   };
 
   const filterTree = (nodes, query) => {
     if (!query) return nodes;
-    
-    const lowerQuery = query.toLowerCase();
-    
+    const lq = query.toLowerCase();
     const filter = (node) => {
-      const nameMatch = (node.name || '').toLowerCase().includes(lowerQuery);
-      
-      if (node.children && node.children.length > 0) {
-        const filteredChildren = node.children.map(filter).filter(Boolean);
-        
-        if (filteredChildren.length > 0) {
-          // Expandir automaticamente se tem filhos correspondentes
-          expandedNodes.add(node.id);
-          return { ...node, children: filteredChildren };
-        }
+      const match = (node.name||'').toLowerCase().includes(lq);
+      if (node.children?.length>0) {
+        const fc = node.children.map(filter).filter(Boolean);
+        if (fc.length>0) { expandedNodes.add(node.id); return { ...node, children:fc }; }
       }
-      
-      return nameMatch ? node : null;
+      return match ? node : null;
     };
-    
     return nodes.map(filter).filter(Boolean);
   };
 
-  const getIcon = (node) => {
-    if (node.type === 'category') return <span className="text-blue-500 text-base">📁</span>;
-    if (node.contentType === 'live') return <Tv className="w-4 h-4 text-green-600" />;
-    if (node.contentType === 'vod') return <Film className="w-4 h-4 text-purple-600" />;
-    if (node.contentType === 'series') return <Clapperboard className="w-4 h-4 text-orange-600" />;
-    return <Tv className="w-4 h-4" />;
+  // ─── TreeNode Component ─────────────────────────────────────
+  const getNodeColor = (node) => {
+    if (node.type==='category')          return '#FFA500';
+    if (node.contentType==='live')       return '#34d399';
+    if (node.contentType==='vod')        return '#a78bfa';
+    if (node.contentType==='series')     return '#60a5fa';
+    return '#71717a';
+  };
+
+  const getNodeIcon = (node) => {
+    if (node.type==='category') return '📁';
+    if (node.contentType==='live')   return '📡';
+    if (node.contentType==='vod')    return '🎬';
+    if (node.contentType==='series') return '📺';
+    return '▶️';
   };
 
   const TreeNode = ({ node, level }) => {
     const isExpanded = expandedNodes.has(node.id);
-    const hasChildren = node.children && node.children.length > 0;
-    const canExpand = node.type === 'category' || (node.type === 'stream' && node.contentType === 'series') || node.type === 'season';
+    const hasChildren = node.children?.length > 0;
+    const canExpand = node.type==='category' || (node.type==='stream' && node.contentType==='series') || node.type==='season';
     const displayName = node.name || node.metadata?.category_name || node.metadata?.name || '(sem nome)';
-    
+    const isSelected  = selectedStream?.id === node.id;
+    const nodeColor   = getNodeColor(node);
+
     return (
       <div>
         <div
-          className={'flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 cursor-pointer ' + (selectedStream?.id === node.id ? 'bg-blue-50' : '')}
-          style={{ paddingLeft: `${level * 20 + 12}px` }}
           data-node-id={node.id}
-          onClick={() => {
-            if (canExpand) {
-              handleToggle(node);
-            } else if (node.type === 'stream' || node.type === 'episode') {
-              setSelectedStream(node);
-            }
+          onClick={() => { if (canExpand) handleToggle(node); else if (node.type==='stream'||node.type==='episode') setSelectedStream(node); }}
+          style={{
+            display:'flex', alignItems:'center', gap:6, padding:'5px 10px',
+            paddingLeft:`${level*18+10}px`, cursor:'pointer', borderRadius:7,
+            background: isSelected ? 'rgba(255,165,0,0.12)' : 'transparent',
+            border: isSelected ? '1px solid rgba(255,165,0,0.25)' : '1px solid transparent',
+            transition:'all .1s',
           }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+          onMouseLeave={e => e.currentTarget.style.background=isSelected?'rgba(255,165,0,0.12)':'transparent'}
         >
-          <span className="flex-shrink-0 w-4">
-            {canExpand ? (isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : null}
+          <span style={{ flexShrink:0, width:14, display:'flex' }}>
+            {canExpand ? (isExpanded ? <ChevronDown size={12} color='#71717a'/> : <ChevronRight size={12} color='#71717a'/>) : null}
           </span>
-          
-          <span className="flex-shrink-0">
-            {getIcon(node)}
-          </span>
-          
-          <span className="flex-1 text-sm text-gray-800 truncate">
+          <span style={{ fontSize:12, flexShrink:0 }}>{getNodeIcon(node)}</span>
+          <span style={{ flex:1, fontSize:12, color:'#a1a1aa', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
             {searchQuery && displayName.toLowerCase().includes(searchQuery.toLowerCase()) ? (
-              <span dangerouslySetInnerHTML={{
-                __html: displayName.replace(
-                  new RegExp('(' + searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
-                  '<mark class="bg-yellow-200">$1</mark>'
-                )
-              }} />
-            ) : (
-              displayName
-            )}
+              <span dangerouslySetInnerHTML={{ __html: displayName.replace(new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark style="background:rgba(255,165,0,0.3);color:#FFA500;border-radius:3px;padding:0 2px">$1</mark>') }}/>
+            ) : displayName}
           </span>
-          
-          {node.type === 'category' && hasChildren && (
-            <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-xs rounded-full flex-shrink-0">
-              {node.children.length}
-            </span>
+          {node.type==='category' && hasChildren && (
+            <span style={{ fontSize:10, padding:'1px 7px', borderRadius:999, background:`${nodeColor}18`, border:`1px solid ${nodeColor}30`, color:nodeColor, fontWeight:800, flexShrink:0 }}>{node.children.length}</span>
           )}
-          
-          {node.type === 'stream' && node.metadata?.num && (
-            <span className="text-xs text-gray-500 flex-shrink-0">#{node.metadata.num}</span>
+          {node.type==='stream' && node.metadata?.num && (
+            <span style={{ fontSize:10, color:'#3f3f46', flexShrink:0 }}>#{node.metadata.num}</span>
           )}
         </div>
-        
         {isExpanded && hasChildren && (
-          <div>
-            {node.children.map(child => (
-              <TreeNode key={child.id} node={child} level={level + 1} />
-            ))}
-          </div>
+          <div>{node.children.map(child => <TreeNode key={child.id} node={child} level={level+1}/>)}</div>
         )}
-        
         {isExpanded && !hasChildren && node.loaded && (
-          <div className="text-gray-500 italic text-sm py-1" style={{ paddingLeft: `${(level + 1) * 20 + 12}px` }}>
-            Nenhum conteúdo disponível
-          </div>
+          <div style={{ paddingLeft:`${(level+1)*18+10}px`, fontSize:11, color:'#3f3f46', padding:'4px', fontStyle:'italic' }}>Nenhum conteúdo</div>
         )}
       </div>
     );
@@ -584,345 +297,170 @@ const IptvTreeViewer = () => {
 
   const filteredTree = filterTree(treeData, searchQuery);
 
+  const tabs = [
+    { key:'live',   label:'TV ao Vivo', Icon:Tv          },
+    { key:'vod',    label:'Filmes',     Icon:Film        },
+    { key:'series', label:'Séries',     Icon:Clapperboard },
+  ];
+
+  const btnPrimary = { display:'inline-flex', alignItems:'center', gap:6, padding:'8px 14px', background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' };
+  const btnGhost   = { display:'inline-flex', alignItems:'center', gap:6, padding:'8px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:9, color:'#71717a', fontSize:12, cursor:'pointer', whiteSpace:'nowrap' };
+
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Visualizar Árvore IPTV</h1>
-        <p className="text-gray-600">Explore a estrutura de categorias e conteúdo do servidor Xtream Codes</p>
+    <div>
+      {/* Header */}
+      <div style={{ marginBottom:20 }}>
+        <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+          <Tv size={26} color='#FFA500'/> Visualizar Árvore IPTV
+        </h1>
+        <p style={{ fontSize:12, color:'#52525b' }}>Explore categorias e conteúdo do servidor Xtream Codes</p>
       </div>
 
       {/* Adicionar Lista Manualmente */}
-      <div className="mb-4 bg-white rounded-lg shadow p-4 border-2 border-blue-500">
-        <h3 className="text-lg font-bold text-gray-800 mb-3">Adicionar Lista IPTV</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input
-            type="text"
-            placeholder="URL do servidor (ex: http://exemplo.com:8080)"
-            value={manualConfig.url}
-            onChange={(e) => setManualConfig({ ...manualConfig, url: e.target.value })}
-            className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Usuário"
-            value={manualConfig.username}
-            onChange={(e) => setManualConfig({ ...manualConfig, username: e.target.value })}
-            className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Senha"
-            value={manualConfig.password}
-            onChange={(e) => setManualConfig({ ...manualConfig, password: e.target.value })}
-            className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
-          />
-          <button
-            onClick={handleLoadManualList}
-            disabled={loadingManual || !manualConfig.url || !manualConfig.username || !manualConfig.password}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loadingManual ? (
-              <>
-                <Loader className="w-4 h-4 animate-spin" />
-                Carregando...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4" />
-                Carregar
-              </>
-            )}
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:14, padding:20, marginBottom:16 }}>
+        <p style={{ fontSize:12, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12 }}>Adicionar Lista IPTV</p>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 140px 140px auto', gap:10, alignItems:'start' }}>
+          <input type='text' placeholder='URL do servidor (http://...)' value={manualConfig.url} onChange={e=>setManualConfig({...manualConfig,url:e.target.value})} style={inputStyle}/>
+          <input type='text' placeholder='Usuário' value={manualConfig.username} onChange={e=>setManualConfig({...manualConfig,username:e.target.value})} style={inputStyle}/>
+          <input type='text' placeholder='Senha' value={manualConfig.password} onChange={e=>setManualConfig({...manualConfig,password:e.target.value})} style={inputStyle}/>
+          <button onClick={handleLoadManualList} disabled={loadingManual||!manualConfig.url||!manualConfig.username||!manualConfig.password}
+            style={{ ...btnPrimary, padding:'10px 16px', opacity:(loadingManual||!manualConfig.url)?0.6:1 }}>
+            {loadingManual ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Carregando</> : <><CheckCircle size={13}/>Carregar</>}
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
-          💡 Digite as credenciais da sua lista IPTV e clique em "Carregar" para visualizar a árvore automaticamente
-        </p>
+        <p style={{ fontSize:11, color:'#52525b', marginTop:8 }}>💡 Digite as credenciais e clique em "Carregar" para visualizar a árvore automaticamente</p>
       </div>
 
       {/* Controles */}
-      <div className="mb-4 flex gap-4 items-center">
-        {/* Informação do Servidor Carregado */}
-        {credentials && credentials.xtream_url && (
-          <div className="px-4 py-2 bg-green-50 border border-green-300 rounded-lg flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-600" />
-            <div className="text-sm">
-              <span className="font-semibold text-green-800">Servidor:</span>
-              <span className="text-green-700 ml-2">
-                {credentials.server_name || credentials.xtream_url}
-              </span>
-              <span className="text-green-600 ml-2">({credentials.xtream_username})</span>
-            </div>
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginBottom:16 }}>
+        {/* Servidor carregado */}
+        {credentials?.xtream_url && (
+          <div style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 12px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:9 }}>
+            <CheckCircle size={13} color='#34d399'/>
+            <span style={{ fontSize:12, color:'#34d399', fontWeight:600 }}>{credentials.server_name||credentials.xtream_url}</span>
+            {credentials.xtream_username && <span style={{ fontSize:11, color:'#52525b' }}>({credentials.xtream_username})</span>}
           </div>
         )}
-        
+
         {/* Config Selector */}
-        <select
-          value={configSource}
-          onChange={(e) => handleConfigChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
-        >
-          <option value="global">Configuração Global</option>
-          {Array.isArray(devices) && devices.map(device => (
-            <option key={device.id} value={device.id}>
-              {device.modelo || device.mac_address}
-            </option>
-          ))}
+        <select value={configSource} onChange={e=>handleConfigChange(e.target.value)} style={{ ...inputStyle, width:'auto', padding:'8px 12px' }}>
+          <option value='global'>Configuração Global</option>
+          {Array.isArray(devices) && devices.map(d => <option key={d.id} value={d.id}>{d.modelo||d.mac_address}</option>)}
         </select>
 
-        {/* Botão Listas de Teste */}
-        <button
-          onClick={() => setShowTestLists(!showTestLists)}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
-        >
-          <List className="w-4 h-4" />
-          Listas de Teste
+        <button onClick={() => setShowTestLists(!showTestLists)} style={btnGhost}><List size={13}/> Listas de Teste</button>
+        <button onClick={handleRefresh} style={btnGhost}><RefreshCw size={13}/> Atualizar</button>
+        <button onClick={handleExpandAll} disabled={expandingAll} style={{ ...btnGhost, opacity:expandingAll?0.6:1 }}>
+          {expandingAll ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Expandindo...</> : <><ChevronDown size={13}/>Expandir Tudo</>}
+        </button>
+        <button onClick={handleCollapseAll} style={btnGhost}><ChevronRight size={13}/> Recolher</button>
+        <button onClick={handleCopyAll} style={{ ...btnGhost, color:copied?'#34d399':'#71717a', borderColor:copied?'rgba(16,185,129,0.3)':'rgba(255,255,255,0.08)' }}>
+          <ClipboardList size={13}/> {copied?'Copiado!':'Copiar Tudo'}
         </button>
 
-        {/* Search */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded bg-white text-gray-900 placeholder-gray-400"
-          />
+        {/* Busca */}
+        <div style={{ flex:1, minWidth:180, position:'relative' }}>
+          <Search size={13} color='#52525b' style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}/>
+          <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder='Buscar...'
+            style={{ ...inputStyle, paddingLeft:30, paddingRight:searchQuery?30:14, width:'100%' }}/>
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-2.5"
-            >
-              <X className="w-4 h-4 text-gray-400" />
+            <button onClick={()=>setSearchQuery('')} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#71717a', cursor:'pointer', display:'flex' }}>
+              <X size={12}/>
             </button>
           )}
         </div>
-
-        {/* Refresh */}
-        <button
-          onClick={handleRefresh}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Atualizar
-        </button>
-
-        {/* Expandir Tudo */}
-        <button
-          onClick={handleExpandAll}
-          disabled={expandingAll}
-          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          title="Expande todas as pastas"
-        >
-          {expandingAll ? (
-            <>
-              <Loader className="w-4 h-4 animate-spin" />
-              Expandindo...
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-4 h-4" />
-              Expandir Tudo
-            </>
-          )}
-        </button>
-
-        {/* Recolher Tudo */}
-        <button
-          onClick={handleCollapseAll}
-          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center gap-2"
-          title="Recolhe todas as pastas"
-        >
-          <ChevronRight className="w-4 h-4" />
-          Recolher
-        </button>
-
-        {/* Copiar Tudo */}
-        <button
-          onClick={handleCopyAll}
-          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
-          title="Copia todos os nomes visíveis na árvore"
-        >
-          <ClipboardList className="w-4 h-4" />
-          Copiar Tudo
-        </button>
       </div>
 
       {/* Modal Listas de Teste */}
       {showTestLists && (
-        <div className="mb-4 bg-white rounded-lg shadow-lg p-4 border-2 border-green-500">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-gray-800">Listas IPTV de Teste Públicas</h3>
-            <button onClick={() => setShowTestLists(false)}>
-              <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
-            </button>
+        <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.15)', borderRadius:14, padding:20, marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+            <p style={{ fontSize:14, fontWeight:800, color:'#fff' }}>Listas IPTV de Teste Públicas</p>
+            <button onClick={()=>setShowTestLists(false)} style={{ background:'none', border:'none', color:'#52525b', cursor:'pointer', display:'flex' }}><X size={16}/></button>
           </div>
-          
-          <p className="text-sm text-gray-600 mb-4">
-            ⚠️ Estas são listas públicas de teste. Podem estar offline ou lentas.
-          </p>
-          
-          <div className="space-y-3">
+          <p style={{ fontSize:11, color:'#71717a', marginBottom:12 }}>⚠️ Listas públicas de teste. Podem estar offline ou lentas.</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {testLists.map(list => (
-              <div key={list.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-800">{list.name}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{list.description}</p>
-                    <div className="mt-2 text-xs text-gray-500 space-y-1">
-                      <div><span className="font-semibold">URL:</span> {list.url}</div>
-                      <div><span className="font-semibold">Usuário:</span> {list.username}</div>
-                      <div><span className="font-semibold">Senha:</span> {list.password}</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleTestList(list)}
-                    disabled={testingList === list.id}
-                    className="ml-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {testingList === list.id ? (
-                      <>
-                        <Loader className="w-4 h-4 animate-spin" />
-                        Testando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Usar Esta Lista
-                      </>
-                    )}
-                  </button>
+              <div key={list.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:10 }}>
+                <div>
+                  <p style={{ fontSize:13, fontWeight:700, color:'#e4e4e7', marginBottom:2 }}>{list.name}</p>
+                  <p style={{ fontSize:11, color:'#52525b', marginBottom:4 }}>{list.description}</p>
+                  <p style={{ fontFamily:'monospace', fontSize:11, color:'#FFA500' }}>{list.url}</p>
                 </div>
+                <button onClick={()=>handleTestList(list)} disabled={testingList===list.id}
+                  style={{ ...btnPrimary, marginLeft:14, opacity:testingList===list.id?0.6:1 }}>
+                  {testingList===list.id ? <><Loader size={12} style={{animation:'spin 1s linear infinite'}}/>Testando...</> : <><CheckCircle size={12}/>Usar</>}
+                </button>
               </div>
             ))}
-          </div>
-          
-          <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-            <p className="text-sm text-blue-800">
-              💡 <strong>Dica:</strong> Clique em "Usar Esta Lista" para testar e configurar automaticamente. 
-              A lista será salva como configuração global.
-            </p>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-2 border-b">
-        <button
-          onClick={() => setActiveTab('live')}
-          className={`px-4 py-2 ${activeTab === 'live' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-        >
-          <Tv className="w-4 h-4 inline mr-2" />
-          TV ao Vivo
-        </button>
-        <button
-          onClick={() => setActiveTab('vod')}
-          className={`px-4 py-2 ${activeTab === 'vod' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-        >
-          <Film className="w-4 h-4 inline mr-2" />
-          Filmes
-        </button>
-        <button
-          onClick={() => setActiveTab('series')}
-          className={`px-4 py-2 ${activeTab === 'series' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-        >
-          <Clapperboard className="w-4 h-4 inline mr-2" />
-          Séries
-        </button>
+      <div style={{ display:'flex', gap:4, marginBottom:16, background:'rgba(17,17,17,0.6)', padding:5, borderRadius:12, width:'fit-content', border:'1px solid rgba(255,255,255,0.06)' }}>
+        {tabs.map(tab => (
+          <button key={tab.key} onClick={() => { setActiveTab(tab.key); setTreeData([]); setExpandedNodes(new Set()); }}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 18px', borderRadius:9, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all .2s', background:activeTab===tab.key?'rgba(255,165,0,0.15)':'transparent', color:activeTab===tab.key?'#FFA500':'#71717a' }}>
+            <tab.Icon size={14}/> {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Content */}
-      <div className="flex gap-4">
-        {/* Tree View */}
-        <div className="flex-1 bg-white rounded-lg shadow overflow-auto" style={{ maxHeight: '600px' }}>
+      <div style={{ display:'flex', gap:16 }}>
+        {/* Tree Panel */}
+        <div style={{ flex:1, background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.08)', borderRadius:14, maxHeight:560, overflow:'auto', boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
           {loading && (
-            <div className="flex items-center justify-center p-8">
-              <Loader className="w-6 h-6 animate-spin text-blue-600" />
-              <span className="ml-2">Carregando...</span>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:40, gap:10, color:'#52525b' }}>
+              <Loader size={20} color='#FFA500' style={{ animation:'spin 1s linear infinite' }}/>
+              <span style={{ fontSize:13 }}>Carregando...</span>
             </div>
           )}
-          
           {error && (
-            <div className="p-4 bg-red-50 text-red-700 rounded m-4">
-              <p>{error}</p>
-              <button
-                onClick={() => loadCategories(activeTab)}
-                className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-sm"
-              >
-                Tentar Novamente
-              </button>
+            <div style={{ margin:16, padding:'12px 16px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:10 }}>
+              <p style={{ fontSize:12, color:'#f87171', marginBottom:10 }}>{error}</p>
+              <button onClick={()=>loadCategories(activeTab)} style={{ padding:'6px 14px', background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:8, color:'#f87171', fontSize:12, cursor:'pointer' }}>Tentar Novamente</button>
             </div>
           )}
-          
-          {!loading && !error && filteredTree.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
+          {!loading && !error && filteredTree.length===0 && (
+            <div style={{ padding:40, textAlign:'center', color:'#52525b', fontSize:13 }}>
               {searchQuery ? 'Nenhum resultado encontrado' : 'Nenhuma categoria disponível'}
             </div>
           )}
-          
-          {!loading && !error && filteredTree.map(node => (
-            <TreeNode key={node.id} node={node} level={0} />
-          ))}
+          {!loading && !error && filteredTree.map(node => <TreeNode key={node.id} node={node} level={0}/>)}
         </div>
 
         {/* Detail Panel */}
         {selectedStream && (
-          <div className="w-96 bg-white rounded-lg shadow p-4">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-bold text-lg">Detalhes</h3>
-              <button onClick={() => setSelectedStream(null)}>
-                <X className="w-5 h-5" />
-              </button>
+          <div style={{ width:300, background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.12)', borderRadius:14, padding:18, flexShrink:0, boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+              <h3 style={{ fontSize:14, fontWeight:800, color:'#fff' }}>Detalhes</h3>
+              <button onClick={()=>setSelectedStream(null)} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:7, width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}><X size={13}/></button>
             </div>
-            
-            <div className="space-y-3">
+
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {[
+                { label:'Nome',          value:selectedStream.name },
+                { label:'Stream ID',     value:selectedStream.metadata.stream_id },
+                { label:'Nº do Canal',   value:selectedStream.metadata.num },
+                { label:'EPG Channel',   value:selectedStream.metadata.epg_channel_id },
+                { label:'Formato',       value:selectedStream.metadata.container_extension },
+              ].filter(i=>i.value).map(item => (
+                <div key={item.label}>
+                  <p style={{ fontSize:10, fontWeight:700, color:'#52525b', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:3 }}>{item.label}</p>
+                  <p style={{ fontSize:12, color:'#a1a1aa' }}>{String(item.value)}</p>
+                </div>
+              ))}
+
               <div>
-                <label className="text-sm font-semibold text-gray-600">Nome:</label>
-                <p className="text-sm">{selectedStream.name}</p>
-              </div>
-              
-              {selectedStream.metadata.stream_id && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Stream ID:</label>
-                  <p className="text-sm">{selectedStream.metadata.stream_id}</p>
-                </div>
-              )}
-              
-              {selectedStream.metadata.num && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Número do Canal:</label>
-                  <p className="text-sm">{selectedStream.metadata.num}</p>
-                </div>
-              )}
-              
-              {selectedStream.metadata.epg_channel_id && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">EPG Channel ID:</label>
-                  <p className="text-sm">{selectedStream.metadata.epg_channel_id}</p>
-                </div>
-              )}
-              
-              {selectedStream.metadata.container_extension && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Formato:</label>
-                  <p className="text-sm">{selectedStream.metadata.container_extension}</p>
-                </div>
-              )}
-              
-              <div>
-                <label className="text-sm font-semibold text-gray-600">URL do Stream:</label>
-                <div className="mt-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={formatStreamUrl(selectedStream, credentials)}
-                    readOnly
-                    className="flex-1 px-2 py-1 border rounded text-xs bg-gray-50 text-gray-900"
-                  />
-                  <button
-                    onClick={() => handleCopyUrl(formatStreamUrl(selectedStream, credentials))}
-                    className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                  >
-                    <Copy className="w-4 h-4" />
+                <p style={{ fontSize:10, fontWeight:700, color:'#52525b', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:6 }}>URL do Stream</p>
+                <div style={{ display:'flex', gap:6 }}>
+                  <input type='text' value={formatStreamUrl(selectedStream, credentials)} readOnly
+                    style={{ flex:1, padding:'7px 10px', background:'rgba(5,5,5,0.6)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:8, color:'#71717a', fontFamily:'monospace', fontSize:10, outline:'none' }}/>
+                  <button onClick={()=>handleCopyUrl(formatStreamUrl(selectedStream, credentials))}
+                    style={{ padding:'7px 10px', background:copied?'rgba(16,185,129,0.15)':'rgba(255,165,0,0.12)', border:`1px solid ${copied?'rgba(16,185,129,0.3)':'rgba(255,165,0,0.25)'}`, borderRadius:8, color:copied?'#34d399':'#FFA500', cursor:'pointer', display:'flex', alignItems:'center' }}>
+                    <Copy size={13}/>
                   </button>
                 </div>
               </div>
@@ -930,6 +468,8 @@ const IptvTreeViewer = () => {
           </div>
         )}
       </div>
+
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 };

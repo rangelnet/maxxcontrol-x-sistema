@@ -1,0 +1,43 @@
+services:
+  # Backend API
+  - type: web
+    name: maxxcontrol-x-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DB_HOST
+        value: db.mmfbirjrhrhobbnzfffe.supabase.co
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        value: postgres
+      - key: DB_PASSWORD
+        sync: false
+      - key: SUPABASE_URL
+        value: https://mmfbirjrhrhobbnzfffe.supabase.co
+      - key: SUPABASE_KEY
+        sync: false
+      - key: TMDB_API_KEY
+        value: c1869e578c74a007f3521d9609a56285
+      - key: JWT_SECRET
+        sync: false
+      - key: USE_SQLITE
+        value: false
+
+  # Frontend Web
+  - type: web
+    name: maxxcontrol-x-web
+    env: static
+    buildCommand: cd web && npm install && npm run build
+    staticPublishPath: ./web/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

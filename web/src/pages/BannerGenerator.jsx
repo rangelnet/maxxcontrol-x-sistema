@@ -1,1333 +1,1071 @@
-import { useState, useEffect, useRef } from 'react'
-import { Image, Film, Trophy, Plus, Trash2, Eye, Download, Save, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import api from '../services/api'
 
+
+// ─── DADOS DOS TEMAS POR CATEGORIA ────────────────────────────────────────────
+const THEMES = {
+  futebol: [
+    {
+      id: 'destaque-pro',
+      name: 'Destaque Pro',
+      badge: 'NOVO',
+      images: [
+        '/previews/previatemadestaque2futebol.png',
+        '/previews/previatemadestaque6futebol.png',
+        '/previews/previatemadestaque5futebol.png',
+        '/previews/previatemadestaque4futebol.png',
+      ],
+      isGroup: true,
+      variants: [
+        { id: 'destaque-vermelho', name: 'Vermelho', colorHex: '#D60000' },
+        { id: 'destaque-roxo',    name: 'Roxo',     colorHex: '#ab2def' },
+        { id: 'destaque-laranja', name: 'Laranja',  colorHex: '#fa8c2b' },
+        { id: 'destaque-azul',   name: 'Azul',     colorHex: '#032cf4' },
+        { id: 'destaque-verde',  name: 'Verde',    colorHex: '#3ed823' },
+      ],
+    },
+    {
+      id: 'pilulas',
+      name: 'Estilo Pílulas',
+      badge: null,
+      images: [
+        '/previews/tema15preview.jpg',
+        '/previews/previacapatema15.jpg',
+        '/previews/tema16preview.jpg',
+        '/previews/previacapatema16.jpg',
+        '/previews/tema17preview.jpg',
+        '/previews/tema18preview.jpg',
+        '/previews/tema19preview.jpg',
+        '/previews/tema20preview.jpg',
+      ],
+      isGroup: true,
+      variants: [
+        { id: 'pilulas-vermelho', name: 'Vermelho', colorHex: '#ef4444' },
+        { id: 'pilulas-laranja',  name: 'Laranja',  colorHex: '#f97316' },
+        { id: 'pilulas-amarelo',  name: 'Amarelo',  colorHex: '#eab308' },
+        { id: 'pilulas-verde',    name: 'Verde',    colorHex: '#22c55e' },
+        { id: 'pilulas-roxo',     name: 'Roxo',     colorHex: '#a855f7' },
+        { id: 'pilulas-azul',     name: 'Azul',     colorHex: '#3b82f6' },
+      ],
+    },
+    {
+      id: 'neon-gold',
+      name: 'Neon & Gold HD',
+      badge: 'HD',
+      images: [
+        '/previews/previatema10.jpg',
+        '/previews/previacapatema10.jpg',
+        '/previews/previatema12.jpg',
+        '/previews/previacapatema12.jpg',
+      ],
+      isGroup: true,
+      variants: [
+        { id: 'neon-gold',   name: 'Gold',   colorHex: '#eab308' },
+        { id: 'neon-red',    name: 'Red',    colorHex: '#ef4444' },
+        { id: 'neon-cyan',   name: 'Cyan',   colorHex: '#06b6d4' },
+        { id: 'neon-green',  name: 'Green',  colorHex: '#22c55e' },
+        { id: 'neon-purple', name: 'Purple', colorHex: '#a855f7' },
+      ],
+    },
+    {
+      id: 'hero-dark',
+      name: 'Hero Dark',
+      badge: 'MAIS USADO',
+      images: [
+        '/previews/tema2apresentacao.jpg',
+        '/previews/previacapatema2.jpg',
+        '/previews/temanow8_preview.jpg',
+        '/previews/temanow9_preview.jpg',
+        '/previews/tema2universalverde_previa.jpg',
+        '/previews/tema2universallaranja_previa.jpg',
+        '/previews/tema2universalamarelo_previa.jpg',
+      ],
+      isGroup: true,
+      variants: [
+        { id: 'hero-blue',   name: 'Blue',   colorHex: '#3b82f6' },
+        { id: 'hero-red',    name: 'Red V2', colorHex: '#ef4444' },
+        { id: 'hero-purple', name: 'Purple', colorHex: '#a855f7' },
+        { id: 'hero-green',  name: 'Green',  colorHex: '#10e606' },
+        { id: 'hero-orange', name: 'Orange', colorHex: '#f79b2e' },
+        { id: 'hero-yellow', name: 'Yellow', colorHex: '#FFE600' },
+      ],
+    },
+    {
+      id: 'pro-series',
+      name: 'Pro Series',
+      badge: 'NOVO',
+      images: [
+        '/previews/tema5_preview.jpg',
+        '/previews/previacapatema5.jpg',
+      ],
+      isGroup: true,
+      variants: [
+        { id: 'pro-laranja', name: 'Laranja', colorHex: '#FF7E00' },
+        { id: 'pro-azul',    name: 'Azul',    colorHex: '#0d1df1' },
+        { id: 'pro-roxo',    name: 'Roxo',    colorHex: '#bb2ef7' },
+        { id: 'pro-amarelo', name: 'Amarelo', colorHex: '#FFE600' },
+      ],
+    },
+    {
+      id: 'classico',
+      name: 'Clássico',
+      badge: null,
+      images: [
+        '/previews/tema1apresentacao.jpg',
+        '/previews/previacapatema1.jpg',
+        '/previews/tema3previa.jpg',
+        '/previews/previacapatema3.jpg',
+        '/previews/tema4preview.jpg',
+        '/previews/previacapatema4.jpg',
+      ],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'novela-vermelho',
+      name: 'Novela Vermelho',
+      badge: 'NOVO',
+      images: ['/previews/previa_futebolounovel_temavermelho.png'],
+      isGroup: false,
+      variants: [],
+    },
+  ],
+
+  filmes: [
+    {
+      id: 'filme-t1',
+      name: 'Cinema Dark',
+      badge: 'NOVO',
+      images: ['/previews/previa_filme_t1.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'filme-t2',
+      name: 'Streamers',
+      badge: null,
+      images: ['/previews/previa_filme_t2.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'filme-t3',
+      name: 'Master Series',
+      badge: null,
+      images: ['/previews/previafilmetema3.jpg', '/previews/previacapatema7.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'video-v1',
+      name: 'Video Teaser V1',
+      badge: 'VÍDEO',
+      images: ['/previews/preview_video_v1.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'video-v2',
+      name: 'Video Teaser V2',
+      badge: 'VÍDEO',
+      images: ['/previews/preview_video_v2.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+  ],
+
+  basquete: [
+    {
+      id: 'basquete-t1',
+      name: 'NBA Pro',
+      badge: 'NOVO',
+      images: ['/previews/previabasquetetema1.jpg', '/previews/previacapabasquetetema1.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t2',
+      name: 'Court Master',
+      badge: null,
+      images: ['/previews/previatema2basquete.jpg', '/previews/previacapabasquetetema2.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t3',
+      name: 'Arena Fire',
+      badge: null,
+      images: ['/previews/previatema3basquete.jpg', '/previews/previacapabasquetetema3.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t4',
+      name: 'Slam Dunk',
+      badge: null,
+      images: ['/previews/previabasquetetema4.jpg', '/previews/previacapabasquetetema4.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t5',
+      name: 'All-Star',
+      badge: null,
+      images: ['/previews/previatetema5basquete.jpg', '/previews/previacapabasquetetema5.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t6',
+      name: 'Playoff Night',
+      badge: 'HD',
+      images: ['/previews/previatetema6basquete.jpg', '/previews/previacapabasquetetema6.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t7',
+      name: 'Championship',
+      badge: null,
+      images: ['/previews/previatema7basquete.jpg', '/previews/previacapabasquetetema7.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t8',
+      name: 'Dynasty',
+      badge: null,
+      images: ['/previews/previatema8basquete.jpg', '/previews/previacapabasquetetema8.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'basquete-t9',
+      name: 'Finals Edition',
+      badge: 'NOVO',
+      images: ['/previews/previatetema9basquete.jpg', '/previews/previacapabasquetetema9.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+  ],
+
+  ufc: [
+    {
+      id: 'ufc-t1',
+      name: 'Fight Night',
+      badge: 'BETA',
+      images: ['/previews/previatema1ufc.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+  ],
+
+  divulgacao: [
+    {
+      id: 'div-azul',
+      name: 'Divulgação Azul',
+      badge: 'NOVO',
+      images: ['/previews/previa_tema_azul_divulgacao.jpg'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'div-amarelo',
+      name: 'Indique & Ganhe',
+      badge: 'NOVO',
+      images: ['/previews/previa_tema_amarelo_indiqueeganhe1amigos.png'],
+      isGroup: false,
+      variants: [],
+    },
+    {
+      id: 'div-preto',
+      name: 'Teste Grátis',
+      badge: null,
+      images: ['/previews/previa_tema_preto_testegratisomelhorapp.png'],
+      isGroup: false,
+      variants: [],
+    },
+  ],
+
+  admin: [
+    // Preenchido dinamicamente pelo useEffect
+  ],
+}
+
+// ─── CATEGORIAS ────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: 'futebol',    label: 'Banner Futebol',   icon: '⚽', color: 'from-green-600 to-emerald-700',  border: 'border-green-500/40',   glow: 'shadow-green-500/20' },
+  { id: 'filmes',     label: 'Banner Filmes',    icon: '🎬', color: 'from-purple-600 to-violet-700',  border: 'border-purple-500/40',  glow: 'shadow-purple-500/20' },
+  { id: 'admin',      label: 'Temas Master',     icon: '💎', color: 'from-yellow-500 to-amber-700',  border: 'border-yellow-500/40',  glow: 'shadow-yellow-500/20' },
+  { id: 'basquete',   label: 'Banner Basquete',  icon: '🏀', color: 'from-orange-500 to-amber-600',  border: 'border-orange-500/40',  glow: 'shadow-orange-500/20' },
+  { id: 'ufc',        label: 'Banner UFC',       icon: '🥊', color: 'from-red-600 to-rose-700',      border: 'border-red-500/40',     glow: 'shadow-red-500/20' },
+  { id: 'divulgacao', label: 'Divulgação',       icon: '📣', color: 'from-pink-500 to-fuchsia-600',  border: 'border-pink-500/40',    glow: 'shadow-pink-500/20' },
+]
+
+// ─── COMPONENTE CARD DE TEMA ───────────────────────────────────────────────────
+const ThemeCard = ({ theme, selected, onSelect, tick }) => {
+  const [showVariants, setShowVariants] = useState(false)
+  const imgIdx = theme.images.length > 0 ? tick % theme.images.length : 0
+
+  const handleClick = () => {
+    if (theme.isGroup && theme.variants.length > 0) {
+      setShowVariants(v => !v)
+    } else {
+      onSelect(theme.id)
+    }
+  }
+
+  const isSelected = selected === theme.id || 
+    (theme.isGroup && theme.variants.some(v => v.id === selected))
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Card Principal */}
+      <div
+        onClick={handleClick}
+        className={`cursor-pointer group relative rounded-xl overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
+          ${isSelected
+            ? 'border-brand-500 ring-2 ring-brand-500/50 shadow-lg shadow-brand-500/30 scale-[1.02]'
+            : 'border-dark-700 hover:border-zinc-500'
+          }`}
+      >
+        {/* Imagem com carrossel */}
+        <div className="absolute inset-0 bg-dark-900 overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl opacity-20">🖼️</span>
+          </div>
+          {theme.images.map((img, idx) => (
+            <img
+              key={idx}
+              src={img}
+              alt={theme.name}
+              className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-700
+                ${imgIdx === idx ? 'opacity-90 group-hover:opacity-100' : 'opacity-0'}`}
+            />
+          ))}
+          {/* Overlay glow no hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-20 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+
+        {/* Badge */}
+        {theme.badge && (
+          <div className="absolute top-2 right-2 z-30">
+            <span className={`text-[9px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider
+              ${theme.badge === 'NOVO' ? 'bg-red-600 text-white' :
+                theme.badge === 'BETA' ? 'bg-yellow-500 text-black' :
+                theme.badge === 'VÍDEO' ? 'bg-purple-600 text-white' :
+                theme.badge === 'HD' ? 'bg-brand-500 text-white' :
+                'bg-brand-500 text-white'}`}
+            >
+              {theme.badge}
+            </span>
+          </div>
+        )}
+
+        {/* Check de selecionado */}
+        {isSelected && !theme.isGroup && (
+          <div className="absolute top-2 left-2 z-30">
+            <div className="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-xs">✓</span>
+            </div>
+          </div>
+        )}
+
+        {/* Nome + botão ver cores */}
+        <div className="absolute bottom-0 left-0 right-0 bg-dark-900/95 border-t border-dark-700 py-2 px-2 z-20 backdrop-blur-md">
+          <span className={`text-[10px] font-bold uppercase tracking-wide text-center block truncate
+            ${isSelected ? 'text-brand-400' : 'text-zinc-300 group-hover:text-white'}`}>
+            {theme.name}
+          </span>
+          {theme.isGroup && (
+            <div className="text-[8px] text-zinc-400 mt-1 flex items-center justify-center gap-1 font-bold">
+              <span>{showVariants ? 'FECHAR' : 'VER CORES'}</span>
+              <span className={`transition-transform ${showVariants ? 'rotate-180' : ''}`}>▾</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Gaveta de variantes */}
+      {theme.isGroup && showVariants && (
+        <div className="bg-dark-800 border border-dark-700 rounded-xl p-2 grid grid-cols-3 gap-2 shadow-inner animate-in slide-in-from-top-2 duration-200">
+          {theme.variants.map(v => (
+            <button
+              key={v.id}
+              onClick={() => { onSelect(v.id); setShowVariants(false) }}
+              className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all hover:bg-dark-700
+                ${selected === v.id ? 'bg-dark-700 ring-1 ring-brand-500 shadow-md' : ''}`}
+            >
+              <div
+                className="w-6 h-6 rounded-full border-2 border-white/20 shadow-md flex items-center justify-center"
+                style={{ backgroundColor: v.colorHex }}
+              >
+                {selected === v.id && <span className="text-white text-[10px] drop-shadow">✓</span>}
+              </div>
+              <span className="text-[8px] text-zinc-300 font-bold uppercase truncate w-full text-center">
+                {v.name}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const BannerGenerator = () => {
-  const [banners, setBanners] = useState([])
+  const [activeCategory, setActiveCategory] = useState('futebol')
+  const [selectedTheme, setSelectedTheme] = useState(null)
+  const [mode, setMode] = useState(null) // 'manual' | 'auto'
+  const [tick, setTick] = useState(0) // para carrossel
   const [contents, setContents] = useState([])
-  const [recentContents, setRecentContents] = useState([])
-  const [showModal, setShowModal] = useState(false)
-  const [showPreviewModal, setShowPreviewModal] = useState(false)
-  const [showContentList, setShowContentList] = useState(false)
-  const [showSizeSelector, setShowSizeSelector] = useState(false)
-  const [selectedContent, setSelectedContent] = useState(null)
-  const [bannerType, setBannerType] = useState('movie')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [preview, setPreview] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedSize, setSelectedSize] = useState('banner')
-  const [selectedPlatforms, setSelectedPlatforms] = useState(['tv', 'mobile'])
-  const canvasRef = useRef(null)
+  const [loading, setLoading] = useState(false)
+  const [generatingBatch, setGeneratingBatch] = useState(false)
+  const [batchResult, setBatchResult] = useState(null)
+  const [autoSelectedThemes, setAutoSelectedThemes] = useState([])
+  const [adminTemplates, setAdminTemplates] = useState([])
+  const [tmdbSearchResults, setTmdbSearchResults] = useState([])
+  const [searchingTMDB, setSearchingTMDB] = useState(false)
 
-  // Tamanhos disponíveis
-  const sizes = {
-    'cartaz': { width: 1080, height: 1920, name: 'Cartaz (Portrait)', icon: '📱' },
-    'banner': { width: 1920, height: 1080, name: 'Banner (Landscape)', icon: '🖥️' },
-    'stories': { width: 1080, height: 1920, name: 'Stories', icon: '📲' },
-    'post': { width: 1080, height: 1080, name: 'Post Quadrado', icon: '⬛' },
-    'facebook': { width: 820, height: 312, name: 'Capa Facebook', icon: '📘' },
-    'youtube': { width: 1280, height: 720, name: 'Thumbnail YouTube', icon: '▶️' }
-  }
-
-  // Ícones de plataformas
-  const platformIcons = {
-    'tv': { icon: '📺', name: 'TV Box' },
-    'notebook': { icon: '💻', name: 'Notebook' },
-    'mobile': { icon: '📱', name: 'Celular' },
-    'xbox': { icon: '🎮', name: 'Xbox' },
-    'chromecast': { icon: '📡', name: 'Chromecast' },
-    'smart': { icon: '🖥️', name: 'Smart TV' }
-  }
-  
-  // Dados do banner de filme
-  const [movieData, setMovieData] = useState({
-    title: '',
-    year: '2025',
-    description: '',
-    posterUrl: '',
-    rating: 8,
-    dubbed: true,
-    isNew: true
-  })
-  
-  // Dados do banner de futebol
-  const [footballData, setFootballData] = useState({
-    title: 'TABELA DE JOGOS',
-    date: 'HOJE',
-    matches: [
-      { league: 'BRASILEIRÃO SÉRIE A', team1: 'FLAMENGO', team2: 'PALMEIRAS', time: '20:00' }
-    ]
-  })
-
+  // Carrega templates personalizados do Admin
   useEffect(() => {
-    loadBanners()
-    loadContents()
-    loadRecentContents()
+    fetchAdminTemplates()
   }, [])
 
-  const loadBanners = async () => {
+  const fetchAdminTemplates = async () => {
     try {
-      const response = await api.get('/api/banners/list')
-      setBanners(response.data.banners || [])
-    } catch (error) {
-      console.error('Erro ao carregar banners:', error)
-      setError('Erro ao carregar banners: ' + (error.response?.data?.error || error.message))
+      const res = await api.get('/api/banner-templates')
+      if (res.data.templates) setAdminTemplates(res.data.templates)
+    } catch (err) {
+      console.error('Erro ao buscar templates:', err)
     }
   }
+
+  // Busca no TMDB em tempo real
+  const handleTmdbSearch = async (query) => {
+    if (!query || query.length < 3) {
+      setTmdbSearchResults([])
+      return
+    }
+    setSearchingTMDB(true)
+    try {
+      const res = await api.get(`/api/content/search?query=${encodeURIComponent(query)}`)
+      setTmdbSearchResults(res.data.resultados || [])
+    } catch (err) {
+      console.error('Erro na pesquisa TMDB:', err)
+    } finally {
+      setSearchingTMDB(false)
+    }
+  }
+
+  // Carrossel automático
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 2500)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Carrega conteúdos para filmes
+  useEffect(() => {
+    if (activeCategory === 'filmes') loadContents()
+  }, [activeCategory])
 
   const loadContents = async () => {
-    try {
-      setLoading(true)
-      const response = await api.get('/api/content/list?limit=100')
-      setContents(response.data.conteudos || [])
-      setError(null)
-    } catch (error) {
-      console.error('Erro ao carregar conteúdos:', error)
-      setError('Erro ao carregar conteúdos: ' + (error.response?.data?.error || error.message))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadRecentContents = async () => {
-    try {
-      const response = await api.get('/api/content/list?limit=10')
-      setRecentContents(response.data.conteudos || [])
-    } catch (error) {
-      console.error('Erro ao carregar recentes:', error)
-      // Não mostra erro para recentes, apenas loga
-    }
-  }
-
-  const openSizeSelector = (content) => {
-    setSelectedContent(content)
-    setShowSizeSelector(true)
-  }
-
-  const generateAndDownload = async (size) => {
-    if (!selectedContent) return
-    
     setLoading(true)
     try {
-      const sizeConfig = sizes[size]
-      const canvas = document.createElement('canvas')
-      canvas.width = sizeConfig.width
-      canvas.height = sizeConfig.height
-      const ctx = canvas.getContext('2d')
+      const r = await api.get('/api/content/list?limit=50')
+      setContents(r.data.conteudos || [])
+    } catch { setContents([]) }
+    finally { setLoading(false) }
+  }
 
-      // Preparar dados do conteúdo
-      const isPortrait = ['cartaz', 'stories'].includes(size)
-      let imageUrl = ''
-      
-      if (isPortrait && selectedContent.poster_path) {
-        imageUrl = `https://image.tmdb.org/t/p/original${selectedContent.poster_path}`
-      } else if (selectedContent.backdrop_path) {
-        imageUrl = `https://image.tmdb.org/t/p/original${selectedContent.backdrop_path}`
-      } else if (selectedContent.poster_path) {
-        imageUrl = `https://image.tmdb.org/t/p/original${selectedContent.poster_path}`
-      }
+  const themes = THEMES[activeCategory] || []
+  const cat = CATEGORIES.find(c => c.id === activeCategory)
 
-      const movieData = {
-        title: selectedContent.titulo,
-        year: selectedContent.ano,
-        description: selectedContent.descricao,
-        posterUrl: imageUrl,
-        rating: selectedContent.nota || 8,
-        dubbed: true,
-        isNew: false
-      }
+  const handleCategoryChange = (catId) => {
+    setActiveCategory(catId)
+    setSelectedTheme(null)
+    setMode(null)
+    setBatchResult(null)
+    setAutoSelectedThemes([])
+  }
 
-      // Gerar banner
-      await generateMovieBannerDirect(ctx, canvas, sizeConfig, movieData)
-
-      // Download direto
-      const dataUrl = canvas.toDataURL('image/png')
-      const link = document.createElement('a')
-      link.download = `${selectedContent.titulo.replace(/[^a-z0-9]/gi, '_')}_${sizeConfig.name.replace(/\s+/g, '_')}.png`
-      link.href = dataUrl
-      link.click()
-
-      setShowSizeSelector(false)
-      setSelectedContent(null)
-    } catch (error) {
-      console.error('Erro ao gerar banner:', error)
-      alert('Erro ao gerar banner')
-    } finally {
-      setLoading(false)
+  const handleThemeSelect = (themeId) => {
+    if (activeCategory === 'futebol') {
+      setSelectedTheme(themeId)
+      if (!mode) setMode('manual') // auto-seleciona modo se ainda não escolheu
+    } else {
+      setSelectedTheme(themeId)
     }
   }
 
-  const generateMovieBannerDirect = async (ctx, canvas, sizeConfig, data) => {
-    const { width, height } = sizeConfig
-    const isPortrait = height > width
-    const scale = width / 1920
-
-    // Fundo gradiente
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#0a0a0a')
-    gradient.addColorStop(1, '#1a1a2e')
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
-
-    // Carregar imagem
-    if (data.posterUrl) {
-      try {
-        const img = new window.Image()
-        img.crossOrigin = 'anonymous'
-        await new Promise((resolve, reject) => {
-          img.onload = resolve
-          img.onerror = reject
-          img.src = data.posterUrl
-        })
-
-        if (isPortrait) {
-          const imgHeight = height * 0.6
-          const imgWidth = width * 0.9
-          const x = (width - imgWidth) / 2
-          ctx.drawImage(img, x, 50 * scale, imgWidth, imgHeight)
-        } else {
-          const imgWidth = width * 0.4
-          const imgHeight = height * 0.8
-          const x = width - imgWidth - 50 * scale
-          const y = (height - imgHeight) / 2
-          ctx.drawImage(img, x, y, imgWidth, imgHeight)
-        }
-      } catch (err) {
-        console.error('Erro ao carregar imagem:', err)
-      }
-    }
-
-    const textX = isPortrait ? width * 0.1 : width * 0.05
-    const textY = isPortrait ? height * 0.65 : height * 0.15
-    const maxTextWidth = isPortrait ? width * 0.8 : width * 0.5
-
-    // Título
-    ctx.fillStyle = '#FF6A00'
-    ctx.font = `bold ${Math.floor(60 * scale)}px Arial`
-    ctx.fillText(data.title || 'Título', textX, textY)
-
-    // Ano
-    ctx.fillStyle = '#ffffff'
-    ctx.font = `${Math.floor(30 * scale)}px Arial`
-    ctx.fillText(`(${data.year || '2025'})`, textX, textY + 50 * scale)
-
-    // Descrição
-    ctx.fillStyle = '#cccccc'
-    ctx.font = `${Math.floor(24 * scale)}px Arial`
-    wrapText(ctx, data.description || 'Descrição', textX, textY + 100 * scale, maxTextWidth, 35 * scale)
-
-    // Rating
-    if (data.rating) {
-      const stars = Math.round(data.rating / 2)
-      ctx.fillStyle = '#FFD700'
-      ctx.font = `${Math.floor(40 * scale)}px Arial`
-      const ratingY = isPortrait ? height * 0.85 : height * 0.65
-      ctx.fillText('★'.repeat(stars) + '☆'.repeat(5 - stars), textX, ratingY)
-    }
-
-    // Badges
-    const badgeY = 30 * scale
-    if (data.dubbed) {
-      drawBadge(ctx, 'DUBLADO', textX, badgeY, '#00AA00', scale)
-    }
-
-    // Ícones de plataformas
-    drawPlatformIcons(ctx, width, height, scale)
+  const toggleAutoTheme = (themeId) => {
+    setAutoSelectedThemes(prev =>
+      prev.includes(themeId) ? prev.filter(t => t !== themeId) : [...prev, themeId]
+    )
   }
 
-  const selectContent = (content) => {
-    // Escolher imagem baseada no tamanho selecionado
-    let imageUrl = ''
-    const isPortrait = ['cartaz', 'stories'].includes(selectedSize)
-    
-    if (isPortrait && content.poster_path) {
-      // Para formatos verticais, usar poster
-      imageUrl = `https://image.tmdb.org/t/p/original${content.poster_path}`
-    } else if (content.backdrop_path) {
-      // Para formatos horizontais, usar backdrop
-      imageUrl = `https://image.tmdb.org/t/p/original${content.backdrop_path}`
-    } else if (content.poster_path) {
-      // Fallback para poster
-      imageUrl = `https://image.tmdb.org/t/p/original${content.poster_path}`
-    }
-    
-    setMovieData({
-      title: content.titulo,
-      year: content.ano,
-      description: content.descricao,
-      posterUrl: imageUrl,
-      rating: content.nota || 8,
-      dubbed: true,
-      isNew: false
-    })
-    setShowContentList(false)
+  const handleGerarLote = () => {
+    if (autoSelectedThemes.length === 0) return
+    setGeneratingBatch(true)
+    setTimeout(() => {
+      setGeneratingBatch(false)
+      setBatchResult({
+        count: autoSelectedThemes.length * 3,
+        themes: autoSelectedThemes,
+      })
+    }, 2000)
   }
 
-  const filteredContents = contents.filter(c => 
+  const filteredContents = contents.filter(c =>
     c.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.titulo_original?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const searchTMDB = async (query) => {
-    if (!query.trim()) return
-    
-    try {
-      const response = await api.get(`/api/content/search?query=${query}`)
-      if (response.data.results && response.data.results.length > 0) {
-        const movie = response.data.results[0]
-        
-        // Escolher imagem baseada no tamanho selecionado
-        let imageUrl = ''
-        const isPortrait = ['cartaz', 'stories'].includes(selectedSize)
-        
-        if (isPortrait && movie.poster_path) {
-          // Para formatos verticais, usar poster
-          imageUrl = `https://image.tmdb.org/t/p/original${movie.poster_path}`
-        } else if (movie.backdrop_path) {
-          // Para formatos horizontais, usar backdrop
-          imageUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-        } else if (movie.poster_path) {
-          // Fallback para poster
-          imageUrl = `https://image.tmdb.org/t/p/original${movie.poster_path}`
-        }
-        
-        setMovieData({
-          ...movieData,
-          title: movie.title || movie.name,
-          year: movie.release_date?.split('-')[0] || movie.first_air_date?.split('-')[0],
-          description: movie.overview,
-          posterUrl: imageUrl,
-          rating: movie.vote_average
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao buscar no TMDB:', error)
-    }
-  }
+  return (
+    <div className="space-y-6 pb-10">
 
-  const generatePreview = async () => {
-    setLoading(true)
-    try {
-      const sizeConfig = sizes[selectedSize]
-      const canvas = document.createElement('canvas')
-      canvas.width = sizeConfig.width
-      canvas.height = sizeConfig.height
-      const ctx = canvas.getContext('2d')
+      {/* ── HEADER ──────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
+              🎨
+            </div>
+            Gerador de Banners
+          </h1>
+          <p className="text-zinc-400 text-sm mt-1">
+            Crie artes profissionais para IPTV em segundos. Escolha a categoria e o tema.
+          </p>
+        </div>
+        {selectedTheme && (
+          <div className="flex items-center gap-2 bg-brand-500/10 border border-brand-500/30 px-4 py-2 rounded-full">
+            <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
+            <span className="text-brand-400 text-xs font-bold uppercase">Tema Selecionado</span>
+          </div>
+        )}
+      </div>
 
-      if (bannerType === 'movie') {
-        await generateMovieBanner(ctx, canvas, sizeConfig)
-      } else {
-        await generateFootballBanner(ctx, canvas, sizeConfig)
-      }
+      {/* ── ABAS DE CATEGORIA ───────────────────────────────────── */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => handleCategoryChange(cat.id)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border shrink-0
+              ${activeCategory === cat.id
+                ? `bg-gradient-to-r ${cat.color} text-white border-transparent shadow-lg ${cat.glow}`
+                : 'bg-dark-800 text-zinc-400 border-dark-700 hover:border-dark-600 hover:text-white'
+              }`}
+          >
+            <span className="text-base">{cat.icon}</span>
+            {cat.label}
+            {cat.id === 'basquete' && <span className="text-[8px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/30">NOVO</span>}
+            {cat.id === 'ufc' && <span className="text-[8px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">BETA</span>}
+            {cat.id === 'divulgacao' && <span className="text-[8px] bg-pink-500/20 text-pink-400 px-1.5 py-0.5 rounded border border-pink-500/30">NOVO</span>}
+          </button>
+        ))}
+      </div>
 
-      const dataUrl = canvas.toDataURL('image/png')
-      setPreview(dataUrl)
-      setShowPreviewModal(true)
-    } catch (error) {
-      console.error('Erro ao gerar preview:', error)
-      alert('Erro ao gerar preview')
-    } finally {
-      setLoading(false)
-    }
-  }
+      {/* ── MODO MANUAL/AUTO (apenas Futebol) ───────────────────── */}
+      {activeCategory === 'futebol' && (
+        <div className="grid grid-cols-2 gap-4">
+          <div
+            onClick={() => setMode('manual')}
+            className={`group bg-dark-800 border-2 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 relative overflow-hidden text-center
+              ${mode === 'manual'
+                ? 'border-brand-500 bg-brand-500/5 shadow-lg shadow-brand-500/20'
+                : 'border-dark-700 hover:border-brand-500/50'
+              }`}
+          >
+            <div className="absolute -right-8 -top-8 w-28 h-28 bg-brand-500/10 rounded-full blur-2xl group-hover:bg-brand-500/20 transition-all" />
+            <div className={`h-14 w-14 rounded-2xl mx-auto flex items-center justify-center mb-3 border transition-colors
+              ${mode === 'manual' ? 'bg-brand-500 border-brand-400 text-white' : 'bg-dark-900 border-dark-600 group-hover:border-brand-500/50 text-brand-500'}`}>
+              <span className="text-2xl">🖐️</span>
+            </div>
+            <h3 className="text-lg font-black text-white mb-1">Modo Manual</h3>
+            <p className="text-zinc-400 text-xs leading-relaxed">
+              Escolha campeonato, jogo e personalize nos detalhes.
+            </p>
+            {mode === 'manual' && (
+              <div className="absolute top-3 right-3 w-5 h-5 bg-brand-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-[10px]">✓</span>
+              </div>
+            )}
+          </div>
 
-  const generateMovieBanner = async (ctx, canvas, sizeConfig) => {
-    const { width, height } = sizeConfig
-    const isPortrait = height > width
-    const scale = width / 1920 // Escala para adaptar elementos
+          <div
+            onClick={() => setMode('auto')}
+            className={`group bg-dark-800 border-2 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 relative overflow-hidden text-center
+              ${mode === 'auto'
+                ? 'border-green-500 bg-green-500/5 shadow-lg shadow-green-500/20'
+                : 'border-dark-700 hover:border-green-500/50'
+              }`}
+          >
+            <div className="absolute -right-8 -top-8 w-28 h-28 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-all" />
+            <div className={`h-14 w-14 rounded-2xl mx-auto flex items-center justify-center mb-3 border transition-colors
+              ${mode === 'auto' ? 'bg-green-500 border-green-400 text-white' : 'bg-dark-900 border-dark-600 group-hover:border-green-500/50 text-green-500'}`}>
+              <span className="text-2xl">⚡</span>
+            </div>
+            <h3 className="text-lg font-black text-white mb-1">Modo Automático</h3>
+            <p className="text-zinc-400 text-xs leading-relaxed">
+              Selecione temas e gere artes de todos os jogos do dia.
+            </p>
+            {mode === 'auto' && (
+              <div className="absolute top-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-[10px]">✓</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-    // Fundo gradiente
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#0a0a0a')
-    gradient.addColorStop(1, '#1a1a2e')
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
+      {/* ── GRID DE TEMAS ───────────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <span className="text-xl">{cat?.icon}</span>
+              Escolha o Tema
+            </h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              {mode === 'auto'
+                ? 'Selecione um ou mais designs para gerar em lote.'
+                : 'Selecione o estilo da sua arte.'}
+            </p>
+          </div>
 
-    // Carregar poster/backdrop
-    if (movieData.posterUrl) {
-      try {
-        const img = new window.Image()
-        img.crossOrigin = 'anonymous'
-        await new Promise((resolve, reject) => {
-          img.onload = resolve
-          img.onerror = reject
-          img.src = movieData.posterUrl
-        })
+          {/* Botão Gerar Lote (modo auto) */}
+          {mode === 'auto' && (
+            <button
+              onClick={handleGerarLote}
+              disabled={autoSelectedThemes.length === 0 || generatingBatch}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-bold py-2.5 px-5 rounded-lg transition shadow-lg text-sm"
+            >
+              {generatingBatch ? (
+                <><span className="animate-spin">⏳</span> Gerando...</>
+              ) : (
+                <><span>⚡</span> Gerar em Lote ({autoSelectedThemes.length})</>
+              )}
+            </button>
+          )}
+        </div>
 
-        if (isPortrait) {
-          // Layout vertical - imagem no topo
-          const imgHeight = height * 0.6
-          const imgWidth = width * 0.9
-          const x = (width - imgWidth) / 2
-          ctx.drawImage(img, x, 50 * scale, imgWidth, imgHeight)
-        } else {
-          // Layout horizontal - imagem na direita
-          const imgWidth = width * 0.4
-          const imgHeight = height * 0.8
-          const x = width - imgWidth - 50 * scale
-          const y = (height - imgHeight) / 2
-          ctx.drawImage(img, x, y, imgWidth, imgHeight)
-        }
-      } catch (err) {
-        console.error('Erro ao carregar imagem:', err)
-      }
-    }
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+          {activeCategory === 'admin' ? (
+            adminTemplates.map(temp => (
+              <ThemeCard
+                key={temp.id}
+                theme={{
+                  id: temp.id,
+                  name: temp.name,
+                  images: [temp.overlay_url, temp.bg_url].filter(Boolean),
+                  isGroup: false,
+                  variants: [],
+                }}
+                selected={selectedTheme}
+                onSelect={handleThemeSelect}
+                tick={tick}
+              />
+            ))
+          ) : themes.map(theme => (
+            mode === 'auto' ? (
+              // Modo auto: checkbox simples
+              <div
+                key={theme.id}
+                onClick={() => toggleAutoTheme(theme.id)}
+                className={`cursor-pointer relative rounded-xl overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
+                  ${autoSelectedThemes.includes(theme.id)
+                    ? 'border-green-500 ring-2 ring-green-500/40 shadow-lg scale-[1.02]'
+                    : 'border-dark-700 hover:border-zinc-500'
+                  }`}
+              >
+                <div className="absolute inset-0">
+                  {theme.images.map((img, idx) => (
+                    <img key={idx} src={img} alt={theme.name}
+                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700
+                        ${tick % theme.images.length === idx ? 'opacity-90' : 'opacity-0'}`}
+                    />
+                  ))}
+                </div>
+                {autoSelectedThemes.includes(theme.id) && (
+                  <div className="absolute top-2 left-2 z-30 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                )}
+                {theme.badge && (
+                  <div className="absolute top-2 right-2 z-30">
+                    <span className="text-[9px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded">
+                      {theme.badge}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-dark-900/95 border-t border-dark-700 py-2 px-2 z-20 backdrop-blur-md">
+                  <span className={`text-[10px] font-bold uppercase text-center block truncate
+                    ${autoSelectedThemes.includes(theme.id) ? 'text-green-400' : 'text-zinc-300'}`}>
+                    {theme.name}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <ThemeCard
+                key={theme.id}
+                theme={theme}
+                selected={selectedTheme}
+                onSelect={handleThemeSelect}
+                tick={tick}
+              />
+            )
+          ))}
+        </div>
+      </div>
 
-    // Posições adaptadas ao layout
-    const textX = isPortrait ? width * 0.1 : width * 0.05
-    const textY = isPortrait ? height * 0.65 : height * 0.15
-    const maxTextWidth = isPortrait ? width * 0.8 : width * 0.5
+      {/* ── RESULTADO LOTE ──────────────────────────────────────── */}
+      {batchResult && (
+        <div className="bg-gradient-to-r from-green-900/40 to-dark-800 border border-green-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 bg-green-500/20 rounded-full flex items-center justify-center text-2xl border border-green-500/30">
+              ✅
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-lg">{batchResult.count} artes geradas!</h3>
+              <p className="text-zinc-400 text-xs">
+                {batchResult.themes.length} tema(s) × jogos do dia. Prontas para download.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-2.5 rounded-xl transition shadow-lg text-sm">
+              📥 Baixar ZIP
+            </button>
+            <button
+              onClick={() => setBatchResult(null)}
+              className="flex items-center gap-2 bg-dark-700 hover:bg-dark-600 text-zinc-300 font-bold px-4 py-2.5 rounded-xl transition text-sm"
+            >
+              ✕ Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
-    // Título
-    ctx.fillStyle = '#FF6A00'
-    ctx.font = `bold ${Math.floor(60 * scale)}px Arial`
-    ctx.fillText(movieData.title || 'Título', textX, textY)
+      {/* ── PAINEL DE CONFIGURAÇÃO (tema selecionado, modo manual) ─ */}
+      {selectedTheme && mode !== 'auto' && activeCategory === 'futebol' && (
+        <FootballConfigurator theme={selectedTheme} />
+      )}
 
-    // Ano
-    ctx.fillStyle = '#ffffff'
-    ctx.font = `${Math.floor(30 * scale)}px Arial`
-    ctx.fillText(`(${movieData.year || '2025'})`, textX, textY + 50 * scale)
+      {selectedTheme && activeCategory !== 'futebol' && activeCategory !== 'filmes' && (
+        <SportConfigurator category={activeCategory} theme={selectedTheme} />
+      )}
 
-    // Descrição
-    ctx.fillStyle = '#cccccc'
-    ctx.font = `${Math.floor(24 * scale)}px Arial`
-    wrapText(ctx, movieData.description || 'Descrição', textX, textY + 100 * scale, maxTextWidth, 35 * scale)
+      {/* ── GALERIA DE FILMES (para banners de filmes) ─────────── */}
+      {(activeCategory === 'filmes' || activeCategory === 'admin') && selectedTheme && (
+        <FilmesConfigurator 
+          theme={selectedTheme} 
+          contents={tmdbSearchResults.length > 0 ? tmdbSearchResults : contents} 
+          loading={searchingTMDB || loading} 
+          onSearch={handleTmdbSearch}
+        />
+      )}
 
-    // Rating
-    if (movieData.rating) {
-      const stars = Math.round(movieData.rating / 2)
-      ctx.fillStyle = '#FFD700'
-      ctx.font = `${Math.floor(40 * scale)}px Arial`
-      const ratingY = isPortrait ? height * 0.85 : height * 0.65
-      ctx.fillText('★'.repeat(stars) + '☆'.repeat(5 - stars), textX, ratingY)
-    }
+      {/* ── EMPTY STATE ─────────────────────────────────────────── */}
+      {!selectedTheme && mode !== 'auto' && (
+        <div className="flex flex-col items-center justify-center py-16 text-zinc-600 border border-dashed border-dark-700 rounded-2xl">
+          <span className="text-5xl mb-4 opacity-40">🎨</span>
+          <p className="text-sm font-medium">Selecione um tema acima para continuar</p>
+          <p className="text-xs mt-1 opacity-60">Passe o mouse sobre os cards para ver o carrossel</p>
+        </div>
+      )}
+    </div>
+  )
+}
 
-    // Badges
-    const badgeY = 30 * scale
-    if (movieData.dubbed) {
-      drawBadge(ctx, 'DUBLADO', textX, badgeY, '#00AA00', scale)
-    }
-    if (movieData.isNew) {
-      drawBadge(ctx, 'LANÇAMENTO', textX + 220 * scale, badgeY, '#FF6A00', scale)
-    }
+// ─── CONFIGURADOR DE FUTEBOL ───────────────────────────────────────────────────
+const FootballConfigurator = ({ theme }) => {
+  const [matches, setMatches] = useState([
+    { league: 'BRASILEIRÃO SÉRIE A', team1: 'FLAMENGO', team2: 'PALMEIRAS', time: '20:00' }
+  ])
+  const [title, setTitle] = useState('TABELA DE JOGOS')
+  const [date, setDate] = useState('HOJE')
+  const [generating, setGenerating] = useState(false)
+  const [done, setDone] = useState(false)
 
-    // Ícones de plataformas no rodapé
-    drawPlatformIcons(ctx, width, height, scale)
-  }
+  const addMatch = () => setMatches(m => [...m, { league: '', team1: '', team2: '', time: '' }])
+  const removeMatch = (i) => setMatches(m => m.filter((_, idx) => idx !== i))
+  const updateMatch = (i, field, val) => setMatches(m => m.map((match, idx) => idx === i ? { ...match, [field]: val } : match))
 
-  const generateFootballBanner = async (ctx, canvas, sizeConfig) => {
-    const { width, height } = sizeConfig
-    const scale = width / 1920
-
-    // Fundo gradiente de fogo
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#1a0000')
-    gradient.addColorStop(0.5, '#330000')
-    gradient.addColorStop(1, '#1a0000')
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
-
-    // Título
-    ctx.fillStyle = '#ffffff'
-    ctx.font = `bold ${Math.floor(50 * scale)}px Arial`
-    ctx.textAlign = 'center'
-    ctx.fillText(footballData.title || 'TABELA DE JOGOS', width / 2, 80 * scale)
-
-    // Data
-    ctx.fillStyle = '#FF6A00'
-    ctx.font = `bold ${Math.floor(35 * scale)}px Arial`
-    ctx.fillText(footballData.date || 'HOJE', width / 2, 140 * scale)
-
-    // Jogos
-    let yPos = 200 * scale
-    const matchHeight = 120 * scale
-    footballData.matches.forEach((match) => {
-      drawMatch(ctx, match, yPos, width, scale)
-      yPos += matchHeight + 20 * scale
-    })
-
-    // Ícones de plataformas no rodapé
-    drawPlatformIcons(ctx, width, height, scale)
-  }
-
-  const drawMatch = (ctx, match, y, width, scale) => {
-    const centerX = width / 2
-    const boxWidth = width * 0.8
-    const boxX = (width - boxWidth) / 2
-
-    // Box da partida
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
-    ctx.fillRect(boxX, y, boxWidth, 100 * scale)
-
-    // Campeonato
-    ctx.fillStyle = '#cccccc'
-    ctx.font = `bold ${Math.floor(20 * scale)}px Arial`
-    ctx.textAlign = 'center'
-    ctx.fillText(match.league || 'CAMPEONATO', centerX, y + 30 * scale)
-
-    // Time 1
-    ctx.fillStyle = '#ffffff'
-    ctx.font = `bold ${Math.floor(28 * scale)}px Arial`
-    ctx.textAlign = 'right'
-    ctx.fillText(match.team1 || 'TIME 1', centerX - 80 * scale, y + 70 * scale)
-
-    // VS
-    ctx.fillStyle = '#FF6A00'
-    ctx.font = `bold ${Math.floor(35 * scale)}px Arial`
-    ctx.textAlign = 'center'
-    ctx.fillText('VS', centerX, y + 70 * scale)
-
-    // Time 2
-    ctx.fillStyle = '#ffffff'
-    ctx.font = `bold ${Math.floor(28 * scale)}px Arial`
-    ctx.textAlign = 'left'
-    ctx.fillText(match.team2 || 'TIME 2', centerX + 80 * scale, y + 70 * scale)
-
-    // Horário
-    ctx.fillStyle = '#FFD700'
-    ctx.font = `bold ${Math.floor(25 * scale)}px Arial`
-    ctx.textAlign = 'center'
-    ctx.fillText(match.time || '20:00', boxX + boxWidth - 80 * scale, y + 70 * scale)
-  }
-
-  const drawBadge = (ctx, text, x, y, color, scale = 1) => {
-    const badgeWidth = 180 * scale
-    const badgeHeight = 50 * scale
-    
-    ctx.fillStyle = color
-    ctx.fillRect(x, y, badgeWidth, badgeHeight)
-    ctx.fillStyle = '#ffffff'
-    ctx.font = `bold ${Math.floor(20 * scale)}px Arial`
-    ctx.textAlign = 'center'
-    ctx.fillText(text, x + badgeWidth / 2, y + badgeHeight / 2 + 8 * scale)
-    ctx.textAlign = 'left'
-  }
-
-  const drawPlatformIcons = (ctx, width, height, scale) => {
-    if (selectedPlatforms.length === 0) return
-
-    const iconSize = 40 * scale
-    const spacing = 60 * scale
-    const totalWidth = selectedPlatforms.length * spacing
-    const startX = (width - totalWidth) / 2
-    const y = height - 60 * scale
-
-    ctx.font = `${Math.floor(iconSize)}px Arial`
-    ctx.textAlign = 'center'
-
-    selectedPlatforms.forEach((platform, index) => {
-      const x = startX + index * spacing + spacing / 2
-      const platformData = platformIcons[platform]
-      
-      if (platformData) {
-        // Ícone
-        ctx.fillText(platformData.icon, x, y)
-        
-        // Nome (opcional, apenas se houver espaço)
-        if (scale >= 0.5) {
-          ctx.font = `${Math.floor(12 * scale)}px Arial`
-          ctx.fillStyle = '#888888'
-          ctx.fillText(platformData.name, x, y + 25 * scale)
-          ctx.font = `${Math.floor(iconSize)}px Arial`
-          ctx.fillStyle = '#ffffff'
-        }
-      }
-    })
-
-    ctx.textAlign = 'left'
-  }
-
-  const wrapText = (ctx, text, x, y, maxWidth, lineHeight) => {
-    const words = text.split(' ')
-    let line = ''
-    let lineCount = 0
-
-    for (let i = 0; i < words.length && lineCount < 5; i++) {
-      const testLine = line + words[i] + ' '
-      const metrics = ctx.measureText(testLine)
-
-      if (metrics.width > maxWidth && i > 0) {
-        ctx.fillText(line, x, y)
-        line = words[i] + ' '
-        y += lineHeight
-        lineCount++
-      } else {
-        line = testLine
-      }
-    }
-
-    if (lineCount < 5) {
-      ctx.fillText(line, x, y)
-    }
-  }
-
-  const downloadBanner = () => {
-    if (!preview) return
-    
-    const sizeConfig = sizes[selectedSize]
-    const link = document.createElement('a')
-    link.download = `banner_${sizeConfig.name.replace(/\s+/g, '_')}_${Date.now()}.png`
-    link.href = preview
-    link.click()
-  }
-
-  const saveBanner = async () => {
-    try {
-      const data = bannerType === 'movie' ? movieData : footballData
-      await api.post('/api/banners/create', {
-        type: bannerType,
-        title: data.title,
-        data,
-        template: bannerType
-      })
-      alert('Banner salvo com sucesso!')
-      setShowModal(false)
-      loadBanners()
-    } catch (error) {
-      console.error('Erro ao salvar banner:', error)
-      alert('Erro ao salvar banner')
-    }
-  }
-
-  const deleteBanner = async (id) => {
-    if (!confirm('Deletar este banner?')) return
-    
-    try {
-      await api.delete(`/api/banners/${id}`)
-      loadBanners()
-    } catch (error) {
-      console.error('Erro ao deletar:', error)
-    }
-  }
-
-  const addMatch = () => {
-    setFootballData({
-      ...footballData,
-      matches: [...footballData.matches, { league: '', team1: '', team2: '', time: '' }]
-    })
-  }
-
-  const updateMatch = (index, field, value) => {
-    const newMatches = [...footballData.matches]
-    newMatches[index][field] = value
-    setFootballData({ ...footballData, matches: newMatches })
-  }
-
-  const removeMatch = (index) => {
-    const newMatches = footballData.matches.filter((_, i) => i !== index)
-    setFootballData({ ...footballData, matches: newMatches })
+  const handleGenerate = () => {
+    setGenerating(true)
+    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1500)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Image className="text-primary" size={32} />
-          <h1 className="text-3xl font-bold text-white">Gerador de Banners</h1>
+    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
+        <h3 className="font-bold text-white flex items-center gap-2">
+          <span>⚽</span> Configurar Banner de Futebol
+        </h3>
+        <span className="text-xs text-zinc-500 bg-dark-800 px-2 py-1 rounded border border-dark-700">
+          Tema: {theme}
+        </span>
+      </div>
+      <div className="p-6 space-y-5">
+        {/* Título e Data */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Título</label>
+            <input value={title} onChange={e => setTitle(e.target.value)}
+              className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
+              placeholder="TABELA DE JOGOS" />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Data / Rodada</label>
+            <input value={date} onChange={e => setDate(e.target.value)}
+              className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
+              placeholder="HOJE" />
+          </div>
         </div>
+
+        {/* Lista de Jogos */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Jogos ({matches.length})</label>
+            <button onClick={addMatch}
+              className="flex items-center gap-1 text-xs font-bold text-brand-400 hover:text-brand-300 transition">
+              <span>+</span> Adicionar Jogo
+            </button>
+          </div>
+          {matches.map((match, i) => (
+            <div key={i} className="bg-dark-900 border border-dark-600 rounded-xl p-4 space-y-3 relative">
+              <button onClick={() => removeMatch(i)}
+                className="absolute top-3 right-3 text-zinc-600 hover:text-red-400 transition text-sm">✕</button>
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase">Campeonato</label>
+                <input value={match.league} onChange={e => updateMatch(i, 'league', e.target.value)}
+                  className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 outline-none transition mt-1"
+                  placeholder="BRASILEIRÃO SÉRIE A" />
+              </div>
+              <div className="grid grid-cols-3 gap-3 items-center">
+                <input value={match.team1} onChange={e => updateMatch(i, 'team1', e.target.value)}
+                  className="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
+                  placeholder="TIME 1" />
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-brand-500 font-black text-lg">VS</span>
+                  <input value={match.time} onChange={e => updateMatch(i, 'time', e.target.value)}
+                    className="w-full bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-yellow-400 text-xs font-bold text-center focus:border-yellow-500 outline-none transition"
+                    placeholder="20:00" />
+                </div>
+                <input value={match.team2} onChange={e => updateMatch(i, 'team2', e.target.value)}
+                  className="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
+                  placeholder="TIME 2" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Botão Gerar */}
         <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
+          onClick={handleGenerate}
+          disabled={generating}
+          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+            ${done
+              ? 'bg-green-600 text-white'
+              : 'bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white'
+            }`}
         >
-          <Plus size={20} />
-          Criar Personalizado
+          {generating ? <><span className="animate-spin">⏳</span> Gerando arte...</>
+            : done ? <><span>✅</span> Arte Gerada! Clique para baixar</>
+            : <><span>🎨</span> Gerar Banner Agora</>}
         </button>
       </div>
+    </div>
+  )
+}
 
-      {/* Mensagem de Erro */}
-      {error && (
-        <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <div className="text-red-500 text-xl">⚠️</div>
-            <div className="flex-1">
-              <h3 className="text-red-500 font-bold mb-1">Erro ao carregar dados</h3>
-              <p className="text-red-300 text-sm">{error}</p>
-              <button
-                onClick={() => {
-                  setError(null)
-                  loadContents()
-                  loadBanners()
-                }}
-                className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
-              >
-                Tentar Novamente
-              </button>
+// ─── CONFIGURADOR DE ESPORTES (Basquete, UFC, Divulgação) ─────────────────────
+const SportConfigurator = ({ category, theme }) => {
+  const [generating, setGenerating] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const [team1, setTeam1] = useState('')
+  const [team2, setTeam2] = useState('')
+  const [gameTime, setGameTime] = useState('21:00')
+  const [league, setLeague] = useState('')
+  const [date, setDate] = useState('')
+
+  const catInfo = {
+    basquete:   { label: 'Basquete',    icon: '🏀', placeholder1: 'LA LAKERS', placeholder2: 'GOLDEN STATE', leagueDefault: 'NBA' },
+    ufc:        { label: 'UFC',         icon: '🥊', placeholder1: 'POATAN',    placeholder2: 'PEREIRA',      leagueDefault: 'UFC' },
+    divulgacao: { label: 'Divulgação',  icon: '📣', placeholder1: '',          placeholder2: '',             leagueDefault: '' },
+  }
+  const info = catInfo[category] || catInfo.divulgacao
+
+  const handleGenerate = () => {
+    setGenerating(true)
+    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1500)
+  }
+
+  return (
+    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
+      <div className="px-6 py-4 border-b border-dark-700 flex items-center gap-2 bg-dark-900/50">
+        <span className="text-lg">{info.icon}</span>
+        <h3 className="font-bold text-white">Configurar Banner de {info.label}</h3>
+      </div>
+      <div className="p-6 space-y-4">
+        {category !== 'divulgacao' && (
+          <>
+            <div>
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Liga / Campeonato</label>
+              <input value={league} onChange={e => setLeague(e.target.value)}
+                className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
+                placeholder={info.leagueDefault} />
             </div>
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Time / Lutador 1</label>
+                <input value={team1} onChange={e => setTeam1(e.target.value)}
+                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
+                  placeholder={info.placeholder1} />
+              </div>
+              <div className="text-center">
+                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Horário</label>
+                <input value={gameTime} onChange={e => setGameTime(e.target.value)}
+                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-yellow-400 text-sm font-bold text-center focus:border-yellow-500 outline-none transition"
+                  placeholder="21:00" />
+              </div>
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Time / Lutador 2</label>
+                <input value={team2} onChange={e => setTeam2(e.target.value)}
+                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
+                  placeholder={info.placeholder2} />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Data</label>
+              <input value={date} onChange={e => setDate(e.target.value)} type="date"
+                className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition" />
+            </div>
+          </>
+        )}
+        {category === 'divulgacao' && (
+          <div className="bg-dark-900 border border-dashed border-dark-600 rounded-xl p-6 text-center text-zinc-500">
+            <span className="text-3xl mb-2 block">📣</span>
+            <p className="text-sm">Banners de divulgação não precisam de configuração.</p>
+            <p className="text-xs mt-1">Clique em gerar para criar o banner com seu contato.</p>
           </div>
-        </div>
-      )}
+        )}
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+            ${done
+              ? 'bg-green-600 text-white'
+              : 'bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white'
+            }`}
+        >
+          {generating ? <><span className="animate-spin">⏳</span> Gerando arte...</>
+            : done ? <><span>✅</span> Arte Gerada! Clique para baixar</>
+            : <><span>🎨</span> Gerar Banner Agora</>}
+        </button>
+      </div>
+    </div>
+  )
+}
 
-      {/* Loading Inicial */}
-      {loading && contents.length === 0 && !error && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mb-4"></div>
-          <p className="text-white text-lg">Carregando conteúdos...</p>
-        </div>
-      )}
+// ─── CONFIGURADOR DE FILMES ────────────────────────────────────────────────────
+const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [done, setDone] = useState(false)
 
-      {/* Mensagem quando não há conteúdos */}
-      {!loading && contents.length === 0 && recentContents.length === 0 && !error && (
-        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 text-center">
-          <div className="text-6xl mb-4">📦</div>
-          <h3 className="text-white font-bold text-xl mb-2">Nenhum conteúdo disponível</h3>
-          <p className="text-gray-400 mb-4">
-            Importe filmes e séries do TMDB para começar a gerar banners
-          </p>
-          <button
-            onClick={() => window.location.href = '/content'}
-            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
-          >
-            Ir para Conteúdos
-          </button>
-        </div>
-      )}
+  const filtered = contents.filter(c =>
+    c.titulo?.toLowerCase().includes(search.toLowerCase()) ||
+    c.titulo_original?.toLowerCase().includes(search.toLowerCase())
+  )
 
-      {/* Galeria de Conteúdos - ÚLTIMAS SÉRIES ADICIONADAS */}
-      {recentContents.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-primary">⚡ ÚLTIMAS SÉRIES ADICIONADAS</h2>
+  const handleGenerate = () => {
+    if (!selected) return
+    setGenerating(true)
+    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1800)
+  }
+
+  return (
+    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
+      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
+        <h3 className="font-bold text-white flex items-center gap-2">🎬 Selecione o Filme / Série</h3>
+        {selected && <span className="text-xs text-purple-400 font-bold">{selected.titulo}</span>}
+      </div>
+      <div className="p-6 space-y-4">
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
+          <input
+            value={search} 
+            onChange={e => {
+              setSearch(e.target.value)
+              onSearch(e.target.value)
+            }}
+            className="w-full bg-dark-900 border border-dark-600 rounded-lg pl-9 pr-4 py-2.5 text-white text-sm focus:border-purple-500 outline-none transition"
+            placeholder="Buscar filme ou série no catálogo e TMDB..."
+          />
+        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-10 text-zinc-500">
+            <span className="animate-spin mr-2">⏳</span> Carregando títulos...
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-            {recentContents.map((content) => (
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+            {filtered.slice(0, 30).map(c => (
               <button
-                key={content.id}
-                onClick={() => openSizeSelector(content)}
-                className="group relative overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all transform hover:scale-105"
-                title={`Clique para gerar banner de ${content.titulo}`}
+                key={c.id}
+                onClick={() => setSelected(c)}
+                className={`group relative rounded-xl overflow-hidden aspect-[2/3] border-2 transition-all
+                  ${selected?.id === c.id
+                    ? 'border-purple-500 ring-2 ring-purple-500/40 scale-[1.03]'
+                    : 'border-dark-700 hover:border-zinc-500'
+                  }`}
               >
-                {content.poster_path ? (
-                  <img
-                    src={`https://image.tmdb.org/t/p/w300${content.poster_path}`}
-                    alt={content.titulo}
-                    className="w-full h-64 object-cover"
-                  />
+                {c.poster_path ? (
+                  <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} alt={c.titulo}
+                    className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-64 bg-gray-800 flex items-center justify-center">
-                    <span className="text-gray-600">Sem imagem</span>
+                  <div className="w-full h-full bg-dark-800 flex items-center justify-center text-xs text-zinc-600 text-center p-1">
+                    {c.titulo}
                   </div>
                 )}
-                
-                {/* Overlay com info */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                  <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
-                  <p className="text-gray-300 text-xs">{content.ano}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    {content.nota && <span className="text-yellow-500 text-xs">⭐ {(parseFloat(content.nota) || 0).toFixed(1)}</span>}
-                    <span className="text-primary text-xs font-semibold">Clique para gerar</span>
-                  </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                  <p className="text-white text-[10px] font-bold leading-tight line-clamp-2">{c.titulo}</p>
                 </div>
-
-                {/* Badge de rating */}
-                {content.nota && (
-                  <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
-                    ⭐ {(parseFloat(content.nota) || 0).toFixed(1)}
+                {selected?.id === c.id && (
+                  <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center shadow">
+                    <span className="text-white text-[10px]">✓</span>
                   </div>
                 )}
               </button>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Galeria de Todos os Conteúdos */}
-      {contents.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">📚 TODOS OS CONTEÚDOS</h2>
-            <input
-              type="text"
-              placeholder="🔍 Buscar..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white w-64"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-            {contents
-              .filter(c => 
-                c.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                c.titulo_original?.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((content) => (
-                <button
-                  key={content.id}
-                  onClick={() => openSizeSelector(content)}
-                  className="group relative overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all transform hover:scale-105"
-                  title={`Clique para gerar banner de ${content.titulo}`}
-                >
-                  {content.poster_path ? (
-                    <img
-                      src={`https://image.tmdb.org/t/p/w300${content.poster_path}`}
-                      alt={content.titulo}
-                      className="w-full h-64 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-64 bg-gray-800 flex items-center justify-center">
-                      <span className="text-gray-600">Sem imagem</span>
-                    </div>
-                  )}
-                  
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                    <p className="text-white text-sm font-bold line-clamp-2 mb-1">{content.titulo}</p>
-                    <p className="text-gray-300 text-xs">{content.ano}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      {content.nota && <span className="text-yellow-500 text-xs">⭐ {(parseFloat(content.nota) || 0).toFixed(1)}</span>}
-                      <span className="text-primary text-xs font-semibold">Clique para gerar</span>
-                    </div>
-                  </div>
-
-                  {content.nota && (
-                    <div className="absolute top-2 right-2 bg-black/80 px-2 py-1 rounded text-xs text-yellow-500 font-bold">
-                      ⭐ {(parseFloat(content.nota) || 0).toFixed(1)}
-                    </div>
-                  )}
-                </button>
-              ))}
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Seleção de Tamanho */}
-      {showSizeSelector && selectedContent && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg p-6 max-w-4xl w-full border border-gray-800">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white">{selectedContent.titulo}</h2>
-                <p className="text-gray-400">{selectedContent.ano}{selectedContent.nota && ` • ⭐ ${(parseFloat(selectedContent.nota) || 0).toFixed(1)}`}</p>
-              </div>
-              <button 
-                onClick={() => {
-                  setShowSizeSelector(false)
-                  setSelectedContent(null)
-                }} 
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X size={28} />
-              </button>
-            </div>
-
-            {/* Preview do Conteúdo */}
-            <div className="mb-6 flex gap-4">
-              {selectedContent.poster_path && (
-                <img
-                  src={`https://image.tmdb.org/t/p/w200${selectedContent.poster_path}`}
-                  alt={selectedContent.titulo}
-                  className="w-32 h-48 object-cover rounded-lg"
-                />
-              )}
-              <div className="flex-1">
-                <p className="text-gray-300 text-sm line-clamp-4">{selectedContent.descricao}</p>
-              </div>
-            </div>
-
-            <h3 className="text-lg font-bold text-white mb-4">📐 Escolha o tamanho do banner:</h3>
-
-            {/* Grid de Tamanhos */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              {Object.entries(sizes).map(([key, size]) => (
-                <button
-                  key={key}
-                  onClick={() => generateAndDownload(key)}
-                  disabled={loading}
-                  className="flex flex-col items-center gap-3 p-4 rounded-lg bg-gray-800 hover:bg-primary hover:ring-2 hover:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-                >
-                  <span className="text-4xl">{size.icon}</span>
-                  <div className="text-center">
-                    <p className="text-white font-semibold group-hover:text-white">{size.name}</p>
-                    <p className="text-xs text-gray-400 group-hover:text-gray-200">{size.width}x{size.height}</p>
-                  </div>
-                  <Download size={20} className="text-primary group-hover:text-white" />
-                </button>
-              ))}
-            </div>
-
-            {loading && (
-              <div className="text-center py-4">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
-                <p className="text-white mt-2">Gerando banner...</p>
+            {filtered.length === 0 && (
+              <div className="col-span-full text-center py-8 text-zinc-600">
+                <span className="block text-3xl mb-2">🎬</span>
+                <p className="text-sm">Nenhum título encontrado</p>
               </div>
             )}
-
-            {/* Seletor de Plataformas */}
-            <div className="border-t border-gray-700 pt-4">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                🎮 Plataformas que aparecerão no rodapé:
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                {Object.entries(platformIcons).map(([key, platform]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      if (selectedPlatforms.includes(key)) {
-                        setSelectedPlatforms(selectedPlatforms.filter(p => p !== key))
-                      } else {
-                        setSelectedPlatforms([...selectedPlatforms, key])
-                      }
-                    }}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-                      selectedPlatforms.includes(key)
-                        ? 'bg-primary text-white ring-2 ring-primary'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    <span className="text-xl">{platform.icon}</span>
-                    <span className="text-xs">{platform.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
-        </div>
-      )}
-
-      {/* Modal de Criação Personalizada */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
-          <div className="bg-card rounded-lg p-6 max-w-4xl w-full mx-4 my-8 border border-gray-800">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Criar Banner</h2>
-              <button 
-                onClick={() => setShowModal(false)} 
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X size={28} />
-              </button>
-            </div>
-
-            {/* Tipo de Banner */}
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={() => setBannerType('movie')}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-                  bannerType === 'movie' ? 'bg-primary text-white' : 'bg-gray-800 text-gray-400'
-                }`}
-              >
-                <Film size={20} />
-                Filme/Série
-              </button>
-              <button
-                onClick={() => setBannerType('football')}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-                  bannerType === 'football' ? 'bg-primary text-white' : 'bg-gray-800 text-gray-400'
-                }`}
-              >
-                <Trophy size={20} />
-                Futebol
-              </button>
-            </div>
-
-            {/* Seletor de Tamanho */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                📐 Tamanho do Banner
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {Object.entries(sizes).map(([key, size]) => (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedSize(key)}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all ${
-                      selectedSize === key 
-                        ? 'bg-primary text-white ring-2 ring-primary' 
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    <span className="text-2xl">{size.icon}</span>
-                    <span className="text-xs font-semibold text-center">{size.name}</span>
-                    <span className="text-xs opacity-70">{size.width}x{size.height}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Seletor de Plataformas */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                🎮 Plataformas (aparecerão no rodapé)
-              </label>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                {Object.entries(platformIcons).map(([key, platform]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      if (selectedPlatforms.includes(key)) {
-                        setSelectedPlatforms(selectedPlatforms.filter(p => p !== key))
-                      } else {
-                        setSelectedPlatforms([...selectedPlatforms, key])
-                      }
-                    }}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-                      selectedPlatforms.includes(key)
-                        ? 'bg-primary text-white ring-2 ring-primary'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    <span className="text-xl">{platform.icon}</span>
-                    <span className="text-xs">{platform.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Formulário de Filme */}
-            {bannerType === 'movie' && (
-              <div className="space-y-4">
-                {/* Últimos Adicionados */}
-                {recentContents.length > 0 && (
-                  <div className="bg-dark rounded-lg p-4 border border-gray-700">
-                    <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                      ⚡ Últimos Adicionados
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      {recentContents.map((content) => (
-                        <button
-                          key={content.id}
-                          onClick={() => selectContent(content)}
-                          className="group relative overflow-hidden rounded-lg hover:ring-2 hover:ring-primary transition-all"
-                          title={content.titulo}
-                        >
-                          {content.poster_path ? (
-                            <img
-                              src={`https://image.tmdb.org/t/p/w200${content.poster_path}`}
-                              alt={content.titulo}
-                              className="w-full h-40 object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-40 bg-gray-800 flex items-center justify-center">
-                              <span className="text-gray-600">Sem imagem</span>
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                            <p className="text-white text-xs font-semibold line-clamp-2">{content.titulo}</p>
-                          </div>
-                          <div className="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs text-yellow-500">
-                            ⭐ {content.nota ? (parseFloat(content.nota) || 0).toFixed(1) : 'N/A'}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowContentList(!showContentList)}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    📋 Ver Todos os Conteúdos ({contents.length})
-                  </button>
-                </div>
-
-                {/* Lista de Conteúdos */}
-                {showContentList && (
-                  <div className="bg-dark rounded-lg p-4 max-h-96 overflow-y-auto border border-gray-700">
-                    <input
-                      type="text"
-                      placeholder="Buscar conteúdo..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white mb-3"
-                    />
-                    
-                    {filteredContents.length === 0 ? (
-                      <p className="text-gray-400 text-center py-4">Nenhum conteúdo encontrado</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {filteredContents.map((content) => (
-                          <button
-                            key={content.id}
-                            onClick={() => selectContent(content)}
-                            className="w-full flex items-center gap-3 p-3 bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors text-left"
-                          >
-                            {content.poster_path && (
-                              <img
-                                src={`https://image.tmdb.org/t/p/w92${content.poster_path}`}
-                                alt={content.titulo}
-                                className="w-12 h-16 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <p className="text-white font-semibold">{content.titulo}</p>
-                              <p className="text-gray-400 text-sm">
-                                {content.tipo === 'filme' ? '🎬 Filme' : '📺 Série'} • {content.ano}
-                              </p>
-                            </div>
-                            <span className="text-yellow-500">⭐ {content.nota ? (parseFloat(content.nota) || 0).toFixed(1) : 'N/A'}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Ou buscar no TMDB
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Digite o nome do filme/série e aperte Enter"
-                      className="flex-1 px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          searchTMDB(e.target.value)
-                          e.target.value = ''
-                        }
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    💡 Dica: A busca usa imagens em alta qualidade do TMDB. Para formatos verticais (Cartaz/Stories) usa poster, para horizontais usa backdrop.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Título</label>
-                    <input
-                      type="text"
-                      value={movieData.title}
-                      onChange={(e) => setMovieData({ ...movieData, title: e.target.value })}
-                      className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Ano</label>
-                    <input
-                      type="text"
-                      value={movieData.year}
-                      onChange={(e) => setMovieData({ ...movieData, year: e.target.value })}
-                      className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
-                  <textarea
-                    value={movieData.description}
-                    onChange={(e) => setMovieData({ ...movieData, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">URL do Poster</label>
-                  <input
-                    type="text"
-                    value={movieData.posterUrl}
-                    onChange={(e) => setMovieData({ ...movieData, posterUrl: e.target.value })}
-                    className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                  />
-                </div>
-
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-white">
-                    <input
-                      type="checkbox"
-                      checked={movieData.dubbed}
-                      onChange={(e) => setMovieData({ ...movieData, dubbed: e.target.checked })}
-                    />
-                    Dublado
-                  </label>
-                  <label className="flex items-center gap-2 text-white">
-                    <input
-                      type="checkbox"
-                      checked={movieData.isNew}
-                      onChange={(e) => setMovieData({ ...movieData, isNew: e.target.checked })}
-                    />
-                    Lançamento
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {/* Formulário de Futebol */}
-            {bannerType === 'football' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Título</label>
-                    <input
-                      type="text"
-                      value={footballData.title}
-                      onChange={(e) => setFootballData({ ...footballData, title: e.target.value })}
-                      className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Data</label>
-                    <input
-                      type="text"
-                      value={footballData.date}
-                      onChange={(e) => setFootballData({ ...footballData, date: e.target.value })}
-                      className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-300">Jogos</label>
-                    <button
-                      onClick={addMatch}
-                      className="flex items-center gap-1 px-3 py-1 bg-primary text-white rounded text-sm"
-                    >
-                      <Plus size={16} />
-                      Adicionar Jogo
-                    </button>
-                  </div>
-
-                  {footballData.matches.map((match, index) => (
-                    <div key={index} className="bg-dark p-4 rounded-lg space-y-2">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-white font-semibold">Jogo {index + 1}</span>
-                        <button
-                          onClick={() => removeMatch(index)}
-                          className="text-red-500 hover:text-red-400"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Campeonato"
-                        value={match.league}
-                        onChange={(e) => updateMatch(index, 'league', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-                      />
-                      <div className="grid grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Time 1"
-                          value={match.team1}
-                          onChange={(e) => updateMatch(index, 'team1', e.target.value)}
-                          className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Time 2"
-                          value={match.team2}
-                          onChange={(e) => updateMatch(index, 'team2', e.target.value)}
-                          className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Horário"
-                          value={match.time}
-                          onChange={(e) => updateMatch(index, 'time', e.target.value)}
-                          className="px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Preview */}
-            {preview && !showPreviewModal && (
-              <div className="mt-6">
-                <h3 className="text-white font-semibold mb-3">Preview:</h3>
-                <div className="relative">
-                  <img 
-                    src={preview} 
-                    alt="Preview" 
-                    className="w-full rounded-lg border border-gray-700 cursor-pointer hover:border-primary transition-colors" 
-                    onClick={() => setShowPreviewModal(true)}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50 rounded-lg cursor-pointer" onClick={() => setShowPreviewModal(true)}>
-                    <Eye size={48} className="text-white" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Ações */}
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={generatePreview}
-                disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
-              >
-                <Eye size={20} />
-                {loading ? 'Gerando...' : 'Gerar Preview'}
-              </button>
-              
-              {preview && (
-                <button
-                  onClick={downloadBanner}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Download size={20} />
-                  Baixar
-                </button>
-              )}
-              
-              <button
-                onClick={saveBanner}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
-              >
-                <Save size={20} />
-                Salvar Banner
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Preview do Banner */}
-      {showPreviewModal && preview && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="relative max-w-7xl w-full">
-            {/* Botão Fechar */}
-            <button
-              onClick={() => setShowPreviewModal(false)}
-              className="absolute -top-12 right-0 text-white hover:text-primary transition-colors flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg"
-            >
-              <X size={24} />
-              Fechar
-            </button>
-
-            {/* Banner Preview */}
-            <div className="bg-dark rounded-lg p-4 border border-gray-800">
-              <img 
-                src={preview} 
-                alt="Preview do Banner" 
-                className="w-full rounded-lg shadow-2xl"
-              />
-              
-              {/* Ações */}
-              <div className="flex gap-3 mt-4 justify-center">
-                <button
-                  onClick={downloadBanner}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Download size={20} />
-                  Baixar Banner
-                </button>
-                
-                <button
-                  onClick={() => {
-                    saveBanner()
-                    setShowPreviewModal(false)
-                  }}
-                  className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
-                >
-                  <Save size={20} />
-                  Salvar e Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+        <button
+          onClick={handleGenerate}
+          disabled={!selected || generating}
+          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+            ${done
+              ? 'bg-green-600 text-white'
+              : 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white disabled:opacity-50'
+            }`}
+        >
+          {generating ? <><span className="animate-spin">⏳</span> Gerando arte...</>
+            : done ? <><span>✅</span> Arte Gerada! Clique para baixar</>
+            : <><span>🎬</span> Gerar Banner de Filme</>}
+        </button>
+      </div>
     </div>
   )
 }

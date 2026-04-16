@@ -248,6 +248,69 @@ router.post('/test-server', async (req, res) => {
 });
 
 // ============================================
+// AUTENTICAÇÃO QPANEL E SIGMA (usuário + senha)
+// ============================================
+
+/**
+ * Autentica no qPanel/Xtream/Sigma usando usuário + senha.
+ * Tenta 4 métodos automaticamente, sem necessidade de API key.
+ * Retorna objeto: { type, headers }
+ */
+async function authenticateQpanel(panelUrl, username, password) {
+  const baseUrl = panelUrl.replace(/\/$/, '');
+
+  const defaultHeaders = {
+    'Accept': 'application/json, text/plain, */*',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
+    'origin': baseUrl,
+    'referer': `${baseUrl}/`
+  };
+
+  // Método 1: Sigma (Vue.js SPA) -> /api/auth/login
+  try {
+    const res = await axios.post(`${baseUrl}/api/auth/login`,
+      { username, password },
+      { timeout: 8000, headers: { ...defaultHeaders, 'Content-Type': 'application/json' } }
+    );
+    const token = res.data?.token || res.data?.access_token || res.data?.data?.token;
+    if (token) {
+      return { type: 'bearer (Sigma)', headers: { ...defaultHeaders, 'Authorization': `Bearer ${token}` } };
+    }
+  } catch (e) { /* continua */ }
+
+  // Método 2: Qpanel REST -> /api/login
+  try {
+    const res = await axios.post(`${baseUrl}/api/login`,
+      { username, password },
+      { timeout: 8000, headers: { ...defaultHeaders, 'Content-Type': 'application/json' } }
+    );
+    const token = res.data?.token || res.data?.access_token;
+    if (token) {
+      return { type: 'bearer (REST)', headers: { ...defaultHeaders, 'Authorization': `Bearer ${token}` } };
+    }
+  } catch (e) { /* continua */ }
+
+  // Método 2: Formulário HTML → Cookie de sessão
+  try {
+    const params = new URLSearchParams({ username, password });
+    const res = await axios.post(`${baseUrl}/login`, params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      maxRedirects: 5,
+      timeout: 8000,
+      validateStatus: s => s >= 200 && s < 400
+    });
+    const cookies = res.headers['set-cookie'];
+    if (cookies) {
+      const cookieStr = cookies.map(c => c.split(';')[0]).join('; ');
+      return { type: 'cookie', headers: { 'Cookie': cookieStr, 'Accept': 'application/json' } };
+    }
+  } catch (e) { /* continua */ }
+
+  // Método 3: Fallback — username como Bearer
+  return { type: 'fallback', headers: { 'Authorization': `Bearer ${username}`, 'Accept': 'application/json' } };
+}
+
+// ============================================
 // QPANEL INTEGRATION (Plugin 3 functionality)
 // ============================================
 
@@ -470,7 +533,15 @@ router.post('/qpanel-load-servers', async (req, res) => {
 
 /**
  * POST /api/iptv-plugin/qpanel-fetch-direct-servers
+<<<<<<< HEAD
+ * Busca servidores e pacotes do qPanel usando USUÁRIO + SENHA (sem API key).
+ * Tenta 3 estratégias automaticamente:
+ *   1. panel_api.php (Xtream UI — padrão no Brasil)
+ *   2. player_api.php (Xtream Codes — fallback)
+ *   3. REST /api/servers com Bearer/Cookie
+=======
  * Busca servidores e pacotes no qPanel DIRETAMENTE do backend Node.js
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
  */
 router.post('/qpanel-fetch-direct-servers', async (req, res) => {
   try {
@@ -492,6 +563,111 @@ router.post('/qpanel-fetch-direct-servers', async (req, res) => {
 
     const panel = panelResult.rows[0];
     const baseUrl = panel.panel_url.replace(/\/$/, '');
+<<<<<<< HEAD
+    const { panel_username: username, panel_password: password } = panel;
+
+    let finalServers = [];
+    let rawPackages = [];
+    let methodUsed = '';
+
+    // ── Estratégia 1: panel_api.php (Xtream UI — mais comum no Brasil) ──
+    try {
+      const [srvRes, pkgRes] = await Promise.allSettled([
+        axios.get(`${baseUrl}/panel_api.php`, {
+          params: { username, password, action: 'get_servers' },
+          timeout: 10000
+        }),
+        axios.get(`${baseUrl}/panel_api.php`, {
+          params: { username, password, action: 'get_packages' },
+          timeout: 10000
+        })
+      ]);
+
+      const rawSrv = srvRes.status === 'fulfilled'
+        ? (Array.isArray(srvRes.value.data) ? srvRes.value.data : srvRes.value.data?.data || [])
+        : [];
+      rawPackages = pkgRes.status === 'fulfilled'
+        ? (Array.isArray(pkgRes.value.data) ? pkgRes.value.data : pkgRes.value.data?.data || [])
+        : [];
+
+      if (Array.isArray(rawSrv) && rawSrv.length > 0) {
+        methodUsed = 'panel_api.php (Xtream UI)';
+        finalServers = rawSrv.map(s => ({
+          id: s.id || s.server_id,
+          name: s.server_name || s.name || `Servidor ${s.id || s.server_id}`,
+          dns: s.server_dns || s.dns || s.url || '',
+          packages: rawPackages.filter(p => !p.server_id || Number(p.server_id) === Number(s.id || s.server_id))
+        }));
+      }
+    } catch (e) {
+      console.warn('⚠️ Estratégia 1 (panel_api.php) falhou:', e.message);
+    }
+
+    // ── Estratégia 2: player_api.php (Xtream Codes — fallback) ──
+    if (finalServers.length === 0) {
+      try {
+        const res = await axios.get(`${baseUrl}/player_api.php`, {
+          params: { username, password },
+          timeout: 10000
+        });
+        if (res.data?.user_info?.auth === 1 || res.data?.server_info) {
+          methodUsed = 'player_api.php (Xtream Codes)';
+          const srv = res.data.server_info || {};
+          const srvHost = srv.url || baseUrl.replace(/^https?:\/\//, '');
+          finalServers = [{
+            id: 1,
+            name: `Servidor ${srvHost}`,
+            dns: srvHost,
+            packages: []
+          }];
+        }
+      } catch (e) {
+        console.warn('⚠️ Estratégia 2 (player_api.php) falhou:', e.message);
+      }
+    }
+
+    // ── Estratégia 3: REST /api/servers com Bearer/Cookie ──
+    if (finalServers.length === 0) {
+      try {
+        const auth = await authenticateQpanel(baseUrl, username, password);
+        const [srvRes2, pkgRes2] = await Promise.allSettled([
+          axios.get(`${baseUrl}/api/servers`, { headers: auth.headers, timeout: 10000 }),
+          axios.get(`${baseUrl}/api/packages`, { headers: auth.headers, timeout: 10000 })
+        ]);
+        const rawSrv2 = srvRes2.status === 'fulfilled'
+          ? (srvRes2.value.data?.data || srvRes2.value.data?.servers || srvRes2.value.data || [])
+          : [];
+        rawPackages = pkgRes2.status === 'fulfilled'
+          ? (pkgRes2.value.data?.data || pkgRes2.value.data?.packages || pkgRes2.value.data || [])
+          : [];
+
+        if (Array.isArray(rawSrv2) && rawSrv2.length > 0) {
+          methodUsed = `REST API (${auth.type})`;
+          finalServers = rawSrv2.map(s => ({
+            id: s.id || s.server_id,
+            name: s.server_name || s.name || `Servidor ${s.id}`,
+            dns: s.server_dns || s.dns || s.url || '',
+            packages: rawPackages.filter(p => !p.server_id || Number(p.server_id) === Number(s.id))
+          }));
+        }
+      } catch (e) {
+        console.warn('⚠️ Estratégia 3 (REST API) falhou:', e.message);
+      }
+    }
+
+    // Nenhuma estratégia funcionou
+    if (finalServers.length === 0) {
+      return res.json({
+        success: false,
+        message: '❌ Não foi possível conectar ao painel. Verifique a URL, usuário e senha.',
+        servers: [],
+        total: 0,
+        methods_tried: ['panel_api.php', 'player_api.php', 'REST /api/servers']
+      });
+    }
+
+    // Persistir no banco
+=======
 
     // Requisição simultânea para Servers e Packages na API
     const headers = {
@@ -551,11 +727,22 @@ router.post('/qpanel-fetch-direct-servers', async (req, res) => {
     }
 
     // Salvar e persistir a estrutura no nosso BD (usando lógica idêntica de sync)
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
     const seenDns = new Set();
     for (const server of finalServers) {
       const serverName = server.name || `Servidor ${server.id}`;
       const serverDns = server.dns || '';
       await pool.query(`
+<<<<<<< HEAD
+        INSERT INTO qpanel_servers (panel_id, server_name, server_dns, server_data, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
+        ON CONFLICT (panel_id, server_name)
+        DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
+      `, [panel_id, serverName, serverDns, JSON.stringify(server)]);
+
+      if (serverDns && !seenDns.has(serverDns)) {
+        seenDns.add(serverDns);
+=======
         INSERT INTO qpanel_servers (
           panel_id, server_name, server_dns, server_data, created_at
         ) VALUES ($1, $2, $3, $4, NOW())
@@ -567,26 +754,86 @@ router.post('/qpanel-fetch-direct-servers', async (req, res) => {
       if (serverDns && !seenDns.has(serverDns)) {
         seenDns.add(serverDns);
         const serverUrl = `http://${serverDns}`;
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
         try {
           await pool.query(`
             INSERT INTO servers (name, url, region, priority, status)
             VALUES ($1, $2, 'Brasil', 100, 'ativo')
             ON CONFLICT (url) DO UPDATE SET name = $1, updated_at = NOW()
+<<<<<<< HEAD
+          `, [serverName, `http://${serverDns}`]);
+        } catch (e) {}
+=======
           `, [serverName, serverUrl]);
         } catch (syncErr) {}
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       }
     }
 
     res.json({
       success: true,
+<<<<<<< HEAD
+      message: `✅ ${finalServers.length} servidor(es) carregado(s) via ${methodUsed}`,
+      servers: finalServers,
+      total: finalServers.length,
+      method: methodUsed
+=======
       message: `${finalServers.length} servidor(es) sincronizado(s) via API Direta`,
       servers: finalServers,
       total: finalServers.length
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
     });
 
   } catch (error) {
     console.error('❌ Erro no fetch direto do qPanel:', error.message);
+<<<<<<< HEAD
+    res.status(500).json({ error: 'Erro de conexão com o painel', detail: error.message });
+  }
+});
+
+/**
+ * POST /api/iptv-plugin/qpanel-sync-arrays
+ * Usado pelo Frontend (Client-Side proxy) para salvar os servidores obtidos diretamente do navegador
+ * (Bypass de Cloudflare).
+ */
+router.post('/qpanel-sync-arrays', async (req, res) => {
+  try {
+    const { panel_id, servers } = req.body;
+    if (!panel_id || !servers) {
+      return res.status(400).json({ error: 'panel_id e servers são obrigatórios' });
+    }
+
+    const seenDns = new Set();
+    for (const server of servers) {
+      const serverName = server.name || `Servidor ${server.id}`;
+      const serverDns = server.dns || '';
+      
+      await pool.query(`
+        INSERT INTO qpanel_servers (panel_id, server_name, server_dns, server_data, created_at)
+        VALUES ($1, $2, $3, $4, NOW())
+        ON CONFLICT (panel_id, server_name)
+        DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
+      `, [panel_id, serverName, serverDns, JSON.stringify(server)]);
+
+      if (serverDns && !seenDns.has(serverDns)) {
+        seenDns.add(serverDns);
+        try {
+          await pool.query(`
+            INSERT INTO servers (name, url, region, priority, status)
+            VALUES ($1, $2, 'Brasil', 100, 'ativo')
+            ON CONFLICT (url) DO UPDATE SET name = $1, updated_at = NOW()
+          `, [serverName, `http://${serverDns}`]);
+        } catch (e) {}
+      }
+    }
+
+    res.json({ success: true, message: `✅ ${servers.length} servidor(es) sincronizados pelo Client-Side` });
+  } catch (error) {
+    console.error('❌ Erro no sync-arrays do qPanel:', error.message);
+    res.status(500).json({ error: 'Erro interno ao salvar arrays' });
+=======
     res.status(500).json({ error: 'Erro de conexão direta com API qPanel', detail: error.message });
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
   }
 });
 
@@ -616,20 +863,25 @@ router.post('/qpanel-create-accounts', async (req, res) => {
     let totalCreated = 0;
     let createdAccounts = [];
     let extractedDNS = [];
+    let errors = [];
 
-    // Criar contas em cada painel selecionado
     for (const pkg of selected_packages) {
       try {
-        // Buscar painel
         const panelResult = await pool.query(
           'SELECT * FROM qpanel_panels WHERE id = $1 AND status = $2',
           [pkg.panel_id, 'active']
         );
-
         if (panelResult.rows.length === 0) continue;
 
         const panel = panelResult.rows[0];
+        const baseUrl = panel.panel_url.replace(/\/$/, '');
+        const adminUser = panel.panel_username;
+        const adminPass = panel.panel_password;
 
+<<<<<<< HEAD
+        let created = false;
+        let m3uUrl = null;
+=======
         // Simular criação de conta via API do painel
         const createResponse = await axios.post(`${panel.panel_url}/api/customers`, {
           server_id: pkg.server_id,
@@ -647,51 +899,84 @@ router.post('/qpanel-create-accounts', async (req, res) => {
           },
           timeout: 10000
         });
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
 
-        if (createResponse.status === 200 || createResponse.status === 201) {
-          totalCreated++;
-
-          // Extrair DNS da resposta
-          const responseData = createResponse.data.data;
-          const m3uUrl = responseData?.m3u_url || responseData?.m3u_url_short;
-
-          if (m3uUrl) {
-            const extractedDns = new URL(m3uUrl).hostname;
-            
-            // Armazenar DNS extraído
-            if (!extractedDNS.find(d => d.dns === extractedDns)) {
-              extractedDNS.push({
-                server_name: pkg.server_name || `Servidor ${pkg.server_id}`,
-                dns: extractedDns,
-                m3u_url: m3uUrl
-              });
-            }
-          }
-
-          // Salvar conta criada
-          await pool.query(`
-            INSERT INTO qpanel_accounts (
-              panel_id, server_id, package_id, username, password, 
-              device_mac, m3u_url, created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-          `, [
-            pkg.panel_id, pkg.server_id, pkg.package_id, 
-            username, password, device_mac, m3uUrl
-          ]);
-
-          createdAccounts.push({
-            panel_id: pkg.panel_id,
-            server_id: pkg.server_id,
-            package_id: pkg.package_id,
-            m3u_url: m3uUrl
+        // ── Estratégia 1: panel_api.php (Xtream UI padrão) ──
+        try {
+          const createRes = await axios.get(`${baseUrl}/panel_api.php`, {
+            params: {
+              username: adminUser, password: adminPass,
+              action: 'create_user',
+              new_username: username,
+              new_password: password,
+              server_id: pkg.server_id,
+              package_id: pkg.package_id,
+              max_connections: 2
+            },
+            timeout: 12000
           });
+          if (createRes.data?.user_created || createRes.data?.success) {
+            created = true;
+            m3uUrl = createRes.data?.url || createRes.data?.m3u_url || null;
+          }
+        } catch (e1) {
+          // ── Estratégia 2: REST /api/customers com Bearer/Cookie ──
+          try {
+            const auth = await authenticateQpanel(baseUrl, adminUser, adminPass);
+            const createRes2 = await axios.post(`${baseUrl}/api/customers`, {
+              server_id: pkg.server_id,
+              package_id: pkg.package_id,
+              username, password,
+              connections: 2,
+              parent_can_edit_personal_data: 'YES'
+            }, {
+              headers: { ...auth.headers, 'Content-Type': 'application/json' },
+              timeout: 12000
+            });
+            if (createRes2.status === 200 || createRes2.status === 201) {
+              created = true;
+              const rd = createRes2.data?.data || createRes2.data;
+              m3uUrl = rd?.m3u_url || rd?.m3u_url_short || null;
+            }
+          } catch (e2) {
+            errors.push(`${panel.panel_name}: ${e2.message}`);
+          }
         }
 
-        // Rate limiting (400ms entre criações)
-        await new Promise(resolve => setTimeout(resolve, 400));
+        if (created) {
+          totalCreated++;
 
-      } catch (createError) {
-        console.error(`Erro ao criar conta no painel ${pkg.panel_id}:`, createError);
+          // Extrair DNS
+          if (m3uUrl) {
+            try {
+              const dns = new URL(m3uUrl).hostname;
+              if (!extractedDNS.find(d => d.dns === dns)) {
+                extractedDNS.push({ server_name: pkg.server_name || `Servidor ${pkg.server_id}`, dns, m3u_url: m3uUrl });
+              }
+            } catch (e) {}
+          } else if (pkg.server_dns) {
+            // Usa o DNS do servidor carregado como fallback
+            const dns = pkg.server_dns;
+            m3uUrl = `http://${dns}/get.php?username=${username}&password=${password}&type=m3u_plus&output=mpegts`;
+            if (!extractedDNS.find(d => d.dns === dns))
+              extractedDNS.push({ server_name: pkg.server_name, dns, m3u_url: m3uUrl });
+          }
+
+          // Persistir conta no banco
+          try {
+            await pool.query(`
+              INSERT INTO qpanel_accounts (panel_id, server_id, package_id, username, password, device_mac, m3u_url, created_at)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            `, [pkg.panel_id, pkg.server_id, pkg.package_id, username, password, device_mac, m3uUrl]);
+          } catch (dbErr) {}
+
+          createdAccounts.push({ panel_id: pkg.panel_id, server_id: pkg.server_id, package_id: pkg.package_id, m3u_url: m3uUrl });
+        }
+
+        await new Promise(r => setTimeout(r, 400));
+
+      } catch (err) {
+        errors.push(`Erro pkg ${pkg.package_id}: ${err.message}`);
       }
     }
 
@@ -700,7 +985,8 @@ router.post('/qpanel-create-accounts', async (req, res) => {
       message: `${totalCreated} conta(s) criada(s) com sucesso`,
       total_created: totalCreated,
       created_accounts: createdAccounts,
-      extracted_dns: extractedDNS
+      extracted_dns: extractedDNS,
+      errors: errors.length > 0 ? errors : undefined
     });
 
   } catch (error) {
@@ -919,12 +1205,10 @@ router.post('/qpanel-search-user', async (req, res) => {
     for (const panel of panelsResult.rows) {
       try {
         const baseUrl = panel.panel_url.replace(/\/$/, '');
+        const authHeaders = await authenticateQpanel(baseUrl, panel.panel_username, panel.panel_password);
         const response = await axios.get(`${baseUrl}/api/customers`, {
           params: { search: username.trim() },
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${panel.panel_username}`
-          },
+          headers: authHeaders,
           timeout: 8000
         });
 
@@ -1002,11 +1286,9 @@ router.post('/qpanel-delete-user', async (req, res) => {
     const panel = panelResult.rows[0];
     const baseUrl = panel.panel_url.replace(/\/$/, '');
 
+    const authHeaders = await authenticateQpanel(baseUrl, panel.panel_username, panel.panel_password);
     const response = await axios.delete(`${baseUrl}/api/customers/${customer_id}`, {
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${panel.panel_username}`
-      },
+      headers: authHeaders,
       timeout: 8000
     });
 
@@ -1073,8 +1355,111 @@ router.post('/relay-command', async (req, res) => {
 });
 
 /**
+<<<<<<< HEAD
+ * POST /api/iptv-plugin/relay-sync-customers
+ * Usado pelo Plugin do Chrome para derramar de volta TODOS os clientes lidos da tela "Usuários/Customers" do painel.
+ * (Espelhamento do Sigma/qPanel).
+ */
+router.post('/relay-sync-customers', async (req, res) => {
+  try {
+    const { panel_id, customers } = req.body;
+    if (!panel_id || !Array.isArray(customers)) {
+      return res.status(400).json({ error: 'panel_id e array de customers são obrigatórios' });
+    }
+
+    // Auto-criar o painel caso ele ainda não exista para não bugar a foreign key!
+    const panelCheck = await pool.query('SELECT id FROM qpanel_panels WHERE id = $1', [panel_id]);
+    if (panelCheck.rows.length === 0) {
+      await pool.query(`
+        INSERT INTO qpanel_panels (id, panel_name, panel_url, status)
+        VALUES ($1, 'Painel Importado (Relay)', 'http://desconhecido', 'active')
+      `, [panel_id]);
+    }
+
+    let inserted = 0;
+    
+    // Insere ou atualiza os usuários pegos do painel. A chave é o username no painel.
+    for (const c of customers) {
+      if (!c.username) continue;
+      
+      const server_id = c.server_id || 1; // Fallback server 1
+      const package_id = c.package_id || 0;
+      const device_mac = c.device_mac || `IMPORT-${c.username.substring(0,8)}`;
+      const m3u_url = c.m3u_url || c.m3u_url_short || '';
+      
+      try {
+        const exist = await pool.query(`SELECT id FROM qpanel_accounts WHERE panel_id = $1 AND username = $2 LIMIT 1`, [panel_id, c.username]);
+
+        if (exist.rows.length > 0) {
+          await pool.query(`
+            UPDATE qpanel_accounts 
+            SET password = $1, m3u_url = $2, status = 'active', updated_at = NOW(), 
+                expire_date = $4, remote_id = $5, panel_url = $6, 
+                package_name = $7, server_name = $8, max_connections = $9
+            WHERE id = $3
+          `, [
+            c.password || '******', 
+            m3u_url, 
+            exist.rows[0].id, 
+            c.expire_date,
+            c.remote_id,
+            c.panel_url,
+            c.package_name,
+            c.server_name,
+            c.max_connections || 1
+          ]);
+        } else {
+          await pool.query(`
+            INSERT INTO qpanel_accounts (
+              panel_id, server_id, package_id, username, password, 
+              device_mac, m3u_url, status, created_at, updated_at, 
+              expire_date, remote_id, panel_url, package_name, server_name, max_connections
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', NOW(), NOW(), $8, $9, $10, $11, $12, $13)
+          `, [
+            panel_id, 
+            server_id, 
+            package_id, 
+            c.username, 
+            c.password || '******', 
+            device_mac, 
+            m3u_url, 
+            c.expire_date,
+            c.remote_id,
+            c.panel_url,
+            c.package_name,
+            c.server_name,
+            c.max_connections || 1
+          ]);
+        }
+        
+        inserted++;
+      } catch (err) {
+        // Ignorar conflitos únicos pesados que não forem username (ex: MAC repetido pode bugar no futuro se tiver constraint de MAC único, mas vamos tentar)
+        console.warn(`Erro no sync do customer ${c.username}:`, err.message);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `${inserted} clientes sincronizados com sucesso no painel via Chrome Relay!`,
+      total_synced: inserted
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no relay-sync-customers:', error.message);
+    res.status(500).json({ error: 'Erro interno ao sincronizar clientes do relay' });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/relay-pending
+ * Plugin Chrome faz polling para buscar comandos pendentes
+ * Query: ?panel_url=http://meupainel.com (opcional, para filtrar por painel)
+=======
  * GET /api/iptv-plugin/relay-poll
  * Plugin Chrome faz polling a cada 2s para ver se há comandos 'pending'
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
  */
 router.get('/relay-poll', async (req, res) => {
   try {
@@ -1089,12 +1474,58 @@ router.get('/relay-poll', async (req, res) => {
 
     const result = await pool.query(query);
 
+<<<<<<< HEAD
+    if (panel_url) {
+      // Buscar comandos do painel específico (por URL)
+      query = `
+        SELECT rc.id, rc.command_type, rc.payload, rc.created_at,
+               rc.panel_url
+        FROM relay_commands rc
+        WHERE rc.status = 'pending'
+          AND (rc.panel_url IS NULL OR rc.panel_url ILIKE $1)
+        ORDER BY rc.created_at ASC
+        LIMIT 10
+      `;
+      params = [`%${panel_url.replace(/\/$/, '')}%`];
+    } else {
+      // Buscar todos os comandos pendentes (plugin pega tudo)
+      query = `
+        SELECT rc.id, rc.command_type, rc.payload, rc.created_at,
+               rc.panel_url
+        FROM relay_commands rc
+        WHERE rc.status = 'pending'
+        ORDER BY rc.created_at ASC
+        LIMIT 10
+      `;
+      params = [];
+=======
     if (result.rows.length === 0) {
       return res.json({ commands: [] });
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
     }
 
     const ids = result.rows.map(r => r.id);
 
+<<<<<<< HEAD
+    // Marcar como 'executing' para evitar que outro plugin pegue o mesmo
+    if (result.rows.length > 0) {
+      const ids = result.rows.map(r => r.id);
+      await pool.query(
+        `UPDATE relay_commands SET status = 'executing', updated_at = NOW() WHERE id = ANY($1)`,
+        [ids]
+      );
+    }
+
+    res.json({
+      success: true,
+      commands: result.rows.map(r => ({
+        id: r.id,
+        panel_url: r.panel_url,
+        command_type: r.command_type,
+        payload: r.payload
+      }))
+    });
+=======
     // Marcar como 'processing'
     await pool.query(`
       UPDATE plugin_relay_commands 
@@ -1103,6 +1534,7 @@ router.get('/relay-poll', async (req, res) => {
     `, [ids]);
 
     res.json({ commands: result.rows });
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
 
   } catch (error) {
     console.error('❌ Erro no relay-poll:', error);
@@ -1122,6 +1554,23 @@ router.post('/relay-result', async (req, res) => {
       return res.status(400).json({ error: 'command_id e status são obrigatórios' });
     }
 
+<<<<<<< HEAD
+    const validStatuses = ['done', 'error'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: `status inválido. Use: ${validStatuses.join(', ')}` });
+    }
+
+    // result pode chegar como objeto (do background.js via fetch JSON) ou já como string
+    // Normalizar para string JSON para salvar no banco
+    let resultStr = null;
+    if (result !== undefined && result !== null) {
+      resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+    }
+
+    const updateResult = await pool.query(`
+      UPDATE relay_commands
+      SET status = $1, result = $2, error_message = $3, updated_at = NOW()
+=======
     const query = `
       UPDATE plugin_relay_commands 
       SET 
@@ -1129,6 +1578,7 @@ router.post('/relay-result', async (req, res) => {
         result = $2, 
         error_message = $3, 
         updated_at = NOW()
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       WHERE id = $4
       RETURNING id
     `;
@@ -1160,6 +1610,13 @@ router.get('/relay-result/:command_id', async (req, res) => {
   try {
     const { command_id } = req.params;
 
+<<<<<<< HEAD
+    const result = await pool.query(
+      `SELECT id, status, result, error_message, created_at, updated_at
+       FROM relay_commands WHERE id = $1`,
+      [command_id]
+    );
+=======
     const query = `
       SELECT status, result, error_message 
       FROM plugin_relay_commands 
@@ -1167,6 +1624,7 @@ router.get('/relay-result/:command_id', async (req, res) => {
     `;
 
     const result = await pool.query(query, [command_id]);
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Comando não encontrado' });
@@ -1192,4 +1650,145 @@ router.get('/relay-result/:command_id', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+/**
+ * POST /api/iptv-plugin/register-device-iptv
+ * Registra credenciais IPTV em um dispositivo TV MAXX PRO
+ * Substitui o SmartOne — o plugin envia direto para o MaxxControl
+ * Body: { device_mac, dns, username, password, server_name? }
+ */
+router.post('/register-device-iptv', async (req, res) => {
+  try {
+    const { device_mac, dns, username, password, server_name } = req.body;
+
+    if (!device_mac || !dns || !username || !password) {
+      return res.status(400).json({ error: 'device_mac, dns, username e password são obrigatórios' });
+    }
+
+    // Verificar se dispositivo existe
+    const deviceResult = await pool.query(
+      'SELECT * FROM devices WHERE mac_address = $1',
+      [device_mac]
+    );
+
+    if (deviceResult.rows.length === 0) {
+      return res.status(404).json({ error: `Dispositivo com MAC ${device_mac} não encontrado no MaxxControl` });
+    }
+
+    const device = deviceResult.rows[0];
+
+    // Montar URL Xtream a partir do DNS
+    const cleanDns = dns.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const xtreamUrl = `http://${cleanDns}`;
+    const m3uUrl = `http://${cleanDns}/get.php?username=${username}&password=${password}&type=m3u_plus&output=mpegts`;
+
+    // Atualizar configuração IPTV do dispositivo
+    await pool.query(`
+      UPDATE devices
+      SET current_iptv_server_url = $1,
+          current_iptv_username = $2,
+          updated_at = NOW()
+      WHERE id = $3
+    `, [xtreamUrl, username, device.id]);
+
+    // Salvar também na tabela device_iptv_config (config por dispositivo)
+    await pool.query(`
+      INSERT INTO device_iptv_config (device_id, xtream_url, xtream_username, xtream_password, updated_at)
+      VALUES ($1, $2, $3, $4, NOW())
+      ON CONFLICT (device_id)
+      DO UPDATE SET xtream_url = $2, xtream_username = $3, xtream_password = $4, updated_at = NOW()
+    `, [device.id, xtreamUrl, username, password]);
+
+    // Registrar no histórico (smartone_registrations reutilizado como histórico de DNS)
+    await pool.query(`
+      INSERT INTO smartone_registrations (device_id, device_mac, server_name, dns, username, password, m3u_url, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      ON CONFLICT (device_mac, dns)
+      DO UPDATE SET username = $5, password = $6, m3u_url = $7, updated_at = NOW()
+    `, [device.id, device_mac, server_name || cleanDns, cleanDns, username, password, m3uUrl]).catch(() => {
+      // Tabela pode não ter a constraint — ignorar silenciosamente
+    });
+
+    console.log(`✅ IPTV registrado no dispositivo ${device_mac}: ${xtreamUrl}`);
+
+    res.json({
+      success: true,
+      message: `Credenciais IPTV registradas no dispositivo ${device_mac}`,
+      device_id: device.id,
+      device_mac,
+      xtream_url: xtreamUrl,
+      m3u_url: m3uUrl
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao registrar IPTV no dispositivo:', error);
+    res.status(500).json({ error: 'Erro ao registrar IPTV no dispositivo', detail: error.message });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/check-tables
+ * Diagnóstico: verifica quais tabelas do plugin existem no banco
+ */
+router.get('/check-tables', async (req, res) => {
+  const tables = ['iptv_servers', 'iptv_playlists', 'device_iptv_sync', 'qpanel_panels', 'qpanel_servers', 'qpanel_accounts', 'smartone_registrations', 'plugin_relay_commands'];
+  const results = {};
+
+  for (const table of tables) {
+    try {
+      const r = await pool.query(`SELECT COUNT(*) FROM ${table}`);
+      results[table] = { exists: true, count: parseInt(r.rows[0].count) };
+    } catch (err) {
+      results[table] = { exists: false, error: err.message };
+    }
+  }
+
+  res.json({ success: true, tables: results });
+});
+
+/**
+ * GET /api/iptv-plugin/qpanel-grouped-accounts
+ * Agrupa contas criadas/sincronizadas por username e password.
+ * Retorna os clientes e todos os servidores que eles possuem.
+ */
+router.get('/qpanel-grouped-accounts', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.username,
+        a.password,
+        json_agg(
+          json_build_object(
+            'id', a.id,
+            'panel_id', a.panel_id,
+            'server_id', a.server_id,
+            'panel_name', p.panel_name,
+            'expire_date', a.expire_date,
+            'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
+            'm3u_url', a.m3u_url,
+            'device_mac', a.device_mac,
+            'status', a.status,
+            'created_at', a.created_at
+          )
+        ) as accounts
+      FROM qpanel_accounts a
+      LEFT JOIN qpanel_panels p ON a.panel_id = p.id
+      LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name -- O qPanel as vezes salva server_name como ID ou nome
+      GROUP BY a.username, a.password
+      ORDER BY MIN(a.created_at) DESC
+    `);
+    
+    res.json({
+      success: true,
+      data: result.rows || []
+    });
+  } catch (error) {
+    console.error('❌ Erro no qpanel-grouped-accounts:', error.message);
+    res.status(500).json({ error: 'Erro ao agrupar clientes', detail: error.message });
+  }
+});
+
 module.exports = router;
+=======
+module.exports = router;
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad

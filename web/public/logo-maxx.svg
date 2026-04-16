@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Background Gradient (Dark Glassmorphism) -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a1a" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#050505" stop-opacity="0.9"/>
+    </linearGradient>
+    
+    <!-- Premium Orange Glow Gradient -->
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFB347" />
+      <stop offset="50%" stop-color="#FFA500" />
+      <stop offset="100%" stop-color="#CC5500" />
+    </linearGradient>
+
+    <!-- Edge Highlight for 3D Effect -->
+    <linearGradient id="edgeHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FFA500" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <!-- Shadow & Glow Filters -->
+    <filter id="dropGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    
+    <filter id="innerGlow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur" />
+      <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowDiff" />
+      <feFlood flood-color="#FFA500" flood-opacity="0.5" />
+      <feComposite in2="shadowDiff" operator="in" />
+      <feComposite in2="SourceGraphic" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Square (Base) -->
+  <rect x="40" y="40" width="432" height="432" rx="100" fill="url(#bgGrad)" stroke="#222" stroke-width="4" filter="url(#dropGlow)" />
+  
+  <!-- Glossy Highlight Top Edge -->
+  <path d="M 140 42 L 372 42 C 430 42 470 82 470 140 L 470 200 C 470 200 400 100 256 100 C 112 100 42 200 42 200 L 42 140 C 42 82 82 42 140 42 Z" fill="url(#edgeHighlight)" opacity="0.6"/>
+
+  <!-- The "M" Logo Mark -->
+  <path d="M 140 360 L 140 180 C 140 160 160 150 175 165 L 256 245 L 337 165 C 352 150 372 160 372 180 L 372 360" fill="none" stroke="url(#orangeGrad)" stroke-width="45" stroke-linecap="round" stroke-linejoin="round" filter="url(#dropGlow) url(#innerGlow)" />
+  
+  <!-- Tech Accents (Play button in the middle gap) -->
+  <polygon points="256,290 296,220 216,220" fill="url(#orangeGrad)" opacity="0.8" filter="url(#dropGlow)"/>
+</svg>

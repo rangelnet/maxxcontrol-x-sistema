@@ -1,463 +1,266 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Server, Plus, Trash2, Play, CheckCircle, XCircle, Loader } from 'lucide-react'
+import { Server, Plus, Trash2, Play, CheckCircle, Loader, X, Save, BarChart3, Activity } from 'lucide-react'
+
+const inputStyle = {
+  width:'100%', padding:'10px 14px', background:'rgba(5,5,5,0.6)',
+  border:'1px solid rgba(255,255,255,0.08)', borderRadius:10,
+  color:'#fff', fontSize:13, outline:'none', boxSizing:'border-box',
+}
+const labelStyle = {
+  display:'block', fontSize:11, fontWeight:700, color:'#71717a',
+  textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:7,
+}
+const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(255,165,0,0.3)' }
+const btnGhost   = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#a1a1aa', fontSize:13, fontWeight:600, cursor:'pointer' }
+
+const platforms = [
+  { id:'smartone', name:'SmartOne', icon:'📺', accent:'#3b82f6' },
+  { id:'ibocast',  name:'IBOCast',  icon:'🎥', accent:'#a855f7' },
+  { id:'ibopro',   name:'IBOPro',   icon:'⚡', accent:'#22c55e' },
+  { id:'vuplayer', name:'VU Player',icon:'🎬', accent:'#ef4444' },
+]
+
+const StatCard = ({ label, value, color }) => (
+  <div style={{ textAlign:'center', padding:'18px 16px', background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:14, boxShadow:'0 4px 20px rgba(0,0,0,0.3)' }}>
+    <p style={{ fontSize:28, fontWeight:800, color, lineHeight:1 }}>{value}</p>
+    <p style={{ fontSize:11, color:'#52525b', marginTop:4, fontWeight:600 }}>{label}</p>
+  </div>
+)
 
 const PlaylistManager = () => {
-  const [servers, setServers] = useState([])
+  const [servers, setServers]           = useState([])
   const [selectedServers, setSelectedServers] = useState([])
   const [currentPlatform, setCurrentPlatform] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading]           = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [showRegisterModal, setShowRegisterModal] = useState(false)
-  const [registering, setRegistering] = useState(false)
-  
-  // Form states
-  const [serverForm, setServerForm] = useState({ name: '', dns: '' })
-  const [registerForm, setRegisterForm] = useState({ mac: '', username: '', password: '' })
-  
-  // Log e estatísticas
-  const [activityLog, setActivityLog] = useState([])
-  const [stats, setStats] = useState({ total: 0, success: 0, error: 0 })
+  const [showRegModal, setShowRegModal] = useState(false)
+  const [registering, setRegistering]   = useState(false)
+  const [serverForm, setServerForm]     = useState({ name:'', dns:'' })
+  const [registerForm, setRegisterForm] = useState({ mac:'', username:'', password:'' })
+  const [activityLog, setActivityLog]   = useState([])
+  const [stats, setStats]               = useState({ total:0, success:0, error:0 })
 
-  const platforms = [
-    { id: 'smartone', name: 'SmartOne', icon: '📺', color: 'bg-blue-500' },
-    { id: 'ibocast', name: 'IBOCast', icon: '🎥', color: 'bg-purple-500' },
-    { id: 'ibopro', name: 'IBOPro', icon: '⚡', color: 'bg-green-500' },
-    { id: 'vuplayer', name: 'VU Player', icon: '🎬', color: 'bg-red-500' }
-  ]
+  useEffect(() => { loadServers() }, [])
 
-  useEffect(() => {
-    loadServers()
-  }, [])
+  const addLog = (msg) => {
+    const time = new Date().toLocaleTimeString('pt-BR')
+    setActivityLog(prev => [{ time, msg }, ...prev.slice(0,49)])
+  }
 
   const loadServers = async () => {
-    try {
-      const response = await api.get('/api/playlist-manager/servers')
-      setServers(response.data)
-    } catch (error) {
-      console.error('Erro ao carregar servidores:', error)
-      addLog('❌ Erro ao carregar servidores')
-    } finally {
-      setLoading(false)
-    }
+    try { const r = await api.get('/api/playlist-manager/servers'); setServers(r.data) }
+    catch { addLog('❌ Erro ao carregar servidores') }
+    finally { setLoading(false) }
   }
 
   const addServer = async () => {
-    if (!serverForm.name.trim() || !serverForm.dns.trim()) {
-      alert('Nome e DNS são obrigatórios')
-      return
-    }
-
+    if (!serverForm.name.trim() || !serverForm.dns.trim()) return
     try {
       await api.post('/api/playlist-manager/servers', serverForm)
       addLog(`✅ Servidor "${serverForm.name}" adicionado`)
-      setServerForm({ name: '', dns: '' })
-      setShowAddModal(false)
-      loadServers()
-    } catch (error) {
-      console.error('Erro ao adicionar servidor:', error)
-      alert('Erro ao adicionar servidor')
-    }
+      setServerForm({ name:'', dns:'' }); setShowAddModal(false); loadServers()
+    } catch { addLog('❌ Erro ao adicionar servidor') }
   }
 
   const deleteServer = async (id, name) => {
-    if (!confirm(`Deseja remover o servidor "${name}"?`)) return
-
-    try {
-      await api.delete(`/api/playlist-manager/servers/${id}`)
-      addLog(`🗑️ Servidor "${name}" removido`)
-      
-      // Remover da seleção se estava selecionado
-      setSelectedServers(prev => prev.filter(serverId => serverId !== id))
-      
-      loadServers()
-    } catch (error) {
-      console.error('Erro ao deletar servidor:', error)
-      alert('Erro ao deletar servidor')
-    }
+    if (!confirm(`Remover "${name}"?`)) return
+    try { await api.delete(`/api/playlist-manager/servers/${id}`); addLog(`🗑️ "${name}" removido`); setSelectedServers(p=>p.filter(sid=>sid!==id)); loadServers() }
+    catch { addLog('❌ Erro ao remover') }
   }
 
-  const toggleServerSelection = (serverId) => {
-    setSelectedServers(prev => {
-      if (prev.includes(serverId)) {
-        return prev.filter(id => id !== serverId)
-      } else {
-        return [...prev, serverId]
-      }
-    })
-  }
+  const toggleServer = (id) => setSelectedServers(p => p.includes(id) ? p.filter(sid=>sid!==id) : [...p,id])
+  const selectAll    = () => setSelectedServers(selectedServers.length===servers.length ? [] : servers.map(s=>s.id))
 
-  const selectAllServers = () => {
-    if (selectedServers.length === servers.length) {
-      setSelectedServers([])
-    } else {
-      setSelectedServers(servers.map(s => s.id))
-    }
-  }
-
-  const selectPlatform = (platformId) => {
-    setCurrentPlatform(platformId)
-    addLog(`🎯 Plataforma selecionada: ${platforms.find(p => p.id === platformId).name}`)
-  }
-
-  const openRegisterModal = () => {
-    if (selectedServers.length === 0) {
-      alert('Selecione pelo menos um servidor!')
-      return
-    }
-    
-    if (!currentPlatform) {
-      alert('Selecione uma plataforma primeiro!')
-      return
-    }
-    
-    setShowRegisterModal(true)
-    addLog(`📝 Formulário em lote aberto: ${selectedServers.length} servidor(es)`)
+  const openRegModal = () => {
+    if (!selectedServers.length) { addLog('⚠️ Selecione servidores'); return }
+    if (!currentPlatform)        { addLog('⚠️ Selecione a plataforma'); return }
+    setShowRegModal(true)
   }
 
   const registerPlaylists = async () => {
     const { mac, username, password } = registerForm
-    
-    if (!mac || !username || !password) {
-      alert('Preencha todos os campos')
-      return
-    }
-
-    // Validar MAC
-    const macRegex = /^[0-9A-Fa-f:]{17}$/
-    if (!macRegex.test(mac)) {
-      alert('Formato de MAC inválido. Use: 00:1A:79:XX:XX:XX')
-      return
-    }
-
+    if (!mac || !username || !password) { addLog('⚠️ Preencha todos os campos'); return }
+    if (!/^[0-9A-Fa-f:]{17}$/.test(mac)) { addLog('⚠️ MAC inválido'); return }
     setRegistering(true)
-    addLog(`⏳ Iniciando registro em lote: ${selectedServers.length} servidor(es)`)
-
+    addLog(`⏳ Iniciando: ${selectedServers.length} servidor(es)`)
     try {
-      const response = await api.post('/api/playlist-manager/register', {
-        platform: currentPlatform,
-        serverIds: selectedServers,
-        mac,
-        username,
-        password
-      })
-
-      // Processar resultados
-      response.data.results.forEach(result => {
-        if (result.success) {
-          addLog(`✅ ${result.server} - ${result.message}`)
-        } else {
-          addLog(`❌ ${result.server} - ${result.error}`)
-        }
-      })
-
-      // Atualizar estatísticas
-      setStats(prev => ({
-        total: prev.total + response.data.summary.total,
-        success: prev.success + response.data.summary.success,
-        error: prev.error + response.data.summary.error
-      }))
-
-      addLog(`🎉 Registro finalizado! Sucesso: ${response.data.summary.success} | Erros: ${response.data.summary.error}`)
-      
-      setShowRegisterModal(false)
-      setRegisterForm({ mac: '', username: '', password: '' })
-      
-    } catch (error) {
-      console.error('Erro no registro:', error)
-      addLog(`❌ Erro no registro em lote: ${error.response?.data?.error || error.message}`)
-      alert('Erro no registro em lote')
-    } finally {
-      setRegistering(false)
-    }
+      const r = await api.post('/api/playlist-manager/register', { platform:currentPlatform, serverIds:selectedServers, mac, username, password })
+      r.data.results.forEach(res => addLog(res.success ? `✅ ${res.server} — ${res.message}` : `❌ ${res.server} — ${res.error}`))
+      setStats(p => ({ total:p.total+r.data.summary.total, success:p.success+r.data.summary.success, error:p.error+r.data.summary.error }))
+      addLog(`🎉 Finalizado! Sucesso: ${r.data.summary.success} | Erros: ${r.data.summary.error}`)
+      setShowRegModal(false); setRegisterForm({ mac:'', username:'', password:'' })
+    } catch (err) { addLog(`❌ ${err.response?.data?.error || err.message}`) }
+    finally { setRegistering(false) }
   }
 
-  const addLog = (message) => {
-    const timestamp = new Date().toLocaleTimeString('pt-BR')
-    setActivityLog(prev => [
-      { time: timestamp, message },
-      ...prev.slice(0, 49) // Manter últimas 50 entradas
-    ])
-  }
-
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <Loader className="inline-block animate-spin mb-4" size={32} />
-        <p className="text-gray-400">Carregando...</p>
-      </div>
-    )
-  }
+  if (loading) return (
+    <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
+      <Loader size={28} color='#FFA500' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
+      Carregando...
+    </div>
+  )
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Playlist Manager 4-in-1</h1>
-        <p className="text-gray-400 mt-2">
-          Cadastre playlists IPTV em 4 plataformas simultaneamente
-        </p>
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+          <Play size={26} color='#FFA500'/> Playlist Manager 4-em-1
+        </h1>
+        <p style={{ fontSize:12, color:'#52525b' }}>Cadastre playlists IPTV em 4 plataformas simultaneamente</p>
+      </div>
+
+      {/* Estatísticas */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+        <StatCard label='Total Cadastrado' value={stats.total}   color='#FFA500'/>
+        <StatCard label='Sucesso'          value={stats.success} color='#34d399'/>
+        <StatCard label='Erros'            value={stats.error}   color='#f87171'/>
       </div>
 
       {/* Seleção de Plataforma */}
-      <div className="card mb-6">
-        <h2 className="text-xl font-bold mb-4">1. Selecione a Plataforma</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {platforms.map(platform => (
-            <button
-              key={platform.id}
-              onClick={() => selectPlatform(platform.id)}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                currentPlatform === platform.id
-                  ? `${platform.color} border-white text-white`
-                  : 'border-gray-700 hover:border-gray-600'
-              }`}
-            >
-              <div className="text-3xl mb-2">{platform.icon}</div>
-              <div className="font-semibold">{platform.name}</div>
-            </button>
-          ))}
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:24 }}>
+        <p style={{ fontSize:12, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14 }}>1 — Selecione a Plataforma</p>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))', gap:10 }}>
+          {platforms.map(p => {
+            const active = currentPlatform === p.id
+            return (
+              <button key={p.id} onClick={() => { setCurrentPlatform(p.id); addLog(`🎯 Plataforma: ${p.name}`) }}
+                style={{ padding:'16px 10px', borderRadius:12, border:`2px solid ${active?p.accent:'rgba(255,255,255,0.07)'}`, background: active?`${p.accent}18`:'rgba(255,255,255,0.02)', cursor:'pointer', transition:'all .2s', textAlign:'center', boxShadow: active?`0 4px 14px ${p.accent}30`:'none' }}>
+                <div style={{ fontSize:24, marginBottom:6 }}>{p.icon}</div>
+                <div style={{ fontSize:12, fontWeight:700, color: active?p.accent:'#71717a' }}>{p.name}</div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Gerenciamento de Servidores */}
-      <div className="card mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">2. Gerenciar Servidores</h2>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80"
-          >
-            <Plus size={18} />
-            Adicionar Servidor
-          </button>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:24 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+          <p style={{ fontSize:12, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.08em' }}>2 — Servidores</p>
+          <button onClick={() => setShowAddModal(true)} style={btnPrimary}><Plus size={14}/> Adicionar</button>
         </div>
 
         {servers.length > 0 && (
-          <div className="mb-4 flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedServers.length === servers.length && servers.length > 0}
-                onChange={selectAllServers}
-                className="w-4 h-4"
-              />
-              <span className="text-sm">Selecionar Todos</span>
-            </label>
-            <span className="text-sm text-gray-400">
-              {selectedServers.length} de {servers.length} selecionado(s)
-            </span>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12, padding:'8px 12px', background:'rgba(255,255,255,0.03)', borderRadius:9 }}>
+            <div onClick={selectAll} style={{ width:18, height:18, borderRadius:5, border:`2px solid ${selectedServers.length===servers.length?'#FFA500':'rgba(255,255,255,0.15)'}`, background:selectedServers.length===servers.length?'rgba(255,165,0,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
+              {selectedServers.length===servers.length && <CheckCircle size={11} color='#FFA500'/>}
+            </div>
+            <span style={{ fontSize:12, color:'#71717a' }}>Selecionar todos · <strong style={{ color:'#a1a1aa' }}>{selectedServers.length}/{servers.length}</strong> selecionados</span>
           </div>
         )}
 
-        <div className="space-y-2">
-          {servers.map(server => (
-            <div
-              key={server.id}
-              className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all ${
-                selectedServers.includes(server.id)
-                  ? 'border-primary bg-primary/10'
-                  : 'border-gray-800 hover:border-gray-700'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selectedServers.includes(server.id)}
-                onChange={() => toggleServerSelection(server.id)}
-                className="w-5 h-5"
-              />
-              <Server className="text-primary" size={20} />
-              <div className="flex-1">
-                <div className="font-semibold">{server.name}</div>
-                <div className="text-sm text-gray-400">{server.dns}</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {servers.map(s => (
+            <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:11, border:`2px solid ${selectedServers.includes(s.id)?'rgba(255,165,0,0.3)':'rgba(255,255,255,0.05)'}`, background: selectedServers.includes(s.id)?'rgba(255,165,0,0.06)':'rgba(255,255,255,0.01)', transition:'all .15s', cursor:'pointer' }}
+              onClick={() => toggleServer(s.id)}>
+              <div style={{ width:18, height:18, borderRadius:5, border:`2px solid ${selectedServers.includes(s.id)?'#FFA500':'rgba(255,255,255,0.15)'}`, background:selectedServers.includes(s.id)?'rgba(255,165,0,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                {selectedServers.includes(s.id) && <CheckCircle size={11} color='#FFA500'/>}
               </div>
-              <button
-                onClick={() => deleteServer(server.id, server.name)}
-                className="text-red-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded"
-              >
-                <Trash2 size={18} />
+              <div style={{ width:32, height:32, borderRadius:8, background:'rgba(255,165,0,0.1)', border:'1px solid rgba(255,165,0,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Server size={14} color='#FFA500'/>
+              </div>
+              <div style={{ flex:1 }}>
+                <p style={{ fontSize:13, fontWeight:700, color:'#e4e4e7' }}>{s.name}</p>
+                <p style={{ fontFamily:'monospace', fontSize:11, color:'#52525b' }}>{s.dns}</p>
+              </div>
+              <button onClick={e=>{e.stopPropagation();deleteServer(s.id,s.name)}}
+                style={{ width:28, height:28, borderRadius:7, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#f87171', flexShrink:0 }}>
+                <Trash2 size={12}/>
               </button>
             </div>
           ))}
 
           {servers.length === 0 && (
-            <p className="text-center text-gray-400 py-8">
-              Nenhum servidor cadastrado. Adicione um acima! 👆
-            </p>
+            <div style={{ textAlign:'center', padding:32, color:'#52525b' }}>
+              <Server size={32} color='#27272a' style={{ display:'block', margin:'0 auto 10px' }}/>
+              Nenhum servidor. Adicione um acima!
+            </div>
           )}
         </div>
 
         {servers.length > 0 && (
-          <button
-            onClick={openRegisterModal}
-            disabled={selectedServers.length === 0 || !currentPlatform}
-            className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            <Play size={20} />
-            {selectedServers.length > 0 && currentPlatform
-              ? `Registrar ${selectedServers.length} Servidor(es)`
-              : 'Registrar Selecionados'}
+          <button onClick={openRegModal} disabled={!selectedServers.length || !currentPlatform}
+            style={{ marginTop:16, width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'12px', background:selectedServers.length&&currentPlatform?'linear-gradient(135deg,#22c55e,#16a34a)':'rgba(255,255,255,0.04)', border:`1px solid ${selectedServers.length&&currentPlatform?'rgba(34,197,94,0.3)':'rgba(255,255,255,0.07)'}`, borderRadius:11, color:selectedServers.length&&currentPlatform?'#fff':'#52525b', fontSize:13, fontWeight:700, cursor:selectedServers.length&&currentPlatform?'pointer':'not-allowed', boxShadow:selectedServers.length&&currentPlatform?'0 4px 14px rgba(34,197,94,0.25)':'none', transition:'all .2s' }}>
+            <Play size={15}/> {selectedServers.length && currentPlatform ? `Registrar ${selectedServers.length} Servidor(es) em ${platforms.find(p=>p.id===currentPlatform)?.name}` : 'Selecione plataforma e servidores'}
           </button>
         )}
       </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="card text-center">
-          <div className="text-3xl font-bold text-blue-500">{stats.total}</div>
-          <div className="text-sm text-gray-400">Total Cadastrado</div>
-        </div>
-        <div className="card text-center">
-          <div className="text-3xl font-bold text-green-500">{stats.success}</div>
-          <div className="text-sm text-gray-400">Sucesso</div>
-        </div>
-        <div className="card text-center">
-          <div className="text-3xl font-bold text-red-500">{stats.error}</div>
-          <div className="text-sm text-gray-400">Erros</div>
-        </div>
-      </div>
-
       {/* Log de Atividades */}
-      <div className="card">
-        <h2 className="text-xl font-bold mb-4">Log de Atividades</h2>
-        <div className="bg-dark rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
-          {activityLog.length === 0 ? (
-            <p className="text-gray-500">Nenhuma atividade ainda...</p>
-          ) : (
-            activityLog.map((log, index) => (
-              <div key={index} className="mb-1">
-                <span className="text-gray-500">[{log.time}]</span>{' '}
-                <span>{log.message}</span>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:24 }}>
+        <p style={{ fontSize:12, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
+          <Activity size={13}/> Log de Atividades
+        </p>
+        <div style={{ background:'rgba(5,5,5,0.7)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:10, padding:'12px 14px', maxHeight:200, overflowY:'auto', fontFamily:'monospace', fontSize:11 }}>
+          {activityLog.length === 0
+            ? <p style={{ color:'#3f3f46' }}>Nenhuma atividade ainda...</p>
+            : activityLog.map((log,i) => (
+              <div key={i} style={{ marginBottom:4, color:'#a1a1aa' }}>
+                <span style={{ color:'#52525b' }}>[{log.time}]</span> {log.msg}
               </div>
             ))
-          )}
+          }
         </div>
       </div>
 
-      {/* Modal: Adicionar Servidor */}
+      {/* Modal Adicionar Servidor */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4 border border-gray-800">
-            <h2 className="text-xl font-bold mb-4">Adicionar Servidor</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Nome do Servidor</label>
-                <input
-                  type="text"
-                  value={serverForm.name}
-                  onChange={(e) => setServerForm({ ...serverForm, name: e.target.value })}
-                  placeholder="Meggas, UltraFlex..."
-                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg focus:outline-none focus:border-primary"
-                />
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
+          onClick={e=>e.target===e.currentTarget&&setShowAddModal(false)}>
+          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:420 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', display:'flex',alignItems:'center',gap:8 }}><Server size={16} color='#FFA500'/> Adicionar Servidor</h2>
+              <button onClick={()=>setShowAddModal(false)} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}><X size={14}/></button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              <div><label style={labelStyle}>Nome do Servidor</label><input style={inputStyle} value={serverForm.name} onChange={e=>setServerForm({...serverForm,name:e.target.value})} placeholder='Meggas, UltraFlex...'/></div>
+              <div><label style={labelStyle}>DNS do Servidor</label>
+                <input style={inputStyle} value={serverForm.dns} onChange={e=>setServerForm({...serverForm,dns:e.target.value})} placeholder='ultraflex.top'/>
+                <p style={{ fontSize:10, color:'#52525b', marginTop:4 }}>Apenas o domínio, sem http://</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">DNS do Servidor</label>
-                <input
-                  type="text"
-                  value={serverForm.dns}
-                  onChange={(e) => setServerForm({ ...serverForm, dns: e.target.value })}
-                  placeholder="ultraflex.top"
-                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg focus:outline-none focus:border-primary"
-                />
-                <p className="text-xs text-gray-500 mt-1">Apenas o domínio, sem http://</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={addServer}
-                  className="flex-1 px-4 py-2 bg-primary rounded-lg hover:bg-primary/80"
-                >
-                  Adicionar
-                </button>
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={addServer} style={{ ...btnPrimary, flex:1, justifyContent:'center' }}><Save size={14}/> Adicionar</button>
+                <button onClick={()=>setShowAddModal(false)} style={{ ...btnGhost, flex:1, justifyContent:'center' }}>Cancelar</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal: Registro em Lote */}
-      {showRegisterModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4 border border-gray-800">
-            <h2 className="text-xl font-bold mb-4">Registro em Lote</h2>
-            
-            <div className="mb-4 p-4 bg-dark rounded-lg">
-              <div className="text-sm text-gray-400 mb-2">
-                <strong>Plataforma:</strong> {platforms.find(p => p.id === currentPlatform)?.name}
-              </div>
-              <div className="text-sm text-gray-400 mb-2">
-                <strong>Servidores:</strong> {selectedServers.length}
-              </div>
-              <div className="text-xs text-gray-500">
-                {servers.filter(s => selectedServers.includes(s.id)).map(s => s.name).join(', ')}
-              </div>
+      {/* Modal Registro em Lote */}
+      {showRegModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
+          onClick={e=>e.target===e.currentTarget&&!registering&&setShowRegModal(false)}>
+          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:440 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+              <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', display:'flex',alignItems:'center',gap:8 }}><Play size={16} color='#22c55e'/> Registro em Lote</h2>
+              {!registering && <button onClick={()=>setShowRegModal(false)} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}><X size={14}/></button>}
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">MAC Address</label>
-                <input
-                  type="text"
-                  value={registerForm.mac}
-                  onChange={(e) => setRegisterForm({ ...registerForm, mac: e.target.value })}
-                  placeholder="00:1A:79:XX:XX:XX"
-                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Usuário</label>
-                <input
-                  type="text"
-                  value={registerForm.username}
-                  onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-                  placeholder="usuario123"
-                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Senha</label>
-                <input
-                  type="password"
-                  value={registerForm.password}
-                  onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                  placeholder="senha456"
-                  className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowRegisterModal(false)}
-                  disabled={registering}
-                  className="flex-1 px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 disabled:opacity-50"
-                >
-                  Cancelar
+            <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:'10px 14px', marginBottom:16 }}>
+              <p style={{ fontSize:12, color:'#71717a', marginBottom:4 }}>Plataforma: <strong style={{ color:'#FFA500' }}>{platforms.find(p=>p.id===currentPlatform)?.name}</strong></p>
+              <p style={{ fontSize:12, color:'#71717a', marginBottom:4 }}>Servidores: <strong style={{ color:'#a1a1aa' }}>{selectedServers.length}</strong></p>
+              <p style={{ fontSize:11, color:'#3f3f46' }}>{servers.filter(s=>selectedServers.includes(s.id)).map(s=>s.name).join(', ')}</p>
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              <div><label style={labelStyle}>MAC Address</label><input style={inputStyle} value={registerForm.mac} onChange={e=>setRegisterForm({...registerForm,mac:e.target.value})} placeholder='00:1A:79:XX:XX:XX'/></div>
+              <div><label style={labelStyle}>Usuário</label><input style={inputStyle} value={registerForm.username} onChange={e=>setRegisterForm({...registerForm,username:e.target.value})} placeholder='usuario123'/></div>
+              <div><label style={labelStyle}>Senha</label><input style={inputStyle} type='password' value={registerForm.password} onChange={e=>setRegisterForm({...registerForm,password:e.target.value})} placeholder='senha456'/></div>
+              <div style={{ display:'flex', gap:8, marginTop:4 }}>
+                <button onClick={registerPlaylists} disabled={registering}
+                  style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:7, padding:'10px', background:'linear-gradient(135deg,#22c55e,#16a34a)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', opacity:registering?0.7:1 }}>
+                  {registering ? <><Loader size={14} style={{ animation:'spin 1s linear infinite' }}/> Registrando...</> : <><CheckCircle size={14}/> Registrar</>}
                 </button>
-                <button
-                  onClick={registerPlaylists}
-                  disabled={registering}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
-                >
-                  {registering ? (
-                    <>
-                      <Loader className="animate-spin" size={18} />
-                      Registrando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle size={18} />
-                      Registrar
-                    </>
-                  )}
-                </button>
+                <button onClick={()=>!registering&&setShowRegModal(false)} disabled={registering} style={{ ...btnGhost, flex:1, justifyContent:'center', opacity:registering?0.5:1 }}>Cancelar</button>
               </div>
             </div>
           </div>
         </div>
       )}
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }

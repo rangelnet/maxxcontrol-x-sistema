@@ -1,9 +1,10 @@
-const Logo = ({ size = 40, showText = true }) => {
+const Logo = ({ size = 32, mdSize = 40, showText = true }) => {
+  const svgSize = `w-${size} h-${size} md:w-${mdSize} md:h-${mdSize}`
+  
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 md:gap-3">
       <svg 
-        width={size} 
-        height={size} 
+        className={`w-8 h-8 md:w-10 md:h-10`}
         viewBox="0 0 100 100" 
         fill="none" 
         xmlns="http://www.w3.org/2000/svg"

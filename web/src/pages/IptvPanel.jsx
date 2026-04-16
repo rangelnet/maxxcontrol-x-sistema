@@ -1,362 +1,306 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Server, Save, TestTube, AlertCircle, CheckCircle, Plus, Edit, Trash2, Settings, Users, X, Eye, EyeOff } from 'lucide-react'
+import { Server, Save, TestTube, AlertCircle, CheckCircle, Plus, Edit, Trash2, Settings, Users, X, Eye, EyeOff, Globe, Zap } from 'lucide-react'
 
+// ─── Estilos base ───────────────────────────────────────────
+const inputStyle = {
+  width:'100%', padding:'10px 14px', background:'rgba(5,5,5,0.6)',
+  border:'1px solid rgba(255,255,255,0.08)', borderRadius:10,
+  color:'#fff', fontSize:13, outline:'none', boxSizing:'border-box',
+}
+const labelStyle = {
+  display:'block', fontSize:11, fontWeight:700, color:'#71717a',
+  textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:7,
+}
+const btnPrimary = {
+  display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px',
+  background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none',
+  borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
+  boxShadow:'0 4px 12px rgba(255,165,0,0.3)',
+}
+const btnGhost = {
+  display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px',
+  background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+  borderRadius:10, color:'#a1a1aa', fontSize:13, fontWeight:600, cursor:'pointer',
+}
+
+const statusCfg = {
+  ativo:        { color:'#34d399', bg:'rgba(16,185,129,0.12)',  border:'rgba(16,185,129,0.25)',  label:'ATIVO'      },
+  manutencao:   { color:'#facc15', bg:'rgba(250,204,21,0.12)',  border:'rgba(250,204,21,0.25)',  label:'MANUTENÇÃO' },
+  'manutenção': { color:'#facc15', bg:'rgba(250,204,21,0.12)',  border:'rgba(250,204,21,0.25)',  label:'MANUTENÇÃO' },
+  inativo:      { color:'#f87171', bg:'rgba(239,68,68,0.12)',   border:'rgba(239,68,68,0.25)',   label:'INATIVO'    },
+}
+
+const StatusBadge = ({ status }) => {
+  const s = statusCfg[status] || statusCfg.inativo
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:999, background:s.bg, border:`1px solid ${s.border}`, color:s.color, fontSize:11, fontWeight:800 }}>
+      <span style={{ width:6, height:6, borderRadius:'50%', background:s.color }}/>{s.label}
+    </span>
+  )
+}
+
+// ─── Feedback Alert ─────────────────────────────────────────
+const MsgAlert = ({ msg }) => {
+  if (!msg.text) return null
+  const ok = msg.type === 'success'
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'12px 14px', borderRadius:10, background: ok?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)', border:`1px solid ${ok?'rgba(16,185,129,0.25)':'rgba(239,68,68,0.25)'}`, color: ok?'#34d399':'#f87171', fontSize:13 }}>
+      {ok ? <CheckCircle size={16}/> : <AlertCircle size={16}/>} {msg.text}
+    </div>
+  )
+}
+
+// ─── Modal Server ────────────────────────────────────────────
+const ServerModal = ({ onClose, onSave, editing }) => {
+  const [form, setForm] = useState(
+    editing ? { name:editing.name, url:editing.url, region:editing.region||'', priority:editing.priority, status:editing.status }
+            : { name:'', url:'', region:'', priority:100, status:'ativo' }
+  )
+  const [saving, setSaving] = useState(false)
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.name.trim() || !form.url.trim()) return
+    setSaving(true)
+    await onSave(form, editing?.id)
+    setSaving(false)
+  }
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
+      onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:460, boxShadow:'0 25px 60px rgba(0,0,0,0.6)' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:36, height:36, borderRadius:10, background:'rgba(255,165,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Server size={18} color='#FFA500'/>
+            </div>
+            <h2 style={{ fontSize:16, fontWeight:800, color:'#fff' }}>{editing?'Editar':'Adicionar'} Servidor</h2>
+          </div>
+          <button onClick={onClose} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}>
+            <X size={16}/>
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <div><label style={labelStyle}>Nome *</label><input style={inputStyle} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder='Servidor Brasil' required/></div>
+          <div><label style={labelStyle}>URL *</label><input style={inputStyle} type='url' value={form.url} onChange={e=>setForm({...form,url:e.target.value})} placeholder='http://servidor.com:8080' required/></div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <div><label style={labelStyle}>Região</label><input style={inputStyle} value={form.region} onChange={e=>setForm({...form,region:e.target.value})} placeholder='Brasil...'/></div>
+            <div><label style={labelStyle}>Prioridade</label><input style={inputStyle} type='number' value={form.priority} onChange={e=>setForm({...form,priority:parseInt(e.target.value)})} min={1} max={999}/></div>
+          </div>
+          <div><label style={labelStyle}>Status</label>
+            <select style={inputStyle} value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>
+              <option value='ativo'>Ativo</option><option value='manutencao'>Manutenção</option><option value='inativo'>Inativo</option>
+            </select>
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:4 }}>
+            <button type='submit' disabled={saving} style={{ ...btnPrimary, flex:1, justifyContent:'center', opacity:saving?0.7:1 }}><Save size={15}/> {saving?'Salvando…':editing?'Atualizar':'Criar'}</button>
+            <button type='button' onClick={onClose} style={{ ...btnGhost, flex:1, justifyContent:'center' }}>Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── Componente Principal ────────────────────────────────────
 const IptvPanel = () => {
   const [activeTab, setActiveTab] = useState('global')
-
-  const [config, setConfig] = useState({ xtream_url: '', xtream_username: '', xtream_password: '' })
-  const [loadingConfig, setLoadingConfig] = useState(false)
-  const [testing, setTesting] = useState(false)
-  const [message, setMessage] = useState({ type: '', text: '' })
-  const [showPassword, setShowPassword] = useState(false)
-
-  const [servers, setServers] = useState([])
-  const [loadingServers, setLoadingServers] = useState(true)
+  const [config, setConfig]       = useState({ xtream_url:'', xtream_username:'', xtream_password:'' })
+  const [loadingCfg, setLoadingCfg] = useState(false)
+  const [testing, setTesting]     = useState(false)
+  const [message, setMessage]     = useState({ type:'', text:'' })
+  const [showPwd, setShowPwd]     = useState(false)
+  const [servers, setServers]     = useState([])
+  const [loadingSrv, setLoadingSrv] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingServer, setEditingServer] = useState(null)
-  const [formData, setFormData] = useState({ name: '', url: '', region: '', priority: 100, status: 'ativo' })
-  const [saving, setSaving] = useState(false)
+  const [toast, setToast]         = useState(null)
 
-  useEffect(() => {
-    fetchConfig()
-    loadServers()
-  }, [])
+  useEffect(() => { fetchConfig(); loadServers() }, [])
+
+  const showToast = (msg, type='success') => { setToast({msg,type}); setTimeout(()=>setToast(null),2800) }
 
   const fetchConfig = async () => {
-    try {
-      const response = await api.get('/api/iptv-server/config')
-      if (response.data && response.data.xtream_url) {
-        setConfig({
-          xtream_url: response.data.xtream_url || '',
-          xtream_username: response.data.xtream_username || '',
-          xtream_password: response.data.xtream_password || ''
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao buscar configuracao:', error)
-    }
+    try { const r = await api.get('/api/iptv-server/config'); if (r.data?.xtream_url) setConfig(r.data) } catch {}
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoadingConfig(true)
-    setMessage({ type: '', text: '' })
+    e.preventDefault(); setLoadingCfg(true); setMessage({type:'',text:''})
     try {
-      const response = await api.post('/api/iptv-server/config', config)
-      if (response.data) {
-        setMessage({ type: 'success', text: 'Configuracao salva com sucesso!' })
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data?.error || 'Erro ao salvar configuracao' })
-    } finally {
-      setLoadingConfig(false)
-    }
+      await api.post('/api/iptv-server/config', config)
+      setMessage({ type:'success', text:'Configuração salva com sucesso!' })
+    } catch (err) { setMessage({ type:'error', text: err.response?.data?.error||'Erro ao salvar' }) }
+    finally { setLoadingCfg(false) }
   }
 
   const handleTest = async () => {
-    setTesting(true)
-    setMessage({ type: '', text: '' })
+    setTesting(true); setMessage({type:'',text:''})
     try {
-      const response = await api.post('/api/iptv-server/test', config)
-      if (response.data.success) {
-        setMessage({ type: 'success', text: 'Conexao bem-sucedida! ' + (response.data.channels || 0) + ' canais disponiveis' })
-      } else {
-        setMessage({ type: 'error', text: response.data.message || 'Falha na conexao' })
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: error.response?.data?.message || 'Erro ao testar conexao' })
-    } finally {
-      setTesting(false)
-    }
+      const r = await api.post('/api/iptv-server/test', config)
+      setMessage(r.data.success ? { type:'success', text:`Conexão OK! ${r.data.channels||0} canais disponíveis` } : { type:'error', text:r.data.message||'Falha na conexão' })
+    } catch (err) { setMessage({ type:'error', text: err.response?.data?.message||'Erro ao testar' }) }
+    finally { setTesting(false) }
   }
 
   const loadServers = async () => {
+    try { const r = await api.get('/api/iptv/servers/all'); setServers(r.data) } 
+    catch (err) { if (err.response?.status===401) window.location.href='/login' }
+    finally { setLoadingSrv(false) }
+  }
+
+  const handleSaveServer = async (form, id) => {
     try {
-      const response = await api.get('/api/iptv/servers/all')
-      setServers(response.data)
-    } catch (error) {
-      console.error('Erro ao carregar servidores:', error)
-      if (error.response?.status === 401) {
-        alert('Sessao expirada. Por favor, faca login novamente.')
-        window.location.href = '/login'
-      }
-    } finally {
-      setLoadingServers(false)
-    }
+      if (id) await api.put(`/api/iptv/servers/${id}`, form)
+      else    await api.post('/api/iptv/servers', form)
+      showToast(id ? 'Servidor atualizado!' : 'Servidor criado!')
+      setShowModal(false); setEditingServer(null); loadServers()
+    } catch (err) { showToast(err.response?.data?.error||'Erro ao salvar','error') }
   }
 
-  const openCreateModal = () => {
-    setEditingServer(null)
-    setFormData({ name: '', url: '', region: '', priority: 100, status: 'ativo' })
-    setShowModal(true)
-  }
-
-  const openEditModal = (server) => {
-    setEditingServer(server)
-    setFormData({ name: server.name, url: server.url, region: server.region || '', priority: server.priority, status: server.status })
-    setShowModal(true)
-  }
-
-  const handleServerSubmit = async (e) => {
-    e.preventDefault()
-    if (!formData.name.trim() || !formData.url.trim()) {
-      alert('Nome e URL sao obrigatorios')
-      return
-    }
-    setSaving(true)
-    try {
-      if (editingServer) {
-        await api.put('/api/iptv/servers/' + editingServer.id, formData)
-        alert('Servidor atualizado com sucesso!')
-      } else {
-        await api.post('/api/iptv/servers', formData)
-        alert('Servidor criado com sucesso!')
-      }
-      setShowModal(false)
-      loadServers()
-    } catch (error) {
-      alert(error.response?.data?.error || 'Erro ao salvar servidor')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const deleteServer = async (serverId, serverName) => {
-    if (!confirm('Deseja excluir o servidor "' + serverName + '"?')) return
-    try {
-      await api.delete('/api/iptv/servers/' + serverId)
-      alert('Servidor excluido com sucesso!')
-      loadServers()
-    } catch (error) {
-      alert(error.response?.data?.error || 'Erro ao excluir servidor')
-    }
+  const deleteServer = async (id, name) => {
+    if (!confirm(`Excluir "${name}"?`)) return
+    try { await api.delete(`/api/iptv/servers/${id}`); showToast('Servidor excluído!'); loadServers() }
+    catch (err) { showToast(err.response?.data?.error||'Erro ao excluir','error') }
   }
 
   const toggleMaintenance = async (server) => {
     const isActive = server.status === 'ativo'
-    const msg = isActive ? 'Colocar "' + server.name + '" em manutencao?' : 'Ativar "' + server.name + '"?'
-    if (!confirm(msg)) return
     try {
-      if (isActive) {
-        await api.post('/api/iptv/servers/' + server.id + '/maintenance')
-      } else {
-        await api.post('/api/iptv/servers/' + server.id + '/activate')
-      }
+      if (isActive) await api.post(`/api/iptv/servers/${server.id}/maintenance`)
+      else          await api.post(`/api/iptv/servers/${server.id}/activate`)
+      showToast(isActive ? `${server.name} em manutenção` : `${server.name} ativado!`)
       loadServers()
-    } catch (error) {
-      alert('Erro ao atualizar status do servidor')
-    }
+    } catch { showToast('Erro ao atualizar status','error') }
   }
 
-  const getStatusBadge = (status) => {
-    const map = {
-      'ativo': { icon: CheckCircle, color: 'bg-green-500/20 text-green-500', text: 'Ativo' },
-      'manutencao': { icon: Settings, color: 'bg-yellow-500/20 text-yellow-500', text: 'Manutencao' },
-      'inativo': { icon: AlertCircle, color: 'bg-red-500/20 text-red-500', text: 'Inativo' }
-    }
-    const cfg = map[status] || map['inativo']
-    const Icon = cfg.icon
-    return (
-      <span className={'inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ' + cfg.color}>
-        <Icon size={14} />{cfg.text}
-      </span>
-    )
-  }
+  const tabs = [
+    { key:'global',  label:'Servidor Global', Icon:Globe  },
+    { key:'servers', label:`Servidores (${servers.length})`, Icon:Server },
+  ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Server className="text-primary" size={32} />
-        <div>
-          <h1 className="text-3xl font-bold text-white">IPTV</h1>
-          <p className="text-gray-400 text-sm">Servidor global e gerenciamento de servidores</p>
+    <div>
+      {/* Toast */}
+      {toast && (
+        <div style={{ position:'fixed', top:24, right:24, zIndex:200, background:toast.type==='error'?'rgba(239,68,68,0.95)':'rgba(16,185,129,0.95)', backdropFilter:'blur(12px)', borderRadius:12, padding:'12px 20px', color:'#fff', fontSize:13, fontWeight:700, boxShadow:'0 12px 30px rgba(0,0,0,0.4)', display:'flex', alignItems:'center', gap:8 }}>
+          {toast.type==='error'?<AlertCircle size={16}/>:<CheckCircle size={16}/>} {toast.msg}
         </div>
+      )}
+
+      {/* Header */}
+      <div style={{ marginBottom:24 }}>
+        <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+          <Server size={26} color='#FFA500'/> IPTV
+        </h1>
+        <p style={{ fontSize:12, color:'#52525b' }}>Servidor global e gerenciamento de servidores IPTV</p>
       </div>
 
-      <div className="flex border-b border-gray-800">
-        <button
-          onClick={() => setActiveTab('global')}
-          className={'px-6 py-3 text-sm font-medium transition-colors ' + (activeTab === 'global' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-white')}
-        >
-          Servidor Global
-        </button>
-        <button
-          onClick={() => setActiveTab('servers')}
-          className={'px-6 py-3 text-sm font-medium transition-colors ' + (activeTab === 'servers' ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-white')}
-        >
-          Servidores
-        </button>
+      {/* Tabs */}
+      <div style={{ display:'flex', gap:4, marginBottom:24, background:'rgba(17,17,17,0.6)', padding:5, borderRadius:14, width:'fit-content', border:'1px solid rgba(255,255,255,0.06)' }}>
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)}
+            style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 22px', borderRadius:10, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all .2s', background:activeTab===t.key?'rgba(255,165,0,0.15)':'transparent', color:activeTab===t.key?'#FFA500':'#71717a', boxShadow:activeTab===t.key?'0 2px 10px rgba(255,165,0,0.15)':'none' }}>
+            <t.Icon size={15}/> {t.label}
+          </button>
+        ))}
       </div>
 
+      {/* ─── Tab Global ─── */}
       {activeTab === 'global' && (
-        <div className="space-y-4">
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-            <p className="text-blue-400 text-sm">
-              Esta e a configuracao global. Voce pode configurar servidores especificos para cada dispositivo na pagina Dispositivos.
-            </p>
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          <div style={{ background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.2)', borderRadius:12, padding:'12px 16px', display:'flex', alignItems:'center', gap:10 }}>
+            <Zap size={16} color='#60a5fa'/><p style={{ fontSize:12, color:'#93c5fd' }}>Configuração global aplicada a todos os dispositivos. Servidores por dispositivo podem ser configurados na aba Dispositivos.</p>
           </div>
-          <div className="bg-card rounded-lg p-6 border border-gray-800">
-            <h2 className="text-xl font-semibold text-white mb-4">Configuracao Xtream Codes</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">URL do Servidor</label>
-                <input type="text" value={config.xtream_url} onChange={(e) => setConfig({ ...config, xtream_url: e.target.value })} placeholder="http://exemplo.com:8080" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Usuario</label>
-                <input type="text" value={config.xtream_username} onChange={(e) => setConfig({ ...config, xtream_username: e.target.value })} placeholder="usuario" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Senha</label>
-                <div className="relative">
-                  <input type={showPassword ? 'text' : 'password'} value={config.xtream_password} onChange={(e) => setConfig({ ...config, xtream_password: e.target.value })} placeholder="senha" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary pr-10" required />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-white">
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+
+          <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:28, boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
+            <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', marginBottom:20, display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:'#FFA500', boxShadow:'0 0 8px #FFA500' }}/> Xtream Codes
+            </h2>
+            <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              <div><label style={labelStyle}>URL do Servidor</label><input style={inputStyle} value={config.xtream_url} onChange={e=>setConfig({...config,xtream_url:e.target.value})} placeholder='http://exemplo.com:8080' required/></div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <div><label style={labelStyle}>Usuário</label><input style={inputStyle} value={config.xtream_username} onChange={e=>setConfig({...config,xtream_username:e.target.value})} placeholder='usuario' required/></div>
+                <div>
+                  <label style={labelStyle}>Senha</label>
+                  <div style={{ position:'relative' }}>
+                    <input style={{ ...inputStyle, paddingRight:40 }} type={showPwd?'text':'password'} value={config.xtream_password} onChange={e=>setConfig({...config,xtream_password:e.target.value})} placeholder='senha' required/>
+                    <button type='button' onClick={()=>setShowPwd(v=>!v)} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#52525b', cursor:'pointer', display:'flex' }}>
+                      {showPwd ? <EyeOff size={16}/> : <Eye size={16}/>}
+                    </button>
+                  </div>
                 </div>
               </div>
-              {message.text && (
-                <div className={'flex items-center gap-2 p-4 rounded-lg ' + (message.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500')}>
-                  {message.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                  {message.text}
-                </div>
-              )}
-              <div className="flex gap-3">
-                <button type="submit" disabled={loadingConfig} className="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50">
-                  <Save size={20} />
-                  {loadingConfig ? 'Salvando...' : 'Salvar'}
-                </button>
-                <button type="button" onClick={handleTest} disabled={testing || !config.xtream_url} className="flex items-center gap-2 px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50">
-                  <TestTube size={20} />
-                  {testing ? 'Testando...' : 'Testar Conexao'}
-                </button>
+              <MsgAlert msg={message}/>
+              <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+                <button type='submit' disabled={loadingCfg} style={{ ...btnPrimary, opacity:loadingCfg?0.7:1 }}><Save size={15}/> {loadingCfg?'Salvando…':'Salvar'}</button>
+                <button type='button' onClick={handleTest} disabled={testing||!config.xtream_url} style={{ ...btnGhost, opacity:(testing||!config.xtream_url)?0.5:1 }}><TestTube size={15}/> {testing?'Testando…':'Testar Conexão'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* ─── Tab Servidores ─── */}
       {activeTab === 'servers' && (
         <div>
-          <div className="flex justify-end mb-4">
-            <button onClick={openCreateModal} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors">
-              <Plus size={18} />
-              Adicionar Servidor
-            </button>
+          <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:16 }}>
+            <button onClick={()=>{setEditingServer(null);setShowModal(true)}} style={btnPrimary}><Plus size={15}/> Adicionar Servidor</button>
           </div>
-          {loadingServers ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-              <p className="text-gray-400">Carregando servidores...</p>
-            </div>
-          ) : (
-            <div className="card">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+
+          <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, overflow:'hidden' }}>
+            {loadingSrv ? (
+              <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>Carregando servidores...</div>
+            ) : servers.length===0 ? (
+              <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
+                <Server size={36} color='#27272a' style={{ display:'block', margin:'0 auto 12px' }}/>
+                <p>Nenhum servidor. <button onClick={()=>setShowModal(true)} style={{ color:'#FFA500', background:'none', border:'none', cursor:'pointer', fontWeight:700 }}>Adicionar</button></p>
+              </div>
+            ) : (
+              <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse' }}>
                   <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="text-left py-3 px-4">Servidor</th>
-                      <th className="text-left py-3 px-4">URL</th>
-                      <th className="text-left py-3 px-4">Regiao</th>
-                      <th className="text-left py-3 px-4">Prioridade</th>
-                      <th className="text-left py-3 px-4">Status</th>
-                      <th className="text-left py-3 px-4">Usuarios</th>
-                      <th className="text-left py-3 px-4">Acoes</th>
+                    <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
+                      {['Servidor','URL','Região','Prioridade','Status','Usuários','Ações'].map(h=>(
+                        <th key={h} style={{ padding:'11px 16px', textAlign:'left', fontSize:10, fontWeight:700, color:'#52525b', textTransform:'uppercase', letterSpacing:'0.08em', whiteSpace:'nowrap' }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {servers.map((server) => (
-                      <tr key={server.id} className="border-b border-gray-800 hover:bg-gray-900">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <Server className="text-primary" size={18} />
-                            <span className="font-semibold">{server.name}</span>
+                    {servers.map((s,idx) => (
+                      <tr key={s.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', background:idx%2===0?'transparent':'rgba(255,255,255,0.01)', transition:'background .15s' }}
+                        onMouseEnter={e=>e.currentTarget.style.background='rgba(255,165,0,0.04)'}
+                        onMouseLeave={e=>e.currentTarget.style.background=idx%2===0?'transparent':'rgba(255,255,255,0.01)'}>
+                        <td style={{ padding:'12px 16px', whiteSpace:'nowrap' }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                            <div style={{ width:30, height:30, borderRadius:8, background:'rgba(255,165,0,0.1)', border:'1px solid rgba(255,165,0,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Server size={13} color='#FFA500'/></div>
+                            <span style={{ fontSize:13, fontWeight:700, color:'#e4e4e7' }}>{s.name}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4"><span className="font-mono text-sm text-gray-400">{server.url}</span></td>
-                        <td className="py-3 px-4 text-gray-300">{server.region || 'N/A'}</td>
-                        <td className="py-3 px-4"><span className="px-2 py-1 bg-blue-500/20 text-blue-500 rounded text-sm font-semibold">{server.priority}</span></td>
-                        <td className="py-3 px-4">{getStatusBadge(server.status)}</td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1 text-gray-300">
-                            <Users size={16} />
-                            <span className="font-semibold">{server.users || 0}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => openEditModal(server)} className="text-blue-400 hover:text-blue-300 p-2 hover:bg-blue-500/10 rounded transition-colors" title="Editar"><Edit size={16} /></button>
-                            <button
-                              onClick={() => toggleMaintenance(server)}
-                              className={'p-2 rounded transition-colors ' + (server.status === 'ativo' ? 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10' : 'text-green-400 hover:text-green-300 hover:bg-green-500/10')}
-                              title={server.status === 'ativo' ? 'Manutencao' : 'Ativar'}
-                            >
-                              {server.status === 'ativo' ? <Settings size={16} /> : <CheckCircle size={16} />}
+                        <td style={{ padding:'12px 16px', maxWidth:180 }}><span style={{ fontFamily:'monospace', fontSize:11, color:'#52525b', display:'block', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.url}</span></td>
+                        <td style={{ padding:'12px 16px', fontSize:12, color:'#a1a1aa' }}>{s.region||'—'}</td>
+                        <td style={{ padding:'12px 16px' }}><span style={{ padding:'3px 10px', borderRadius:999, background:'rgba(59,130,246,0.12)', border:'1px solid rgba(59,130,246,0.25)', color:'#60a5fa', fontSize:11, fontWeight:800 }}>{s.priority}</span></td>
+                        <td style={{ padding:'12px 16px', whiteSpace:'nowrap' }}><StatusBadge status={s.status}/></td>
+                        <td style={{ padding:'12px 16px' }}><span style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, color:'#71717a' }}><Users size={13}/> <strong style={{ color:'#a1a1aa' }}>{s.users||0}</strong></span></td>
+                        <td style={{ padding:'12px 16px' }}>
+                          <div style={{ display:'flex', gap:4 }}>
+                            <button onClick={()=>{setEditingServer(s);setShowModal(true)}} title='Editar' style={{ width:28, height:28, borderRadius:7, background:'rgba(59,130,246,0.12)', border:'1px solid rgba(59,130,246,0.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#60a5fa' }}><Edit size={12}/></button>
+                            <button onClick={()=>toggleMaintenance(s)} title={s.status==='ativo'?'Manutenção':'Ativar'} style={{ width:28, height:28, borderRadius:7, background:s.status==='ativo'?'rgba(250,204,21,0.12)':'rgba(16,185,129,0.12)', border:`1px solid ${s.status==='ativo'?'rgba(250,204,21,0.2)':'rgba(16,185,129,0.2)'}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:s.status==='ativo'?'#facc15':'#34d399' }}>
+                              {s.status==='ativo' ? <Settings size={12}/> : <CheckCircle size={12}/>}
                             </button>
-                            <button onClick={() => deleteServer(server.id, server.name)} className="text-red-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded transition-colors" title="Excluir"><Trash2 size={16} /></button>
+                            <button onClick={()=>deleteServer(s.id,s.name)} title='Excluir' style={{ width:28, height:28, borderRadius:7, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#f87171' }}><Trash2 size={12}/></button>
                           </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                {servers.length === 0 && (
-                  <div className="text-center py-8 text-gray-400">Nenhum servidor cadastrado. Clique em "Adicionar Servidor" para comecar.</div>
-                )}
               </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 max-w-md w-full mx-4 border border-gray-800">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Server className="text-primary" size={24} />
-                {editingServer ? 'Editar Servidor' : 'Adicionar Servidor'}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white"><X size={24} /></button>
-            </div>
-            <form onSubmit={handleServerSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Nome do Servidor *</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Servidor Brasil" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">URL do Servidor *</label>
-                <input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} placeholder="http://servidor.exemplo.com:8080" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Regiao</label>
-                <input type="text" value={formData.region} onChange={(e) => setFormData({ ...formData, region: e.target.value })} placeholder="Brasil, EUA, Europa..." className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Prioridade</label>
-                <input type="number" value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })} min="1" max="999" className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary" />
-                <p className="text-xs text-gray-500 mt-1">Menor numero = maior prioridade</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-4 py-2 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary">
-                  <option value="ativo">Ativo</option>
-                  <option value="manutencao">Manutencao</option>
-                  <option value="inativo">Inativo</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">Cancelar</button>
-                <button type="submit" disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50">
-                  <Save size={18} />
-                  {saving ? 'Salvando...' : editingServer ? 'Atualizar' : 'Criar'}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}
+
+      {showModal && <ServerModal onClose={()=>{setShowModal(false);setEditingServer(null)}} onSave={handleSaveServer} editing={editingServer}/>}
     </div>
   )
 }

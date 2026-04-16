@@ -134,11 +134,11 @@ exports.toggleStatus = async (req, res) => {
   }
 };
 
-// Enviar créditos para revendedor (apenas admin)
+// Enviar créditos para revendedor (apenas admin/master com segurança Telegram)
 exports.sendCredits = async (req, res) => {
   try {
-    const { revendedor_id, quantidade } = req.body;
-    const adminId = req.user.id;
+    const { revendedor_id, quantidade, tfa_code } = req.body;
+    const adminId = req.userId; // ID do admin/master logado
 
     if (!revendedor_id || !quantidade) {
       return res.status(400).json({ error: 'Revendedor e quantidade são obrigatórios' });
@@ -148,6 +148,38 @@ exports.sendCredits = async (req, res) => {
       return res.status(400).json({ error: 'Quantidade mínima é 1 crédito' });
     }
 
+    // 1. Verificar se o Admin/Master tem 2FA ativo
+    const adminResult = await pool.query(
+      'SELECT email, tfa_enabled, telegram_chat_id, tfa_code FROM users WHERE id = $1',
+      [adminId]
+    );
+    const admin = adminResult.rows[0];
+
+    if (admin.tfa_enabled && admin.telegram_chat_id) {
+      // Se não enviou o código ainda, gerar e enviar via Telegram
+      if (!tfa_code) {
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        await pool.query('UPDATE users SET tfa_code = $1 WHERE id = $2', [code, adminId]);
+        
+        const { send2FACode } = require('../telegram/telegramBot');
+        await send2FACode(admin.telegram_chat_id, code, admin.email);
+        
+        return res.json({ 
+          require2FA: true, 
+          message: 'Confirme o código enviado ao seu Telegram para autorizar a transferência.' 
+        });
+      }
+
+      // Se enviou o código, validar
+      if (tfa_code !== admin.tfa_code) {
+        return res.status(401).json({ error: 'Código de segurança inválido ou expirado.' });
+      }
+
+      // Limpar código após sucesso
+      await pool.query('UPDATE users SET tfa_code = NULL WHERE id = $1', [adminId]);
+    }
+
+    // 2. Processar a transferência
     const revendedorResult = await pool.query(
       'SELECT id, nome, creditos FROM users WHERE id=$1 AND tipo=$2',
       [revendedor_id, 'revendedor']
@@ -159,19 +191,40 @@ exports.sendCredits = async (req, res) => {
 
     const revendedor = revendedorResult.rows[0];
 
-    await pool.query(
-      'UPDATE users SET creditos = creditos + $1 WHERE id=$2',
-      [quantidade, revendedor_id]
-    );
+    // Iniciar Transação SQL para garantir integridade
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Adicionar créditos
+      await client.query(
+        'UPDATE users SET creditos = creditos + $1 WHERE id=$2',
+        [quantidade, revendedor_id]
+      );
+
+      // Registrar no histórico financeiro (tipo manual)
+      await client.query(
+        `INSERT INTO mp_transactions (reseller_id, credits, amount, status, type)
+         VALUES ($1, $2, $3, 'approved', 'manual')`,
+        [revendedor_id, quantidade, 0] // Valor 0 para manual (ou poderia ser o custo unitário)
+      );
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
 
     res.json({ 
       success: true, 
-      message: `${quantidade} créditos enviados para ${revendedor.nome}`,
+      message: `${quantidade} créditos enviados com segurança para ${revendedor.nome}`,
       novo_saldo: revendedor.creditos + quantidade
     });
   } catch (error) {
     console.error('Erro ao enviar créditos:', error);
-    res.status(500).json({ error: 'Erro ao enviar créditos' });
+    res.status(500).json({ error: 'Erro ao processar transferência com segurança.' });
   }
 };
 

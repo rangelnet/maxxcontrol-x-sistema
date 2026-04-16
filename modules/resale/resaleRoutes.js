@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const resaleController = require('./resaleController');
-const { authMiddleware } = require('../../middlewares/auth');
+const authMiddleware = require('../../middlewares/auth');
 
 const adminOnly = (req, res, next) => {
   if (req.user.tipo !== 'admin') {

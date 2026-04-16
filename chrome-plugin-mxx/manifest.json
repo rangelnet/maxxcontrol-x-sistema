@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Mxxcontrol Relay - Master Admin",
+  "version": "1.0.0",
+  "description": "Ferramenta de bypass interno para extrair e gerenciar clientes em painéis Sigma/qPanel de forma invisível.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/#/customers", "*://*/#/users", "*://megga99.shop/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_title": "Mxxcontrol Relay Ativo"
+  }
+}

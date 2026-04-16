@@ -1,6 +1,14 @@
+<<<<<<< HEAD
+import { useState, useEffect } from 'react';
+import api from '../services/api';
+import axios from 'axios';
+import { Plus, Trash2, Play, Globe, Users, Settings, Server, List, CheckCircle, Loader, Search, XCircle, TreePine } from 'lucide-react';
+import IptvTreeViewer from './IptvTreeViewer';
+=======
 import React, { useState, useEffect } from 'react';
 import { Settings, Server, Plus, Trash2, Globe, CheckCircle, RefreshCcw, Loader, Tv, MonitorPlay, Box, Cast, RadioGroup, List, Play, TreePine, Users } from 'lucide-react';
 import api from '../../api/axios';
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
 
 // ─── Tab: Limpar qPanel (Plugin 1) ───────────────────────────────────────────
 const CleanQpanelTab = () => {
@@ -632,7 +640,11 @@ const IptvServersManager = () => {
   });
 
   const [qpanelForm, setQpanelForm] = useState({
+<<<<<<< HEAD
+    panel_name: '', panel_url: '', panel_username: '', panel_password: ''
+=======
     panel_name: '', panel_url: '', panel_username: ''
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
   });
 
   const [accountForm, setAccountForm] = useState({
@@ -749,7 +761,11 @@ const IptvServersManager = () => {
     try {
       await api.post('/api/iptv-plugin/add-qpanel', qpanelForm);
       alert('Painel qPanel adicionado!');
+<<<<<<< HEAD
+      setQpanelForm({ panel_name: '', panel_url: '', panel_username: '', panel_password: '' });
+=======
       setQpanelForm({ panel_name: '', panel_url: '', panel_username: '' });
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       setShowAddQpanel(false);
       loadQpanels();
     } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
@@ -770,6 +786,88 @@ const IptvServersManager = () => {
 
     try {
       setLoadState('waiting');
+<<<<<<< HEAD
+      setStatus('⏳ Conectando diretamente ao backend...');
+
+      let finalServers = [];
+      let message = '';
+      
+      try {
+        const saveResponse = await api.post('/api/iptv-plugin/qpanel-fetch-direct-servers', { 
+          panel_id: id 
+        });
+        
+        if (saveResponse.data.total > 0) {
+          finalServers = saveResponse.data.servers;
+          message = saveResponse.data.message;
+        }
+      } catch (backendErr) {
+        console.warn("Backend fetch error, going to fallback...", backendErr);
+      }
+
+      // ==========================================
+      // FALLBACK CLIENT-SIDE (BYPASS CLOUDFLARE)
+      // ==========================================
+      if (finalServers.length === 0) {
+        setStatus('Bloqueio CF detectado. Tentando via Navegador (Client-Side)...');
+        const baseUrl = qpanel.panel_url.replace(/\/$/, '');
+        
+        try {
+          // Fase 1: Auth (Sigma usa POST /api/auth/login)
+          const authRes = await axios.post(`${baseUrl}/api/auth/login`, {
+            username: qpanel.panel_username,
+            password: qpanel.panel_password
+          }, { timeout: 10000 });
+          
+          const token = authRes.data?.token || authRes.data?.access_token || authRes.data?.data?.token;
+
+          if (token) {
+            // Fase 2: Pega servers e packages
+            const config = { headers: { 'Authorization': `Bearer ${token}` } };
+            const [srvRes, pkgRes] = await Promise.allSettled([
+              axios.get(`${baseUrl}/api/servers`, config),
+              axios.get(`${baseUrl}/api/packages`, config)
+            ]);
+
+            const rawSrv = srvRes.status === 'fulfilled' ? (srvRes.value.data?.data || srvRes.value.data || []) : [];
+            const rawPkg = pkgRes.status === 'fulfilled' ? (pkgRes.value.data?.data || pkgRes.value.data || []) : [];
+
+            if (rawSrv.length > 0) {
+              finalServers = rawSrv.map(s => ({
+                id: s.id || s.server_id,
+                name: s.server_name || s.name || `Servidor ${s.id}`,
+                dns: s.server_dns || s.dns || s.url || '',
+                packages: rawPkg.filter(p => !p.server_id || Number(p.server_id) === Number(s.id))
+              }));
+
+              message = `✅ ${finalServers.length} servidor(es) carregado(s) via Navegador/Sigma`;
+              
+              // Fase 3: Envia os resultados pro backend para salvar
+              await api.post('/api/iptv-plugin/qpanel-sync-arrays', {
+                panel_id: id,
+                servers: finalServers
+              });
+            }
+          }
+        } catch (clientErr) {
+          console.error("Client fallback error:", clientErr);
+        }
+      }
+
+      if (finalServers.length === 0) {
+        setStatus(`❌ Falha: Ocorreu um erro no backend e o bypass do navegador também falhou.`);
+        setLoadState('error');
+      } else {
+        setStatus(message);
+        setLoadState('done');
+      }
+
+      // Recarregar os painéis para renderizar a nova lista
+      await loadQpanels();
+    } catch (err) {
+      console.error(err);
+      setStatus('❌ Erro Fatal: ' + (err.response?.data?.error || err.message));
+=======
       setStatus('⏳ Conectando diretamente ao qPanel...');
 
       const saveResponse = await api.post('/api/iptv-plugin/qpanel-fetch-direct-servers', { 
@@ -791,6 +889,7 @@ const IptvServersManager = () => {
     } catch (err) {
       console.error(err);
       setStatus('❌ Erro: ' + (err.response?.data?.error || err.message));
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       setLoadState('error');
     }
   };
@@ -1010,6 +1109,22 @@ const IptvServersManager = () => {
 
             {showAddQpanel && (
               <form onSubmit={handleAddQpanel} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:18, marginBottom:16 }}>
+<<<<<<< HEAD
+                <h4 style={{ fontSize:13, fontWeight:800, color:'#fff', marginBottom:12 }}>📡 Conectar Painel qPanel</h4>
+                <div style={{ background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.2)', borderRadius:9, padding:'10px 14px', marginBottom:12, fontSize:11, color:'#93c5fd' }}>
+                  ✅ <strong>Sem API key!</strong> O sistema usa seu <strong>usuário + senha</strong> de admin e tenta conectar automaticamente via:<br/>
+                  &nbsp;&nbsp;① <code>panel_api.php</code> (Xtream UI — mais comum no Brasil)<br/>
+                  &nbsp;&nbsp;② <code>player_api.php</code> (Xtream Codes)<br/>
+                  &nbsp;&nbsp;③ REST API com autenticação por sessão
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+                  <input style={inputSt} type='text' placeholder='Nome do painel (ex: Meu qPanel)' value={qpanelForm.panel_name} onChange={e=>setQpanelForm({...qpanelForm,panel_name:e.target.value})} required/>
+                  <input style={inputSt} type='url' placeholder='URL do painel (http://painel.com)' value={qpanelForm.panel_url} onChange={e=>setQpanelForm({...qpanelForm,panel_url:e.target.value})} required/>
+                  <input style={inputSt} type='text' placeholder='Usuário admin do painel' value={qpanelForm.panel_username} onChange={e=>setQpanelForm({...qpanelForm,panel_username:e.target.value})} required/>
+                  <input style={inputSt} type='password' placeholder='Senha do admin' value={qpanelForm.panel_password} onChange={e=>setQpanelForm({...qpanelForm,panel_password:e.target.value})} required/>
+                </div>
+                <button type='submit' style={{ ...btnPri, width:'100%', justifyContent:'center' }}>🔗 Adicionar Painel</button>
+=======
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
                   <input style={inputSt} type='text' placeholder='Nome do painel' value={qpanelForm.panel_name} onChange={e=>setQpanelForm({...qpanelForm,panel_name:e.target.value})} required/>
                   <input style={inputSt} type='url' placeholder='URL do painel (http://...)' value={qpanelForm.panel_url} onChange={e=>setQpanelForm({...qpanelForm,panel_url:e.target.value})} required/>
@@ -1017,6 +1132,7 @@ const IptvServersManager = () => {
                 </div>
                 <p style={{ fontSize:11, color:'#52525b', marginBottom:10 }}>ℹ️ Conexão direta segura API-to-API sem necessidade de Plugins locais.</p>
                 <button type='submit' style={{ ...btnPri, width:'100%', justifyContent:'center' }}>Adicionar Painel qPanel</button>
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
               </form>
             )}
 
@@ -1136,12 +1252,26 @@ const IptvServersManager = () => {
                   )}
 
                   {statusMsg && (
+<<<<<<< HEAD
+                    <div style={{ marginBottom:10, padding:'8px 12px', borderRadius:9, background:stColor, fontSize:11, fontWeight:600, color:stTxt, lineHeight:1.5 }}>{statusMsg}</div>
+                  )}
+
+                  {loadedServers.length === 0 && !statusMsg && (
+                    <div style={{ marginBottom:8, padding:'6px 10px', borderRadius:8, background:'rgba(255,255,255,0.03)', fontSize:10, color:'#52525b' }}>
+                      🔑 Usa usuário + senha · Tenta panel_api.php → player_api.php → REST automaticamente
+                    </div>
+=======
                     <div style={{ marginBottom:10, padding:'8px 12px', borderRadius:9, background:stColor, fontSize:11, fontWeight:600, color:stTxt }}>{statusMsg}</div>
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
                   )}
 
                   <button onClick={()=>handleLoadQpanelServers(qpanel)} disabled={isLoading}
                     style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:7, padding:'9px', background:isLoading?'rgba(255,255,255,0.04)':'linear-gradient(135deg,#FFA500,#FF6B00)', border:isLoading?'1px solid rgba(255,255,255,0.08)':'none', borderRadius:10, color:isLoading?'#52525b':'#fff', fontSize:12, fontWeight:700, cursor:isLoading?'not-allowed':'pointer', opacity:isLoading?0.7:1 }}>
+<<<<<<< HEAD
+                    {isLoading ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Conectando ao painel...</> : <>{loadedServers.length>0?'🔄 Recarregar':'🔌 Carregar'} Servidores</> }
+=======
                     {isLoading ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Carregando...</> : <>🔄 {loadedServers.length>0?'Recarregar':'Carregar'} Servidores</>}
+>>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
                   </button>
                 </div>
               );
@@ -1176,6 +1306,8 @@ const IptvServersManager = () => {
 
       {/* ── Tab: Limpar qPanel ── */}
       {activeTab === 'clean' && <CleanQpanelTab />}
+
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import axios from 'axios'
 // Em produção: sempre aponta para o backend no Render
 const isDev = import.meta.env.DEV
 const BACKEND_URL = import.meta.env.VITE_API_URL || 
-  (isDev ? 'http://localhost:3001' : 'https://maxxcontrol-x-sistema.onrender.com')
+  (isDev ? 'http://localhost:3001' : '')
 
 const api = axios.create({
   baseURL: BACKEND_URL,
