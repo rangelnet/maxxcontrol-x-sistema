@@ -21,7 +21,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vendor-ui': ['lucide-react', 'react-router-dom'],
-          'vendor-core': ['axios', 'framer-motion']
+          'vendor-core': ['axios']
         }
       }
     }
