@@ -72,7 +72,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center relative overflow-hidden">
 
       {/* ══════ BLOBS ANIMADOS DE FUNDO ══════ */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
@@ -85,7 +85,7 @@ const Login = () => {
           }}
         />
         {/* Blob laranja */}
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-brand-500 rounded-full mix-blend-multiply filter blur-[80px] opacity-20 animate-pulse" 
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-[#FFA500] rounded-full mix-blend-multiply filter blur-[80px] opacity-20 animate-pulse" 
           style={{ animation: 'blob 7s infinite' }} 
         />
         {/* Blob laranja escuro */}
@@ -102,7 +102,7 @@ const Login = () => {
       <div className="w-full max-w-md p-4 z-10 animate-fade-in">
         <div className="glass-effect rounded-2xl p-8 md:p-10 relative overflow-hidden" 
           style={{
-            background: 'rgba(24, 24, 27, 0.6)',
+            background: 'rgba(17, 17, 17, 0.6)',
             backdropFilter: 'blur(16px)',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
           }}
@@ -116,7 +116,7 @@ const Login = () => {
             </div>
 
             <h1 className="text-3xl font-black tracking-tight text-white mb-1">
-              Maxx<span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-orange-400">Control</span>
+              Maxx<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFA500] to-orange-400">Control</span>
             </h1>
             <p className="text-zinc-400 text-sm font-medium">
               Entre para acessar o sistema
@@ -128,18 +128,18 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Campo Email */}
               <div className="space-y-1 group">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider transition-colors group-focus-within:text-brand-500">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider transition-colors group-focus-within:text-[#FFA500]">
                   Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail size={16} className="text-zinc-600 transition-colors group-focus-within:text-brand-500" />
+                    <Mail size={16} className="text-zinc-600 transition-colors group-focus-within:text-[#FFA500]" />
                   </div>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-dark-900/50 border border-dark-600 rounded-xl text-white placeholder-zinc-600 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-[#111111]/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:border-[#FFA500] focus:ring-1 focus:ring-[#FFA500] outline-none transition-all shadow-[0_0_15px_rgba(255,165,0,0.1)]"
                     placeholder="seu@email.com"
                     required
                   />
@@ -148,18 +148,18 @@ const Login = () => {
 
               {/* Campo Senha */}
               <div className="space-y-1 group">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider transition-colors group-focus-within:text-brand-500">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider transition-colors group-focus-within:text-[#FFA500]">
                   Senha
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock size={16} className="text-zinc-600 transition-colors group-focus-within:text-brand-500" />
+                    <Lock size={16} className="text-zinc-600 transition-colors group-focus-within:text-[#FFA500]" />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
-                    className="w-full pl-11 pr-12 py-3 bg-dark-900/50 border border-dark-600 rounded-xl text-white placeholder-zinc-600 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all"
+                    className="w-full pl-11 pr-12 py-3 bg-[#111111]/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:border-[#FFA500] focus:ring-1 focus:ring-[#FFA500] outline-none transition-all shadow-[0_0_15px_rgba(255,165,0,0.1)]"
                     placeholder="••••••••"
                     required
                   />
@@ -181,8 +181,8 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full group relative flex justify-center items-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-brand-500 to-orange-600 hover:from-brand-600 hover:to-orange-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg mt-2 active:scale-95 transform"
-                style={{ boxShadow: '0 10px 15px -3px rgba(252, 95, 22, 0.2)' }}
+                className="w-full group relative flex justify-center items-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-[#FFA500] to-orange-600 hover:from-orange-400 hover:to-orange-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg mt-2 active:scale-95 transform"
+                style={{ boxShadow: '0 10px 15px -3px rgba(255, 165, 0, 0.2)' }}
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -201,13 +201,13 @@ const Login = () => {
             /* ══════ FORMULÁRIO 2FA ══════ */
             <form onSubmit={handleVerify2FA} className="space-y-6 animate-fade-in">
               <div className="text-center space-y-2">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand-500/10 text-brand-500 border border-brand-500/20 mb-2">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#FFA500]/10 text-[#FFA500] border border-[#FFA500]/20 mb-2">
                   <Zap size={24} className="animate-pulse" />
                 </div>
                 <h2 className="text-xl font-bold text-white uppercase tracking-tighter">Segurança Máxima</h2>
                 <p className="text-[11px] text-zinc-500 leading-relaxed">
                   Enviamos um código de acesso para o <br />
-                  <span className="text-brand-400 font-bold">seu Bot no Telegram.</span>
+                  <span className="text-[#FFA500] font-bold">seu Bot no Telegram.</span>
                 </p>
               </div>
 
@@ -217,7 +217,7 @@ const Login = () => {
                   maxLength={6}
                   value={tfaCode}
                   onChange={(e) => setTfaCode(e.target.value.replace(/\D/g, ''))}
-                  className="w-full text-center text-3xl tracking-[0.6em] font-mono py-4 bg-dark-900/50 border-2 border-brand-500/30 rounded-2xl text-white focus:border-brand-500 focus:ring-0 outline-none transition-all shadow-2xl shadow-brand-500/10 placeholder:text-zinc-800 placeholder:tracking-normal"
+                  className="w-full text-center text-3xl tracking-[0.6em] font-mono py-4 bg-[#111111]/50 border-2 border-[#FFA500]/30 rounded-2xl text-white focus:border-[#FFA500] focus:ring-0 outline-none transition-all shadow-2xl shadow-[#FFA500]/10 placeholder:text-zinc-800 placeholder:tracking-normal"
                   placeholder="000000"
                   required
                   autoFocus
@@ -234,7 +234,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading || tfaCode.length !== 6}
-                className="w-full group py-4 px-4 font-black rounded-2xl text-white bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:grayscale transition-all shadow-lg active:scale-95"
+                className="w-full group py-4 px-4 font-black rounded-2xl text-white bg-[#FFA500] hover:bg-orange-600 disabled:opacity-50 disabled:grayscale transition-all shadow-lg active:scale-95"
               >
                 {loading ? (
                     <Loader2 size={18} className="animate-spin mx-auto" />

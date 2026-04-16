@@ -15,6 +15,14 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    minify: 'esbuild'
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-ui': ['lucide-react', 'react-router-dom'],
+          'vendor-core': ['axios', 'framer-motion']
+        }
+      }
+    }
   }
 })
