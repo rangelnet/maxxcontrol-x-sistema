@@ -8,6 +8,7 @@ require('dotenv').config();
 
 const { initWebSocket } = require('./websocket/wsServer');
 const pool = require('./config/database');
+const sentinela = require('./modules/sentinela/sentinelaAgent');
 
 // Executar migrações pendentes automaticamente
 async function runPendingMigrations() {
@@ -538,7 +539,9 @@ const iptvTreeLimiter = rateLimit({
 app.use('/api/iptv-tree/', iptvTreeLimiter);
 
 // Servir arquivos estáticos do frontend (build do Vite)
-app.use(express.static(path.join(__dirname, 'web/dist')));
+const distPath = path.join(__dirname, 'web', 'dist');
+app.use(express.static(distPath));
+console.log('📂 Servindo frontend de:', distPath);
 
 // Rotas da API
 app.use('/api/auth', require('./modules/auth/authRoutes'));
@@ -607,15 +610,13 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Servir index.html para todas as outras rotas (SPA) - DEVE SER A ÚLTIMA ROTA
-app.get('*', (req, res) => {
-  // Ignorar rotas de API e arquivos estáticos conhecidos
-  const ignoredPaths = ['/api', '/banners', '/media', '/health'];
-  const isApiOrStatic = ignoredPaths.some(p => req.path.startsWith(p));
-  
-  if (!isApiOrStatic) {
-    res.sendFile(path.join(__dirname, 'web/dist/index.html'));
-  }
+// Servir index.html para todas as outras rotas (SPA)
+// Removido o wildcard daqui para mover para o final
+
+// Tratamento de erros
+app.use((err, req, res, next) => {
+  console.error('❌ Erro:', err);
+  res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
 // Criar HTTP server para Socket.IO + Express
@@ -728,11 +729,19 @@ app.post('/api/iptv-plugin/relay-command', async (req, res) => {
 
 // Servir index.html para todas as outras rotas (SPA) - DEVE SER A ÚLTIMA ROTA
 app.get('*', (req, res) => {
-  // Ignorar rotas de API e arquivos estáticos conhecidos
-  const ignoredPaths = ['/api', '/banners', '/media', '/health'];
-  if (!ignoredPaths.some(p => req.path.startsWith(p))) {
-    res.sendFile(path.join(__dirname, 'web/dist/index.html'));
+  // Se for uma rota de API, não servir o index.html (evitar confusão)
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Endpoint da API não encontrado' });
   }
+
+  // Se for qualquer outra rota, servir o frontend
+  const indexPath = path.join(__dirname, 'web', 'dist', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('❌ Erro ao servir index.html:', err.message);
+      res.status(404).send('Not Found: O frontend ainda não foi construído ou o arquivo index.html não existe.');
+    }
+  });
 });
 
 // Graceful shutdown
