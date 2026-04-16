@@ -8,7 +8,7 @@ require('dotenv').config();
 
 const { initWebSocket } = require('./websocket/wsServer');
 const pool = require('./config/database');
-const sentinela = require('./modules/sentinela/sentinelaAgent');
+const sentinela = require('./modules/maintenance/sentinela');
 
 // Executar migrações pendentes automaticamente
 async function runPendingMigrations() {
