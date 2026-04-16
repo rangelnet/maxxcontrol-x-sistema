@@ -4,7 +4,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const http = require('http');
-const sentinela = require('./modules/maintenance/sentinela');
 require('dotenv').config();
 
 const { initWebSocket } = require('./websocket/wsServer');
@@ -608,13 +607,15 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Servir index.html para todas as outras rotas (SPA)
-// Removido o wildcard daqui para mover para o final
-
-// Tratamento de erros
-app.use((err, req, res, next) => {
-  console.error('❌ Erro:', err);
-  res.status(500).json({ error: 'Erro interno do servidor' });
+// Servir index.html para todas as outras rotas (SPA) - DEVE SER A ÚLTIMA ROTA
+app.get('*', (req, res) => {
+  // Ignorar rotas de API e arquivos estáticos conhecidos
+  const ignoredPaths = ['/api', '/banners', '/media', '/health'];
+  const isApiOrStatic = ignoredPaths.some(p => req.path.startsWith(p));
+  
+  if (!isApiOrStatic) {
+    res.sendFile(path.join(__dirname, 'web/dist/index.html'));
+  }
 });
 
 // Criar HTTP server para Socket.IO + Express
