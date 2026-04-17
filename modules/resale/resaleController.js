@@ -30,15 +30,24 @@ exports.createReseller = async (req, res) => {
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
+    const welcome = require('../notifications/welcomeNotifier');
+    const expires_at = await welcome.calculateExpiration();
 
     const result = await pool.query(
-      `INSERT INTO users (nome, email, senha_hash, telefone, empresa, limite_dispositivos, creditos, tipo, status) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'revendedor', 'ativo') 
-       RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, tipo, status`,
-      [nome, email, senhaHash, telefone || null, empresa || null, limite_dispositivos || 10, creditos || 0]
+      `INSERT INTO users (nome, email, senha_hash, telefone, empresa, limite_dispositivos, creditos, tipo, status, expires_at) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'revendedor', 'ativo', $8) 
+       RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, tipo, status, expires_at`,
+      [nome, email, senhaHash, telefone || null, empresa || null, limite_dispositivos || 10, creditos || 0, expires_at]
     );
 
-    res.status(201).json(result.rows[0]);
+    const newUser = result.rows[0];
+
+    // Enviar Boas-vindas via WhatsApp
+    if (newUser.telefone) {
+        welcome.sendWelcomeCredentials(newUser, senha);
+    }
+
+    res.status(201).json(newUser);
   } catch (error) {
     console.error('Erro ao criar revendedor:', error);
     if (error.code === '23505') {

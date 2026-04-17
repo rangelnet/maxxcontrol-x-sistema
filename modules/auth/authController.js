@@ -4,7 +4,7 @@ const pool = require('../../config/database');
 
 // Registro de usuário
 exports.register = async (req, res) => {
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha, telefone } = req.body;
 
   try {
     const userExists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
@@ -15,12 +15,22 @@ exports.register = async (req, res) => {
 
     const senha_hash = await bcrypt.hash(senha, 10);
     
+    // Calcular expiração se houver tempo de teste configurado
+    const welcome = require('../notifications/welcomeNotifier');
+    const expires_at = await welcome.calculateExpiration();
+    
     const result = await pool.query(
-      'INSERT INTO users (nome, email, senha_hash) VALUES ($1, $2, $3) RETURNING id, nome, email, plano, status',
-      [nome, email, senha_hash]
+      'INSERT INTO users (nome, email, senha_hash, telefone, tipo, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nome, email, plano, status, telefone, expires_at',
+      [nome, email, senha_hash, telefone || null, 'revendedor', expires_at]
     );
 
     const user = result.rows[0];
+
+    // Enviar Boas-vindas via WhatsApp
+    if (user.telefone) {
+        welcome.sendWelcomeCredentials(user, senha); // Não espera para não travar resposta
+    }
+
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN
     });
