@@ -84,13 +84,34 @@ export default function Settings() {
   const [googleEmail, setGoogleEmail] = useState('')
   const [googleLoading, setGoogleLoading] = useState(false)
 
+  const showFeedback = (text, type = 'success') => {
+    setMessage({ text, type })
+    setTimeout(() => setMessage(null), 4000)
+  }
+
   useEffect(() => {
     loadSettings()
     loadTwoFaStatus()
     loadWaStatus()
     loadGoogleStatus()
+    loadDevices()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const loadDevices = async () => {
+    try {
+      setSessionsLoading(true)
+      const bid = localStorage.getItem('browser_id')
+      const res = await api.get('/auth/devices', {
+        headers: { 'x-device-id': bid }
+      })
+      setSessions(res.data)
+    } catch (err) {
+      console.error('Erro ao carregar dispositivos:', err)
+    } finally {
+      setSessionsLoading(false)
+    }
+  }
 
   const loadSettings = async () => {
     try {
@@ -109,6 +130,11 @@ export default function Settings() {
         setWelcomeTemplate(response.data.welcome_template || '')
         setMpAccessToken(response.data.mp_access_token || '')
         setMpPublicKey(response.data.mp_public_key || '')
+        
+        if (response.data.showEarnings !== undefined) setShowEarnings(response.data.showEarnings)
+        if (response.data.persistFilters !== undefined) setPersistFilters(response.data.persistFilters)
+        if (response.data.masterPermission !== undefined) setMasterPermission(response.data.masterPermission)
+        if (response.data.panelLanguage) setPanelLanguage(response.data.panelLanguage)
       }
     } catch (err) {
       console.error('Erro ao carregar configurações:', err)
@@ -122,18 +148,24 @@ export default function Settings() {
     } catch (err) { console.error(err) }
   }
 
-  const loadWaStatus = async () => {
+  const loadWaStatus = useCallback(async (forceConnect = false) => {
+    if (forceConnect && !localStorage.getItem('wa_terms_accepted')) {
+      setWaTermsModalOpen(true)
+      return
+    }
     setWaStatus('loading')
     try {
       const { data } = await api.get('/whatsapp/status')
       setWaStatus(data.status)
       if (data.status === 'connected') {
         loadWaGroups()
+      } else if (data.status === 'disconnected' && data.qrcode) {
+        setWaQrCode(data.qrcode)
       }
     } catch (err) {
       setWaStatus('disconnected')
     }
-  }
+  }, [])
 
   const loadGoogleStatus = async () => {
     setGoogleLoading(true)
@@ -154,31 +186,51 @@ export default function Settings() {
       let value = ''
       let payloadKey = key
 
-      if (key === 'whatsapp') value = whatsappInput
-      if (key === 'support') {
+      if (key === 'whatsapp' || key === 'wpp') { value = whatsappInput; payloadKey = 'whatsapp'; }
+      if (key === 'support' || key === 'sup') {
         value = supportInput
         payloadKey = 'support_whatsapp'
       }
-      if (key === 'telegram') {
+      if (key === 'telegram' || key === 'tel') {
         value = telegramId
         payloadKey = 'telegram_id'
       }
-      if (key === 'mp_credentials') {
+      if (key === 'mp' || key === 'mp_credentials') {
         await api.post('/settings', { mp_access_token: mpAccessToken, mp_public_key: mpPublicKey })
-        setMessage({ type: 'success', text: 'Credenciais Mercado Pago salvas!' })
+        showFeedback('Credenciais Mercado Pago salvas!')
+        return
+      }
+      if (key === 'profile') {
+        await api.post('/settings', { name: profileName, email: profileEmail, phone: profilePhone, telegram_username: profileTg })
+        showFeedback('Perfil atualizado!')
+        return
+      }
+      if (key === 'trial') {
+        await api.post('/settings', { panel_url: panelUrl, trial_hours: trialHours, welcome_template: welcomeTemplate })
+        showFeedback('Configurações de Trial salvas!')
+        return
+      }
+      if (key === 'earnings' || key === 'filters' || key === 'master' || key === 'language') {
+        const payload = {
+          showEarnings: key === 'earnings' ? !showEarnings : showEarnings,
+          persistFilters: key === 'filters' ? !persistFilters : persistFilters,
+          masterPermission: key === 'master' ? !masterPermission : masterPermission,
+          panelLanguage: key === 'language' ? value : panelLanguage
+        }
+        await api.post('/settings', payload)
+        showFeedback('Preferencia salva!')
         return
       }
 
       await api.post('/settings', { [payloadKey]: value })
-      if (key === 'whatsapp') setWhatsapp(value)
-      if (key === 'support') setSupportWhatsapp(value)
+      if (key === 'whatsapp' || key === 'wpp') setWhatsapp(value)
+      if (key === 'support' || key === 'sup') setSupportWhatsapp(value)
       
-      setMessage({ type: 'success', text: 'Alteração salva com sucesso!' })
+      showFeedback('Alteração salva com sucesso!')
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erro ao salvar alteração.' })
+      showFeedback('Erro ao salvar alteração.', 'error')
     } finally {
       setSaving(prev => ({ ...prev, [key]: false }))
-      setTimeout(() => setMessage(null), 3000)
     }
   }
 
@@ -194,12 +246,11 @@ export default function Settings() {
       const { data } = await api.post('/settings/logo', formData)
       setLogoUrl(data.logo_url)
       setLogoPreview(null)
-      setMessage({ type: 'success', text: 'Logo atualizada!' })
+      showFeedback('Logo atualizada!')
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erro ao subir logo.' })
+      showFeedback('Erro ao subir logo.', 'error')
     } finally {
       setSaving(prev => ({ ...prev, logo: false }))
-      setTimeout(() => setMessage(null), 3000)
     }
   }
 
@@ -210,12 +261,11 @@ export default function Settings() {
       await api.post('/settings/password', { currentPassword: currentPwd, newPassword: newPwd })
       setCurrentPwd('')
       setNewPwd('')
-      setMessage({ type: 'success', text: 'Senha alterada!' })
+      showFeedback('Senha alterada!')
     } catch (err) {
-      setMessage({ type: 'error', text: 'Senha atual incorreta.' })
+      showFeedback('Senha atual incorreta.', 'error')
     } finally {
       setSaving(prev => ({ ...prev, password: false }))
-      setTimeout(() => setMessage(null), 3000)
     }
   }
 
@@ -232,6 +282,10 @@ export default function Settings() {
   }
 
   const handleWaConnect = async () => {
+    if (!localStorage.getItem('wa_terms_accepted')) {
+      setWaTermsModalOpen(true)
+      return
+    }
     setWaLoadingAction(true)
     try {
       const { data } = await api.get('/whatsapp/connect')
@@ -248,9 +302,60 @@ export default function Settings() {
       }, 3000)
       setWaPolling(poll)
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erro ao gerar QR Code' })
+      showFeedback('Erro ao gerar QR Code', 'error')
     } finally {
       setWaLoadingAction(false)
+    }
+  }
+
+  const handleWaDisconnect = async () => {
+    if (!window.confirm('Deseja desconectar o WhatsApp?')) return
+    setWaLoadingAction(true)
+    try {
+      await api.post('/whatsapp/disconnect')
+      setWaStatus('disconnected')
+      setWaQrCode('')
+      setWaGroups([])
+      showFeedback('WhatsApp desconectado.', 'warning')
+    } catch (err) {
+      showFeedback('Erro ao desconectar.', 'error')
+    } finally {
+      setWaLoadingAction(false)
+    }
+  }
+
+  const handleToggleAutoPost = async () => {
+    const next = !waAutoPost
+    setWaAutoPost(next)
+    try {
+      await api.post('/whatsapp/autopost', { enabled: next, group_id: waSelectedGroup })
+    } catch (err) {
+      showFeedback('Erro ao salvar autopost.', 'error')
+    }
+  }
+
+  const handleToggleChannelAutoPost = async () => {
+    const next = !waChannelAutoPost
+    setWaChannelAutoPost(next)
+    try {
+      await api.post('/whatsapp/channel-autopost', { enabled: next, channel_id: waChannelId })
+    } catch (err) {
+      showFeedback('Erro ao salvar canal post.', 'error')
+    }
+  }
+
+  const handleResolveChannel = async () => {
+    if (!waChannelLink) return
+    setWaResolvingChannel(true)
+    try {
+      const { data } = await api.post('/whatsapp/resolve-channel', { link: waChannelLink })
+      setWaChannelId(data.id)
+      setWaChannelName(data.name)
+      showFeedback(`Canal "${data.name}" vinculado!`)
+    } catch (err) {
+      showFeedback('Link de canal inválido.', 'error')
+    } finally {
+      setWaResolvingChannel(false)
     }
   }
 
@@ -266,6 +371,7 @@ export default function Settings() {
           setGoogleConnected(true)
           setGoogleEmail(st.email)
           clearInterval(poll)
+          showFeedback('Google Conectado!')
         }
       }, 3000)
     } catch (err) {
@@ -282,25 +388,24 @@ export default function Settings() {
       await api.post('/google/disconnect')
       setGoogleConnected(false)
       setGoogleEmail('')
+      showFeedback('Google Desconectado.', 'warning')
     } catch (err) { console.error(err) }
     finally { setGoogleLoading(false) }
   }
 
-  const handleToggleAutoPost = () => {}
-  const handleToggleChannelAutoPost = () => {}
-  const handleResolveChannel = () => {}
-  const handleWaDisconnect = () => {}
-  const waAutoPost = false
-  const waChannelAutoPost = false
-  const waResolvingChannel = false
-  const waChannelLink = ''
-  const waChannelName = ''
+  const acceptWaTerms = () => {
+    localStorage.setItem('wa_terms_accepted', 'true')
+    setWaTermsModalOpen(false)
+    handleWaConnect()
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {message && (
         <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${
-          message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
+          message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 
+          message.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+          'bg-red-500/10 border-red-500/20 text-red-400'
         } backdrop-blur-md animate-in slide-in-from-right-8`}>
           {message.type === 'success' ? <CheckCircle className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
           <p className="font-medium text-sm">{message.text}</p>
@@ -323,7 +428,7 @@ export default function Settings() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* Seção trial e entrega */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-6">
               <Zap className="h-5 w-5 text-orange-500" />
               <h2 className="text-lg font-bold text-white">Sistema de Trial (Teste)</h2>
@@ -338,6 +443,7 @@ export default function Settings() {
                     onChange={e => setTrialHours(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
                   >
+                    <option value="1">01 Hora</option Fundamentos</option>
                     <option value="1">01 Hora</option>
                     <option value="2">02 Horas</option>
                     <option value="6">06 Horas</option>
@@ -356,11 +462,18 @@ export default function Settings() {
                   />
                 </div>
               </div>
+              <button 
+                onClick={() => handleSave('trial')}
+                disabled={saving.trial}
+                className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-black transition shadow-lg shadow-orange-500/20"
+              >
+                {saving.trial ? 'Salvando...' : 'Salvar Configurações de Cadastro'}
+              </button>
             </div>
           </div>
 
           {/* Boas vindas WhatsApp */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-6">
               <MessageCircle className="h-5 w-5 text-emerald-500" />
               <h2 className="text-lg font-bold text-white">Boas-vindas WhatsApp</h2>
@@ -379,7 +492,7 @@ export default function Settings() {
 
         <div className="space-y-8">
           {/* Contato do Banner */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
              <div className="flex items-center gap-3 mb-4">
                <Phone className="h-5 w-5 text-orange-500" />
                <h3 className="font-bold text-white">Contato do Banner</h3>
@@ -394,11 +507,11 @@ export default function Settings() {
                  placeholder="551199999999"
                />
                <button 
-                 onClick={() => handleSave('whatsapp')}
-                 disabled={saving.whatsapp}
+                 onClick={() => handleSave('wpp')}
+                 disabled={saving.wpp}
                  className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
                >
-                 {saving.whatsapp ? 'Salvando...' : 'Atualizar Número'}
+                 {saving.wpp ? 'Salvando...' : 'Atualizar Número'}
                </button>
                {whatsapp && (
                  <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
@@ -410,7 +523,7 @@ export default function Settings() {
           </div>
 
           {/* Identidade Visual */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <Globe className="h-5 w-5 text-blue-500" />
               <h3 className="font-bold text-white">Identidade Visual</h3>
@@ -437,7 +550,7 @@ export default function Settings() {
           </div>
 
           {/* Suporte */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <UserCheck className="h-5 w-5 text-indigo-500" />
               <h3 className="font-bold text-white">Contato de Suporte</h3>
@@ -451,7 +564,7 @@ export default function Settings() {
               placeholder="Ex: 554799999999"
             />
             <button 
-              onClick={() => handleSave('support')}
+              onClick={() => handleSave('sup')}
               className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition"
             >
               Salvar Contato
@@ -466,7 +579,7 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          {/* Envio Automático Telegram */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
                 <Send className="h-5 w-5 text-sky-400" />
@@ -487,7 +600,7 @@ export default function Settings() {
                     className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20"
                   />
                   <button 
-                    onClick={() => handleSave('telegram')}
+                    onClick={() => handleSave('tel')}
                     className="px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition"
                   >
                     <RefreshCw className="h-4 w-4" />
@@ -502,7 +615,7 @@ export default function Settings() {
          </div>
 
          {/* Mercado Pago */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-2">
               <CreditCard className="h-5 w-5 text-sky-500" />
               <h2 className="text-lg font-bold text-white">Mercado Pago</h2>
@@ -514,19 +627,27 @@ export default function Settings() {
                 value={mpAccessToken}
                 onChange={e => setMpAccessToken(e.target.value)}
                 placeholder="Access Token (APP_USR-...)"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none shadow-inner"
+              />
+              <input 
+                type="text"
+                value={mpPublicKey}
+                onChange={e => setMpPublicKey(e.target.value)}
+                placeholder="Public Key (APP_USR-...)"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none shadow-inner"
               />
               <button 
-                onClick={() => handleSave('mp_credentials')}
-                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition"
+                onClick={() => handleSave('mp')}
+                disabled={saving.mp}
+                className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-black transition shadow-lg shadow-sky-500/20"
               >
-                Conectar Gateway
+                {saving.mp ? 'Conectando...' : 'Conectar Gateway'}
               </button>
             </div>
          </div>
 
          {/* Alterar Senha */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <Lock className="h-5 w-5 text-rose-500" />
               <h2 className="text-lg font-bold text-white">Alterar Senha</h2>
@@ -557,7 +678,7 @@ export default function Settings() {
          </div>
 
          {/* Automação WhatsApp Status */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center justify-between mb-4">
                <div className="flex items-center gap-3">
                  <Radio className="h-5 w-5 text-emerald-500" />
@@ -573,7 +694,7 @@ export default function Settings() {
             
             {waStatus === 'connected' ? (
               <div className="space-y-4">
-                <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800">
+                <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800 shadow-inner">
                    <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
                          <Smartphone className="h-5 w-5 text-emerald-500" />
@@ -584,25 +705,180 @@ export default function Settings() {
                       </div>
                    </div>
                 </div>
-                <button
-                  onClick={handleWaDisconnect}
-                  className="w-full py-3 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 text-xs font-bold rounded-xl transition"
-                >
-                  Desconectar Celular
-                </button>
+                
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Grupo Destino</label>
+                  <select 
+                    value={waSelectedGroup} 
+                    onChange={e => setWaSelectedGroup(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm"
+                  >
+                    <option value="">Selecione um grupo...</option>
+                    {waGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                  <button 
+                    onClick={handleToggleAutoPost}
+                    className={`w-full py-3 rounded-xl text-xs font-black transition ${waAutoPost ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/20' : 'bg-zinc-800 text-white'}`}
+                  >
+                    {waAutoPost ? 'BOT ATIVO NO GRUPO' : 'ATIVAR BOT NO GRUPO'}
+                  </button>
+                </div>
+
+                <div className="pt-4 border-t border-zinc-800">
+                  <button
+                    onClick={handleWaDisconnect}
+                    className="w-full py-3 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 text-xs font-bold rounded-xl transition"
+                  >
+                    Desconectar Celular
+                  </button>
+                </div>
               </div>
             ) : (
-              <button 
-                onClick={handleWaConnect}
-                disabled={waLoadingAction}
-                className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-black text-sm rounded-2xl transition flex items-center justify-center gap-2 group shadow-lg shadow-emerald-500/20"
-              >
-                {waLoadingAction ? <Loader2 className="h-5 w-5 animate-spin" /> : <QrCode className="h-5 w-5 group-hover:scale-110 transition" />}
-                GERAR QR-CODE
-              </button>
+              <div className="space-y-6 flex flex-col items-center">
+                {waQrCode ? (
+                  <div className="bg-white p-4 rounded-2xl shadow-2xl animate-in zoom-in-95">
+                    <img src={`data:image/png;base64,${waQrCode}`} alt="QR Code WhatsApp" className="w-48 h-48" />
+                  </div>
+                ) : (
+                  <div className="h-48 w-48 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-800">
+                    <QrCode className="h-12 w-12" />
+                  </div>
+                )}
+                <button 
+                  onClick={handleWaConnect}
+                  disabled={waLoadingAction}
+                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-black text-sm rounded-2xl transition flex items-center justify-center gap-2 group shadow-lg shadow-emerald-500/20"
+                >
+                  {waLoadingAction ? <Loader2 className="h-5 w-5 animate-spin" /> : <QrCode className="h-5 w-5 group-hover:scale-110 transition" />}
+                  {waQrCode ? 'REGERAR QR-CODE' : 'GERAR QR-CODE'}
+                </button>
+              </div>
             )}
          </div>
+         
+         {/* Google Integration */}
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl col-span-1 md:col-span-2">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Globe className="h-6 w-6 text-blue-500" />
+                <div>
+                  <h2 className="text-xl font-bold text-white">Google Integration</h2>
+                  <p className="text-xs text-zinc-500 font-medium">Sincronize sua conta Google para serviços avançados.</p>
+                </div>
+              </div>
+              <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                googleConnected ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-800 text-zinc-500'
+              }`}>
+                {googleConnected ? 'Conectado' : 'Indisponível'}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className={`p-4 rounded-2xl border transition ${googleConnected ? 'bg-blue-500/5 border-blue-500/10' : 'bg-zinc-950/50 border-zinc-800 opacity-50'}`}>
+                 <div className="h-10 w-10 bg-blue-500/10 rounded-xl flex items-center justify-center mb-3">
+                    <Globe className="h-5 w-5 text-blue-400" />
+                 </div>
+                 <p className="text-xs font-bold text-white mb-1">Google Drive</p>
+                 <p className="text-[10px] text-zinc-500">Backup automático de templates.</p>
+              </div>
+
+              <div className={`p-4 rounded-2xl border transition ${googleConnected ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-zinc-950/50 border-zinc-800 opacity-50'}`}>
+                 <div className="h-10 w-10 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-3">
+                    <Users className="h-5 w-5 text-emerald-400" />
+                 </div>
+                 <p className="text-xs font-bold text-white mb-1">Google Contacts</p>
+                 <p className="text-[10px] text-zinc-500">Sincronização de leads.</p>
+              </div>
+
+              <div className="flex flex-col justify-center">
+                {googleConnected ? (
+                  <div className="space-y-4">
+                    <div className="px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-between">
+                       <span className="text-[10px] text-zinc-500 truncate max-w-[150px]">{googleEmail}</span>
+                       <CheckCircle className="h-3 w-3 text-emerald-500" />
+                    </div>
+                    <button 
+                      onClick={handleGoogleDisconnect}
+                      disabled={googleLoading}
+                      className="w-full py-3 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-500/5 transition"
+                    >
+                      {googleLoading ? 'DESCONECTANDO...' : 'DESCONECTAR GOOGLE'}
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleGoogleConnect}
+                    disabled={googleLoading}
+                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-black rounded-2xl shadow-lg shadow-blue-500/20 transition active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+                    CONECTAR COM GOOGLE
+                  </button>
+                )}
+              </div>
+            </div>
+         </div>
       </div>
+
+      {/* Perfil e Segurança Adicionais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Perfil */}
+        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+           <div className="flex items-center gap-3 mb-6">
+              <User className="h-5 w-5 text-orange-500" />
+              <h2 className="text-lg font-bold text-white">Perfil do Usuário</h2>
+           </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="Nome" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-sm" />
+              <input type="email" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} placeholder="Email" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-sm opacity-50 cursor-not-allowed" disabled />
+              <input type="text" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} placeholder="WhatsApp Pessoal" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-sm" />
+              <input type="text" value={profileTg} onChange={e => setProfileTg(e.target.value)} placeholder="Telegram Username" className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-sm" />
+           </div>
+           <button onClick={() => handleSave('profile')} className="w-full mt-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition">Salvar Perfil</button>
+        </div>
+
+        {/* Preferências */}
+        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+           <div className="flex items-center gap-3 mb-6">
+              <SlidersHorizontal className="h-5 w-5 text-orange-500" />
+              <h2 className="text-lg font-bold text-white">Preferências</h2>
+           </div>
+           <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-400">Mostrar Ganhos na Dashboard</span>
+                <button onClick={() => handleSave('earnings')}>{showEarnings ? <ToggleRight className="h-8 w-8 text-orange-500" /> : <ToggleLeft className="h-8 w-8 text-zinc-700" />}</button>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-400">Filtros Persistentes</span>
+                <button onClick={() => handleSave('filters')}>{persistFilters ? <ToggleRight className="h-8 w-8 text-orange-500" /> : <ToggleLeft className="h-8 w-8 text-zinc-700" />}</button>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {/* MODAL TERMOS WHATSAPP */}
+      {waTermsModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="h-16 w-16 bg-orange-500/10 rounded-3xl flex items-center justify-center mb-6">
+              <AlertTriangle className="h-8 w-8 text-orange-500" />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-4">Boas Práticas & Avisos</h2>
+            <div className="space-y-4 mb-8">
+              <p className="text-sm text-zinc-400 leading-relaxed">Para garantir a estabilidade da sua conta WhatsApp, siga estas recomendações:</p>
+              <ul className="space-y-3">
+                {['O uso de contas novas não é recomendado.', 'Evite disparos em massa para quem não tem seu contato salvo.', 'O sistema não se responsabiliza por banimentos.'].map((t, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-zinc-500">
+                    <CheckCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button onClick={acceptWaTerms} className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black rounded-2xl transition active:scale-95">LI E CONCORDO COM OS TERMOS</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
