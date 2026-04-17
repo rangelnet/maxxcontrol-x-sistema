@@ -4,7 +4,8 @@ services:
     env: node
     plan: free
     buildCommand: npm install && npm run build
-    startCommand: node server.js
+    startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: 18.x
@@ -15,3 +16,22 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: USE_SQLITE
+        value: "false"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: /api/*
+      - type: rewrite
+        source: /banners/*
+        destination: /banners/*
+      - type: rewrite
+        source: /media/*
+        destination: /media/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: maxxcontrol-db
+    plan: free
