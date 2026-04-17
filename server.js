@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const http = require('http');
+const fs = require('fs');
 require('dotenv').config();
 
 const { initWebSocket } = require('./websocket/wsServer');
@@ -538,8 +539,23 @@ const iptvTreeLimiter = rateLimit({
 });
 app.use('/api/iptv-tree/', iptvTreeLimiter);
 
-// Servir arquivos estáticos do frontend (build do Vite)
-const distPath = path.join(__dirname, 'web', 'dist');
+// Servir arquivos estáticos do frontend (build do Vite) - Busca dinâmica de diretório
+const possibleDistPaths = [
+  path.join(__dirname, 'web', 'dist'),
+  path.join(__dirname, '..', 'web', 'dist'),
+  path.join(process.cwd(), 'web', 'dist')
+];
+
+let distPath = possibleDistPaths[0];
+
+for (const p of possibleDistPaths) {
+  if (fs.existsSync(p)) {
+    distPath = p;
+    console.log('✅ Frontend localizado em:', distPath);
+    break;
+  }
+}
+
 app.use(express.static(distPath));
 console.log('📂 Servindo frontend de:', distPath);
 
@@ -678,11 +694,25 @@ app.get('*', (req, res) => {
   }
 
   // Se for qualquer outra rota, servir o frontend
-  const indexPath = path.join(__dirname, 'web', 'dist', 'index.html');
+  // Re-verificar o caminho do index.html dinamicamente
+  const possibleIndexPaths = [
+    path.join(__dirname, 'web', 'dist', 'index.html'),
+    path.join(__dirname, '..', 'web', 'dist', 'index.html'),
+    path.join(process.cwd(), 'web', 'dist', 'index.html')
+  ];
+
+  let indexPath = possibleIndexPaths[0];
+  for (const p of possibleIndexPaths) {
+    if (fs.existsSync(p)) {
+      indexPath = p;
+      break;
+    }
+  }
+
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('❌ Erro ao servir index.html:', err.message);
-      res.status(404).send('Not Found: O frontend ainda não foi construído ou o arquivo index.html não existe.');
+      res.status(404).send(`Not Found: O frontend não foi encontrado. Tentamos em: ${JSON.stringify(possibleIndexPaths)}`);
     }
   });
 });
