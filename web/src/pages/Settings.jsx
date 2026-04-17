@@ -504,7 +504,7 @@ export default function Settings() {
           <div className="mt-auto space-y-3">
             <input 
               type="text" value={whatsappInput} onChange={e => setWhatsappInput(e.target.value)}
-              placeholder=\"(11) 99912-3745\" 
+              placeholder="(11) 99912-3745" 
               className="w-full p-3 rounded-lg bg-dark-900 border border-dark-600 focus:border-maxx outline-none transition text-white"
             />
             <button 
@@ -512,7 +512,7 @@ export default function Settings() {
               disabled={saving.wpp}
               className="w-full bg-white hover:bg-zinc-200 text-dark-900 font-bold py-3 rounded-lg transition flex items-center justify-center disabled:opacity-50"
             >
-              {saving.wpp ? <span className=\"animate-spin\">⏳</span> : 'Atualizar Número'}
+              {saving.wpp ? <span className="animate-spin">⏳</span> : 'Atualizar Número'}
             </button>
           </div>
         </div>
@@ -550,7 +550,7 @@ export default function Settings() {
               disabled={!logoPreview || saving.logo}
               className="w-full bg-maxx hover:bg-maxx/90 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-maxx/20"
             >
-              {saving.logo ? <span className=\"animate-spin\">⏳</span> : 'Salvar Logo'}
+              {saving.logo ? <span className="animate-spin">⏳</span> : 'Salvar Logo'}
             </button>
           </div>
         </div>
@@ -582,7 +582,7 @@ export default function Settings() {
               <Phone className="absolute left-3 top-3.5 h-4 w-4 text-zinc-500" />
               <input 
                 type="text" value={supportInput} onChange={e => setSupportInput(e.target.value)}
-                placeholder=\"(11) 99999-9999\" 
+                placeholder="(11) 99999-9999" 
                 className="w-full p-3 pl-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-green-500 outline-none transition text-white"
               />
             </div>
@@ -591,7 +591,7 @@ export default function Settings() {
               disabled={saving.sup}
               className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition flex items-center justify-center shadow-lg disabled:opacity-50"
             >
-              {saving.sup ? <span className=\"animate-spin\">⏳</span> : 'Salvar Contato'}
+              {saving.sup ? <span className="animate-spin">⏳</span> : 'Salvar Contato'}
             </button>
           </div>
         </div>
@@ -628,7 +628,7 @@ export default function Settings() {
               <span className="absolute left-3 top-3.5 text-zinc-600 text-xs font-bold">#</span>
               <input 
                 type="text" value={telegramId} onChange={e => setTelegramId(e.target.value)}
-                placeholder=\"-100...\" 
+                placeholder="-100..." 
                 className="w-full p-3 pl-8 rounded-lg bg-dark-900 border border-dark-600 focus:border-blue-500 outline-none transition text-white font-mono text-sm"
               />
             </div>
@@ -638,7 +638,7 @@ export default function Settings() {
                 disabled={saving.tel || !telegramId}
                 className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 shadow-lg flex items-center justify-center gap-2"
               >
-                {saving.tel ? <span className=\"animate-spin\">⏳</span> : 'Salvar'}
+                {saving.tel ? <span className="animate-spin">⏳</span> : 'Salvar'}
               </button>
               <button 
                 disabled={!telegramId}
@@ -683,7 +683,7 @@ export default function Settings() {
             type={showMpToken ? 'text' : 'password'}
             value={mpAccessToken}
             onChange={e => setMpAccessToken(e.target.value)}
-            placeholder=\"APP_USR-123456789...\"
+            placeholder="APP_USR-123456789..."
             className="w-full p-3 pl-10 pr-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-[#009EE3] outline-none transition text-white text-sm font-mono"
           />
           <button onClick={() => setShowMpToken(!showMpToken)} className="absolute right-3 top-3.5 text-zinc-500 hover:text-white transition">
@@ -701,7 +701,7 @@ export default function Settings() {
               type="text"
               value={mpPublicKey}
               onChange={e => setMpPublicKey(e.target.value)}
-              placeholder=\"APP_USR-...\"
+              placeholder="APP_USR-..."
               className="w-full p-3 pl-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-zinc-400 outline-none transition text-white text-sm font-mono"
             />
           </div>
@@ -712,7 +712,7 @@ export default function Settings() {
           disabled={saving.mp || (!mpAccessToken && !mpPublicKey)}
           className="w-full md:w-auto bg-[#009EE3] hover:bg-[#009EE3]/80 text-white font-bold py-3 px-8 rounded-lg transition disabled:opacity-50 shadow-lg shadow-[#009EE3]/20 flex items-center justify-center gap-2 h-12"
         >
-          {saving.mp ? <span className=\"animate-spin\">⏳</span> : 'Salvar API'}
+          {saving.mp ? <span className="animate-spin">⏳</span> : 'Salvar API'}
         </button>
       </div>
 
@@ -734,7 +734,7 @@ export default function Settings() {
           <Key className="absolute left-3 top-3.5 h-4 w-4 text-zinc-600" />
           <input
             type={showPwd ? 'text' : 'password'} value={currentPwd} onChange={e => setCurrentPwd(e.target.value)}
-            placeholder=\"••••••\"
+            placeholder="••••••"
             className="w-full p-3 pl-10 pr-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-maxx outline-none transition text-white text-sm"
           />
           <button onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-3.5 text-zinc-500 hover:text-white transition">
@@ -758,7 +758,7 @@ export default function Settings() {
         disabled={saving.pwd || !currentPwd || !newPwd}
         className="w-full bg-maxx hover:bg-maxx/90 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 shadow-lg flex items-center justify-center gap-2"
       >
-        {saving.pwd ? <span className=\"animate-spin\">⏳</span> : 'Atualizar Senha'}
+        {saving.pwd ? <span className="animate-spin">⏳</span> : 'Atualizar Senha'}
       </button>
     </div>
   </div>
@@ -1106,7 +1106,7 @@ export default function Settings() {
       <button onClick={() => handleSave('profile')}
         disabled={saving.profile}
         className="bg-maxx hover:bg-maxx/90 text-white font-bold py-3 px-8 rounded-lg transition disabled:opacity-50 shadow-lg shadow-maxx/20 flex items-center gap-2">
-        {saving.profile ? <span className=\"animate-spin\">⏳</span> : <><CheckCircle className="h-4 w-4" /> Salvar Perfil</>}
+        {saving.profile ? <span className="animate-spin">⏳</span> : <><CheckCircle className="h-4 w-4" /> Salvar Perfil</>}
       </button>
     </div>
   </div>
@@ -1260,7 +1260,7 @@ export default function Settings() {
             <code className="text-xs text-maxx font-mono break-all flex-1">{twoFaSecret}</code>
             <button onClick={() => { navigator.clipboard.writeText(twoFaSecret); setCopiedSecret(true); setTimeout(() => setCopiedSecret(false), 1500) }}
               className="shrink-0 text-zinc-500 hover:text-maxx transition">
-              {copiedSecret ? <CheckCircle className=\"h-4 w-4 text-green-500\" /> : <Copy className=\"h-4 w-4\" />}
+              {copiedSecret ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
           <p className="text-[10px] text-zinc-600 mt-2">Ou insira a chave manualmente no app.</p>
@@ -1280,7 +1280,7 @@ export default function Settings() {
             <button onClick={() => { if (twoFaCode.length === 6) { setTwoFaEnabled(true); setTwoFaStep('done'); showFeedback('2FA via App ativado!', 'success') } }}
               disabled={twoFaCode.length !== 6 || twoFaLoading}
               className="flex-1 bg-maxx hover:bg-maxx/90 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 shadow-lg shadow-maxx/20 flex items-center justify-center gap-2">
-              {twoFaLoading ? <Loader2 className=\"h-4 w-4 animate-spin\" /> : <><ShieldCheck className=\"h-4 w-4\" /> Confirmar</>}
+              {twoFaLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> Confirmar</>}
             </button>
           </div>
         </div>
@@ -1362,7 +1362,7 @@ export default function Settings() {
               }}
               disabled={twoFaCode.length !== 6 || twoFaLoading}
               className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition disabled:opacity-50 shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-              {twoFaLoading ? <Loader2 className=\"h-4 w-4 animate-spin\" /> : <><ShieldCheck className=\"h-4 w-4\" /> Confirmar</>}
+              {twoFaLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> Confirmar</>}
             </button>
           </div>
         </div>
@@ -1459,7 +1459,7 @@ export default function Settings() {
                   try {
                     await api.delete(`/api/auth/devices/${session.id}`)
                     loadDevices()
-                    showFeedback(`Sessão \"${session.device}\" encerrada.`, 'warning')
+                    showFeedback(`Sessão "${session.device}" encerrada.`, 'warning')
                   } catch (err) {
                     showFeedback('Erro ao encerrar sessão', 'warning')
                   }
@@ -1566,7 +1566,7 @@ export default function Settings() {
           <>
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className=\"h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse\"></div>
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse"></div>
                 <p className="text-xs font-bold text-green-400 uppercase tracking-wider">Conta Conectada</p>
               </div>
               {googleLastSync && (
@@ -1581,7 +1581,7 @@ export default function Settings() {
               disabled={googleLoading}
               className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-400 text-sm font-bold transition disabled:opacity-50"
             >
-              {googleLoading ? <Loader2 className=\"h-4 w-4 animate-spin\" /> : <Unlink className=\"h-4 w-4\" />}
+              {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />}
               Desconectar Google
             </button>
           </>
@@ -1599,11 +1599,11 @@ export default function Settings() {
             <button
               onClick={handleGoogleConnect}
               disabled={googleLoading}
-              className=\"w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-500/20 disabled:opacity-50 active:scale-95\"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-500/20 disabled:opacity-50 active:scale-95"
             >
               {googleLoading
-                ? <Loader2 className=\"h-4 w-4 animate-spin\" />
-                : <ExternalLink className=\"h-4 w-4\" />
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <ExternalLink className="h-4 w-4" />
               }
               {googleLoading ? 'Aguardando autorização...' : 'Conectar com Google'}
             </button>
