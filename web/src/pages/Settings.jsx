@@ -84,6 +84,24 @@ export default function Settings() {
   const [googleEmail, setGoogleEmail] = useState('')
   const [googleLoading, setGoogleLoading] = useState(false)
 
+  // === DNS Custom State ===
+  const [dnsHost, setDnsHost] = useState('')
+  const [dnsPort, setDnsPort] = useState('')
+  const [dnsProtocol, setDnsProtocol] = useState('https')
+
+  // === EPG API State ===
+  const [epgUrl, setEpgUrl] = useState('')
+  const [epgInterval, setEpgInterval] = useState('24') // Horas
+
+  // === Xtream API State ===
+  const [xtreamUrl, setXtreamUrl] = useState('')
+  const [xtreamUser, setXtreamUser] = useState('')
+  const [xtreamPass, setXtreamPass] = useState('')
+
+  // === P2P Mesh State ===
+  const [p2pEnabled, setP2pEnabled] = useState(false)
+  const [p2pKey, setP2pKey] = useState('')
+
   const showFeedback = (text, type = 'success') => {
     setMessage({ text, type })
     setTimeout(() => setMessage(null), 4000)
@@ -135,6 +153,18 @@ export default function Settings() {
         if (response.data.persistFilters !== undefined) setPersistFilters(response.data.persistFilters)
         if (response.data.masterPermission !== undefined) setMasterPermission(response.data.masterPermission)
         if (response.data.panelLanguage) setPanelLanguage(response.data.panelLanguage)
+
+        // Carregar APIs obrigatórias
+        setDnsHost(response.data.dns_host || '')
+        setDnsPort(response.data.dns_port || '')
+        setDnsProtocol(response.data.dns_protocol || 'https')
+        setEpgUrl(response.data.epg_url || '')
+        setEpgInterval(response.data.epg_interval || '24')
+        setXtreamUrl(response.data.xtream_url || '')
+        setXtreamUser(response.data.xtream_user || '')
+        setXtreamPass(response.data.xtream_pass || '')
+        setP2pEnabled(response.data.p2p_enabled || false)
+        setP2pKey(response.data.p2p_key || '')
       }
     } catch (err) {
       console.error('Erro ao carregar configurações:', err)
@@ -219,6 +249,28 @@ export default function Settings() {
         }
         await api.post('/settings', payload)
         showFeedback('Preferencia salva!')
+        return
+      }
+      if (key === 'dns') {
+        await api.post('/settings', { dns_host: dnsHost, dns_port: dnsPort, dns_protocol: dnsProtocol })
+        showFeedback('Configurações DNS salvas!')
+        return
+      }
+      if (key === 'epg') {
+        await api.post('/settings', { epg_url: epgUrl, epg_interval: epgInterval })
+        showFeedback('Configurações EPG salvas!')
+        return
+      }
+      if (key === 'xtream') {
+        await api.post('/settings', { xtream_url: xtreamUrl, xtream_user: xtreamUser, xtream_pass: xtreamPass })
+        showFeedback('Configurações Xtream salvas!')
+        return
+      }
+      if (key === 'p2p') {
+        const next = !p2pEnabled
+        setP2pEnabled(next)
+        await api.post('/settings', { p2p_enabled: next, p2p_key: p2pKey })
+        showFeedback(`P2P Engine ${next ? 'ativada' : 'desativada'}!`)
         return
       }
 
@@ -485,6 +537,37 @@ export default function Settings() {
                 placeholder="Olá {nome}, seu acesso foi criado..."
                 className="w-full h-32 bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-white resize-none focus:ring-2 focus:ring-orange-500/20 outline-none"
               />
+              <button 
+                onClick={() => handleSave('trial')}
+                disabled={saving.trial}
+                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition"
+              >
+                {saving.trial ? 'Salvando...' : 'Salvar Texto de Boas-vindas'}
+              </button>
+            </div>
+          </div>
+
+          {/* P2P Mesh Engine (Rule 5) */}
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Radio className="h-5 w-5 text-orange-500" />
+                <h2 className="text-lg font-bold text-white">P2P Mesh Engine (Rule 5)</h2>
+              </div>
+              <button onClick={() => handleSave('p2p')}>
+                {p2pEnabled ? <ToggleRight className="h-8 w-8 text-orange-500" /> : <ToggleLeft className="h-8 w-8 text-zinc-700" />}
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500 mb-6">Reduz o buffer e melhora a estabilidade compartilhando banda entre usuários.</p>
+            <div className="space-y-4">
+               <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1 block">Chave de Licença P2P</label>
+               <input 
+                 type="password" 
+                 value={p2pKey} 
+                 onChange={e => setP2pKey(e.target.value)}
+                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none"
+                 placeholder="Insira sua chave premium"
+               />
             </div>
           </div>
         </div>
@@ -819,6 +902,104 @@ export default function Settings() {
          </div>
       </div>
 
+      {/* Sessões Ativas / Dispositivos */}
+      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Monitor className="h-6 w-6 text-orange-500" />
+            <div>
+              <h2 className="text-xl font-bold text-white">Sessões Ativas</h2>
+              <p className="text-xs text-zinc-500 font-medium">Dispositivos conectados à sua conta no momento.</p>
+            </div>
+          </div>
+          <button 
+            onClick={loadDevices}
+            disabled={sessionsLoading}
+            className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition"
+          >
+            <RefreshCw className={`h-4 w-4 ${sessionsLoading ? 'animate-spin text-orange-500' : ''}`} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sessions.map((session) => (
+            <div key={session.id} className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                 <div className="h-10 w-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+                    {session.icon === 'monitor' ? <Monitor className="h-5 w-5" /> : session.icon === 'phone' ? <Smartphone className="h-5 w-5" /> : <Laptop className="h-5 w-5" />}
+                 </div>
+                 <div>
+                    <div className="flex items-center gap-2">
+                       <p className="text-xs font-bold text-white">{session.device}</p>
+                       {session.active && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                    </div>
+                    <p className="text-[10px] text-zinc-500 font-medium">{session.ip} • {session.location} • {session.time}</p>
+                 </div>
+              </div>
+              {!session.active && (
+                <button className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-red-500 rounded-lg transition">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* APIs Obrigatórias (DNS, EPG, Xtream) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         {/* DNS Custom */}
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Radio className="h-5 w-5 text-orange-500" />
+              <h2 className="text-lg font-bold text-white">DNS Custom (Rule 6)</h2>
+            </div>
+            <div className="space-y-4">
+               <div className="grid grid-cols-3 gap-2">
+                  <select value={dnsProtocol} onChange={e => setDnsProtocol(e.target.value)} className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none">
+                    <option value="http">HTTP</option>
+                    <option value="https">HTTPS</option>
+                  </select>
+                  <input type="text" value={dnsHost} onChange={e => setDnsHost(e.target.value)} placeholder="Host" className="col-span-2 bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
+               </div>
+               <input type="text" value={dnsPort} onChange={e => setDnsPort(e.target.value)} placeholder="Porta" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
+               <button onClick={() => handleSave('dns')} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition">Configurar DNS</button>
+            </div>
+         </div>
+
+         {/* EPG API */}
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Monitor className="h-5 w-5 text-emerald-500" />
+              <h2 className="text-lg font-bold text-white">EPG API (Rule 3)</h2>
+            </div>
+            <div className="space-y-4">
+               <input type="text" value={epgUrl} onChange={e => setEpgUrl(e.target.value)} placeholder="URL do XMLTV / JSON" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
+               <select value={epgInterval} onChange={e => setEpgInterval(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none">
+                  <option value="1">Atualizar a cada 1h</option>
+                  <option value="6">Atualizar a cada 6h</option>
+                  <option value="12">Atualizar a cada 12h</option>
+                  <option value="24">Atualizar a cada 24h</option>
+               </select>
+               <button onClick={() => handleSave('epg')} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition">Salvar EPG</button>
+            </div>
+         </div>
+
+         {/* Xtream API */}
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Zap className="h-5 w-5 text-sky-500" />
+              <h2 className="text-lg font-bold text-white">Xtream API (Rule 1)</h2>
+            </div>
+            <div className="space-y-3">
+               <input type="text" value={xtreamUrl} onChange={e => setXtreamUrl(e.target.value)} placeholder="URL do Servidor" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
+               <input type="text" value={xtreamUser} onChange={e => setXtreamUser(e.target.value)} placeholder="Usuário" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
+               <input type="password" value={xtreamPass} onChange={e => setXtreamPass(e.target.value)} placeholder="Senha" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
+               <button onClick={() => handleSave('xtream')} className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition">Conectar Xtream</button>
+            </div>
+         </div>
+      </div>
+
       {/* Perfil e Segurança Adicionais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Perfil */}
@@ -852,6 +1033,49 @@ export default function Settings() {
                 <button onClick={() => handleSave('filters')}>{persistFilters ? <ToggleRight className="h-8 w-8 text-orange-500" /> : <ToggleLeft className="h-8 w-8 text-zinc-700" />}</button>
               </div>
            </div>
+        </div>
+      </div>
+
+      {/* Autenticação em Duas Etapas (2FA) */}
+      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-6 w-6 text-orange-500" />
+            <h2 className="text-xl font-bold text-white">Segurança 2FA</h2>
+          </div>
+          <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
+            twoFaEnabled ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
+          }`}>
+            {twoFaEnabled ? 'Protegido' : 'Vulnerável'}
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div className="space-y-4">
+            <p className="text-xs text-zinc-500 leading-relaxed font-medium">Adicione uma camada extra de segurança à sua conta usando Autenticação em Duas Etapas.</p>
+            {!twoFaEnabled ? (
+              <button 
+                onClick={() => setTwoFaStep('type-select')}
+                className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black text-xs uppercase tracking-widest rounded-2xl transition shadow-lg shadow-orange-500/20 active:scale-95"
+              >
+                ATIVAR PROTEÇÃO AGORA
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleSave('2fa-disable')}
+                className="w-full py-4 bg-zinc-800 hover:bg-red-500/10 hover:text-red-500 text-white text-xs font-black rounded-2xl transition"
+              >
+                DESATIVAR 2FA
+              </button>
+            )}
+          </div>
+          
+          <div className="p-6 bg-zinc-950/50 border border-zinc-800/50 rounded-[2rem] border-dashed flex flex-col items-center justify-center text-center">
+             <Key className={`h-10 w-10 mb-3 ${twoFaEnabled ? 'text-emerald-500' : 'text-zinc-700'}`} />
+             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-tight">
+               {twoFaEnabled ? 'Acesso Biométrico / App Ativo' : 'Nenhuma chave configurada'}
+             </p>
+          </div>
         </div>
       </div>
 
