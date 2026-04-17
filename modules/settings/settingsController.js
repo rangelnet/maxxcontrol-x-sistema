@@ -5,7 +5,11 @@ exports.getSettings = async (req, res) => {
     const result = await pool.query('SELECT key, value FROM global_settings');
     const settings = {};
     result.rows.forEach(row => {
-      settings[row.key] = row.value;
+      try {
+        settings[row.key] = JSON.parse(row.value);
+      } catch (e) {
+        settings[row.key] = row.value;
+      }
     });
     res.json(settings);
   } catch (error) {
@@ -19,7 +23,8 @@ exports.updateSetting = async (req, res) => {
   const { value } = req.body;
 
   try {
-    const jsonValue = typeof value === 'object' ? JSON.stringify(value) : JSON.stringify({ data: value });
+    // Salva o valor diretamente (objetos são stringificados, strings ficam como strings JSON)
+    const jsonValue = JSON.stringify(value);
 
     await pool.query(
       `INSERT INTO global_settings (key, value, updated_at) 
