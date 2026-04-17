@@ -419,16 +419,61 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Aviso 24h */}
-      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex gap-4 items-center shadow-sm">
-        <div className="h-12 w-12 bg-yellow-500/20 rounded-full flex items-center justify-center shrink-0 text-yellow-500 border border-yellow-500/10">
-          <AlertTriangle className="h-5 w-5" />
+      {/* NOVO: BLOCO 5: Trial e Boas-vindas (MOVIDO PARA O TOPO) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-dark-800 p-6 rounded-xl border border-dark-700 shadow-lg hover:border-maxx/40 transition duration-300">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold mb-1 text-white flex items-center gap-2">
+              <Clock className="h-5 w-5 text-maxx" /> Sistema de Trial (Teste)
+            </h2>
+            <p className="text-sm text-zinc-400">Configure o tempo de acesso gratuito e a URL oficial.</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">URL Oficial do Painel</label>
+              <div className="relative">
+                <Link className="absolute left-3 top-3.5 h-4 w-4 text-maxx" />
+                <input 
+                  type="text" value={panelUrl} onChange={e => setPanelUrl(e.target.value)}
+                  placeholder="https://sua-url.com" 
+                  className="w-full p-3 pl-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-maxx outline-none text-white text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Tempo de Teste (Horas)</label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-3.5 h-4 w-4 text-zinc-500" />
+                <input 
+                  type="number" value={trialHours} onChange={e => setTrialHours(e.target.value)}
+                  className="w-full p-3 pl-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-maxx outline-none text-white text-sm"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <h4 className="text-yellow-500 font-bold text-xs uppercase tracking-wide mb-1">Política de Alteração</h4>
-          <p className="text-xs text-zinc-300 leading-relaxed font-medium">
-            Por medidas de segurança, a <strong>Logo</strong> só pode ser alterada 1 vez a cada 24 horas.
-          </p>
+
+        <div className="bg-dark-800 p-6 rounded-xl border border-dark-700 shadow-lg hover:border-green-500/30 transition duration-300">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold mb-1 text-white flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-green-500" /> Boas-vindas WhatsApp
+            </h2>
+            <p className="text-sm text-zinc-400">Personalize a mensagem enviada aos novos revendedores.</p>
+          </div>
+          <textarea 
+            value={welcomeTemplate} onChange={e => setWelcomeTemplate(e.target.value)}
+            rows="5"
+            className="w-full p-3 rounded-lg bg-dark-900 border border-dark-600 focus:border-green-500 outline-none text-white text-sm resize-none mb-4"
+            placeholder="Use {nome}, {login}, {senha}, {url}, {expiracao}"
+          />
+          <button 
+            onClick={() => handleSave('trial')}
+            disabled={saving.trial}
+            className="w-full bg-maxx hover:bg-maxx/90 text-white font-bold py-3 rounded-lg transition shadow-lg flex items-center justify-center gap-2"
+          >
+            {saving.trial ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Salvar Configurações de Cadastro
+          </button>
         </div>
       </div>
 
@@ -601,64 +646,6 @@ export default function Settings() {
 
       </div>
 
-      {/* NOVO: BLOCO 5: Trial e Boas-vindas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <div className="bg-dark-800 p-6 rounded-xl border border-dark-700 shadow-lg hover:border-maxx/40 transition duration-300">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold mb-1 text-white flex items-center gap-2">
-              <Clock className="h-5 w-5 text-maxx" /> Sistema de Trial (Teste)
-            </h2>
-            <p className="text-sm text-zinc-400">Configure o tempo de acesso gratuito e a URL oficial.</p>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">URL Oficial do Painel</label>
-              <div className="relative">
-                <Link className="absolute left-3 top-3.5 h-4 w-4 text-maxx" />
-                <input 
-                  type="text" value={panelUrl} onChange={e => setPanelUrl(e.target.value)}
-                  placeholder="https://sua-url.com" 
-                  className="w-full p-3 pl-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-maxx outline-none text-white text-sm"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Tempo de Teste (Horas)</label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-3.5 h-4 w-4 text-zinc-500" />
-                <input 
-                  type="number" value={trialHours} onChange={e => setTrialHours(e.target.value)}
-                  className="w-full p-3 pl-10 rounded-lg bg-dark-900 border border-dark-600 focus:border-maxx outline-none text-white text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-dark-800 p-6 rounded-xl border border-dark-700 shadow-lg hover:border-green-500/30 transition duration-300">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold mb-1 text-white flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-green-500" /> Boas-vindas WhatsApp
-            </h2>
-            <p className="text-sm text-zinc-400">Personalize a mensagem enviada aos novos revendedores.</p>
-          </div>
-          <textarea 
-            value={welcomeTemplate} onChange={e => setWelcomeTemplate(e.target.value)}
-            rows="5"
-            className="w-full p-3 rounded-lg bg-dark-900 border border-dark-600 focus:border-green-500 outline-none text-white text-sm resize-none mb-4"
-            placeholder="Use {nome}, {login}, {senha}, {url}, {expiracao}"
-          />
-          <button 
-            onClick={() => handleSave('trial')}
-            disabled={saving.trial}
-            className="w-full bg-maxx hover:bg-maxx/90 text-white font-bold py-3 rounded-lg transition shadow-lg flex items-center justify-center gap-2"
-          >
-            {saving.trial ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            Salvar Configurações de Cadastro
-          </button>
-        </div>
-      </div>
-
       {/* Gateway Mercado Pago */}
       <div className="bg-dark-800 p-6 rounded-xl border border-dark-700 shadow-lg hover:border-[#009EE3]/40 transition duration-300 overflow-hidden relative">
         <div className="absolute right-0 top-0 p-4 opacity-5 pointer-events-none">
@@ -738,6 +725,32 @@ export default function Settings() {
           >
             Atualizar Senha
           </button>
+        </div>
+      </div>
+
+      {/* Automação WhatsApp */}
+      <div className="glass-effect rounded-2xl border border-white/5 shadow-xl relative overflow-hidden group hover:border-green-500/20 transition duration-300 mt-6">
+        <div className="absolute right-0 top-0 p-4 opacity-5 pointer-events-none">
+          <MessageCircle className="h-28 w-28" />
+        </div>
+
+        <div className="flex items-center justify-between p-6 border-b border-white/5 flex-wrap gap-2 relative z-10">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-green-500" /> Automação WhatsApp
+              <span className="text-[10px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded border border-green-500/20 font-black uppercase">NOVO</span>
+            </h2>
+            <p className="text-sm text-zinc-400 mt-0.5">Conecte seu celular para postar artes automaticamente nos seus grupos.</p>
+          </div>
+          {waStatus === 'connected' && (
+            <button
+              onClick={() => loadWaGroups()}
+              className="flex items-center gap-2 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 transition"
+            >
+              <RefreshCw className={`h-3.5 w-3.5`} />
+              Atualizar Grupos
+            </button>
+          )}
         </div>
       </div>
 
