@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: maxxcontrol-frontend
+    name: maxxcontrol-x-sistema
     env: node
     plan: free
     buildCommand: npm install && npm run build
