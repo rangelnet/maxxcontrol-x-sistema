@@ -543,7 +543,10 @@ const distPath = path.join(__dirname, 'web', 'dist');
 app.use(express.static(distPath));
 console.log('📂 Servindo frontend de:', distPath);
 
-// Rotas da API
+// ============================================
+// ROTAS DA API
+// ============================================
+
 app.use('/api/auth', require('./modules/auth/authRoutes'));
 app.use('/api/device', require('./modules/mac/macRoutes'));
 app.use('/api/mac', require('./modules/mac/macRoutes')); // Alias para compatibilidade com app Android
@@ -577,111 +580,6 @@ app.use('/api/playlist-manager', require('./modules/playlist-manager/playlistMan
 
 // Rotas do Plugin IPTV Unificado (integração com MaxxControl)
 app.use('/api/iptv-plugin', require('./modules/iptv-servers/iptv-plugin-unified'));
-
-// Servir arquivos estáticos (banners gerados e mídias do whatsapp)
-app.use('/banners', express.static('public/banners'));
-app.use('/media', express.static('public/media'));
-
-// Rota de health check melhorada
-app.get('/health', async (req, res) => {
-  let dbStatus = 'disconnected';
-  try {
-    const result = await pool.query(process.env.USE_SQLITE === 'true' ? 'SELECT 1' : 'SELECT NOW()');
-    if (result) dbStatus = 'connected';
-  } catch (err) {
-    console.error('❌ Health check DB error:', err.message);
-  }
-
-  const isOnline = dbStatus === 'connected';
-  res.status(isOnline ? 200 : 503).json({ 
-    status: isOnline ? 'online' : 'degraded', 
-    database: dbStatus,
-    timestamp: new Date().toISOString(),
-    service: 'MaxxControl X API'
-  });
-});
-
-// Rota raiz da API
-app.get('/api', (req, res) => {
-  res.json({ 
-    message: '🚀 MaxxControl X API',
-    version: '1.0.0',
-    status: 'running'
-  });
-});
-
-// Servir index.html para todas as outras rotas (SPA)
-// Removido o wildcard daqui para mover para o final
-
-// Tratamento de erros
-app.use((err, req, res, next) => {
-  console.error('❌ Erro:', err);
-  res.status(500).json({ error: 'Erro interno do servidor' });
-});
-
-// Criar HTTP server para Socket.IO + Express
-const server = http.createServer(app);
-
-// ── Socket.IO (MaxxChat Live Chat) ─────────────────────────────────────────
-let io;
-try {
-  const { Server } = require('socket.io');
-  io = new Server(server, { cors: { origin: '*' } });
-  io.on('connection', (socket) => {
-    console.log('🔌 [Socket.IO] Cliente conectado:', socket.id);
-    socket.on('join_chat', (jid) => { socket.join(`chat_${jid}`); });
-    socket.on('disconnect', () => { /* silêncio */ });
-  });
-  // Exportar io globalmente para o whatsappClient poder emitir
-  global.__maxxchat_io = io;
-  console.log('🔌 [Socket.IO] MaxxChat Live Chat pronto!');
-} catch (e) {
-  console.warn('⚠️ socket.io não instalado. Live Chat desabilitado. Rode: npm install socket.io');
-}
-
-// Inicializar Agente Sentinela Maxx PRO
-sentinela.iniciar().catch(err => console.error('❌ Falha ao iniciar Sentinela:', err));
-
-// Rota de Saúde do Sentinela
-app.get('/api/sentinela/status', (req, res) => {
-  res.json({
-    status: 'online',
-    agent: 'Sentinela Maxx PRO',
-    last_check: new Date().toISOString()
-  });
-});
-
-// Iniciar servidor
-server.listen(PORT, () => {
-  console.log(`🚀 MaxxControl X API rodando na porta ${PORT}`);
-  console.log(`🌐 http://localhost:${PORT}`);
-});
-
-// Iniciar WebSocket (existente)
-initWebSocket(server);
-
-// Iniciar Bot do Telegram para 2FA
-const { initBot } = require('./modules/telegram/telegramBot');
-initBot();
-
-// Testar conexão com banco e executar migrações
-if (process.env.USE_SQLITE === 'true') {
-  pool.query('SELECT datetime("now") as now').then(res => {
-    console.log('✅ Banco de dados SQLite conectado:', res.rows[0].now);
-    runPendingMigrations();
-  }).catch(err => {
-    console.error('❌ Erro ao conectar no banco de dados:', err.message);
-  });
-} else {
-  pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-      console.error('❌ Erro ao conectar no banco de dados:', err);
-    } else {
-      console.log('✅ Banco de dados PostgreSQL conectado:', res.rows[0].now);
-      runPendingMigrations();
-    }
-  });
-}
 
 // ============================================
 // SISTEMA DE RELAY (Controle Remoto via Extensão)
@@ -727,6 +625,51 @@ app.post('/api/iptv-plugin/relay-command', async (req, res) => {
   }
 });
 
+// ============================================
+// OUTROS SERVIÇOS E FALLBACK SPA
+// ============================================
+
+// Servir arquivos estáticos (banners gerados e mídias do whatsapp)
+app.use('/banners', express.static('public/banners'));
+app.use('/media', express.static('public/media'));
+
+// Rota de health check melhorada
+app.get('/health', async (req, res) => {
+  let dbStatus = 'disconnected';
+  try {
+    const result = await pool.query(process.env.USE_SQLITE === 'true' ? 'SELECT 1' : 'SELECT NOW()');
+    if (result) dbStatus = 'connected';
+  } catch (err) {
+    console.error('❌ Health check DB error:', err.message);
+  }
+
+  const isOnline = dbStatus === 'connected';
+  res.status(isOnline ? 200 : 503).json({ 
+    status: isOnline ? 'online' : 'degraded', 
+    database: dbStatus,
+    timestamp: new Date().toISOString(),
+    service: 'MaxxControl X API'
+  });
+});
+
+// Rota raiz da API
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: '🚀 MaxxControl X API',
+    version: '1.0.0',
+    status: 'running'
+  });
+});
+
+// Rota de Saúde do Sentinela
+app.get('/api/sentinela/status', (req, res) => {
+  res.json({
+    status: 'online',
+    agent: 'Sentinela Maxx PRO',
+    last_check: new Date().toISOString()
+  });
+});
+
 // Servir index.html para todas as outras rotas (SPA) - DEVE SER A ÚLTIMA ROTA
 app.get('*', (req, res) => {
   // Se for uma rota de API, não servir o index.html (evitar confusão)
@@ -743,6 +686,71 @@ app.get('*', (req, res) => {
     }
   });
 });
+
+// Tratamento de erros global
+app.use((err, req, res, next) => {
+  console.error('❌ Erro:', err);
+  res.status(500).json({ error: 'Erro interno do servidor' });
+});
+
+// ============================================
+// INICIALIZAÇÃO DO SERVIDOR
+// ============================================
+
+// Criar HTTP server para Socket.IO + Express
+const server = http.createServer(app);
+
+// ── Socket.IO (MaxxChat Live Chat) ─────────────────────────────────────────
+let io;
+try {
+  const { Server } = require('socket.io');
+  io = new Server(server, { cors: { origin: '*' } });
+  io.on('connection', (socket) => {
+    console.log('🔌 [Socket.IO] Cliente conectado:', socket.id);
+    socket.on('join_chat', (jid) => { socket.join(`chat_${jid}`); });
+    socket.on('disconnect', () => { /* silêncio */ });
+  });
+  // Exportar io globalmente para o whatsappClient poder emitir
+  global.__maxxchat_io = io;
+  console.log('🔌 [Socket.IO] MaxxChat Live Chat pronto!');
+} catch (e) {
+  console.warn('⚠️ socket.io não instalado. Live Chat desabilitado. Rode: npm install socket.io');
+}
+
+// Inicializar Agente Sentinela Maxx PRO
+sentinela.iniciar().catch(err => console.error('❌ Falha ao iniciar Sentinela:', err));
+
+// Iniciar servidor
+server.listen(PORT, () => {
+  console.log(`🚀 MaxxControl X API rodando na porta ${PORT}`);
+  console.log(`🌐 http://localhost:${PORT}`);
+});
+
+// Iniciar WebSocket (existente)
+initWebSocket(server);
+
+// Iniciar Bot do Telegram para 2FA
+const { initBot } = require('./modules/telegram/telegramBot');
+initBot();
+
+// Testar conexão com banco e executar migrações
+if (process.env.USE_SQLITE === 'true') {
+  pool.query('SELECT datetime("now") as now').then(res => {
+    console.log('✅ Banco de dados SQLite conectado:', res.rows[0].now);
+    runPendingMigrations();
+  }).catch(err => {
+    console.error('❌ Erro ao conectar no banco de dados:', err.message);
+  });
+} else {
+  pool.query('SELECT NOW()', (err, res) => {
+    if (err) {
+      console.error('❌ Erro ao conectar no banco de dados:', err);
+    } else {
+      console.log('✅ Banco de dados PostgreSQL conectado:', res.rows[0].now);
+      runPendingMigrations();
+    }
+  });
+}
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
