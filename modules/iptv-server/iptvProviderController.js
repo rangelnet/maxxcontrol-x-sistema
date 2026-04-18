@@ -1,77 +1,32 @@
-const supabase = require('../../config/supabase');
+const pool = require('../../config/database');
 
 exports.getProviders = async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('iptv_providers')
-      .select('*')
-      .order('slot_index', { ascending: true });
-
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const result = await pool.query('SELECT * FROM iptv_providers ORDER BY slot_index ASC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
 exports.updateProvider = async (req, res) => {
+  const { id } = req.params;
+  const { name, url, username, password } = req.body;
   try {
-    const { id } = req.params;
-    const { name, url, username, password } = req.body;
-
-    const { data, error } = await supabase
-      .from('iptv_providers')
-      .update({ name, url, username, password, updated_at: new Date() })
-      .eq('id', id)
-      .select();
-
-    if (error) throw error;
-    res.json(data[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const resu = await pool.query('UPDATE iptv_providers SET name=$1, url=$2, username=$3, password=$4, updated_at=NOW() WHERE id=$5 RETURNING *', [name, url, username, password, id]);
+    res.json(resu.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
 exports.getCuration = async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('iptv_curation')
-      .select('*, iptv_providers(name)')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const resu = await pool.query('SELECT c.*, p.name as provider_name FROM iptv_curation c LEFT JOIN iptv_providers p ON c.provider_id=p.id ORDER BY created_at DESC');
+    res.json(resu.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
 exports.addToCuration = async (req, res) => {
+  const { type, title, external_id, tmdb_id, poster_path, backdrop_path, provider_id } = req.body;
   try {
-    const item = req.body;
-    const { data, error } = await supabase
-      .from('iptv_curation')
-      .insert([item])
-      .select();
-
-    if (error) throw error;
-    res.json({ success: true, data: data[0] });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.deleteCurationItem = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { error } = await supabase
-      .from('iptv_curation')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    const resu = await pool.query('INSERT INTO iptv_curation (type, title, external_id, tmdb_id, poster_path, backdrop_path, provider_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *', [type, title, external_id, tmdb_id, poster_path, backdrop_path, provider_id]);
+    res.json(resu.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 };
