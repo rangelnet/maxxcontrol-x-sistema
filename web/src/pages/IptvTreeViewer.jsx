@@ -463,7 +463,7 @@ const IptvTreeViewer = () => {
         {credentials?.xtream_url && (
           <div style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 12px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:9 }}>
             <CheckCircle size={13} color='#34d399'/>
-            <span style={{ fontSize:12, color='#34d399', fontWeight:600 }}>{credentials.server_name||credentials.xtream_url}</span>
+            <span style={{ fontSize:12, color:'#34d399', fontWeight:600 }}>{credentials.server_name||credentials.xtream_url}</span>
             {credentials.xtream_username && <span style={{ fontSize:11, color:'#52525b' }}>({credentials.xtream_username})</span>}
           </div>
         )}
@@ -477,7 +477,7 @@ const IptvTreeViewer = () => {
         <button onClick={() => setShowTestLists(!showTestLists)} style={btnGhost}><List size={13}/> Listas de Teste</button>
         <button onClick={handleRefresh} style={btnGhost}><RefreshCw size={13}/> Atualizar</button>
         <button onClick={handleExpandAll} disabled={expandingAll} style={{ ...btnGhost, opacity:expandingAll?0.6:1 }}>
-          {expandingAll ? <><Loader size={12} style={{animation:'spin 1s linear infinite'}}/>Expandindo...</> : <><ChevronDown size={13}/>Expandir Tudo</>}
+          {expandingAll ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Expandindo...</> : <><ChevronDown size={13}/>Expandir Tudo</>}
         </button>
         <button onClick={handleCollapseAll} style={btnGhost}><ChevronRight size={13}/> Recolher</button>
         <button onClick={handleCopyAll} style={{ ...btnGhost, color:copied?'#34d399':'#71717a', borderColor:copied?'rgba(16,185,129,0.3)':'rgba(255,255,255,0.08)' }}>

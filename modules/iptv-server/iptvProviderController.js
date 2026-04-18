@@ -1,85 +1,77 @@
-const pool = require('../../config/database');
+const supabase = require('../../config/supabase');
 
-/**
- * Gerencia os 6 slots de provedores IPTV e a curadoria de conteúdo para o banner generator.
- */
-
-// Listar todos os provedores (os 6 slots)
-exports.listProviders = async (req, res) => {
+exports.getProviders = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM iptv_providers ORDER BY slot_index ASC');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { data, error } = await supabase
+      .from('iptv_providers')
+      .select('*')
+      .order('slot_index', { ascending: true });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Atualizar um slot de provedor específico
 exports.updateProvider = async (req, res) => {
-  const { id } = req.params;
-  const { name, url, username, password, is_active } = req.body;
-
   try {
-    const result = await pool.query(
-      `UPDATE iptv_providers 
-       SET name = $1, url = $2, username = $3, password = $4, is_active = $5, updated_at = NOW()
-       WHERE id = $6 OR slot_index = $6
-       RETURNING *`,
-      [name, url, username, password, is_active, id]
-    );
+    const { id } = req.params;
+    const { name, url, username, password } = req.body;
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Provedor não encontrado' });
-    }
+    const { data, error } = await supabase
+      .from('iptv_providers')
+      .update({ name, url, username, password, updated_at: new Date() })
+      .eq('id', id)
+      .select();
 
-    res.json({ success: true, provider: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (error) throw error;
+    res.json(data[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Adicionar item à curadoria (Banner Generator)
+exports.getCuration = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('iptv_curation')
+      .select('*, iptv_providers(name)')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.addToCuration = async (req, res) => {
-  const { type, title, external_id, tmdb_id, poster_path, backdrop_path, provider_id } = req.body;
-
   try {
-    const result = await pool.query(
-      `INSERT INTO iptv_curation (type, title, external_id, tmdb_id, poster_path, backdrop_path, provider_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (type, external_id, provider_id) DO UPDATE SET
-       title = $2, tmdb_id = $4, poster_path = $5, backdrop_path = $6, created_at = NOW()
-       RETURNING *`,
-      [type, title, external_id, tmdb_id, poster_path, backdrop_path, provider_id]
-    );
+    const item = req.body;
+    const { data, error } = await supabase
+      .from('iptv_curation')
+      .insert([item])
+      .select();
 
-    res.json({ success: true, item: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (error) throw error;
+    res.json({ success: true, data: data[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Listar itens da curadoria
-exports.listCuration = async (req, res) => {
+exports.deleteCurationItem = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT c.*, p.name as provider_name 
-       FROM iptv_curation c
-       JOIN iptv_providers p ON p.id = c.provider_id
-       ORDER BY c.created_at DESC`
-    );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('iptv_curation')
+      .delete()
+      .eq('id', id);
 
-// Remover item da curadoria
-exports.removeFromCuration = async (req, res) => {
-  const { id } = req.params;
-  try {
-    await pool.query('DELETE FROM iptv_curation WHERE id = $1', [id]);
+    if (error) throw error;
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
