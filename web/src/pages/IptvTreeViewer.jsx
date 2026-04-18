@@ -30,6 +30,14 @@ const IptvTreeViewer = () => {
   const [expandingAll, setExpandingAll] = useState(false);
   const [copied, setCopied]             = useState(false);
 
+  // --- Novos Estados Curadoria ---
+  const [providers, setProviders]       = useState([]);
+  const [activeProvider, setActiveProvider] = useState(null);
+  const [showProviderModal, setShowProviderModal] = useState(false);
+  const [editingProvider, setEditingProvider] = useState(null);
+  const [savingProvider, setSavingProvider] = useState(false);
+  const [curationItems, setCurationItems] = useState([]);
+
   const testLists = [
     { id:1, name:'Servidor Teste 1', url:'http://xtream.swiftiptv.com:8080',    username:'test', password:'test', description:'Servidor público de teste com canais internacionais' },
     { id:2, name:'Servidor Teste 2', url:'http://pro.xviptv.com:25443',         username:'test', password:'test', description:'Servidor de demonstração com múltiplas categorias' },
@@ -42,14 +50,23 @@ const IptvTreeViewer = () => {
   const loadConfig = async () => {
     try {
       setLoading(true);
+      // Carregar 6 slots de provedores
+      const providersRes = await api.get('/api/iptv-server/providers');
+      setProviders(providersRes.data);
+      
       const configRes  = await api.get('/api/iptv-server/config');
       setCredentials(configRes.data);
+      
       const devicesRes = await api.get('/api/device/list-all');
       setDevices(Array.isArray(devicesRes.data) ? devicesRes.data : []);
+      
+      // Carregar itens já na curadoria
+      const curationRes = await api.get('/api/iptv-server/curation');
+      setCurationItems(curationRes.data);
+      
       setError(null);
     } catch (err) {
-      setError('Erro ao carregar configuração. Configure o servidor IPTV primeiro.');
-      setDevices([]); setCredentials(null);
+      setError('Erro ao carregar configuração. Verifique as tabelas do banco de dados.');
     } finally { setLoading(false); }
   };
 
@@ -206,6 +223,67 @@ const IptvTreeViewer = () => {
     finally { setTestingList(null); }
   };
 
+  // --- Novas Funções Curadoria ---
+  const handlePromoteToBanner = async (node) => {
+    try {
+      setLoading(true);
+      const payload = {
+        type: node.contentType || 'vod',
+        title: node.name,
+        external_id: node.metadata?.stream_id || node.metadata?.series_id || node.metadata?.id,
+        tmdb_id: node.metadata?.tmdb_id || null,
+        poster_path: node.metadata?.stream_icon || node.metadata?.cover || null,
+        backdrop_path: node.metadata?.backdrop_path || null,
+        provider_id: activeProvider?.id || providers[0]?.id
+      };
+      
+      const res = await api.post('/api/iptv-server/curation', payload);
+      if (res.data.success) {
+        // Feedback visual
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        // Atualizar lista local
+        const curationRes = await api.get('/api/iptv-server/curation');
+        setCurationItems(curationRes.data);
+      }
+    } catch (err) {
+      alert('Erro ao enviar para o banner: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProviderSelect = async (provider) => {
+    setActiveProvider(provider);
+    setTreeData([]);
+    setExpandedNodes(new Set());
+    
+    // Atualiza as credenciais temporárias para carregar a árvore desse provedor
+    setCredentials({
+      xtream_url: provider.url,
+      xtream_username: provider.username,
+      xtream_password: provider.password,
+      server_name: provider.name
+    });
+  };
+
+  const saveProviderConfig = async () => {
+    setSavingProvider(true);
+    try {
+      await api.put(`/api/iptv-server/providers/${editingProvider.id}`, editingProvider);
+      setShowProviderModal(false);
+      const res = await api.get('/api/iptv-server/providers');
+      setProviders(res.data);
+      if (activeProvider?.id === editingProvider.id) {
+        setActiveProvider(editingProvider);
+      }
+    } catch (err) {
+      alert('Erro ao salvar provedor');
+    } finally {
+      setSavingProvider(false);
+    }
+  };
+
   const formatStreamUrl = (stream, creds) => {
     if (!creds) return '';
     const { xtream_url, xtream_username, xtream_password } = creds;
@@ -284,6 +362,23 @@ const IptvTreeViewer = () => {
           {node.type==='stream' && node.metadata?.num && (
             <span style={{ fontSize:10, color:'#3f3f46', flexShrink:0 }}>#{node.metadata.num}</span>
           )}
+          
+          {/* Botão Promover para Banner */}
+          {(node.type==='stream' || (node.type==='category' && (node.contentType==='vod' || node.contentType==='series'))) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handlePromoteToBanner(node); }}
+              title="Enviar para Gerador de Banners"
+              style={{
+                background: 'rgba(255,165,0,0.1)', border: '1px solid rgba(255,165,0,0.2)',
+                borderRadius: 6, padding: '3px 6px', color: '#FFA500', fontSize: 10,
+                cursor: 'pointer', opacity: 0.6, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 4
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = 1}
+              onMouseLeave={e => e.currentTarget.style.opacity = 0.6}
+            >
+              🎬 <span className="hidden sm:inline">Banner</span>
+            </button>
+          )}
         </div>
         {isExpanded && hasChildren && (
           <div>{node.children.map(child => <TreeNode key={child.id} node={child} level={level+1}/>)}</div>
@@ -311,9 +406,40 @@ const IptvTreeViewer = () => {
       {/* Header */}
       <div style={{ marginBottom:20 }}>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-          <Tv size={26} color='#FFA500'/> Visualizar Árvore IPTV
+          <Tv size={26} color='#FFA500'/> Árvore de Curadoria Master
         </h1>
-        <p style={{ fontSize:12, color:'#52525b' }}>Explore categorias e conteúdo do servidor Xtream Codes</p>
+        <p style={{ fontSize:12, color:'#52525b' }}>Gerencie 6 provedores e selecione conteúdos para o Gerador de Banners</p>
+      </div>
+
+      {/* BARRA DE 6 SLOTS - PROVEDORES */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:10, marginBottom:20 }}>
+        {providers.map((p) => (
+          <div key={p.id} style={{ position:'relative' }}>
+            <button
+              onClick={() => handleProviderSelect(p)}
+              style={{
+                width:'100%', padding:'12px 10px', borderRadius:12, border:'1px solid',
+                background: activeProvider?.id === p.id ? 'rgba(255,165,0,0.1)' : 'rgba(17,17,17,0.6)',
+                borderColor: activeProvider?.id === p.id ? '#FFA500' : 'rgba(255,255,255,0.08)',
+                color: activeProvider?.id === p.id ? '#FFA500' : '#71717a',
+                cursor:'pointer', transition:'all 0.2s', textAlign:'left', boxSizing:'border-box'
+              }}
+            >
+              <div style={{ fontSize:10, fontWeight:800, textTransform:'uppercase', opacity:0.6 }}>Lista {p.slot_index}</div>
+              <div style={{ fontSize:13, fontWeight:900, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                {p.url ? (p.name || `Slot ${p.slot_index}`) : 'Vazio'}
+              </div>
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setEditingProvider(p); setShowProviderModal(true); }}
+              style={{ position:'absolute', top:8, right:8, background:'none', border:'none', cursor:'pointer', padding:4, opacity:0.4, color:'#fff' }}
+              onMouseEnter={e => e.currentTarget.style.opacity = 1}
+              onMouseLeave={e => e.currentTarget.style.opacity = 0.4}
+            >
+              ⚙️
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* Adicionar Lista Manualmente */}
@@ -337,7 +463,7 @@ const IptvTreeViewer = () => {
         {credentials?.xtream_url && (
           <div style={{ display:'flex', alignItems:'center', gap:7, padding:'8px 12px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:9 }}>
             <CheckCircle size={13} color='#34d399'/>
-            <span style={{ fontSize:12, color:'#34d399', fontWeight:600 }}>{credentials.server_name||credentials.xtream_url}</span>
+            <span style={{ fontSize:12, color='#34d399', fontWeight:600 }}>{credentials.server_name||credentials.xtream_url}</span>
             {credentials.xtream_username && <span style={{ fontSize:11, color:'#52525b' }}>({credentials.xtream_username})</span>}
           </div>
         )}
@@ -468,6 +594,49 @@ const IptvTreeViewer = () => {
           </div>
         )}
       </div>
+
+      {/* MODAL DE EDIÇÃO DE PROVEDOR */}
+      {showProviderModal && editingProvider && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20 }}>
+          <div style={{ background:'#111', border:'1px solid rgba(255,165,0,0.3)', borderRadius:20, width:'100%', maxWidth:500, padding:24, boxShadow:'0 20px 50px rgba(0,0,0,0.5)' }}>
+            <h2 style={{ fontSize:20, fontWeight:900, color:'#fff', marginBottom:20, display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:24 }}>⚙️</span> Configurar Provedor {editingProvider.slot_index}
+            </h2>
+            
+            <div style={{ display:'flex', flexDirection:'column', gap:15 }}>
+              <div>
+                <label style={{ fontSize:11, fontWeight:800, color:'#71717a', textTransform:'uppercase', display:'block', marginBottom:6 }}>Nome Exibição</label>
+                <input type='text' value={editingProvider.name} onChange={e=>setEditingProvider({...editingProvider, name:e.target.value})} style={{...inputStyle, width:'100%'}} placeholder="Ex: Servidor VIP 1"/>
+              </div>
+              <div>
+                <label style={{ fontSize:11, fontWeight:800, color:'#71717a', textTransform:'uppercase', display:'block', marginBottom:6 }}>URL (DNS)</label>
+                <input type='text' value={editingProvider.url} onChange={e=>setEditingProvider({...editingProvider, url:e.target.value})} style={{...inputStyle, width:'100%'}} placeholder="http://dns.com:8080"/>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:15 }}>
+                <div>
+                  <label style={{ fontSize:11, fontWeight:800, color:'#71717a', textTransform:'uppercase', display:'block', marginBottom:6 }}>Usuário</label>
+                  <input type='text' value={editingProvider.username} onChange={e=>setEditingProvider({...editingProvider, username:e.target.value})} style={{...inputStyle, width:'100%'}}/>
+                </div>
+                <div>
+                  <label style={{ fontSize:11, fontWeight:800, color:'#71717a', textTransform:'uppercase', display:'block', marginBottom:6 }}>Senha</label>
+                  <input type='password' value={editingProvider.password} onChange={e=>setEditingProvider({...editingProvider, password:e.target.value})} style={{...inputStyle, width:'100%'}}/>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display:'flex', gap:10, marginTop:30 }}>
+              <button onClick={() => setShowProviderModal(false)} style={{...btnGhost, flex:1, justifyContent:'center', padding:12}}>Cancelar</button>
+              <button 
+                onClick={saveProviderConfig} 
+                disabled={savingProvider}
+                style={{...btnPrimary, flex:1, justifyContent:'center', padding:12, opacity:savingProvider?0.6:1}}
+              >
+                {savingProvider ? 'Salvando...' : 'Salvar Configuração'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
