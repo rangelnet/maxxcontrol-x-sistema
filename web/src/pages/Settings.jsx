@@ -123,7 +123,7 @@ export default function Settings() {
       const res = await api.get('/auth/devices', {
         headers: { 'x-device-id': bid }
       })
-      setSessions(res.data)
+      setSessions(res.data?.devices || (Array.isArray(res.data) ? res.data : []))
     } catch (err) {
       console.error('Erro ao carregar dispositivos:', err)
     } finally {
@@ -165,11 +165,11 @@ export default function Settings() {
         setXtreamPass(response.data.xtream_pass || '')
         setP2pEnabled(response.data.p2p_enabled || false)
         setP2pKey(response.data.p2p_key || '')
-      }
-    } catch (err) {
-      console.error('Erro ao carregar configurações:', err)
     }
+  } catch (err) {
+    console.error('Erro ao carregar configurações:', err)
   }
+}
 
   const loadTwoFaStatus = async () => {
     try {
@@ -938,7 +938,7 @@ export default function Settings() {
               </div>
               {!session.active && (
                 <button className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-red-500 rounded-lg transition">
-                  <Trash2 className="h-4 w-4" />
+                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
             </div>
