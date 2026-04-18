@@ -1,414 +1,451 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import api from '../services/api'
+import html2canvas from 'html2canvas'
+import MovieBannerElite from '../components/MovieBannerElite'
 
 
 // ─── DADOS DOS TEMAS POR CATEGORIA ────────────────────────────────────────────
-const THEMES = {
-  futebol: [
-    {
-      id: 'destaque-pro',
-      name: 'Destaque Pro',
-      badge: 'NOVO',
-      images: [
-        '/previews/previatemadestaque2futebol.png',
-        '/previews/previatemadestaque6futebol.png',
-        '/previews/previatemadestaque5futebol.png',
-        '/previews/previatemadestaque4futebol.png',
-      ],
-      isGroup: true,
-      variants: [
-        { id: 'destaque-vermelho', name: 'Vermelho', colorHex: '#D60000' },
-        { id: 'destaque-roxo',    name: 'Roxo',     colorHex: '#ab2def' },
-        { id: 'destaque-laranja', name: 'Laranja',  colorHex: '#fa8c2b' },
-        { id: 'destaque-azul',   name: 'Azul',     colorHex: '#032cf4' },
-        { id: 'destaque-verde',  name: 'Verde',    colorHex: '#3ed823' },
-      ],
-    },
-    {
-      id: 'pilulas',
-      name: 'Estilo Pílulas',
-      badge: null,
-      images: [
-        '/previews/tema15preview.jpg',
-        '/previews/previacapatema15.jpg',
-        '/previews/tema16preview.jpg',
-        '/previews/previacapatema16.jpg',
-        '/previews/tema17preview.jpg',
-        '/previews/tema18preview.jpg',
-        '/previews/tema19preview.jpg',
-        '/previews/tema20preview.jpg',
-      ],
-      isGroup: true,
-      variants: [
-        { id: 'pilulas-vermelho', name: 'Vermelho', colorHex: '#ef4444' },
-        { id: 'pilulas-laranja',  name: 'Laranja',  colorHex: '#f97316' },
-        { id: 'pilulas-amarelo',  name: 'Amarelo',  colorHex: '#eab308' },
-        { id: 'pilulas-verde',    name: 'Verde',    colorHex: '#22c55e' },
-        { id: 'pilulas-roxo',     name: 'Roxo',     colorHex: '#a855f7' },
-        { id: 'pilulas-azul',     name: 'Azul',     colorHex: '#3b82f6' },
-      ],
-    },
-    {
-      id: 'neon-gold',
-      name: 'Neon & Gold HD',
-      badge: 'HD',
-      images: [
-        '/previews/previatema10.jpg',
-        '/previews/previacapatema10.jpg',
-        '/previews/previatema12.jpg',
-        '/previews/previacapatema12.jpg',
-      ],
-      isGroup: true,
-      variants: [
-        { id: 'neon-gold',   name: 'Gold',   colorHex: '#eab308' },
-        { id: 'neon-red',    name: 'Red',    colorHex: '#ef4444' },
-        { id: 'neon-cyan',   name: 'Cyan',   colorHex: '#06b6d4' },
-        { id: 'neon-green',  name: 'Green',  colorHex: '#22c55e' },
-        { id: 'neon-purple', name: 'Purple', colorHex: '#a855f7' },
-      ],
-    },
-    {
-      id: 'hero-dark',
-      name: 'Hero Dark',
-      badge: 'MAIS USADO',
-      images: [
-        '/previews/tema2apresentacao.jpg',
-        '/previews/previacapatema2.jpg',
-        '/previews/temanow8_preview.jpg',
-        '/previews/temanow9_preview.jpg',
-        '/previews/tema2universalverde_previa.jpg',
-        '/previews/tema2universallaranja_previa.jpg',
-        '/previews/tema2universalamarelo_previa.jpg',
-      ],
-      isGroup: true,
-      variants: [
-        { id: 'hero-blue',   name: 'Blue',   colorHex: '#3b82f6' },
-        { id: 'hero-red',    name: 'Red V2', colorHex: '#ef4444' },
-        { id: 'hero-purple', name: 'Purple', colorHex: '#a855f7' },
-        { id: 'hero-green',  name: 'Green',  colorHex: '#10e606' },
-        { id: 'hero-orange', name: 'Orange', colorHex: '#f79b2e' },
-        { id: 'hero-yellow', name: 'Yellow', colorHex: '#FFE600' },
-      ],
-    },
-    {
-      id: 'pro-series',
-      name: 'Pro Series',
-      badge: 'NOVO',
-      images: [
-        '/previews/tema5_preview.jpg',
-        '/previews/previacapatema5.jpg',
-      ],
-      isGroup: true,
-      variants: [
-        { id: 'pro-laranja', name: 'Laranja', colorHex: '#FF7E00' },
-        { id: 'pro-azul',    name: 'Azul',    colorHex: '#0d1df1' },
-        { id: 'pro-roxo',    name: 'Roxo',    colorHex: '#bb2ef7' },
-        { id: 'pro-amarelo', name: 'Amarelo', colorHex: '#FFE600' },
-      ],
-    },
-    {
-      id: 'classico',
-      name: 'Clássico',
-      badge: null,
-      images: [
-        '/previews/tema1apresentacao.jpg',
-        '/previews/previacapatema1.jpg',
-        '/previews/tema3previa.jpg',
-        '/previews/previacapatema3.jpg',
-        '/previews/tema4preview.jpg',
-        '/previews/previacapatema4.jpg',
-      ],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'novela-vermelho',
-      name: 'Novela Vermelho',
-      badge: 'NOVO',
-      images: ['/previews/previa_futebolounovel_temavermelho.png'],
-      isGroup: false,
-      variants: [],
-    },
-  ],
-
-  filmes: [
-    {
-      id: 'filme-t1',
-      name: 'Cinema Dark',
-      badge: 'NOVO',
-      images: ['/previews/previa_filme_t1.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'filme-t2',
-      name: 'Streamers',
-      badge: null,
-      images: ['/previews/previa_filme_t2.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'filme-t3',
-      name: 'Master Series',
-      badge: null,
-      images: ['/previews/previafilmetema3.jpg', '/previews/previacapatema7.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'video-v1',
-      name: 'Video Teaser V1',
-      badge: 'VÍDEO',
-      images: ['/previews/preview_video_v1.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'video-v2',
-      name: 'Video Teaser V2',
-      badge: 'VÍDEO',
-      images: ['/previews/preview_video_v2.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-  ],
-
-  basquete: [
-    {
-      id: 'basquete-t1',
-      name: 'NBA Pro',
-      badge: 'NOVO',
-      images: ['/previews/previabasquetetema1.jpg', '/previews/previacapabasquetetema1.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t2',
-      name: 'Court Master',
-      badge: null,
-      images: ['/previews/previatema2basquete.jpg', '/previews/previacapabasquetetema2.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t3',
-      name: 'Arena Fire',
-      badge: null,
-      images: ['/previews/previatema3basquete.jpg', '/previews/previacapabasquetetema3.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t4',
-      name: 'Slam Dunk',
-      badge: null,
-      images: ['/previews/previabasquetetema4.jpg', '/previews/previacapabasquetetema4.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t5',
-      name: 'All-Star',
-      badge: null,
-      images: ['/previews/previatetema5basquete.jpg', '/previews/previacapabasquetetema5.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t6',
-      name: 'Playoff Night',
-      badge: 'HD',
-      images: ['/previews/previatetema6basquete.jpg', '/previews/previacapabasquetetema6.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t7',
-      name: 'Championship',
-      badge: null,
-      images: ['/previews/previatema7basquete.jpg', '/previews/previacapabasquetetema7.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t8',
-      name: 'Dynasty',
-      badge: null,
-      images: ['/previews/previatema8basquete.jpg', '/previews/previacapabasquetetema8.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'basquete-t9',
-      name: 'Finals Edition',
-      badge: 'NOVO',
-      images: ['/previews/previatetema9basquete.jpg', '/previews/previacapabasquetetema9.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-  ],
-
-  ufc: [
-    {
-      id: 'ufc-t1',
-      name: 'Fight Night',
-      badge: 'BETA',
-      images: ['/previews/previatema1ufc.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-  ],
-
-  divulgacao: [
-    {
-      id: 'div-azul',
-      name: 'Divulgação Azul',
-      badge: 'NOVO',
-      images: ['/previews/previa_tema_azul_divulgacao.jpg'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'div-amarelo',
-      name: 'Indique & Ganhe',
-      badge: 'NOVO',
-      images: ['/previews/previa_tema_amarelo_indiqueeganhe1amigos.png'],
-      isGroup: false,
-      variants: [],
-    },
-    {
-      id: 'div-preto',
-      name: 'Teste Grátis',
-      badge: null,
-      images: ['/previews/previa_tema_preto_testegratisomelhorapp.png'],
-      isGroup: false,
-      variants: [],
-    },
-  ],
-
-  admin: [
-    // Preenchido dinamicamente pelo useEffect
-  ],
-}
-
-// ─── CATEGORIAS ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id: 'futebol',    label: 'Banner Futebol',   icon: '⚽', color: 'from-green-600 to-emerald-700',  border: 'border-green-500/40',   glow: 'shadow-green-500/20' },
-  { id: 'filmes',     label: 'Banner Filmes',    icon: '🎬', color: 'from-purple-600 to-violet-700',  border: 'border-purple-500/40',  glow: 'shadow-purple-500/20' },
-  { id: 'admin',      label: 'Temas Master',     icon: '💎', color: 'from-yellow-500 to-amber-700',  border: 'border-yellow-500/40',  glow: 'shadow-yellow-500/20' },
-  { id: 'basquete',   label: 'Banner Basquete',  icon: '🏀', color: 'from-orange-500 to-amber-600',  border: 'border-orange-500/40',  glow: 'shadow-orange-500/20' },
-  { id: 'ufc',        label: 'Banner UFC',       icon: '🥊', color: 'from-red-600 to-rose-700',      border: 'border-red-500/40',     glow: 'shadow-red-500/20' },
-  { id: 'divulgacao', label: 'Divulgação',       icon: '📣', color: 'from-pink-500 to-fuchsia-600',  border: 'border-pink-500/40',    glow: 'shadow-pink-500/20' },
+  { id: 'futebol', label: 'Futebol', icon: '⚽', color: 'from-green-600 to-emerald-600', glow: 'shadow-green-500/20' },
+  { id: 'baquete', label: 'NBA / Basketball', icon: '🏀', color: 'from-orange-600 to-red-600', glow: 'shadow-orange-500/20' },
+  { id: 'ufc', label: 'MMA / UFC', icon: '🥊', color: 'from-red-600 to-zinc-900', glow: 'shadow-red-500/20' },
+  { id: 'filmes', label: 'Filmes & Séries', icon: '🎬', color: 'from-purple-600 to-violet-600', glow: 'shadow-purple-500/20' },
+  { id: 'kids', label: 'Kids / Desenhos', icon: '🧸', color: 'from-blue-400 to-cyan-500', glow: 'shadow-blue-500/20' },
+  { id: 'animes', label: 'Animes', icon: '👺', color: 'from-rose-500 to-orange-500', glow: 'shadow-rose-500/20' },
+  { id: 'divulgacao', label: 'Promo / Planos', icon: '📢', color: 'from-pink-500 to-rose-600', glow: 'shadow-pink-500/20' },
+  { id: 'admin', label: 'Personalizados', icon: '🛠️', color: 'from-zinc-700 to-zinc-900', glow: 'shadow-zinc-500/20' }
 ]
 
-// ─── COMPONENTE CARD DE TEMA ───────────────────────────────────────────────────
+const THEMES = {
+  futebol: [
+    { id: 'spot-orange', name: 'Spotlight Orange', images: ['/banners/football/spot_orange.png'], isGroup: false },
+    { id: 'neon-strike', name: 'Neon Strike', images: ['/banners/football/neon_strike.png'], isGroup: false },
+    { id: 'stadium-master', name: 'Stadium Master', images: ['/banners/football/stadium_master.png'], isGroup: false },
+  ],
+  filmes: [
+    { id: 'filme-t1', name: 'Cinema Dark', images: ['/banners/movies/cinema_dark.jpg'], isGroup: false },
+    { id: 'filme-t2', name: 'Action Blue', images: ['/banners/movies/action_blue.jpg'], isGroup: false },
+    { id: 'filme-t3', name: 'Glow Premium', images: ['/banners/movies/glow_premium.jpg'], isGroup: false },
+  ],
+  divulgacao: [
+    { id: 'promo-basic', name: 'Promoção Simples', images: ['/banners/promo/promo_basic.jpg'], isGroup: false },
+    { id: 'plan-master', name: 'Tabela de Preços', images: ['/banners/promo/plan_master.jpg'], isGroup: false },
+  ]
+}
+
+// ─── COMPONENTES AUXILIARES ────────────────────────────────────────────────────
+
 const ThemeCard = ({ theme, selected, onSelect, tick }) => {
-  const [showVariants, setShowVariants] = useState(false)
-  const imgIdx = theme.images.length > 0 ? tick % theme.images.length : 0
-
-  const handleClick = () => {
-    if (theme.isGroup && theme.variants.length > 0) {
-      setShowVariants(v => !v)
-    } else {
-      onSelect(theme.id)
-    }
-  }
-
-  const isSelected = selected === theme.id || 
-    (theme.isGroup && theme.variants.some(v => v.id === selected))
-
+  const isSelected = selected === theme.id
+  
   return (
-    <div className="flex flex-col gap-2">
-      {/* Card Principal */}
-      <div
-        onClick={handleClick}
-        className={`cursor-pointer group relative rounded-xl overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
-          ${isSelected
-            ? 'border-brand-500 ring-2 ring-brand-500/50 shadow-lg shadow-brand-500/30 scale-[1.02]'
-            : 'border-dark-700 hover:border-zinc-500'
-          }`}
-      >
-        {/* Imagem com carrossel */}
-        <div className="absolute inset-0 bg-dark-900 overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-4xl opacity-20">🖼️</span>
+    <div 
+      onClick={() => onSelect(theme.id)}
+      className={`relative group cursor-pointer rounded-2xl overflow-hidden border-2 transition-all duration-300 transform 
+        ${isSelected 
+          ? 'border-brand-500 scale-[1.02] shadow-2xl shadow-brand-500/20 ring-4 ring-brand-500/10' 
+          : 'border-dark-700 hover:border-brand-500/50 hover:-translate-y-1'
+        }`}
+    >
+      <div className="aspect-[9/16] relative bg-dark-900">
+        <img 
+          src={theme.images[tick % theme.images.length]} 
+          alt={theme.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80" />
+        
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <p className="text-[10px] font-black text-white uppercase tracking-widest">{theme.name}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <span className="w-1.5 h-1.5 bg-brand-500 rounded-full" />
+            <span className="text-[8px] text-zinc-400 font-bold uppercase tracking-tighter">HD Rendering</span>
           </div>
-          {theme.images.map((img, idx) => (
-            <img
-              key={idx}
-              src={img}
-              alt={theme.name}
-              className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-700
-                ${imgIdx === idx ? 'opacity-90 group-hover:opacity-100' : 'opacity-0'}`}
-            />
-          ))}
-          {/* Overlay glow no hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-20 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-
-        {/* Badge */}
-        {theme.badge && (
-          <div className="absolute top-2 right-2 z-30">
-            <span className={`text-[9px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider
-              ${theme.badge === 'NOVO' ? 'bg-red-600 text-white' :
-                theme.badge === 'BETA' ? 'bg-yellow-500 text-black' :
-                theme.badge === 'VÍDEO' ? 'bg-purple-600 text-white' :
-                theme.badge === 'HD' ? 'bg-brand-500 text-white' :
-                'bg-brand-500 text-white'}`}
-            >
-              {theme.badge}
-            </span>
-          </div>
-        )}
-
-        {/* Check de selecionado */}
-        {isSelected && !theme.isGroup && (
-          <div className="absolute top-2 left-2 z-30">
-            <div className="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-xs">✓</span>
-            </div>
-          </div>
-        )}
-
-        {/* Nome + botão ver cores */}
-        <div className="absolute bottom-0 left-0 right-0 bg-dark-900/95 border-t border-dark-700 py-2 px-2 z-20 backdrop-blur-md">
-          <span className={`text-[10px] font-bold uppercase tracking-wide text-center block truncate
-            ${isSelected ? 'text-brand-400' : 'text-zinc-300 group-hover:text-white'}`}>
-            {theme.name}
-          </span>
-          {theme.isGroup && (
-            <div className="text-[8px] text-zinc-400 mt-1 flex items-center justify-center gap-1 font-bold">
-              <span>{showVariants ? 'FECHAR' : 'VER CORES'}</span>
-              <span className={`transition-transform ${showVariants ? 'rotate-180' : ''}`}>▾</span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Gaveta de variantes */}
-      {theme.isGroup && showVariants && (
-        <div className="bg-dark-800 border border-dark-700 rounded-xl p-2 grid grid-cols-3 gap-2 shadow-inner animate-in slide-in-from-top-2 duration-200">
-          {theme.variants.map(v => (
-            <button
-              key={v.id}
-              onClick={() => { onSelect(v.id); setShowVariants(false) }}
-              className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all hover:bg-dark-700
-                ${selected === v.id ? 'bg-dark-700 ring-1 ring-brand-500 shadow-md' : ''}`}
-            >
-              <div
-                className="w-6 h-6 rounded-full border-2 border-white/20 shadow-md flex items-center justify-center"
-                style={{ backgroundColor: v.colorHex }}
-              >
-                {selected === v.id && <span className="text-white text-[10px] drop-shadow">✓</span>}
-              </div>
-              <span className="text-[8px] text-zinc-300 font-bold uppercase truncate w-full text-center">
-                {v.name}
-              </span>
-            </button>
-          ))}
+      {isSelected && (
+        <div className="absolute top-3 right-3 w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center shadow-lg animate-bounce-subtle">
+          <span className="text-white text-xs">✓</span>
         </div>
       )}
+    </div>
+  )
+}
+
+const FootballConfigurator = ({ theme, sportsData, loading }) => {
+  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const handleGenerate = () => {
+    if (!selectedMatch) return
+    setGenerating(true)
+    setTimeout(() => {
+      setGenerating(false)
+      setDone(true)
+      setTimeout(() => setDone(false), 3000)
+    }, 2000)
+  }
+
+  return (
+    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl animate-fade-in">
+      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
+        <h3 className="font-bold text-white flex items-center gap-2 tracking-wide uppercase text-xs">
+          <span className="text-brand-500">⚡</span> Configuração da Partida
+        </h3>
+        {selectedMatch && (
+          <span className="text-[10px] bg-brand-500/10 text-brand-400 px-3 py-1 rounded-full border border-brand-500/20 font-black">
+            {selectedMatch.home_team} vs {selectedMatch.away_team}
+          </span>
+        )}
+      </div>
+
+      <div className="p-6 space-y-6">
+        {/* Lista de Jogos do Dia */}
+        <div className="space-y-3">
+          <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">Jogos Recentes / Próximos</label>
+          
+          {loading ? (
+             <div className="flex items-center justify-center py-10 bg-dark-900/30 rounded-xl border border-dashed border-dark-700">
+               <span className="animate-spin text-brand-500 mr-3 text-xl">⏳</span>
+               <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Sincronizando Live Scores...</span>
+             </div>
+          ) : sportsData.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {sportsData.map(match => (
+                <div 
+                  key={match.id}
+                  onClick={() => setSelectedMatch(match)}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between
+                    ${selectedMatch?.id === match.id 
+                      ? 'border-brand-500 bg-brand-500/5' 
+                      : 'border-dark-700 bg-dark-900/50 hover:border-dark-600'}`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">{match.league_name}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-center">
+                        <span className="text-white font-black text-xs">{match.home_team}</span>
+                      </div>
+                      <span className="text-brand-500 font-black italic">VS</span>
+                      <div className="flex flex-col items-center">
+                        <span className="text-white font-black text-xs">{match.away_team}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] bg-dark-700 text-zinc-300 px-2 py-1 rounded font-bold">{match.match_time}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 bg-dark-900/30 rounded-xl border border-dashed border-dark-700">
+               <span className="text-4xl mb-3 block">🏟️</span>
+               <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Nenhum jogo encontrado para hoje</p>
+            </div>
+          )}
+        </div>
+
+        <button 
+          onClick={handleGenerate}
+          disabled={!selectedMatch || generating}
+          className={`w-full font-black py-4 rounded-xl shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.2em]
+            ${done 
+              ? 'bg-green-600 text-white animate-bounce-subtle' 
+              : 'bg-gradient-to-r from-brand-500 to-orange-600 hover:from-brand-400 hover:to-orange-500 text-white disabled:opacity-30 disabled:grayscale disabled:scale-100'}`}
+        >
+          {generating ? <><span className="animate-spin">⏳</span> Renderizando Banner...</> 
+           : done ? <><span>✅</span> Banner Gerado!</> 
+           : <><span>🎨</span> Gerar Banner Agora</>}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const SportConfigurator = ({ category, theme, sportsData, loading }) => {
+  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [done, setDone] = useState(false)
+  
+  const handleGenerate = () => {
+    if (!selectedMatch) return
+    setGenerating(true)
+    setTimeout(() => {
+      setGenerating(false)
+      setDone(true)
+      setTimeout(() => setDone(false), 3000)
+    }, 2000)
+  }
+
+  const getCategoryIcon = () => {
+    if (category === 'ufc') return '🥊'
+    if (category === 'basquete') return '🏀'
+    return '🏆'
+  }
+
+  const getCategoryLabel = () => {
+    if (category === 'ufc') return 'Luta / Evento'
+    if (category === 'basquete') return 'Partida NBA'
+    return 'Evento'
+  }
+
+  return (
+    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl animate-fade-in group">
+       <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
+        <h3 className="font-bold text-white flex items-center gap-2 tracking-wide uppercase text-xs">
+          <span className="text-brand-500">{getCategoryIcon()}</span> Configuração de {getCategoryLabel()}
+        </h3>
+      </div>
+
+      <div className="p-6 space-y-6">
+        {loading ? (
+           <div className="flex items-center justify-center py-20 bg-dark-900/30 rounded-xl border border-dashed border-dark-700">
+             <span className="animate-spin text-brand-500 mr-3 text-xl">⏳</span>
+             <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest italic">Sincronizando feeds de {category}...</span>
+           </div>
+        ) : sportsData && sportsData.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+             {sportsData.map(match => (
+                <div 
+                  key={match.id}
+                  onClick={() => setSelectedMatch(match)}
+                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col gap-4 relative overflow-hidden
+                    ${selectedMatch?.id === match.id 
+                      ? 'border-brand-500 bg-brand-500/10' 
+                      : 'border-dark-700 bg-dark-900/50 hover:border-dark-600'}`}
+                >
+                  <div className="flex items-center justify-between relative z-10">
+                    <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest">{match.league_name || 'MASTER LEAGUE'}</span>
+                    <span className="text-[10px] font-bold text-zinc-500 bg-dark-900 px-2 py-1 rounded">{match.match_time}</span>
+                  </div>
+
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="flex-1 flex flex-col items-center gap-2">
+                       <div className="w-12 h-12 bg-dark-800 rounded-full flex items-center justify-center border border-white/5 text-xl">👤</div>
+                       <span className="text-white font-black text-xs text-center uppercase tracking-tighter">{match.home_team}</span>
+                    </div>
+
+                    <div className="flex flex-col items-center">
+                       <span className="text-brand-500 font-black italic text-lg">VS</span>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center gap-2">
+                       <div className="w-12 h-12 bg-dark-800 rounded-full flex items-center justify-center border border-white/5 text-xl">👤</div>
+                       <span className="text-white font-black text-xs text-center uppercase tracking-tighter">{match.away_team}</span>
+                    </div>
+                  </div>
+                  
+                  {selectedMatch?.id === match.id && (
+                     <div className="absolute top-0 right-0 p-2">
+                        <div className="w-5 h-5 bg-brand-500 rounded-full flex items-center justify-center animate-pulse">
+                           <span className="text-white text-[10px]">✓</span>
+                        </div>
+                     </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-dark-900/30 rounded-xl border border-dashed border-dark-700">
+             <span className="text-5xl mb-4 block">📡</span>
+             <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Sem eventos detectados no momento</p>
+             <p className="text-zinc-600 text-[9px] mt-2 uppercase">Verificaremos novas transmissões em breve</p>
+          </div>
+        )}
+
+        <button 
+          onClick={handleGenerate}
+          disabled={!selectedMatch || generating}
+          className={`w-full font-black py-4 rounded-2xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-3 text-xs uppercase tracking-[0.3em] overflow-hidden relative
+            ${done 
+              ? 'bg-green-600 text-white' 
+              : 'bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white disabled:opacity-20 disabled:grayscale'}`}
+        >
+          {generating ? <span className="animate-spin text-lg">⏳</span> : done ? '✅ ARTE PRONTA!' : '🎨 CRIAR BANNER PREMIUM'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const ManualConfigurator = ({ theme, category, contents, info }) => {
+  const [selected, setSelected] = useState(null)
+  const [team1, setTeam1] = useState('')
+  const [team2, setTeam2] = useState('')
+  const [date, setDate] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const handleGenerate = () => {
+    if (!selected) return
+    setGenerating(true)
+    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1800)
+  }
+
+  return (
+    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl animate-scale-in">
+      <div className="px-6 py-4 border-b border-dark-700 bg-dark-900/50 flex items-center justify-between">
+        <h3 className="font-bold text-white text-xs uppercase tracking-widest flex items-center gap-2">
+          <span className="text-brand-500 text-base">✏️</span> Edição Master
+        </h3>
+        <span className="text-[10px] font-bold text-zinc-500 bg-dark-900 px-2 py-0.5 rounded border border-white/5 uppercase">{theme}</span>
+      </div>
+      <div className="p-6 space-y-6">
+        {category !== 'divulgacao' && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Time / Lutador 1</label>
+                <input value={team1} onChange={e => setTeam1(e.target.value)}
+                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
+                  placeholder={info.placeholder1} />
+              </div>
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Time / Lutador 2</label>
+                <input value={team2} onChange={e => setTeam2(e.target.value)}
+                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
+                  placeholder={info.placeholder2} />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Data</label>
+              <input value={date} onChange={e => setDate(e.target.value)} type="date"
+                className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition" />
+            </div>
+          </>
+        )}
+        {category === 'divulgacao' && (
+          <div className="bg-dark-900 border border-dashed border-dark-600 rounded-xl p-6 text-center text-zinc-500">
+            <span className="text-3xl mb-2 block">📣</span>
+            <p className="text-sm">Banners de divulgação não precisam de configuração.</p>
+            <p className="text-xs mt-1">Clique em gerar para criar o banner com seu contato.</p>
+          </div>
+        )}
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+            ${done
+              ? 'bg-green-600 text-white'
+              : 'bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white'
+            }`}
+        >
+          {generating ? <><span className="animate-spin">⏳</span> Gerando arte...</>
+            : done ? <><span>✅</span> Arte Gerada! Clique para baixar</>
+            : <><span>🎨</span> Gerar Banner Agora</>}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── CONFIGURADOR DE FILMES ────────────────────────────────────────────────────
+const FilmesConfigurator = ({ theme, contents, loading, onSearch, onMovieSelect, onGenerate }) => {
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const handleSelect = (c) => {
+    setSelected(c)
+    if (onMovieSelect) onMovieSelect(c)
+  }
+
+  const handleGenerateClick = () => {
+    if (!selected) return
+    setGenerating(true)
+    if (onGenerate) onGenerate()
+    setTimeout(() => {
+      setGenerating(false)
+      setDone(true)
+      setTimeout(() => setDone(false), 3000)
+    }, 1500)
+  }
+
+  const filtered = contents.filter(c =>
+    c.titulo?.toLowerCase().includes(search.toLowerCase()) ||
+    c.titulo_original?.toLowerCase().includes(search.toLowerCase())
+  )
+
+
+  return (
+    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
+      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
+        <h3 className="font-bold text-white flex items-center gap-2">🎬 Selecione o Filme / Série</h3>
+        {selected && <span className="text-xs text-purple-400 font-bold">{selected.titulo}</span>}
+      </div>
+      <div className="p-6 space-y-4">
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
+          <input
+            value={search} 
+            onChange={e => {
+              setSearch(e.target.value)
+              onSearch(e.target.value)
+            }}
+            className="w-full bg-dark-900 border border-dark-600 rounded-lg pl-9 pr-4 py-2.5 text-white text-sm focus:border-purple-500 outline-none transition"
+            placeholder="Buscar filme ou série no catálogo e TMDB..."
+          />
+        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-10 text-zinc-500">
+            <span className="animate-spin mr-2">⏳</span> Carregando títulos...
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+            {filtered.slice(0, 30).map(c => (
+              <button
+                key={c.id}
+                onClick={() => handleSelect(c)}
+                className={`group relative rounded-xl overflow-hidden aspect-[2/3] border-2 transition-all
+                  ${selected?.id === c.id
+                    ? 'border-purple-500 ring-2 ring-purple-500/40 scale-[1.03]'
+                    : 'border-dark-700 hover:border-zinc-500'
+                  }`}
+              >
+                {c.poster_path ? (
+                  <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} alt={c.titulo}
+                    className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-dark-800 flex items-center justify-center text-xs text-zinc-600 text-center p-1">
+                    {c.titulo}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                  <p className="text-white text-[10px] font-bold leading-tight line-clamp-2">{c.titulo}</p>
+                </div>
+                {selected?.id === c.id && (
+                  <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center shadow">
+                    <span className="text-white text-[10px]">✓</span>
+                  </div>
+                )}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <div className="col-span-full text-center py-8 text-zinc-600">
+                <span className="block text-3xl mb-2">🎬</span>
+                <p className="text-sm">Nenhum título encontrado</p>
+              </div>
+            )}
+          </div>
+        )}
+        <button
+          onClick={handleGenerateClick}
+          disabled={!selected || generating}
+          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+            ${done
+              ? 'bg-green-600 text-white'
+              : 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white disabled:opacity-50'
+            }`}
+        >
+          {generating ? <><span className="animate-spin">⏳</span> Gerando arte...</>
+            : done ? <><span>✅</span> Arte Gerada! Clique para baixar</>
+            : <><span>🎬</span> Gerar Banner de Filme</>}
+        </button>
+      </div>
     </div>
   )
 }
@@ -430,12 +467,26 @@ const BannerGenerator = () => {
   const [searchingTMDB, setSearchingTMDB] = useState(false)
   const [curationItems, setCurationItems] = useState([])
   const [loadingCuration, setLoadingCuration] = useState(false)
+  const [loadingSports, setLoadingSports] = useState(false)
+  const [selectedMovie, setSelectedMovie] = useState(null)
+  const [bannerContact, setBannerContact] = useState('')
+  const bannerRef = useRef(null)
 
   // Carrega templates personalizados do Admin e Curadoria
   useEffect(() => {
     fetchAdminTemplates()
     fetchCuration()
+    fetchSettings()
   }, [])
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await api.get('/settings')
+      setBannerContact(data.whatsapp || '')
+    } catch (err) {
+      console.error('Erro ao buscar contato do banner:', err)
+    }
+  }
 
   const fetchCuration = async () => {
     setLoadingCuration(true)
@@ -455,6 +506,38 @@ const BannerGenerator = () => {
       if (res.data.templates) setAdminTemplates(res.data.templates)
     } catch (err) {
       console.error('Erro ao buscar templates:', err)
+    }
+  }
+
+  const fetchSportsData = async (type) => {
+    setLoadingSports(true)
+    try {
+      const res = await api.get(`/api/sports/matches?type=${type}`)
+      setSportsData(prev => ({ ...prev, [type]: res.data.data || [] }))
+    } catch (err) {
+      console.error(`Erro ao buscar esportes (${type}):`, err)
+    } finally {
+      setLoadingSports(false)
+    }
+  }
+
+  const handleExportBanner = async () => {
+    if (!bannerRef.current || !selectedMovie) return;
+    
+    try {
+      const canvas = await html2canvas(bannerRef.current, {
+        useCORS: true,
+        scale: 2, // Melhor qualidade (Digital Print Ready)
+        backgroundColor: '#000000'
+      });
+      
+      const link = document.createElement('a');
+      const fileName = `banner-${selectedMovie.titulo.toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.download = fileName;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Erro ao exportar banner:', err);
     }
   }
 
@@ -481,9 +564,12 @@ const BannerGenerator = () => {
     return () => clearInterval(interval)
   }, [])
 
-  // Carrega conteúdos para filmes
+  // Carrega conteúdos para filmes e esportes
   useEffect(() => {
     if (activeCategory === 'filmes') loadContents()
+    if (activeCategory === 'futebol') fetchSportsData('soccer')
+    if (activeCategory === 'ufc') fetchSportsData('mma')
+    if (activeCategory === 'basquete') fetchSportsData('basketball')
   }, [activeCategory])
 
   const loadContents = async () => {
@@ -591,7 +677,7 @@ const BannerGenerator = () => {
                   <img 
                     src={item.poster_path || 'https://via.placeholder.com/200x300?text=No+Image'} 
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
                   <div className="absolute bottom-1 left-0 right-0 px-2">
@@ -666,7 +752,7 @@ const BannerGenerator = () => {
           >
             <div className="absolute -right-8 -top-8 w-28 h-28 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-all" />
             <div className={`h-14 w-14 rounded-2xl mx-auto flex items-center justify-center mb-3 border transition-colors
-              ${mode === 'auto' ? 'bg-green-500 border-green-400 text-white' : 'bg-dark-900 border-dark-600 group-hover:border-brand-500/50 text-green-500'}`}>
+              ${mode === 'auto' ? 'bg-green-500 border-green-400 text-white' : 'bg-dark-900 border-dark-600 group-hover:border-green-500/50 text-green-500'}`}>
               <span className="text-2xl">⚡</span>
             </div>
             <h3 className="text-lg font-black text-white mb-1">Modo Automático</h3>
@@ -732,41 +818,25 @@ const BannerGenerator = () => {
             ))
           ) : themes.map(theme => (
             mode === 'auto' ? (
-              // Modo auto: checkbox simples
-              <div
+              <div 
                 key={theme.id}
                 onClick={() => toggleAutoTheme(theme.id)}
-                className={`cursor-pointer relative rounded-xl overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
-                  ${autoSelectedThemes.includes(theme.id)
-                    ? 'border-green-500 ring-2 ring-green-500/40 shadow-lg scale-[1.02]'
-                    : 'border-dark-700 hover:border-zinc-500'
-                  }`}
+                className={`relative group cursor-pointer rounded-2xl overflow-hidden border-2 transition-all
+                  ${autoSelectedThemes.includes(theme.id) 
+                    ? 'border-green-500 ring-2 ring-green-500/20' 
+                    : 'border-dark-700 hover:border-dark-600'}`}
               >
-                <div className="absolute inset-0">
-                  {theme.images.map((img, idx) => (
-                    <img key={idx} src={img} alt={theme.name}
-                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700
-                        ${tick % theme.images.length === idx ? 'opacity-90' : 'opacity-0'}`}
-                    />
-                  ))}
-                </div>
-                {autoSelectedThemes.includes(theme.id) && (
-                  <div className="absolute top-2 left-2 z-30 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow">
-                    <span className="text-white text-xs">✓</span>
+                <div className="aspect-[9/16] bg-dark-900">
+                  <img src={theme.images[0]} className="w-full h-full object-cover opacity-60" alt="" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all
+                      ${autoSelectedThemes.includes(theme.id) ? 'bg-green-500 border-green-400' : 'bg-black/50 border-white/20'}`}>
+                      {autoSelectedThemes.includes(theme.id) && <span className="text-white text-xs">✓</span>}
+                    </div>
                   </div>
-                )}
-                {theme.badge && (
-                  <div className="absolute top-2 right-2 z-30">
-                    <span className="text-[9px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded">
-                      {theme.badge}
-                    </span>
+                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black text-center">
+                     <p className="text-[9px] font-black text-white uppercase">{theme.name}</p>
                   </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-dark-900/95 border-t border-dark-700 py-2 px-2 z-20 backdrop-blur-md">
-                  <span className={`text-[10px] font-bold uppercase text-center block truncate
-                    ${autoSelectedThemes.includes(theme.id) ? 'text-green-400' : 'text-zinc-300'}`}>
-                    {theme.name}
-                  </span>
                 </div>
               </div>
             ) : (
@@ -782,23 +852,19 @@ const BannerGenerator = () => {
         </div>
       </div>
 
-      {/* ── RESULTADO LOTE ──────────────────────────────────────── */}
+      {/* ── RESULTADO EM LOTE ───────────────────────────────────── */}
       {batchResult && (
-        <div className="bg-gradient-to-r from-green-900/40 to-dark-800 border border-green-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 bg-green-500/20 rounded-full flex items-center justify-center text-2xl border border-green-500/30">
-              ✅
-            </div>
-            <div>
-              <h3 className="font-bold text-white text-lg">{batchResult.count} artes geradas!</h3>
-              <p className="text-zinc-400 text-xs">
-                {batchResult.themes.length} tema(s) × jogos do dia. Prontas para download.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-2.5 rounded-xl transition shadow-lg text-sm">
-              📥 Baixar ZIP
+        <div className="bg-brand-500/10 border-2 border-brand-500/30 rounded-3xl p-8 text-center animate-bounce-subtle mt-10 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-brand-500 animate-pulse" />
+          <span className="text-5xl mb-4 block">🔥</span>
+          <h3 className="text-2xl font-black text-white uppercase tracking-tight">Sucesso! Geramos {batchResult.count} banners</h3>
+          <p className="text-zinc-400 mt-2 text-sm">Todas as artes foram processadas e estão prontas para download.</p>
+          
+          <div className="flex gap-3 justify-center mt-6">
+            <button
+               className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-black py-3 px-8 rounded-xl transition shadow-xl text-sm uppercase tracking-widest"
+            >
+              📥 Baixar ZIP com Todas
             </button>
             <button
               onClick={() => setBatchResult(null)}
@@ -812,245 +878,95 @@ const BannerGenerator = () => {
 
       {/* ── PAINEL DE CONFIGURAÇÃO (tema selecionado, modo manual) ─ */}
       {selectedTheme && mode !== 'auto' && activeCategory === 'futebol' && (
-        <FootballConfigurator theme={selectedTheme} />
+        <FootballConfigurator 
+          theme={selectedTheme} 
+          sportsData={sportsData.soccer} 
+          loading={loadingSports}
+        />
       )}
 
       {selectedTheme && activeCategory !== 'futebol' && activeCategory !== 'filmes' && (
-        <SportConfigurator category={activeCategory} theme={selectedTheme} />
+        <SportConfigurator 
+          category={activeCategory} 
+          theme={selectedTheme} 
+          sportsData={activeCategory === 'ufc' ? sportsData.mma : sportsData.basketball}
+          loading={loadingSports}
+        />
       )}
 
       {/* ── GALERIA DE FILMES (para banners de filmes) ─────────── */}
       {(activeCategory === 'filmes' || activeCategory === 'admin') && selectedTheme && (
-        <FilmesConfigurator 
-          theme={selectedTheme} 
-          contents={tmdbSearchResults.length > 0 ? tmdbSearchResults : contents} 
-          loading={searchingTMDB || loading} 
-          onSearch={handleTmdbSearch}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <FilmesConfigurator 
+            theme={selectedTheme} 
+            contents={tmdbSearchResults.length > 0 ? tmdbSearchResults : contents} 
+            loading={searchingTMDB || loading} 
+            onSearch={handleTmdbSearch}
+            onMovieSelect={setSelectedMovie}
+            onGenerate={handleExportBanner}
+          />
+          
+            <div className="w-full aspect-[9/16] max-h-[600px] overflow-hidden rounded-2xl border border-white/10 shadow-2xl origin-top scale-[0.35]">
+              <div ref={bannerRef} className="bg-black">
+                {selectedTheme === 'filme-t1' ? (
+                  <MovieBannerElite 
+                    movie={selectedMovie} 
+                    contact={bannerContact} 
+                    theme={selectedTheme} 
+                  />
+                ) : (
+                  <div className="w-[1080px] h-[1920px] flex items-center justify-center text-4xl text-zinc-600 font-black uppercase text-center p-20">
+                    Selecione o tema Cinema Dark para ver o preview Elite
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── EMPTY STATE ─────────────────────────────────────────── */}
-      {!selectedTheme && mode !== 'auto' && (
-        <div className="flex flex-col items-center justify-center py-16 text-zinc-600 border border-dashed border-dark-700 rounded-2xl">
-          <span className="text-5xl mb-4 opacity-40">🎨</span>
-          <p className="text-sm font-medium">Selecione um tema acima para continuar</p>
-          <p className="text-xs mt-1 opacity-60">Passe o mouse sobre os cards para ver o carrossel</p>
+      {!selectedTheme && (
+        <div className="py-20 text-center bg-dark-800/20 rounded-3xl border-2 border-dashed border-dark-700/50">
+          <div className="w-20 h-20 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5">
+            <span className="text-3xl grayscale opacity-50">🎨</span>
+          </div>
+          <h3 className="text-zinc-500 font-bold uppercase tracking-widest text-sm">Aguardando Seleção</h3>
+          <p className="text-zinc-600 text-xs mt-1">Escolha um estilo acima para configurar sua arte</p>
         </div>
       )}
-    </div>
-  )
-}
-
-// ─── CONFIGURADOR DE FUTEBOL ───────────────────────────────────────────────────
-const FootballConfigurator = ({ theme }) => {
-  const [matches, setMatches] = useState([
-    { league: 'BRASILEIRÃO SÉRIE A', team1: 'FLAMENGO', team2: 'PALMEIRAS', time: '20:00' }
-  ])
-  const [title, setTitle] = useState('TABELA DE JOGOS')
-  const [date, setDate] = useState('HOJE')
-  const [generating, setGenerating] = useState(false)
-  const [done, setDone] = useState(false)
-
-  const addMatch = () => setMatches(m => [...m, { league: '', team1: '', team2: '', time: '' }])
-  const removeMatch = (i) => setMatches(m => m.filter((_, idx) => idx !== i))
-  const updateMatch = (i, field, val) => setMatches(m => m.map((match, idx) => idx === i ? { ...match, [field]: val } : match))
-
-  const handleGenerate = () => {
-    setGenerating(true)
-    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1500)
-  }
-
-  return (
-    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
-        <h3 className="font-bold text-white flex items-center gap-2">
-          <span>⚽</span> Configurar Banner de Futebol
-        </h3>
-        <span className="text-xs text-zinc-500 bg-dark-800 px-2 py-1 rounded border border-dark-700">
-          Tema: {theme}
-        </span>
-      </div>
-      <div className="p-6 space-y-5">
-        {/* Título e Data */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Título</label>
-            <input value={title} onChange={e => setTitle(e.target.value)}
-              className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
-              placeholder="TABELA DE JOGOS" />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Data / Rodada</label>
-            <input value={date} onChange={e => setDate(e.target.value)}
-              className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
-              placeholder="HOJE" />
-          </div>
-        </div>
-
-        {/* Lista de Jogos */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Jogos ({matches.length})</label>
-            <button onClick={addMatch}
-              className="flex items-center gap-1 text-xs font-bold text-brand-400 hover:text-brand-300 transition">
-              <span>+</span> Adicionar Jogo
-            </button>
-          </div>
-          {matches.map((match, i) => (
-            <div key={i} className="bg-dark-900 border border-dark-600 rounded-xl p-4 space-y-3 relative">
-              <button onClick={() => removeMatch(i)}
-                className="absolute top-3 right-3 text-zinc-600 hover:text-red-400 transition text-sm">✕</button>
-              <div>
-                <label className="text-[9px] font-bold text-zinc-500 uppercase">Campeonato</label>
-                <input value={match.league} onChange={e => updateMatch(i, 'league', e.target.value)}
-                  className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 outline-none transition mt-1"
-                  placeholder="BRASILEIRÃO SÉRIE A" />
-              </div>
-              <div className="grid grid-cols-3 gap-3 items-center">
-                <input value={match.team1} onChange={e => updateMatch(i, 'team1', e.target.value)}
-                  className="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
-                  placeholder="TIME 1" />
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-brand-500 font-black text-lg">VS</span>
-                  <input value={match.time} onChange={e => updateMatch(i, 'time', e.target.value)}
-                    className="w-full bg-dark-800 border border-dark-700 rounded-lg px-2 py-1.5 text-yellow-400 text-xs font-bold text-center focus:border-yellow-500 outline-none transition"
-                    placeholder="20:00" />
-                </div>
-                <input value={match.team2} onChange={e => updateMatch(i, 'team2', e.target.value)}
-                  className="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
-                  placeholder="TIME 2" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Botão Gerar */}
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
-            ${done
-              ? 'bg-green-600 text-white'
-              : 'bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white'
-            }`}
-        >
-          {generating ? <><span className="animate-spin">⏳</span> Gerando arte...</>
-            : done ? <><span>✅</span> Arte Gerada! Clique para baixar</>
-            : <><span>🎨</span> Gerar Banner Agora</>}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ─── CONFIGURADOR DE ESPORTES (Basquete, UFC, Divulgação) ─────────────────────
-const SportConfigurator = ({ category, theme }) => {
-  const [generating, setGenerating] = useState(false)
-  const [done, setDone] = useState(false)
-
-  const [team1, setTeam1] = useState('')
-  const [team2, setTeam2] = useState('')
-  const [gameTime, setGameTime] = useState('21:00')
-  const [league, setLeague] = useState('')
-  const [date, setDate] = useState('')
-
-  const catInfo = {
-    basquete:   { label: 'Basquete',    icon: '🏀', placeholder1: 'LA LAKERS', placeholder2: 'GOLDEN STATE', leagueDefault: 'NBA' },
-    ufc:        { label: 'UFC',         icon: '🥊', placeholder1: 'POATAN',    placeholder2: 'PEREIRA',      leagueDefault: 'UFC' },
-    divulgacao: { label: 'Divulgação',  icon: '📣', placeholder1: '',          placeholder2: '',             leagueDefault: '' },
-  }
-  const info = catInfo[category] || catInfo.divulgacao
-
-  const handleGenerate = () => {
-    setGenerating(true)
-    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1500)
-  }
-
-  return (
-    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
-      <div className="px-6 py-4 border-b border-dark-700 flex items-center gap-2 bg-dark-900/50">
-        <span className="text-lg">{info.icon}</span>
-        <h3 className="font-bold text-white">Configurar Banner de {info.label}</h3>
-      </div>
-      <div className="p-6 space-y-4">
-        {category !== 'divulgacao' && (
-          <>
-            <div>
-              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Liga / Campeonato</label>
-              <input value={league} onChange={e => setLeague(e.target.value)}
-                className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
-                placeholder={info.leagueDefault} />
-            </div>
-            <div className="grid grid-cols-3 gap-3 items-center">
-              <div>
-                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Time / Lutador 1</label>
-                <input value={team1} onChange={e => setTeam1(e.target.value)}
-                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
-                  placeholder={info.placeholder1} />
-              </div>
-              <div className="text-center">
-                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Horário</label>
-                <input value={gameTime} onChange={e => setGameTime(e.target.value)}
-                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-yellow-400 text-sm font-bold text-center focus:border-yellow-500 outline-none transition"
-                  placeholder="21:00" />
-              </div>
-              <div>
-                <label className="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Time / Lutador 2</label>
-                <input value={team2} onChange={e => setTeam2(e.target.value)}
-                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm font-bold text-center focus:border-brand-500 outline-none transition"
-                  placeholder={info.placeholder2} />
-              </div>
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Data</label>
-              <input value={date} onChange={e => setDate(e.target.value)} type="date"
-                className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition" />
-            </div>
-          </>
-        )}
-        {category === 'divulgacao' && (
-          <div className="bg-dark-900 border border-dashed border-dark-600 rounded-xl p-6 text-center text-zinc-500">
-            <span className="text-3xl mb-2 block">📣</span>
-            <p className="text-sm">Banners de divulgação não precisam de configuração.</p>
-            <p className="text-xs mt-1">Clique em gerar para criar o banner com seu contato.</p>
-          </div>
-        )}
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
-            ${done
-              ? 'bg-green-600 text-white'
-              : 'bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white'
-            }`}
-        >
-          {generating ? <><span className="animate-spin">⏳</span> Gerando arte...</>
-            : done ? <><span>✅</span> Arte Gerada! Clique para baixar</>
-            : <><span>🎨</span> Gerar Banner Agora</>}
-        </button>
-      </div>
     </div>
   )
 }
 
 // ─── CONFIGURADOR DE FILMES ────────────────────────────────────────────────────
-const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
+const FilmesConfigurator = ({ theme, contents, loading, onSearch, onMovieSelect, onGenerate }) => {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [done, setDone] = useState(false)
+
+  const handleSelect = (c) => {
+    setSelected(c)
+    if (onMovieSelect) onMovieSelect(c)
+  }
+
+  const handleGenerateClick = () => {
+    if (!selected) return
+    setGenerating(true)
+    if (onGenerate) onGenerate()
+    setTimeout(() => {
+      setGenerating(false)
+      setDone(true)
+      setTimeout(() => setDone(false), 3000)
+    }, 1500)
+  }
 
   const filtered = contents.filter(c =>
     c.titulo?.toLowerCase().includes(search.toLowerCase()) ||
     c.titulo_original?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleGenerate = () => {
-    if (!selected) return
-    setGenerating(true)
-    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1800)
-  }
 
   return (
     <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
@@ -1080,7 +996,7 @@ const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
             {filtered.slice(0, 30).map(c => (
               <button
                 key={c.id}
-                onClick={() => setSelected(c)}
+                onClick={() => handleSelect(c)}
                 className={`group relative rounded-xl overflow-hidden aspect-[2/3] border-2 transition-all
                   ${selected?.id === c.id
                     ? 'border-purple-500 ring-2 ring-purple-500/40 scale-[1.03]'
@@ -1114,7 +1030,7 @@ const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
           </div>
         )}
         <button
-          onClick={handleGenerate}
+          onClick={handleGenerateClick}
           disabled={!selected || generating}
           className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
             ${done
