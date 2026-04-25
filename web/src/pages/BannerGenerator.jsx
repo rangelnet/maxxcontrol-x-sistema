@@ -1,6 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import api from '../services/api'
-
+import html2canvas from 'html2canvas'
+import MovieBannerElite from '../components/MovieBannerElite'
+import { useAuth } from '../context/AuthContext'
+import { 
+  Plus, Trash2, Save, Settings, Layers, Type, Layout as LayoutIcon, 
+  ImageIcon, X, ChevronRight, Info, AlertTriangle, Monitor, Phone,
+  Tv2, Trophy, Image, Download, Search, Loader2, RefreshCcw, Swords,
+  Sparkles, Palette, Shield
+} from 'lucide-react'
 
 // ─── DADOS DOS TEMAS POR CATEGORIA ────────────────────────────────────────────
 const THEMES = {
@@ -172,6 +180,14 @@ const THEMES = {
       isGroup: false,
       variants: [],
     },
+    {
+      id: 'fire-series',
+      name: 'Fire Series Master',
+      badge: 'ELITE',
+      images: ['/previews/fire_series_sample.jpg'], 
+      isGroup: false,
+      variants: [],
+    },
   ],
 
   basquete: [
@@ -302,6 +318,7 @@ const CATEGORIES = [
   { id: 'divulgacao', label: 'Divulgação',       icon: '📣', color: 'from-pink-500 to-fuchsia-600',  border: 'border-pink-500/40',    glow: 'shadow-pink-500/20' },
 ]
 
+
 // ─── COMPONENTE CARD DE TEMA ───────────────────────────────────────────────────
 const ThemeCard = ({ theme, selected, onSelect, tick }) => {
   const [showVariants, setShowVariants] = useState(false)
@@ -415,24 +432,75 @@ const ThemeCard = ({ theme, selected, onSelect, tick }) => {
 
 // ─── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const BannerGenerator = () => {
+  const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState('generator') // 'generator' | 'themes'
   const [activeCategory, setActiveCategory] = useState('futebol')
   const [selectedTheme, setSelectedTheme] = useState(null)
   const [mode, setMode] = useState(null) // 'manual' | 'auto'
-  const [tick, setTick] = useState(0) // para carrossel
+  const [tick, setTick] = useState(0)
   const [contents, setContents] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [generatingBatch, setGeneratingBatch] = useState(false)
   const [batchResult, setBatchResult] = useState(null)
   const [autoSelectedThemes, setAutoSelectedThemes] = useState([])
+  
+  // ─── ESTADO DA FÁBRICA DE TEMAS ──────────────────────────────────────────────
   const [adminTemplates, setAdminTemplates] = useState([])
+  const [showThemeModal, setShowThemeModal] = useState(false)
+  const [editingTheme, setEditingTheme] = useState(null)
+  const [previewActive, setPreviewActive] = useState('feed')
+  const [themeFormData, setThemeFormData] = useState({
+    name: '', type: 'movie', bg_url: '', overlay_url: '',
+    config: { 
+      poster_x: 50, poster_y: 50, poster_scale: 1, 
+      text_color: '#FFA500', font_family: 'Inter', show_synopsis: true,
+      brand_name: 'TV MAXX', brand_logo_url: ''
+    }
+  })
+  const [useRealContentInPreview, setUseRealContentInPreview] = useState(false)
+  const sampleMovie = contents[0] || { titulo: 'The Batman', poster_path: '/5P8InoNmzq0oXoo3aMbbp9FbDSb.jpg', backdrop_path: '/b0PljB9Zbe0STqja9zGo0tSNEt6.jpg', release_date: '2022-03-01', vote_average: 7.7, overview: 'Batman ventures into Gotham City\'s underworld when a sadistic killer leaves behind a trail of cryptic clues.' }
+
+  // ─── DADOS ADICIONAIS ───────────────────────────────────────────────────────
   const [tmdbSearchResults, setTmdbSearchResults] = useState([])
   const [searchingTMDB, setSearchingTMDB] = useState(false)
+  const [curationItems, setCurationItems] = useState([])
+  const [loadingCuration, setLoadingCuration] = useState(false)
+  const [loadingSports, setLoadingSports] = useState(false)
+  const [selectedMovie, setSelectedMovie] = useState(null)
+  const [trendingMovies, setTrendingMovies] = useState([])
+  const [trendingSeries, setTrendingSeries] = useState([])
+  const [bannerContact, setBannerContact] = useState('')
+  const [sportsData, setSportsData] = useState({})
+  const bannerRef = useRef(null)
 
-  // Carrega templates personalizados do Admin
+  // Carrega templates personalizados do Admin e Curadoria
   useEffect(() => {
     fetchAdminTemplates()
+    fetchCuration()
+    fetchSettings()
   }, [])
+
+  const fetchSettings = async () => {
+    try {
+      const { data } = await api.get('/settings')
+      setBannerContact(data.whatsapp || '')
+    } catch (err) {
+      console.error('Erro ao buscar contato do banner:', err)
+    }
+  }
+
+  const fetchCuration = async () => {
+    setLoadingCuration(true)
+    try {
+      const res = await api.get('/api/iptv-server/curation')
+      setCurationItems(Array.isArray(res.data) ? res.data : [])
+    } catch (err) {
+      console.error('Erro ao buscar curadoria:', err)
+    } finally {
+      setLoadingCuration(false)
+    }
+  }
 
   const fetchAdminTemplates = async () => {
     try {
@@ -440,6 +508,57 @@ const BannerGenerator = () => {
       if (res.data.templates) setAdminTemplates(res.data.templates)
     } catch (err) {
       console.error('Erro ao buscar templates:', err)
+    }
+  }
+
+  // ─── LÓGICA DA FÁBRICA (MIGRADA) ─────────────────────────────────────────────
+  const handleSaveTheme = async (e) => {
+    e.preventDefault()
+    const method = editingTheme ? 'put' : 'post'
+    const url = editingTheme ? `/api/banner-templates/${editingTheme.id}` : '/api/banner-templates'
+    try {
+      const res = await api[method](url, themeFormData)
+      if (res.status === 200 || res.status === 201) {
+        setShowThemeModal(false)
+        fetchAdminTemplates()
+        setEditingTheme(null)
+        setThemeFormData({ 
+          name: '', type: 'movie', bg_url: '', overlay_url: '', 
+          config: { ...themeFormData.config } 
+        })
+      }
+    } catch (err) { console.error('Erro ao salvar template:', err) }
+  }
+
+  const handleEditTheme = (temp) => {
+    setEditingTheme(temp)
+    setThemeFormData({
+      name: temp.name, type: temp.type, bg_url: temp.bg_url,
+      overlay_url: temp.overlay_url, config: temp.config || themeFormData.config
+    })
+    setShowThemeModal(true)
+  }
+
+  const handleDeleteTheme = async (id) => {
+    if (!confirm('Deseja realmente excluir este template?')) return
+    try {
+      const res = await api.delete(`/api/banner-templates/${id}`)
+      if (res.status === 200) fetchAdminTemplates()
+    } catch (err) { console.error('Erro ao deletar:', err) }
+  }
+
+  // Permissões Master/Admin
+  const isMaster = user && (user.role === 'admin' || user.plano === 'premium' || user.plano === 'master' || user.plano === 'ILIMITADO')
+
+  const fetchSportsData = async (type) => {
+    setLoadingSports(true)
+    try {
+      const res = await api.get(`/api/sports/matches?type=${type}`)
+      setSportsData(prev => ({ ...prev, [type]: res.data.data || [] }))
+    } catch (err) {
+      console.error(`Erro ao buscar esportes (${type}):`, err)
+    } finally {
+      setLoadingSports(false)
     }
   }
 
@@ -460,16 +579,53 @@ const BannerGenerator = () => {
     }
   }
 
+  const handleExportBanner = async () => {
+    if (!bannerRef.current || !selectedMovie) return;
+    
+    try {
+      const canvas = await html2canvas(bannerRef.current, {
+        useCORS: true,
+        scale: 2, // Melhor qualidade (Digital Print Ready)
+        backgroundColor: '#000000'
+      });
+      
+      const link = document.createElement('a');
+      const fileName = `banner-${selectedMovie.titulo.toLowerCase().replace(/\s+/g, '-')}.png`;
+      link.download = fileName;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Erro ao exportar banner:', err);
+    }
+  }
+
   // Carrossel automático
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 2500)
     return () => clearInterval(interval)
   }, [])
 
-  // Carrega conteúdos para filmes
+  // Carrega conteúdos para filmes e esportes
   useEffect(() => {
-    if (activeCategory === 'filmes') loadContents()
+    if (activeCategory === 'filmes') {
+      loadContents()
+      fetchTrendingContent()
+    }
+    if (activeCategory === 'futebol') fetchSportsData('soccer')
+    if (activeCategory === 'ufc') fetchSportsData('mma')
+    if (activeCategory === 'basquete') fetchSportsData('basketball')
   }, [activeCategory])
+
+  const fetchTrendingContent = async () => {
+    try {
+      const { data: movies } = await api.get('/api/content/populares?tipo=movie')
+      const { data: tv } = await api.get('/api/content/populares?tipo=tv')
+      setTrendingMovies(movies.resultados?.slice(0, 10) || [])
+      setTrendingSeries(tv.resultados?.slice(0, 10) || [])
+    } catch (err) {
+      console.error('Erro ao buscar tendências:', err)
+    }
+  }
 
   const loadContents = async () => {
     setLoading(true)
@@ -524,28 +680,73 @@ const BannerGenerator = () => {
   )
 
   return (
-    <div className="space-y-6 pb-10">
-
-      {/* ── HEADER ──────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 pb-20 animate-fade-in">
+      {/* ── HEADER & TABS (Marketing Hub Style) ────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-dark-800/50 p-6 rounded-[2rem] border border-white/5 shadow-2xl">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
-              🎨
+               🚀
             </div>
-            Gerador de Banners
+            Marketing <span className="text-brand-500">Hub</span>
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">
-            Crie artes profissionais para IPTV em segundos. Escolha a categoria e o tema.
-          </p>
+          <p className="text-zinc-400 text-sm mt-1">Sua central de criação de artes e identidade visual.</p>
         </div>
-        {selectedTheme && (
-          <div className="flex items-center gap-2 bg-brand-500/10 border border-brand-500/30 px-4 py-2 rounded-full">
-            <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
-            <span className="text-brand-400 text-xs font-bold uppercase">Tema Selecionado</span>
-          </div>
-        )}
+
+        <div className="flex bg-black/40 p-1.5 rounded-2xl border border-white/10 self-start md:self-center">
+          <button 
+            onClick={() => setActiveTab('generator')}
+            className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'generator' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
+          >
+            <ImageIcon size={16} /> Gerar Banner
+          </button>
+          {isMaster && (
+            <button 
+              onClick={() => setActiveTab('themes')}
+              className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'themes' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
+            >
+              <Sparkles size={16} className={activeTab === 'themes' ? 'animate-pulse' : ''} /> Fábrica de Temas
+            </button>
+          )}
+        </div>
       </div>
+
+      {activeTab === 'generator' ? (
+        <>
+          {/* ── SEÇÃO DE CURADORIA ───────────────────────────────────── */}
+          {curationItems.length > 0 && (
+            <div className="bg-dark-800/80 backdrop-blur-md border border-brand-500/20 rounded-[2rem] p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xs font-black text-white flex items-center gap-2 uppercase tracking-widest">
+                  <span className="text-lg">🎬</span> Sua Seleção (Criação Direta)
+                </h2>
+                <div className="flex items-center gap-2">
+                   <span className="text-[10px] text-zinc-500 font-bold uppercase">Itens da Árvore</span>
+                   <button onClick={fetchCuration} className="text-brand-500 hover:text-brand-400 transition-colors"><RefreshCcw size={14} /></button>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-brand-500/20">
+                {curationItems.map((item) => (
+                  <button 
+                    key={item.id}
+                    onClick={() => {
+                      setSearchQuery(item.title);
+                      handleTmdbSearch(item.title);
+                    }}
+                    className="flex-shrink-0 group relative w-28 transition-transform hover:scale-105 active:scale-95"
+                  >
+                    <div className="aspect-[2/3] rounded-xl overflow-hidden border-2 border-white/5 group-hover:border-brand-500/50 shadow-lg">
+                      <img src={item.poster_path || '/placeholder-poster.jpg'} className="w-full h-full object-cover" />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black p-2">
+                        <p className="text-[8px] font-black text-white truncate text-left uppercase">{item.title}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
       {/* ── ABAS DE CATEGORIA ───────────────────────────────────── */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
@@ -751,21 +952,57 @@ const BannerGenerator = () => {
 
       {/* ── PAINEL DE CONFIGURAÇÃO (tema selecionado, modo manual) ─ */}
       {selectedTheme && mode !== 'auto' && activeCategory === 'futebol' && (
-        <FootballConfigurator theme={selectedTheme} />
+        <FootballConfigurator 
+          theme={selectedTheme} 
+          sportsData={sportsData.soccer} 
+          loading={loadingSports}
+        />
       )}
 
       {selectedTheme && activeCategory !== 'futebol' && activeCategory !== 'filmes' && (
-        <SportConfigurator category={activeCategory} theme={selectedTheme} />
+        <SportConfigurator 
+          category={activeCategory} 
+          theme={selectedTheme} 
+          sportsData={activeCategory === 'ufc' ? sportsData.mma : sportsData.basketball}
+          loading={loadingSports}
+        />
       )}
 
       {/* ── GALERIA DE FILMES (para banners de filmes) ─────────── */}
       {(activeCategory === 'filmes' || activeCategory === 'admin') && selectedTheme && (
-        <FilmesConfigurator 
-          theme={selectedTheme} 
-          contents={tmdbSearchResults.length > 0 ? tmdbSearchResults : contents} 
-          loading={searchingTMDB || loading} 
-          onSearch={handleTmdbSearch}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <FilmesConfigurator 
+            theme={selectedTheme} 
+            contents={tmdbSearchResults.length > 0 ? tmdbSearchResults : contents} 
+            trendingMovies={trendingMovies}
+            trendingSeries={trendingSeries}
+            loading={searchingTMDB || loading} 
+            onSearch={handleTmdbSearch}
+            onMovieSelect={setSelectedMovie}
+            contact={bannerContact}
+          />
+          <div className="hidden lg:flex flex-col items-center gap-6 bg-dark-900/50 p-8 rounded-[2rem] border border-dark-700 sticky top-24 w-full">
+            <h4 className="text-[12px] font-black text-brand-400 uppercase tracking-[0.2em] self-start border-l-4 border-brand-500 pl-3">Digital Twin Live Preview (UHD)</h4>
+            <div className="w-full aspect-[9/16] max-h-[750px] overflow-y-auto overflow-x-hidden rounded-[1.5rem] border-4 border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] bg-black/40 custom-scrollbar-thin flex justify-center">
+              <div ref={bannerRef} className="bg-black origin-top scale-[0.45] w-[1080px] h-[1920px] flex-shrink-0">
+                {(['filme-t1', 'fire-series'].includes(selectedTheme) || activeCategory === 'admin') ? (
+                  <MovieBannerElite 
+                    movie={selectedMovie || sampleMovie} 
+                    contact={bannerContact} 
+                    theme={selectedTheme} 
+                    config={activeCategory === 'admin' 
+                      ? adminTemplates.find(t => t.id === selectedTheme)?.config 
+                      : {}}
+                  />
+                ) : (
+                  <div className="w-[1080px] h-[1920px] flex items-center justify-center text-4xl text-zinc-600 font-black uppercase text-center p-20">
+                    Selecione um tema mestre para ver o preview Elite
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── EMPTY STATE ─────────────────────────────────────────── */}
@@ -776,23 +1013,312 @@ const BannerGenerator = () => {
           <p className="text-xs mt-1 opacity-60">Passe o mouse sobre os cards para ver o carrossel</p>
         </div>
       )}
+
+        </>
+      ) : (
+        /* ── ABA FÁBRICA DE TEMAS (MASTER ONLY) ─────────────────── */
+        <div className="space-y-8 animate-slide-up">
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-white">Oficina de <span className="text-brand-500">Modelos Elite</span></h2>
+                <p className="text-zinc-400 text-sm mt-1">Configure o esqueleto visual dos banners da sua rede.</p>
+              </div>
+              <button 
+                onClick={() => { setEditingTheme(null); setShowThemeModal(true); }}
+                className="bg-brand-500 hover:bg-brand-600 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-xl shadow-brand-500/20 flex items-center gap-3 hover:scale-105 active:scale-95"
+              >
+                <Plus size={20} /> Criar Novo Modelo
+              </button>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {adminTemplates.map(temp => (
+                <div key={temp.id} className="group relative bg-dark-800 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-brand-500/50 transition-all shadow-2xl">
+                  <div className="aspect-video bg-black relative flex items-center justify-center overflow-hidden">
+                    {temp.bg_url ? (
+                      <img src={temp.bg_url} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-dark-700 to-black" />
+                    )}
+                    {temp.overlay_url && <img src={temp.overlay_url} className="absolute inset-0 w-full h-full object-contain z-10" />}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-20" />
+                    <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-[10px] font-black uppercase text-brand-400 z-30 backdrop-blur-md">
+                      {temp.type === 'movie' ? 'Cinematográfico' : temp.type === 'soccer' ? 'Sports' : temp.type}
+                    </span>
+                  </div>
+                  <div className="p-6 flex justify-between items-center bg-dark-900 border-t border-white/5">
+                    <div>
+                      <h3 className="text-white font-bold text-lg">{temp.name}</h3>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black flex items-center gap-1">
+                        <Monitor size={10} /> Design Estrutural
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleEditTheme(temp)} className="w-10 h-10 bg-white/5 text-zinc-400 hover:text-brand-500 hover:bg-brand-500/10 rounded-full flex items-center justify-center transition-all border border-white/5"><Settings size={18} /></button>
+                      <button onClick={() => handleDeleteTheme(temp.id)} className="w-10 h-10 bg-white/5 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-full flex items-center justify-center transition-all border border-white/5"><Trash2 size={18} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+           </div>
+
+           {adminTemplates.length === 0 && (
+             <div className="py-20 text-center bg-dark-800/30 border border-dashed border-white/10 rounded-[3rem]">
+                <Palette size={48} className="mx-auto text-zinc-700 mb-6" />
+                <h3 className="text-xl font-bold text-white mb-2">Sua Oficina está vazia</h3>
+                <p className="text-zinc-500 max-w-sm mx-auto">Crie seu primeiro modelo de encarte para começar a automatizar o marketing da sua rede.</p>
+             </div>
+           )}
+        </div>
+      )}
+
+      {/* ── MODAL DE GESTÃO DE TEMAS (FÁBRICA) ─────────────────── */}
+      {showThemeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setShowThemeModal(false)}></div>
+          <div className="relative bg-dark-800 border border-white/10 rounded-[3rem] w-full max-w-7xl h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,0,0,1)] animate-scale-in">
+            {/* Header Modal */}
+            <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-brand-500/20 rounded-2xl flex items-center justify-center text-brand-500 border border-brand-500/30">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-white">{editingTheme ? 'Editar' : 'Novos'} <span className="text-brand-500">Protocolos Visuais</span></h2>
+                  <p className="text-zinc-400 text-sm mt-1">Defina as proporções e camadas do modelo mestre.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowThemeModal(false)} 
+                className="w-12 h-12 flex items-center justify-center text-zinc-500 hover:text-white transition bg-white/5 rounded-2xl border border-white/5 hover:bg-red-500/20 hover:border-red-500/30"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col lg:flex-row p-8 gap-8">
+              {/* FORMULÁRIO */}
+              <form onSubmit={handleSaveTheme} className="flex-1 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Nome do Dispositivo</label>
+                    <input 
+                      required 
+                      value={themeFormData.name} 
+                      onChange={e => setThemeFormData({...themeFormData, name: e.target.value})}
+                      placeholder="Ex: Encarte Cinema Black Friday" 
+                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white placeholder-zinc-700 outline-none focus:border-brand-500 transition-all shadow-inner focus:ring-4 focus:ring-brand-500/10 font-bold" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Categoria Alvo</label>
+                    <select 
+                      value={themeFormData.type} 
+                      onChange={e => setThemeFormData({...themeFormData, type: e.target.value})}
+                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-brand-500 transition-all appearance-none cursor-pointer font-bold"
+                    >
+                      <option value="movie">Filmes & Séries (VOD)</option>
+                      <option value="soccer">Esportes (Futebol)</option>
+                      <option value="iptv">Canais Ao Vivo</option>
+                      <option value="game">Grades de Programação</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                   <div className="space-y-3">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Layout Principal</label>
+                      <div className="flex gap-2">
+                         <button type="button" onClick={() => setPreviewActive('feed')} className={`flex-1 py-3.5 rounded-2xl border text-[10px] font-black uppercase transition-all ${previewActive === 'feed' ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-black/20 border-white/5 text-zinc-600'}`}>FEED (1:1)</button>
+                         <button type="button" onClick={() => setPreviewActive('story')} className={`flex-1 py-3.5 rounded-2xl border text-[10px] font-black uppercase transition-all ${previewActive === 'story' ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-black/20 border-white/5 text-zinc-600'}`}>STORY (9:16)</button>
+                      </div>
+                   </div>
+                   <div className="space-y-3">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Cromatismo Elite</label>
+                      <div className="flex-1 bg-black/40 border border-white/10 rounded-2xl flex items-center p-1 px-4 gap-4 h-[58px] shadow-inner">
+                         <input type="color" value={themeFormData.config.text_color} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, text_color: e.target.value}})}
+                            className="h-9 w-9 bg-transparent cursor-pointer rounded-xl border-none" />
+                         <input type="text" value={themeFormData.config.text_color} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, text_color: e.target.value}})}
+                            className="bg-transparent border-none text-white font-mono uppercase text-sm w-full outline-none font-bold" />
+                      </div>
+                   </div>
+                   <div className="space-y-3">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Tipografia</label>
+                      <select 
+                        value={themeFormData.config.font_family} 
+                        onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, font_family: e.target.value}})}
+                        className="w-full bg-black/40 border border-white/10 rounded-2xl h-[58px] px-6 text-white outline-none focus:border-brand-500 transition-all appearance-none cursor-pointer font-extrabold text-sm shadow-inner"
+                      >
+                        <option value="Inter">INTER (Sleek)</option>
+                        <option value="Outfit">OUTFIT (Modern)</option>
+                        <option value="Roboto">ROBOTO (Classic)</option>
+                      </select>
+                   </div>
+                   <div className="space-y-3">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">HUD Extra</label>
+                      <button 
+                        type="button"
+                        onClick={() => setThemeFormData({...themeFormData, config: {...themeFormData.config, show_synopsis: !themeFormData.config.show_synopsis}})}
+                        className={`w-full h-[58px] rounded-2xl border text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${themeFormData.config.show_synopsis ? 'bg-brand-500/20 border-brand-500 text-brand-500' : 'bg-black/20 border-white/5 text-zinc-600'}`}
+                      >
+                        {themeFormData.config.show_synopsis ? (
+                            <><span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" /> Sinopse Ativa</>
+                        ) : 'Sinopse Oculta'}
+                      </button>
+                   </div>
+                </div>
+
+                <div className="space-y-6 bg-black/40 p-6 rounded-[2rem] border border-white/5">
+                  <h4 className="text-[10px] font-black text-zinc-500 flex items-center gap-2 uppercase tracking-widest border-b border-white/5 pb-2">
+                    <Monitor size={14} /> Calibração Mestre de Layout (Digital Twin)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                           <span className="text-[10px] font-black text-white uppercase tracking-tighter">Poster Eixo X: {themeFormData.config.poster_x}%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value={themeFormData.config.poster_x} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, poster_x: parseInt(e.target.value)}})} 
+                               className="w-full accent-brand-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer" />
+                     </div>
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                           <span className="text-[10px] font-black text-white uppercase tracking-tighter">Poster Eixo Y: {themeFormData.config.poster_y}%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value={themeFormData.config.poster_y} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, poster_y: parseInt(e.target.value)}})} 
+                               className="w-full accent-brand-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer" />
+                     </div>
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                           <span className="text-[10px] font-black text-white uppercase tracking-tighter">Escala: {themeFormData.config.poster_scale}x</span>
+                        </div>
+                        <input type="range" min="0.5" max="2" step="0.1" value={themeFormData.config.poster_scale} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, poster_scale: parseFloat(e.target.value)}})} 
+                               className="w-full accent-brand-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer" />
+                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6 bg-black/40 p-6 rounded-[2rem] border border-white/5">
+                  <h4 className="text-[10px] font-black text-zinc-500 flex items-center gap-2 uppercase tracking-widest border-b border-white/5 pb-2">
+                    <Shield size={14} /> Branding & Identidade Visual
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Nome da Marca</label>
+                      <input value={themeFormData.config.brand_name} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, brand_name: e.target.value}})} 
+                        placeholder="Ex: TV MAXX" className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 px-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-bold" />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">URL da Logo (PNG Transparente)</label>
+                      <input value={themeFormData.config.brand_logo_url} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, brand_logo_url: e.target.value}})} 
+                        placeholder="Link da sua logo..." className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 px-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono text-[10px]" />
+                    </div>
+                  </div>
+
+                  <h4 className="text-[10px] font-black text-zinc-500 flex items-center gap-2 uppercase tracking-widest border-b border-white/5 pb-2 mt-4">
+                    <Layers size={14} /> Camadas de Composição (Layout Base)
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="relative group">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Link da imagem BASE (Fundo Estático)</label>
+                      <input value={themeFormData.bg_url} onChange={e => setThemeFormData({...themeFormData, bg_url: e.target.value})} 
+                        placeholder="Cole a URL da imagem de fundo..." className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 pl-12 pr-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono font-bold" />
+                    </div>
+                    <div className="relative group">
+                      <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Link do OVERLAY PNG (Moldura Transparente)</label>
+                      <input value={themeFormData.overlay_url} onChange={e => setThemeFormData({...themeFormData, overlay_url: e.target.value})} 
+                        placeholder="Cole a URL do overlay transparente..." className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 pl-12 pr-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono font-bold" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-8">
+                  <button type="submit" className="w-full h-16 bg-gradient-to-r from-brand-600 to-orange-500 text-white font-black rounded-[1.5rem] shadow-2xl shadow-brand-500/30 hover:scale-[1.02] active:scale-95 transition-all text-lg flex items-center justify-center gap-3">
+                    <Save size={24} /> SELAR E SALVAR PROTOCOLO
+                  </button>
+                </div>
+              </form>
+
+              {/* LIVE DUAL PREVIEW */}
+              <div className="lg:w-[450px] space-y-6">
+                 <div className="bg-black/60 border border-white/5 rounded-[2.5rem] p-8 flex flex-col items-center gap-6 shadow-2xl">
+                    <div className="flex items-center gap-2 mb-2">
+                       <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                       <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Digital Twin Preview</span>
+                    </div>
+
+                    <div className={`relative bg-zinc-950 border-4 border-white/5 rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,1)] overflow-hidden transition-all duration-500 ${previewActive === 'feed' ? 'aspect-square w-full' : 'aspect-[9/16] h-[650px]'}`}>
+                        <div className="absolute inset-0 origin-top flex items-center justify-center">
+                           <div className="origin-top" style={{ transform: `scale(${previewActive === 'feed' ? 0.38 : 0.33})` }}>
+                              <div className="w-[1080px] h-[1920px]">
+                              <MovieBannerElite 
+                                movie={useRealContentInPreview ? sampleMovie : { titulo: 'MOCK TITLE', overview: 'LOREM IPSUM DOLOR SIT AMET...', poster_path: null, backdrop_path: null }} 
+                                contact="(00) 00000-0000"
+                                config={{
+                                  ...themeFormData.config,
+                                  custom_bg: themeFormData.bg_url,
+                                  custom_overlay: themeFormData.overlay_url
+                                }}
+                              />
+                           </div>
+                        </div>
+                        </div>
+
+                        <div className="absolute top-4 right-4 z-[60]">
+                           <button 
+                             type="button"
+                             onClick={() => setUseRealContentInPreview(!useRealContentInPreview)}
+                             className="px-3 py-1.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg text-[8px] font-black text-white hover:bg-brand-500/20 transition-all uppercase tracking-widest"
+                           >
+                             {useRealContentInPreview ? 'USAR MOCK' : 'DADOS REAIS'}
+                           </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-brand-500/5 border border-brand-500/20 p-4 rounded-2xl flex gap-3">
+                       <Info size={18} className="text-brand-500 shrink-0" />
+                       <p className="text-[9px] text-zinc-500 leading-relaxed italic">
+                         O motor de renderização Maxx compositor empilha as imagens nativamente. Certifique-se que o Overlay é um PNG de 24 bits com canal alpha transparente.
+                       </p>
+                    </div>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
+export default BannerGenerator
+
 // ─── CONFIGURADOR DE FUTEBOL ───────────────────────────────────────────────────
-const FootballConfigurator = ({ theme }) => {
-  const [matches, setMatches] = useState([
-    { league: 'BRASILEIRÃO SÉRIE A', team1: 'FLAMENGO', team2: 'PALMEIRAS', time: '20:00' }
-  ])
+const FootballConfigurator = ({ theme, sportsData = [], loading }) => {
+  const [matches, setMatches] = useState([])
   const [title, setTitle] = useState('TABELA DE JOGOS')
   const [date, setDate] = useState('HOJE')
   const [generating, setGenerating] = useState(false)
   const [done, setDone] = useState(false)
 
+  // Inicializa com um jogo vazio se não houver dados
+  useEffect(() => {
+    if (matches.length === 0 && sportsData.length === 0) {
+      setMatches([{ league: 'BRASILEIRÃO SÉRIE A', team1: 'FLAMENGO', team2: 'PALMEIRAS', time: '20:00' }])
+    }
+  }, [sportsData])
+
   const addMatch = () => setMatches(m => [...m, { league: '', team1: '', team2: '', time: '' }])
   const removeMatch = (i) => setMatches(m => m.filter((_, idx) => idx !== i))
   const updateMatch = (i, field, val) => setMatches(m => m.map((match, idx) => idx === i ? { ...match, [field]: val } : match))
+
+  const importFromApi = (game) => {
+    setMatches(prev => [...prev, {
+      league: game.campeonato || '',
+      team1: game.time_casa || '',
+      team2: game.time_fora || '',
+      time: game.horario || ''
+    }])
+  }
 
   const handleGenerate = () => {
     setGenerating(true)
@@ -811,6 +1337,39 @@ const FootballConfigurator = ({ theme }) => {
         </span>
       </div>
       <div className="p-6 space-y-5">
+        {/* Sugestões da API */}
+        {(sportsData.length > 0 || loading) && (
+          <div className="bg-brand-500/5 border border-brand-500/10 rounded-xl p-4">
+            <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              ⚡ Sugestões de Hoje (API Real)
+            </h4>
+            {loading ? (
+              <div className="text-xs text-zinc-500 animate-pulse">Buscando jogos...</div>
+            ) : (
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                {sportsData.flatMap(cat => cat.jogos || []).map((game, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => importFromApi(game)}
+                    className="flex-shrink-0 bg-dark-900 border border-dark-700 hover:border-brand-500/50 p-3 rounded-lg text-left transition group"
+                  >
+                    <p className="text-[8px] font-bold text-zinc-500 uppercase truncate mb-1">{game.campeonato}</p>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-white mb-1">
+                      <span>{game.time_casa}</span>
+                      <span className="text-brand-500 italic">vs</span>
+                      <span>{game.time_fora}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-yellow-500 font-bold">{game.horario}</span>
+                      <span className="text-[9px] text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity font-black">+ ADD</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Título e Data */}
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -884,7 +1443,7 @@ const FootballConfigurator = ({ theme }) => {
 }
 
 // ─── CONFIGURADOR DE ESPORTES (Basquete, UFC, Divulgação) ─────────────────────
-const SportConfigurator = ({ category, theme }) => {
+const SportConfigurator = ({ category, theme, sportsData = [], loading }) => {
   const [generating, setGenerating] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -893,6 +1452,13 @@ const SportConfigurator = ({ category, theme }) => {
   const [gameTime, setGameTime] = useState('21:00')
   const [league, setLeague] = useState('')
   const [date, setDate] = useState('')
+
+  const importGame = (game) => {
+    setTeam1(game.time_casa || game.nome_evento || '')
+    setTeam2(game.time_fora || '')
+    setGameTime(game.horario || '')
+    setLeague(game.campeonato || '')
+  }
 
   const catInfo = {
     basquete:   { label: 'Basquete',    icon: '🏀', placeholder1: 'LA LAKERS', placeholder2: 'GOLDEN STATE', leagueDefault: 'NBA' },
@@ -913,6 +1479,42 @@ const SportConfigurator = ({ category, theme }) => {
         <h3 className="font-bold text-white">Configurar Banner de {info.label}</h3>
       </div>
       <div className="p-6 space-y-4">
+        {/* Sugestões da API */}
+        {category !== 'divulgacao' && (sportsData.length > 0 || loading) && (
+          <div className="bg-brand-500/5 border border-brand-500/10 rounded-xl p-4">
+            <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+              ⚡ {category === 'ufc' ? 'Eventos MMA Próximos' : 'Jogos NBA de Hoje'}
+            </h4>
+            {loading ? (
+              <div className="text-xs text-zinc-500 animate-pulse">Buscando...</div>
+            ) : (
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                {sportsData.map((game, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => importGame(game)}
+                    className="flex-shrink-0 bg-dark-900 border border-dark-700 hover:border-brand-500/50 p-3 rounded-lg text-left transition group"
+                  >
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-white mb-1">
+                      <span>{game.time_casa || game.nome_evento}</span>
+                      {game.time_fora && (
+                        <>
+                          <span className="text-brand-500 italic">vs</span>
+                          <span>{game.time_fora}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-yellow-500 font-bold">{game.horario || game.data_fmt}</span>
+                      <span className="text-[9px] text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity font-black">USAR</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {category !== 'divulgacao' && (
           <>
             <div>
@@ -974,22 +1576,32 @@ const SportConfigurator = ({ category, theme }) => {
 }
 
 // ─── CONFIGURADOR DE FILMES ────────────────────────────────────────────────────
-const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
+const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeries = [], loading, onSearch, onMovieSelect, onGenerate }) => {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [done, setDone] = useState(false)
 
+  const handleSelect = (c) => {
+    setSelected(c)
+    if (onMovieSelect) onMovieSelect(c)
+  }
+
+  const handleGenerateClick = () => {
+    if (!selected) return
+    setGenerating(true)
+    if (onGenerate) onGenerate()
+    setTimeout(() => {
+      setGenerating(false)
+      setDone(true)
+      setTimeout(() => setDone(false), 3000)
+    }, 1500)
+  }
+
   const filtered = contents.filter(c =>
     c.titulo?.toLowerCase().includes(search.toLowerCase()) ||
     c.titulo_original?.toLowerCase().includes(search.toLowerCase())
   )
-
-  const handleGenerate = () => {
-    if (!selected) return
-    setGenerating(true)
-    setTimeout(() => { setGenerating(false); setDone(true); setTimeout(() => setDone(false), 3000) }, 1800)
-  }
 
   return (
     <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
@@ -1015,37 +1627,72 @@ const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
             <span className="animate-spin mr-2">⏳</span> Carregando títulos...
           </div>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-            {filtered.slice(0, 30).map(c => (
-              <button
-                key={c.id}
-                onClick={() => setSelected(c)}
-                className={`group relative rounded-xl overflow-hidden aspect-[2/3] border-2 transition-all
-                  ${selected?.id === c.id
-                    ? 'border-purple-500 ring-2 ring-purple-500/40 scale-[1.03]'
-                    : 'border-dark-700 hover:border-zinc-500'
-                  }`}
-              >
-                {c.poster_path ? (
-                  <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} alt={c.titulo}
-                    className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-dark-800 flex items-center justify-center text-xs text-zinc-600 text-center p-1">
-                    {c.titulo}
+          <div className="space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+            {/* Seções de Tendências (Somente se não houver busca ativa) */}
+            {search.length < 3 && (
+              <>
+                {trendingMovies.length > 0 && (
+                  <div>
+                    <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-3 flex items-center gap-2">🔥 Top 10 Filmes Hoje</h4>
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                      {trendingMovies.map(c => (
+                        <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
+                          <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                  <p className="text-white text-[10px] font-bold leading-tight line-clamp-2">{c.titulo}</p>
-                </div>
-                {selected?.id === c.id && (
-                  <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center shadow">
-                    <span className="text-white text-[10px]">✓</span>
+
+                {trendingSeries.length > 0 && (
+                  <div>
+                    <h4 className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-3 flex items-center gap-2">📺 Top 10 Séries Hoje</h4>
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                      {trendingSeries.map(c => (
+                        <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
+                          <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </button>
-            ))}
-            {filtered.length === 0 && (
-              <div className="col-span-full text-center py-8 text-zinc-600">
+              </>
+            )}
+
+            {/* Galeria Geral / Resultados de Busca */}
+            <div>
+              <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">
+                {search.length >= 3 ? `Resultados para "${search}"` : 'Galeria de Conteúdos'}
+              </h4>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                {filtered.slice(0, 30).map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSelect(c)}
+                    className={`group relative rounded-xl overflow-hidden aspect-[2/3] border-2 transition-all
+                      ${selected?.id === c.id
+                        ? 'border-brand-500 ring-2 ring-brand-500/40 scale-[1.03]'
+                        : 'border-dark-700 hover:border-zinc-500'
+                      }`}
+                  >
+                    {c.poster_path ? (
+                      <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} alt={c.titulo}
+                        className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-dark-800 flex items-center justify-center text-xs text-zinc-600 text-center p-1 uppercase font-black">
+                        {c.titulo}
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-[8px] font-black uppercase truncate">{c.titulo}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {filtered.length === 0 && search.length >= 3 && (
+              <div className="text-center py-8 text-zinc-600">
                 <span className="block text-3xl mb-2">🎬</span>
                 <p className="text-sm">Nenhum título encontrado</p>
               </div>
@@ -1053,7 +1700,7 @@ const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
           </div>
         )}
         <button
-          onClick={handleGenerate}
+          onClick={handleGenerateClick}
           disabled={!selected || generating}
           className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
             ${done
@@ -1069,5 +1716,3 @@ const FilmesConfigurator = ({ theme, contents, loading, onSearch }) => {
     </div>
   )
 }
-
-export default BannerGenerator
