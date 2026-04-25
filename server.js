@@ -9,7 +9,6 @@ require('dotenv').config();
 const { initWebSocket } = require('./websocket/wsServer');
 const pool = require('./config/database');
 const sentinela = require('./modules/maintenance/sentinela');
-const aiAgentRoutes = require('./modules/ai-agent/aiAgentRoutes');
 
 // Executar migrações pendentes automaticamente
 async function runPendingMigrations() {
@@ -631,7 +630,6 @@ app.use('/api/content', require('./modules/content/contentRoutes'));
 app.use('/api/branding', require('./modules/branding/brandingRoutes'));
 app.use('/api/iptv-server', require('./modules/iptv-server/iptvServerRoutes'));
 app.use('/api/iptv-tree', require('./modules/iptv-tree/iptvTreeRoutes'));
-app.use('/api/ai-agent', aiAgentRoutes);
 app.use('/api/banners', require('./modules/banners/bannerRoutes'));
 app.use('/api/banner-templates', require('./modules/banners/templateRoutes'));
 app.use('/api/resale', require('./modules/resale/resaleRoutes'));
