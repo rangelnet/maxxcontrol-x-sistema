@@ -8,3 +8,4 @@ build/
 maxxcontrol.db
 web/dist/
 web/node_modules/
+.wpp-session/
