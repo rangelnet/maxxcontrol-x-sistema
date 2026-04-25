@@ -194,7 +194,7 @@ exports.listDevices = async (req, res) => {
   const userId = req.userId;
 
   try {
-    const result = await pool.query('SELECT * FROM devices WHERE user_id = $1 AND (modelo != \\'Web Browser\\' OR modelo IS NULL) ORDER BY ultimo_acesso DESC', [userId]);
+    const result = await pool.query(`SELECT * FROM devices WHERE user_id = $1 AND (modelo != 'Web Browser' OR modelo IS NULL) ORDER BY ultimo_acesso DESC`, [userId]);
     res.json({ devices: result.rows });
   } catch (error) {
     console.error('Erro ao listar dispositivos:', error);
