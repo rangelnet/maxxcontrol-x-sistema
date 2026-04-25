@@ -5,13 +5,7 @@ const bcrypt = require('bcryptjs');
 exports.listResellers = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT 
-        id, nome, email, telefone, empresa, creditos, plano_revenda, preco_credito, 
-        limite_dispositivos, status, tipo, criado_em,
-        (SELECT COUNT(*) FROM devices WHERE revendedor_id = users.id AND modelo != 'Web Browser') as dispositivos_ativos
-       FROM users 
-       WHERE tipo = 'revendedor'
-       ORDER BY nome ASC`
+      `SELECT \n        id, nome, email, telefone, empresa, creditos, plano_revenda, preco_credito, \n        limite_dispositivos, status, tipo, criado_em,\n        (SELECT COUNT(*) FROM devices WHERE revendedor_id = users.id AND (modelo != 'Web Browser' OR modelo IS NULL)) as dispositivos_ativos\n       FROM users \n       WHERE tipo = 'revendedor'\n       ORDER BY nome ASC`
     );
     res.json(result.rows);
   } catch (error) {
@@ -34,9 +28,7 @@ exports.createReseller = async (req, res) => {
     const expires_at = await welcome.calculateExpiration();
 
     const result = await pool.query(
-      `INSERT INTO users (nome, email, senha_hash, telefone, empresa, limite_dispositivos, creditos, tipo, status, expires_at) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'revendedor', 'ativo', $8) 
-       RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, tipo, status, expires_at`,
+      `INSERT INTO users (nome, email, senha_hash, telefone, empresa, limite_dispositivos, creditos, tipo, status, expires_at) \n       VALUES ($1, $2, $3, $4, $5, $6, $7, 'revendedor', 'ativo', $8) \n       RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, tipo, status, expires_at`,
       [nome, email, senhaHash, telefone || null, empresa || null, limite_dispositivos || 10, creditos || 0, expires_at]
     );
 
@@ -44,7 +36,7 @@ exports.createReseller = async (req, res) => {
 
     // Enviar Boas-vindas via WhatsApp
     if (newUser.telefone) {
-      welcome.sendWelcomeCredentials(newUser, senha);
+        welcome.sendWelcomeCredentials(newUser, senha);
     }
 
     res.status(201).json(newUser);
@@ -71,14 +63,10 @@ exports.updateReseller = async (req, res) => {
 
     if (senha) {
       const senhaHash = await bcrypt.hash(senha, 10);
-      query = `UPDATE users SET nome=$1, email=$2, senha_hash=$3, telefone=$4, empresa=$5, 
-               limite_dispositivos=$6, creditos=$7, status=$8, updated_at=NOW()
-               WHERE id=$9 AND tipo='revendedor' RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, status`;
+      query = `UPDATE users SET nome=$1, email=$2, senha_hash=$3, telefone=$4, empresa=$5, \n               limite_dispositivos=$6, creditos=$7, status=$8, updated_at=NOW()\n               WHERE id=$9 AND tipo='revendedor' RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, status`;
       params = [nome, email, senhaHash, telefone || null, empresa || null, limite_dispositivos || 10, creditos || 0, status !== undefined ? (status ? 'ativo' : 'inativo') : 'ativo', id];
     } else {
-      query = `UPDATE users SET nome=$1, email=$2, telefone=$3, empresa=$4, 
-               limite_dispositivos=$5, creditos=$6, status=$7, updated_at=NOW()
-               WHERE id=$8 AND tipo='revendedor' RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, status`;
+      query = `UPDATE users SET nome=$1, email=$2, telefone=$3, empresa=$4, \n               limite_dispositivos=$5, creditos=$6, status=$7, updated_at=NOW()\n               WHERE id=$8 AND tipo='revendedor' RETURNING id, nome, email, telefone, empresa, limite_dispositivos, creditos, status`;
       params = [nome, email, telefone || null, empresa || null, limite_dispositivos || 10, creditos || 0, status !== undefined ? (status ? 'ativo' : 'inativo') : 'ativo', id];
     }
 
@@ -169,13 +157,13 @@ exports.sendCredits = async (req, res) => {
       if (!tfa_code) {
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         await pool.query('UPDATE users SET tfa_code = $1 WHERE id = $2', [code, adminId]);
-
+        
         const { send2FACode } = require('../telegram/telegramBot');
         await send2FACode(admin.telegram_chat_id, code, admin.email);
-
-        return res.json({
-          require2FA: true,
-          message: 'Confirme o código enviado ao seu Telegram para autorizar a transferência.'
+        
+        return res.json({ 
+          require2FA: true, 
+          message: 'Confirme o código enviado ao seu Telegram para autorizar a transferência.' 
         });
       }
 
@@ -204,7 +192,7 @@ exports.sendCredits = async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-
+      
       // Adicionar créditos
       await client.query(
         'UPDATE users SET creditos = creditos + $1 WHERE id=$2',
@@ -226,8 +214,8 @@ exports.sendCredits = async (req, res) => {
       client.release();
     }
 
-    res.json({
-      success: true,
+    res.json({ 
+      success: true, 
       message: `${quantidade} créditos enviados com segurança para ${revendedor.nome}`,
       novo_saldo: revendedor.creditos + quantidade
     });

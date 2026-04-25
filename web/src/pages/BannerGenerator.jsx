@@ -1716,3 +1716,5 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
     </div>
   )
 }
+
+export default BannerGenerator

@@ -23,6 +23,7 @@ exports.updateSetting = async (req, res) => {
   const { value } = req.body;
 
   try {
+    // Salva o valor diretamente (objetos são stringificados, strings ficam como strings JSON)
     const jsonValue = JSON.stringify(value);
 
     await pool.query(

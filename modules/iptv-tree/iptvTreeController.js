@@ -1,477 +1,74 @@
 const pool = require('../../config/database');
 const cache = require('./cache');
 
-/**
- * Obtém configuração Xtream (global ou de dispositivo específico)
- * @param {string|number} source - 'global' ou deviceId
- * @returns {Promise<object|null>} Configuração com xtream_url, xtream_username, xtream_password
- */
 const getXtreamConfig = async (source, providerId = null) => {
   try {
-    // Se um ID de provedor (slot) for fornecido, prioriza ele (Sistema Master 6 Slots)
     if (providerId) {
       const result = await pool.query('SELECT * FROM iptv_providers WHERE id = $1', [providerId]);
       if (result.rows.length > 0) {
         const p = result.rows[0];
-        return {
-          xtream_url: p.url,
-          xtream_username: p.username,
-          xtream_password: p.password,
-          server_name: p.name
-        };
+        return { xtream_url: p.url, xtream_username: p.username, xtream_password: p.password, server_name: p.name };
       }
     }
-
-    if (source === 'global') {
-      // Fallback para configuração global antiga se necessário
-      const result = await pool.query(`
-        SELECT isc.*, s.name as server_name
-        FROM iptv_server_config isc
-        LEFT JOIN servers s ON s.url = isc.xtream_url
-        LIMIT 1
-      `);
-      
-      if (result.rows.length > 0) return result.rows[0];
-      
-      // Se não achar nada, tenta o primeiro slot da nova tabela
-      const firstSlot = await pool.query('SELECT * FROM iptv_providers ORDER BY slot_index ASC LIMIT 1');
-      if (firstSlot.rows.length > 0) {
-        const p = firstSlot.rows[0];
-        return { xtream_url:p.url, xtream_username:p.username, xtream_password:p.password, server_name:p.name };
-      }
-      return null;
-    } else {
-      // Dispositivo específico... (mantém lógica original de fallback)
-      const deviceId = parseInt(source);
-      if (isNaN(deviceId)) return null;
-      
-      const deviceResult = await pool.query('SELECT dic.*, s.name as server_name FROM device_iptv_config dic LEFT JOIN servers s ON s.url = dic.xtream_url WHERE dic.device_id = $1', [deviceId]);
-      if (deviceResult.rows.length > 0) return deviceResult.rows[0];
-
-      return await getXtreamConfig('global');
+    const result = await pool.query(`SELECT isc.*, s.name as server_name FROM iptv_server_config isc LEFT JOIN servers s ON s.url = isc.xtream_url LIMIT 1`);
+    if (result.rows.length > 0) return result.rows[0];
+    const firstSlot = await pool.query('SELECT * FROM iptv_providers ORDER BY slot_index ASC LIMIT 1');
+    if (firstSlot.rows.length > 0) {
+      const p = firstSlot.rows[0];
+      return { xtream_url:p.url, xtream_username:p.username, xtream_password:p.password, server_name:p.name };
     }
-  } catch (error) {
-    console.error('❌ Erro ao buscar configuração Xtream:', error);
     return null;
-  }
+  } catch (error) { console.error('Error fetching config:', error); return null; }
 };
 
-/**
- * Constrói URL da API Xtream
- * @param {object} config - Configuração com xtream_url, xtream_username, xtream_password
- * @param {string} action - Ação da API (ex: get_live_categories)
- * @param {object} params - Parâmetros adicionais (opcional)
- * @returns {string} URL completa
- */
 const buildXtreamUrl = (config, action, params = {}) => {
   const { xtream_url, xtream_username, xtream_password } = config;
-  
   const url = new URL(`${xtream_url}/player_api.php`);
   url.searchParams.append('username', xtream_username);
   url.searchParams.append('password', xtream_password);
   url.searchParams.append('action', action);
-  
-  // Adicionar parâmetros adicionais
-  Object.keys(params).forEach(key => {
-    url.searchParams.append(key, params[key]);
-  });
-  
+  Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
   return url.toString();
 };
 
-/**
- * Faz requisição para API Xtream com timeout
- * @param {string} url - URL completa da API
- * @returns {Promise<any>} Dados JSON da resposta
- */
 const fetchFromXtream = async (url) => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 min timeout para listas grandes
-  
+  const timeoutId = setTimeout(() => controller.abort(), 300000);
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'MaxxControl/1.0'
-      }
-    });
-    
+    const response = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'MaxxControl/1.0' } });
     clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('INVALID_CREDENTIALS');
-      }
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    return data;
-    
-  } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if (error.name === 'AbortError') {
-      throw new Error('TIMEOUT');
-    }
-    throw error;
-  }
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (err) { clearTimeout(timeoutId); throw err; }
 };
 
-/**
- * GET /api/iptv-tree/categories/:type
- * Busca categorias do servidor Xtream
- */
 exports.getCategories = async (req, res) => {
   try {
     const { type } = req.params;
     const { source = 'global', provider_id = null } = req.query;
-    
-    // Obter configuração
     const config = await getXtreamConfig(source, provider_id);
-    if (!config || !config.xtream_url || !config.xtream_username || !config.xtream_password) {
-      return res.status(400).json({
-        success: false,
-        error: 'CONFIG_NOT_FOUND',
-        message: 'Configuração IPTV não encontrada ou incompleta'
-      });
-    }
-    
-    // Verificar cache
-    const cacheKey = `${source}-categories-${type}`;
+    if (!config) return res.status(400).json({ error: 'CONFIG_NOT_FOUND' });
+    const cacheKey = `${provider_id || source}-categories-${type}`;
     const cached = cache.get(cacheKey);
-    if (cached) {
-      return res.json({
-        success: true,
-        data: cached,
-        cached: true,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    // Buscar da API Xtream
-    const action = `get_${type}_categories`;
-    const url = buildXtreamUrl(config, action);
-    
-    try {
-      const data = await fetchFromXtream(url);
-      
-      // Armazenar em cache (5 minutos)
-      cache.set(cacheKey, data, 300);
-      
-      res.json({
-        success: true,
-        data: data,
-        cached: false,
-        timestamp: new Date().toISOString()
-      });
-      
-    } catch (xtreamError) {
-      if (xtreamError.message === 'INVALID_CREDENTIALS') {
-        return res.status(401).json({
-          success: false,
-          error: 'INVALID_CREDENTIALS',
-          message: 'Credenciais inválidas'
-        });
-      }
-      if (xtreamError.message === 'TIMEOUT') {
-        return res.status(504).json({
-          success: false,
-          error: 'TIMEOUT',
-          message: 'Timeout na conexão com servidor IPTV'
-        });
-      }
-      throw xtreamError;
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro ao buscar categorias:', error);
-    res.status(500).json({
-      success: false,
-      error: 'INTERNAL_ERROR',
-      message: 'Erro interno do servidor'
-    });
-  }
+    if (cached) return res.json({ success: true, data: cached });
+    const data = await fetchFromXtream(buildXtreamUrl(config, `get_${type}_categories`));
+    cache.set(cacheKey, data, 300);
+    res.json({ success: true, data });
+  } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
-/**
- * GET /api/iptv-tree/streams/:type/:categoryId
- * Busca streams de uma categoria específica
- */
 exports.getStreams = async (req, res) => {
   try {
     const { type, categoryId } = req.params;
     const { source = 'global', provider_id = null } = req.query;
-    
-    // Obter configuração
     const config = await getXtreamConfig(source, provider_id);
-    if (!config || !config.xtream_url || !config.xtream_username || !config.xtream_password) {
-      return res.status(400).json({
-        success: false,
-        error: 'CONFIG_NOT_FOUND',
-        message: 'Configuração IPTV não encontrada ou incompleta'
-      });
-    }
-    
-    // Verificar cache
-    const cacheKey = `${source}-streams-${type}-${categoryId}`;
+    if (!config) return res.status(400).json({ error: 'CONFIG_NOT_FOUND' });
+    const cacheKey = `${provider_id || source}-streams-${type}-${categoryId}`;
     const cached = cache.get(cacheKey);
-    if (cached) {
-      return res.json({
-        success: true,
-        data: cached,
-        cached: true,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    // Buscar da API Xtream
-    const action = `get_${type}_streams`;
-    const url = buildXtreamUrl(config, action);
-    
-    try {
-      const allStreams = await fetchFromXtream(url);
-      
-      // Filtrar por category_id
-      const filtered = allStreams.filter(stream => 
-        stream.category_id === categoryId || stream.category_id === parseInt(categoryId)
-      );
-      
-      // Ordenar por num (para live TV)
-      if (type === 'live') {
-        filtered.sort((a, b) => {
-          const numA = parseInt(a.num) || 0;
-          const numB = parseInt(b.num) || 0;
-          return numA - numB;
-        });
-      }
-      
-      // Armazenar em cache (10 minutos)
-      cache.set(cacheKey, filtered, 600);
-      
-      res.json({
-        success: true,
-        data: filtered,
-        cached: false,
-        timestamp: new Date().toISOString()
-      });
-      
-    } catch (xtreamError) {
-      if (xtreamError.message === 'INVALID_CREDENTIALS') {
-        return res.status(401).json({
-          success: false,
-          error: 'INVALID_CREDENTIALS',
-          message: 'Credenciais inválidas'
-        });
-      }
-      if (xtreamError.message === 'TIMEOUT') {
-        return res.status(504).json({
-          success: false,
-          error: 'TIMEOUT',
-          message: 'Timeout na conexão com servidor IPTV'
-        });
-      }
-      throw xtreamError;
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro ao buscar streams:', error);
-    res.status(500).json({
-      success: false,
-      error: 'INTERNAL_ERROR',
-      message: 'Erro interno do servidor'
-    });
-  }
+    if (cached) return res.json({ success: true, data: cached });
+    const allStreams = await fetchFromXtream(buildXtreamUrl(config, `get_${type}_streams`));
+    const filtered = allStreams.filter(s => s.category_id == categoryId);
+    cache.set(cacheKey, filtered, 600);
+    res.json({ success: true, data: filtered });
+  } catch (error) { res.status(500).json({ error: error.message }); }
 };
-
-/**
- * GET /api/iptv-tree/series/:categoryId
- * Busca séries de uma categoria
- */
-exports.getSeries = async (req, res) => {
-  try {
-    const { categoryId } = req.params;
-    const { source = 'global' } = req.query;
-    
-    // Obter configuração
-    const config = await getXtreamConfig(source);
-    if (!config || !config.xtream_url || !config.xtream_username || !config.xtream_password) {
-      return res.status(400).json({
-        success: false,
-        error: 'CONFIG_NOT_FOUND',
-        message: 'Configuração IPTV não encontrada ou incompleta'
-      });
-    }
-    
-    // Verificar cache
-    const cacheKey = `${source}-series-${categoryId}`;
-    const cached = cache.get(cacheKey);
-    if (cached) {
-      return res.json({
-        success: true,
-        data: cached,
-        cached: true,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    // Buscar da API Xtream
-    const url = buildXtreamUrl(config, 'get_series');
-    
-    try {
-      const allSeries = await fetchFromXtream(url);
-      
-      // Filtrar por category_id
-      const filtered = allSeries.filter(series => 
-        series.category_id === categoryId || series.category_id === parseInt(categoryId)
-      );
-      
-      // Armazenar em cache (10 minutos)
-      cache.set(cacheKey, filtered, 600);
-      
-      res.json({
-        success: true,
-        data: filtered,
-        cached: false,
-        timestamp: new Date().toISOString()
-      });
-      
-    } catch (xtreamError) {
-      if (xtreamError.message === 'INVALID_CREDENTIALS') {
-        return res.status(401).json({
-          success: false,
-          error: 'INVALID_CREDENTIALS',
-          message: 'Credenciais inválidas'
-        });
-      }
-      if (xtreamError.message === 'TIMEOUT') {
-        return res.status(504).json({
-          success: false,
-          error: 'TIMEOUT',
-          message: 'Timeout na conexão com servidor IPTV'
-        });
-      }
-      throw xtreamError;
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro ao buscar séries:', error);
-    res.status(500).json({
-      success: false,
-      error: 'INTERNAL_ERROR',
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
-/**
- * GET /api/iptv-tree/series-info/:seriesId
- * Busca detalhes de uma série (temporadas e episódios)
- */
-exports.getSeriesInfo = async (req, res) => {
-  try {
-    const { seriesId } = req.params;
-    const { source = 'global' } = req.query;
-    
-    // Obter configuração
-    const config = await getXtreamConfig(source);
-    if (!config || !config.xtream_url || !config.xtream_username || !config.xtream_password) {
-      return res.status(400).json({
-        success: false,
-        error: 'CONFIG_NOT_FOUND',
-        message: 'Configuração IPTV não encontrada ou incompleta'
-      });
-    }
-    
-    // Verificar cache
-    const cacheKey = `${source}-series-info-${seriesId}`;
-    const cached = cache.get(cacheKey);
-    if (cached) {
-      return res.json({
-        success: true,
-        data: cached,
-        cached: true,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    // Buscar da API Xtream
-    const url = buildXtreamUrl(config, 'get_series_info', { series_id: seriesId });
-    
-    try {
-      const data = await fetchFromXtream(url);
-      
-      // Armazenar em cache (15 minutos)
-      cache.set(cacheKey, data, 900);
-      
-      res.json({
-        success: true,
-        data: data,
-        cached: false,
-        timestamp: new Date().toISOString()
-      });
-      
-    } catch (xtreamError) {
-      if (xtreamError.message === 'INVALID_CREDENTIALS') {
-        return res.status(401).json({
-          success: false,
-          error: 'INVALID_CREDENTIALS',
-          message: 'Credenciais inválidas'
-        });
-      }
-      if (xtreamError.message === 'TIMEOUT') {
-        return res.status(504).json({
-          success: false,
-          error: 'TIMEOUT',
-          message: 'Timeout na conexão com servidor IPTV'
-        });
-      }
-      throw xtreamError;
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro ao buscar informações da série:', error);
-    res.status(500).json({
-      success: false,
-      error: 'INTERNAL_ERROR',
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
-/**
- * POST /api/iptv-tree/clear-cache
- * Limpa cache para uma fonte específica
- */
-exports.clearCache = async (req, res) => {
-  try {
-    const { source } = req.body;
-    
-    if (!source) {
-      return res.status(400).json({
-        success: false,
-        error: 'MISSING_SOURCE',
-        message: 'Parâmetro source é obrigatório'
-      });
-    }
-    
-    // Limpar todas as chaves que começam com o source
-    const cleared = cache.clearByPrefix(`${source}-`);
-    
-    res.json({
-      success: true,
-      message: 'Cache limpo com sucesso',
-      keysCleared: cleared
-    });
-    
-  } catch (error) {
-    console.error('❌ Erro ao limpar cache:', error);
-    res.status(500).json({
-      success: false,
-      error: 'INTERNAL_ERROR',
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
-// exports já está configurado corretamente via exports.xxx = ...

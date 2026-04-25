@@ -30,6 +30,7 @@ exports.register = async (req, res) => {
     if (user.telefone) {
         welcome.sendWelcomeCredentials(user, senha); // Não espera para não travar resposta
     }
+
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN
     });

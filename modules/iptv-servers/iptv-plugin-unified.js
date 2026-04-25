@@ -1470,7 +1470,7 @@ router.post('/register-device-iptv', async (req, res) => {
     await pool.query(`
       INSERT INTO smartone_registrations (device_id, device_mac, server_name, dns, username, password, m3u_url, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      ON CONFLICT (device_mac, dns)
+      ON CONFLICT (device_mac, dns) 
       DO UPDATE SET username = $5, password = $6, m3u_url = $7, updated_at = NOW()
     `, [device.id, device_mac, server_name || cleanDns, cleanDns, username, password, m3uUrl]).catch(() => {
       // Tabela pode não ter a constraint — ignorar silenciosamente

@@ -154,6 +154,7 @@ export default function Settings() {
         if (response.data.masterPermission !== undefined) setMasterPermission(response.data.masterPermission)
         if (response.data.panelLanguage) setPanelLanguage(response.data.panelLanguage)
 
+        // Carregar APIs obrigatórias
         setDnsHost(response.data.dns_host || '')
         setDnsPort(response.data.dns_port || '')
         setDnsProtocol(response.data.dns_protocol || 'https')
@@ -164,14 +165,13 @@ export default function Settings() {
         setXtreamPass(response.data.xtream_pass || '')
         setP2pEnabled(response.data.p2p_enabled || false)
         setP2pKey(response.data.p2p_key || '')
-      }
-    } catch (err) {
-      console.error('Erro ao carregar configurações:', err)
     }
+  } catch (err) {
+    console.error('Erro ao carregar configurações:', err)
   }
+}
 
   const loadTwoFaStatus = async () => {
-
     try {
       const { data } = await api.get('/auth/2fa/status')
       setTwoFaEnabled(data.enabled)
@@ -796,7 +796,7 @@ export default function Settings() {
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm"
                   >
                     <option value="">Selecione um grupo...</option>
-                    {waGroups?.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    {waGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                   <button 
                     onClick={handleToggleAutoPost}
@@ -922,7 +922,7 @@ export default function Settings() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sessions?.map((session) => (
+          {sessions.map((session) => (
             <div key={session.id} className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-between group">
               <div className="flex items-center gap-4">
                  <div className="h-10 w-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
@@ -938,7 +938,7 @@ export default function Settings() {
               </div>
               {!session.active && (
                 <button className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-red-500 rounded-lg transition">
-                  <Trash2 className="h-4 w-4" />
+                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
             </div>

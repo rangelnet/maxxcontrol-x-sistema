@@ -34,12 +34,12 @@ exports.registerDevicePublic = async (req, res) => {
 
     // Gerar token JWT para o dispositivo
     const token = jwt.sign(
-      {
-        device_id: device.id,
+      { 
+        device_id: device.id, 
         mac_address: device.mac_address,
         type: 'device' // Identificar que é um token de dispositivo
-      },
-      process.env.JWT_SECRET,
+      }, 
+      process.env.JWT_SECRET, 
       {
         expiresIn: '365d' // Token válido por 1 ano
       }
@@ -47,10 +47,10 @@ exports.registerDevicePublic = async (req, res) => {
 
     console.log('🔑 Token JWT gerado para o dispositivo');
 
-    res.status(existing.rows.length > 0 ? 200 : 201).json({
-      device: device,
+    res.status(existing.rows.length > 0 ? 200 : 201).json({ 
+      device: device, 
       token: token, // ✅ NOVO: Retornar token JWT
-      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado'
+      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado' 
     });
   } catch (error) {
     console.error('❌ Erro ao registrar dispositivo público:', error);
@@ -76,9 +76,9 @@ exports.updateConnectionStatus = async (req, res) => {
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
 
-    res.json({
-      device: result.rows[0],
-      message: `Status atualizado para ${connection_status}`
+    res.json({ 
+      device: result.rows[0], 
+      message: `Status atualizado para ${connection_status}` 
     });
   } catch (error) {
     console.error('Erro ao atualizar status de conexão:', error);
@@ -113,22 +113,22 @@ exports.registerDevice = async (req, res) => {
 
     // Gerar token JWT para o dispositivo
     const token = jwt.sign(
-      {
-        device_id: device.id,
+      { 
+        device_id: device.id, 
         mac_address: device.mac_address,
         user_id: userId,
         type: 'device'
-      },
-      process.env.JWT_SECRET,
+      }, 
+      process.env.JWT_SECRET, 
       {
         expiresIn: '365d'
       }
     );
 
-    res.status(existing.rows.length > 0 ? 200 : 201).json({
-      device: device,
+    res.status(existing.rows.length > 0 ? 200 : 201).json({ 
+      device: device, 
       token: token, // ✅ NOVO: Retornar token JWT
-      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado'
+      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado' 
     });
   } catch (error) {
     console.error('Erro ao registrar dispositivo:', error);
@@ -194,7 +194,7 @@ exports.listDevices = async (req, res) => {
   const userId = req.userId;
 
   try {
-    const result = await pool.query('SELECT * FROM devices WHERE user_id = $1 AND (modelo != \'Web Browser\' OR modelo IS NULL) ORDER BY ultimo_acesso DESC', [userId]);
+    const result = await pool.query('SELECT * FROM devices WHERE user_id = $1 AND (modelo != \\'Web Browser\\' OR modelo IS NULL) ORDER BY ultimo_acesso DESC', [userId]);
     res.json({ devices: result.rows });
   } catch (error) {
     console.error('Erro ao listar dispositivos:', error);
@@ -228,8 +228,8 @@ exports.listAllDevices = async (req, res) => {
       WHERE d.modelo != 'Web Browser' OR d.modelo IS NULL
       ORDER BY d.ultimo_acesso DESC
     `);
-    console.log(`✅ Encontrados ${result.rows.length} dispositivos`);
-
+    console.log(`✅ Encontrados \${result.rows.length} dispositivos`);
+    
     // Parsear test_api_urls de JSON string para array
     const devices = result.rows.map(d => {
       let test_api_urls = null;
@@ -284,7 +284,7 @@ exports.setTestApiUrl = async (req, res) => {
 
   for (const url of urlList) {
     if (!validateUrl(url)) {
-      return res.status(400).json({ error: `URL inválida ou não permitida: ${url}` });
+      return res.status(400).json({ error: \`URL inválida ou não permitida: \${url}\` });
     }
   }
 
@@ -292,7 +292,7 @@ exports.setTestApiUrl = async (req, res) => {
     const primaryUrl = urlList[0] || null;
     const urlsJson = urlList.length > 0 ? JSON.stringify(urlList) : null;
 
-    console.log(`🔧 Configurando test_api_urls para MAC: ${mac_address}`, urlList);
+    console.log(\`🔧 Configurando test_api_urls para MAC: \${mac_address}\`, urlList);
 
     // Tenta salvar com test_api_urls (nova coluna), com fallback se não existir
     let result;
@@ -328,7 +328,7 @@ exports.setTestApiUrl = async (req, res) => {
 
     res.json({
       device: result.rows[0],
-      message: urlList.length > 0 ? `${urlList.length} URL(s) configurada(s) com sucesso` : 'Configuração removida com sucesso'
+      message: urlList.length > 0 ? \`\${urlList.length} URL(s) configurada(s) com sucesso\` : 'Configuração removida com sucesso'
     });
   } catch (error) {
     console.error('❌ Erro ao configurar test_api_urls:', error);
@@ -347,18 +347,18 @@ exports.getTestApiUrl = async (req, res) => {
   }
 
   try {
-    console.log(`🔍 Buscando test_api_url para MAC: ${mac_address}`);
-
+    console.log(\`🔍 Buscando test_api_url para MAC: \${mac_address}\`);
+    
     const result = await pool.query(
       'SELECT test_api_url, test_api_urls FROM devices WHERE mac_address = $1',
       [mac_address]
     );
-
+    
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-
+    
     const row = result.rows[0];
     const testApiUrl = row.test_api_url;
 
@@ -379,7 +379,7 @@ exports.getTestApiUrl = async (req, res) => {
 
     const hasCustomUrl = (testApiUrls && testApiUrls.length > 0) || (testApiUrl !== null && testApiUrl !== '');
 
-    console.log(`✅ test_api_urls encontrado:`, testApiUrls, `(has_custom_url: ${hasCustomUrl})`);
+    console.log(\`✅ test_api_urls encontrado:\`, testApiUrls, \`(has_custom_url: \${hasCustomUrl})\`);
 
     res.json({
       test_api_url: testApiUrl,
@@ -399,8 +399,8 @@ exports.checkDeviceStatusByMac = async (req, res) => {
   const { mac_address } = req.params;
 
   try {
-    console.log(`🔍 Verificando status por MAC: ${mac_address}`);
-
+    console.log(\`🔍 Verificando status por MAC: \${mac_address}\`);
+    
     const result = await pool.query(
       `SELECT id, mac_address, status, connection_status, modelo, 
               android_version, app_version, ip, ultimo_acesso
@@ -408,12 +408,12 @@ exports.checkDeviceStatusByMac = async (req, res) => {
        WHERE mac_address = $1`,
       [mac_address]
     );
-
+    
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-
+    
     console.log('✅ Status do dispositivo:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (error) {
@@ -427,8 +427,8 @@ exports.blockDeviceByMac = async (req, res) => {
   const { mac_address } = req.body;
 
   try {
-    console.log(`🔒 Bloqueando dispositivo por MAC: ${mac_address}`);
-
+    console.log(\`🔒 Bloqueando dispositivo por MAC: \${mac_address}\`);
+    
     const result = await pool.query(
       `UPDATE devices 
        SET status = 'bloqueado' 
@@ -436,16 +436,16 @@ exports.blockDeviceByMac = async (req, res) => {
        RETURNING *`,
       [mac_address]
     );
-
+    
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-
+    
     console.log('✅ Dispositivo bloqueado:', result.rows[0]);
-    res.json({
+    res.json({ 
       device: result.rows[0],
-      message: 'Dispositivo bloqueado com sucesso'
+      message: 'Dispositivo bloqueado com sucesso' 
     });
   } catch (error) {
     console.error('❌ Erro ao bloquear dispositivo por MAC:', error);
@@ -458,8 +458,8 @@ exports.unblockDeviceByMac = async (req, res) => {
   const { mac_address } = req.body;
 
   try {
-    console.log(`🔓 Desbloqueando dispositivo por MAC: ${mac_address}`);
-
+    console.log(\`🔓 Desbloqueando dispositivo por MAC: \${mac_address}\`);
+    
     const result = await pool.query(
       `UPDATE devices 
        SET status = 'ativo' 
@@ -467,16 +467,16 @@ exports.unblockDeviceByMac = async (req, res) => {
        RETURNING *`,
       [mac_address]
     );
-
+    
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-
+    
     console.log('✅ Dispositivo desbloqueado:', result.rows[0]);
-    res.json({
+    res.json({ 
       device: result.rows[0],
-      message: 'Dispositivo desbloqueado com sucesso'
+      message: 'Dispositivo desbloqueado com sucesso' 
     });
   } catch (error) {
     console.error('❌ Erro ao desbloquear dispositivo por MAC:', error);
@@ -489,8 +489,8 @@ exports.deleteDevice = async (req, res) => {
   const { device_id } = req.params;
 
   try {
-    console.log(`🗑️ Excluindo dispositivo ID: ${device_id}`);
-
+    console.log(\`🗑️ Excluindo dispositivo ID: \${device_id}\`);
+    
     // Deletar apps relacionados (se a tabela existir)
     try {
       await pool.query('DELETE FROM device_apps WHERE device_id = $1', [device_id]);
@@ -498,7 +498,7 @@ exports.deleteDevice = async (req, res) => {
     } catch (error) {
       console.log('⚠️ Tabela device_apps não existe ou erro ao deletar apps:', error.message);
     }
-
+    
     // Deletar comandos relacionados (se a tabela existir)
     try {
       await pool.query('DELETE FROM device_commands WHERE device_id = $1', [device_id]);
@@ -506,7 +506,7 @@ exports.deleteDevice = async (req, res) => {
     } catch (error) {
       console.log('⚠️ Tabela device_commands não existe ou erro ao deletar comandos:', error.message);
     }
-
+    
     // Deletar configuração IPTV relacionada (se a tabela existir)
     try {
       await pool.query('DELETE FROM device_iptv_config WHERE device_id = $1', [device_id]);
@@ -514,26 +514,26 @@ exports.deleteDevice = async (req, res) => {
     } catch (error) {
       console.log('⚠️ Tabela device_iptv_config não existe ou erro ao deletar IPTV:', error.message);
     }
-
+    
     // Deletar dispositivo
     const result = await pool.query('DELETE FROM devices WHERE id = $1 RETURNING *', [device_id]);
-
+    
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-
+    
     console.log('✅ Dispositivo excluído com sucesso:', result.rows[0]);
-    res.json({
-      message: 'Dispositivo excluído com sucesso',
-      device: result.rows[0]
+    res.json({ 
+      message: 'Dispositivo excluído com sucesso', 
+      device: result.rows[0] 
     });
   } catch (error) {
     console.error('❌ Erro ao excluir dispositivo:', error);
     console.error('❌ Stack trace:', error.stack);
-    res.status(500).json({
+    res.status(500).json({ 
       error: 'Erro ao excluir dispositivo',
-      details: error.message
+      details: error.message 
     });
   }
 };
@@ -549,11 +549,11 @@ exports.saveTestCredentials = async (req, res) => {
   }
 
   try {
-    console.log(`💾 Salvando credenciais de teste para MAC: ${mac_address}`);
-    console.log(`   Server: ${server}`);
-    console.log(`   Username: ${username}`);
-    console.log(`   Ping: ${ping}`);
-    console.log(`   Quality: ${quality}`);
+    console.log(\`💾 Salvando credenciais de teste para MAC: \${mac_address}\`);
+    console.log(\`   Server: \${server}\`);
+    console.log(\`   Username: \${username}\`);
+    console.log(\`   Ping: \${ping}\`);
+    console.log(\`   Quality: \${quality}\`);
 
     // Atualizar dispositivo com as credenciais de teste
     const result = await pool.query(

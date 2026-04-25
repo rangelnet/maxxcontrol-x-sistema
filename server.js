@@ -13,7 +13,6 @@ const aiAgentRoutes = require('./modules/ai-agent/aiAgentRoutes');
 
 // Executar migrações pendentes automaticamente
 async function runPendingMigrations() {
-  console.log('🏗️ Iniciando migrações do banco de dados...');
   const IGNORE_CODES = ['42P07', '42701', '42P11', '42710']; // duplicate table/column/index/object
 
   // Migração: tabelas IPTV Plugin (executar cada CREATE individualmente)
@@ -504,8 +503,7 @@ async function runPendingMigrations() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR(255)`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tfa_enabled BOOLEAN DEFAULT FALSE`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tfa_code VARCHAR(10)`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
-    console.log('  ✅ Colunas de Usuário (2FA e updated_at) verificadas/criadas');
+    console.log('  ✅ Colunas 2FA verificadas/criadas');
   } catch (err) {
     if (!IGNORE_CODES.includes(err.code)) {
       console.error('❌ Erro na migration 2FA:', err.message);
@@ -540,25 +538,30 @@ async function runPendingMigrations() {
     // 1. Adicionar data de expiração aos usuários
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP`);
     
-    // 2. Configurações padrão iniciais (Usando JSON.stringify para garantir sintaxe válida)
-    const setSetting = async (key, val) => {
-      await pool.query(
-        'INSERT INTO global_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
-        [key, JSON.stringify(val)]
-      );
-    };
+    // 2. Configurações padrão iniciais
+    await pool.query(`
+      INSERT INTO global_settings (key, value) 
+      VALUES ('panel_url', '"https://maxxcontrol-x-sistema.onrender.com/"')
+      ON CONFLICT (key) DO NOTHING;
+    `);
+    
+    await pool.query(`
+      INSERT INTO global_settings (key, value) 
+      VALUES ('trial_hours', '24')
+      ON CONFLICT (key) DO NOTHING;
+    `);
 
-    await setSetting('panel_url', 'https://maxxcontrol-x-sistema.onrender.com/');
-    await setSetting('trial_hours', '24');
-    await setSetting('reseller_welcome_template', 'Olá {nome}! Bem-vindo ao MaxxControl PRO.\n\n🌐 Site: {url}\n👤 Login: {login}\n🔑 Senha: {senha}\n⌛ Seu teste expira em: {expiracao}');
+    await pool.query(`
+      INSERT INTO global_settings (key, value) 
+      VALUES ('reseller_welcome_template', '"Olá {nome}! Bem-vindo ao MaxxControl PRO.\n\n🌐 Site: {url}\n👤 Login: {login}\n🔑 Senha: {senha}\n⌛ Seu teste expira em: {expiracao}"')
+      ON CONFLICT (key) DO NOTHING;
+    `);
 
-    console.log('✅ Todas as migrações foram concluídas com sucesso!');
-    return true;
+    console.log('  ✅ Migrações de Trial e Configurações concluídas');
   } catch (err) {
     if (!IGNORE_CODES.includes(err.code)) {
-      console.error('❌ Erro crítico em uma migration:', err.message);
+      console.error('❌ Erro na migration de Trial:', err.message);
     }
-    return false;
   }
 }
 
@@ -636,7 +639,6 @@ app.use('/api/settings', require('./modules/settings/settingsRoutes'));
 app.use('/api/payments',   require('./modules/payments/paymentRoutes'));
 app.use('/api/whatsapp',   require('./modules/whatsapp/whatsappRoutes'));
 app.use('/api/integrations/google', require('./modules/integrations/google/googleRoutes'));
-app.use('/api/mcp', require('./modules/mcp/mcpServer'));
 
 // ⚽ Placar e Dados Esportivos (SportsData.io)
 app.use('/api/sports', require('./modules/sports/sportsRoutes'));
@@ -796,50 +798,20 @@ try {
     socket.on('disconnect', () => { /* silêncio */ });
   });
   // Exportar io globalmente para o whatsappClient poder emitir
-  global.__maxxchat_io = io;
-  console.log('🔌 [Socket.IO] MaxxChat Live Chat pronto!');
-} catch (e) {
-  console.warn('⚠️ socket.io não instalado. Live Chat desabilitado. Rode: npm install socket.io');
+  global.io = io;
+  console.log('🚀 [Socket.IO] Servidor inicializado');
+} catch (err) {
+  console.error('⚠️ [Socket.IO] Falha ao inicializar:', err.message);
 }
 
-// Iniciar WebSocket (existente)
-initWebSocket(server);
-
-// Função para disparar serviços apenas após o banco estar pronto
-async function bootstrapServices() {
-  try {
-    const isOnline = await pool.query(process.env.USE_SQLITE === 'true' ? 'SELECT 1' : 'SELECT NOW()');
-    console.log('✅ Banco de dados conectado com sucesso!');
-    
-    // 1. Executar migrações primeiro
-    await runPendingMigrations();
-
-    // 2. Iniciar Bot do Telegram (após migrações que podem criar campos 2FA)
-    const { initBot } = require('./modules/telegram/telegramBot');
-    initBot();
-
-    // 3. Iniciar Sentinela (após migrações que garantem updated_at e outras colunas)
-    // 4. Iniciar servidor
-    server.listen(PORT, () => {
-      console.log(`🚀 MaxxControl X API rodando na porta ${PORT}`);
-      console.log(`🌐 http://localhost:${PORT}`);
-    });
-
-    console.log('🚀 Todos os subsistemas do MaxxControl PRO estão operacionais.');
-  } catch (err) {
-    console.error('❌ Falha crítica no bootstrap de serviços:', err.message);
-  }
-}
-
-// Iniciar bootstrap
-bootstrapServices();
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM recebido, encerrando servidor...');
-  server.close(() => {
-    console.log('✅ Servidor encerrado');
-    pool.end();
-    process.exit(0);
-  });
+// Iniciar servidor
+server.listen(PORT, async () => {
+  console.log(` Servidor rodando na porta ${PORT}`);
+  
+  // Executar migrações
+  console.log('🔄 Verificando migrações de banco de dados...');
+  await runPendingMigrations();
+  
+  // Iniciar Sentinela de Manutenção
+  sentinela.init();
 });
