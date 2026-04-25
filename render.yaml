@@ -9,16 +9,28 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18.x
-      - key: PORT
-        value: 10000
-      - key: DATABASE_URL
-        fromDatabase:
-          name: maxxcontrol-db
-          property: connectionString
+      - fromGroup: maxxcontrol-secrets
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: USE_SQLITE
         value: "false"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: /api/*
+      - type: rewrite
+        source: /banners/*
+        destination: /banners/*
+      - type: rewrite
+        source: /media/*
+        destination: /media/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
 
 databases:
   - name: maxxcontrol-db

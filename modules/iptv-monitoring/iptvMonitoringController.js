@@ -208,7 +208,7 @@ exports.getMonitoringStats = async (req, res) => {
         COUNT(CASE WHEN quality = 'ruim' THEN 1 END) as poor_quality,
         AVG(ping) as avg_ping
       FROM devices
-      WHERE stream_status IS NOT NULL
+      WHERE stream_status IS NOT NULL AND modelo != 'Web Browser'
     `;
     
     const result = await pool.query(statsQuery);

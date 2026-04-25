@@ -160,7 +160,11 @@ async function initClient() {
       },
       printQRInTerminal: false,
       browser          : Browsers.macOS('Chrome'),
-      logger
+      logger,
+      keepAliveIntervalMs: 30000,
+      syncFullHistory: false,
+      markOnlineOnConnect: true,
+      generateHighQualityLinkPreview: false
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -173,8 +177,21 @@ async function initClient() {
       const remoteJid = msg.key.remoteJid;
       const fromMe = msg.key.fromMe;
       const pushName = msg.pushName || '';
-      const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
-      const messageId = msg.key.id;
+      const messageId = msg.key.id; // <-- CORREÇÃO: Variável restaurada
+      
+      // ─── Extração de Texto e Cliques de Botão ────────────────────────────────
+      let text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
+      
+      if (msg.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
+        try {
+          const params = JSON.parse(msg.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson);
+          text = params.id || text; // O id será o próprio texto da opção
+        } catch (e) {}
+      } else if (msg.message.buttonsResponseMessage?.selectedButtonId) {
+        text = msg.message.buttonsResponseMessage.selectedButtonId;
+      } else if (msg.message.templateButtonReplyMessage?.selectedId) {
+        text = msg.message.templateButtonReplyMessage.selectedId;
+      }
 
       // Determinar tipo de mídia e baixar caso exista
       let mediaType = 'text';
@@ -280,11 +297,20 @@ async function initClient() {
             await pool.run('INSERT INTO whatsapp_chatbot_sessions (contact_id, flow_id, current_node_id) VALUES (?, ?, ?)', [remoteJid, flowId, firstNode.id]);
           }
           
-          // Enviar primeira mensagem e persistir como bot
-          await sock.sendMessage(remoteJid, { text: firstNode.content });
-          await persistMessage(conversation.id, remoteJid, `bot_${Date.now()}`, true, 'Maxx Bot', firstNode.content, 'text', true);
+          // Enviar primeira mensagem (com botões se for do tipo choice)
+          const isChoice = firstNode.type === 'choice' && firstNode.options?.length > 0;
+          let botMsgId = `bot_${Date.now()}`;
+          
+          if (isChoice) {
+            const buttons = firstNode.options.map(opt => ({ id: opt.text, text: opt.text.substring(0, 20) }));
+            botMsgId = await sendInteractiveMessage(remoteJid, firstNode.content, "Selecione uma opção:", buttons) || botMsgId;
+          } else {
+            await sock.sendMessage(remoteJid, { text: firstNode.content });
+          }
+          
+          await persistMessage(conversation.id, remoteJid, botMsgId, true, 'Maxx Bot', firstNode.content, 'text', true);
           broadcastMessage(remoteJid, {
-            id: `bot_${Date.now()}`, conversation_id: conversation.id, jid: remoteJid,
+            id: botMsgId, conversation_id: conversation.id, jid: remoteJid,
             from_me: true, sender_name: 'Maxx Bot', content: firstNode.content,
             media_type: 'text', is_bot_reply: true, created_at: new Date().toISOString()
           });
@@ -307,9 +333,16 @@ async function initClient() {
         if (!currentNode) return;
 
         // Lógica de desvio baseada no tipo do nó
-        const sendBotReply = async (replyText, nextNodeId) => {
-          await sock.sendMessage(remoteJid, { text: replyText });
-          const botMsgId = `bot_${Date.now()}`;
+        const sendBotReply = async (replyText, nextNodeId, options = null) => {
+          let botMsgId = `bot_${Date.now()}`;
+          if (options && options.length > 0) {
+            // Se passar options, usar NATIVE_FLOW (Botões hack)
+            const buttons = options.map(opt => ({ id: opt.text, text: opt.text.substring(0, 20) }));
+            botMsgId = await sendInteractiveMessage(remoteJid, replyText, "Selecione uma opção:", buttons) || botMsgId;
+          } else {
+            await sock.sendMessage(remoteJid, { text: replyText });
+          }
+          
           await persistMessage(conversation.id, remoteJid, botMsgId, true, 'Maxx Bot', replyText, 'text', true);
           broadcastMessage(remoteJid, {
             id: botMsgId, conversation_id: conversation.id, jid: remoteJid,
@@ -331,17 +364,20 @@ async function initClient() {
             const nextNodeId = currentNode.options[match.index].next_node_id;
             const nextNode = nodes.find(n => n.id === nextNodeId);
             if (nextNode) {
-              await sendBotReply(nextNode.content, nextNodeId);
+              const isNextChoice = nextNode.type === 'choice';
+              await sendBotReply(nextNode.content, nextNodeId, isNextChoice ? nextNode.options : null);
             }
           } else {
-            await sendBotReply(`Desculpe, não entendi. Escolha uma das opções:\n${currentNode.options.map((o,i) => `${i+1}. ${o.text}`).join('\n')}`, null);
+            // Re-envia com botões novamente se o usuário digitar algo errado
+            await sendBotReply(`Desculpe, não entendi.\n\n${currentNode.content}`, null, currentNode.options);
           }
         } else {
            // Se for apenas uma sequência de mensagens, pula para o próximo se houver
            if (currentNode.next_node_id) {
               const nextNode = nodes.find(n => n.id === currentNode.next_node_id);
               if (nextNode) {
-                await sendBotReply(nextNode.content, nextNode.id);
+                const isNextChoice = nextNode.type === 'choice';
+                await sendBotReply(nextNode.content, nextNode.id, isNextChoice ? nextNode.options : null);
               }
            }
         }
@@ -359,26 +395,28 @@ async function initClient() {
           await ensureConversation(chat.id, chat.name || chat.verifiedName || '');
         }
 
-        // Restaurar histórico de mensagens recente
-        for (const m of messages) {
-          if (!m.message) continue;
-          const remoteJid = m.key.remoteJid;
-          const fromMe = m.key.fromMe;
-          const pushName = m.pushName || '';
-          
-          const text = m.message.conversation || m.message.extendedTextMessage?.text || '';
-          let mediaType = 'text';
-          if (m.message.imageMessage) mediaType = 'image';
-          else if (m.message.videoMessage) mediaType = 'video';
-          
-          let content = text;
-          if (!content && mediaType !== 'text') content = `[${mediaType.toUpperCase()}]`; // Mensagens históricas não vamos baixar tudo para não sobrecarregar
-          if (!content) continue;
+        // Restaurar histórico de mensagens recente de forma assíncrona (não-bloqueante)
+        Promise.resolve().then(async () => {
+          for (const m of messages) {
+            if (!m.message) continue;
+            const remoteJid = m.key.remoteJid;
+            const fromMe = m.key.fromMe;
+            const pushName = m.pushName || '';
+            
+            const text = m.message.conversation || m.message.extendedTextMessage?.text || '';
+            let mediaType = 'text';
+            if (m.message.imageMessage) mediaType = 'image';
+            else if (m.message.videoMessage) mediaType = 'video';
+            
+            let content = text;
+            if (!content && mediaType !== 'text') content = `[${mediaType.toUpperCase()}]`; 
+            if (!content) continue;
 
-          const conversation = await ensureConversation(remoteJid, pushName);
-          await persistMessage(conversation.id, remoteJid, m.key.id, fromMe, pushName, content, mediaType, false);
-        }
-        log(`✅ [MaxxChat] Histórico sincronizado com sucesso!`);
+            const conversation = await ensureConversation(remoteJid, pushName);
+            await persistMessage(conversation.id, remoteJid, m.key.id, fromMe, pushName, content, mediaType, false);
+          }
+          log(`✅ [MaxxChat] Histórico sincronizado no background com sucesso!`);
+        }).catch(err => log(`❌ Erro no histórico de background: ${err.message}`));
       } catch (err) {
         log(`❌ [MaxxChat] Erro na sincronização de histórico: ${err.message}`);
       }
@@ -463,11 +501,16 @@ async function getGroups() {
 }
 
 // ─── Enviar mensagem ──────────────────────────────────────────────────────────
-async function sendMessage(groupId, message) {
+async function sendMessage(groupId, message, options = {}) {
   if (!sock || currentStatus !== 'connected') {
     throw new Error('WhatsApp não conectado');
   }
   const jid = groupId.includes('@g.us') ? groupId : `${groupId}@g.us`;
+  
+  if (options && options.buttons && options.buttons.length > 0) {
+     return await sendInteractiveMessage(jid, message, "MaxxControl", options.buttons);
+  }
+  
   await sock.sendMessage(jid, { text: message });
 }
 
@@ -480,4 +523,43 @@ async function sendMessage(groupId, message) {
   }
 })();
 
-module.exports = { initClient, destroyClient, getGroups, sendMessage, getStatus, getSock };
+// ─── Enviar Mensagem Interativa (Botões Hack) ─────────────────────────────────
+async function sendInteractiveMessage(groupId, text, footer, buttons) {
+  if (!sock || currentStatus !== 'connected') {
+    throw new Error('WhatsApp não conectado');
+  }
+  const jid = groupId.includes('@g.us') ? groupId : `${groupId}@g.us`;
+  
+  const baileys = await import('@whiskeysockets/baileys');
+  const { generateWAMessageFromContent } = baileys;
+
+  const dynamicButtons = buttons.map(btn => ({
+    name: "quick_reply",
+    buttonParamsJson: JSON.stringify({
+      display_text: btn.text,
+      id: btn.id
+    })
+  }));
+
+  const msgContent = {
+    viewOnceMessage: {
+      message: {
+        interactiveMessage: {
+          header: { hasMediaAttachment: false },
+          body: { text: text },
+          footer: { text: footer || "MaxxControl" },
+          nativeFlowMessage: {
+            buttons: dynamicButtons
+          }
+        }
+      }
+    }
+  };
+
+  const msg = generateWAMessageFromContent(jid, msgContent, { userJid: sock?.user?.id });
+  await sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+  
+  return msg.key.id;
+}
+
+module.exports = { initClient, destroyClient, getGroups, sendMessage, getStatus, getSock, sendInteractiveMessage };

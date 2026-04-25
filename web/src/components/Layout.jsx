@@ -49,7 +49,6 @@ const Layout = () => {
         { path: '/whatsapp-auto', icon: MessageCircle, label: 'Automação WhatsApp', badge: 'NOVO' },
         { path: '/versions', icon: Package, label: 'Versões' },
         { path: '/settings', icon: Settings2, label: 'Configurações' },
-        { path: '/admin-templates', icon: Sparkles, label: 'Fábrica de Temas', badge: 'MASTER', adminOnly: true },
         { path: '/tickets', icon: MessageSquare, label: 'Tickets de Suporte' },
       ]
     },

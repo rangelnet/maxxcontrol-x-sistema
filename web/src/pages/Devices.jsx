@@ -6,7 +6,9 @@ import {
   EyeOff, Copy, Wifi, WifiOff, Tv2, Signal, Activity,
   ShieldCheck, ShieldOff, ChevronLeft, ChevronRight, Search,
   MoreVertical, Link, MessageSquare, Users, Repeat, Scissors,
-  ExternalLink, Share2, Edit2, Tablet, ChevronDown, ChevronUp
+  ExternalLink, Share2, Edit2, Tablet, ChevronDown, ChevronUp,
+  Pencil, Play, Calendar, UserCheck, Monitor, Smartphone, 
+  Settings, LogIn, LayoutGrid, CalendarCheck, Power
 } from 'lucide-react'
 import TestApiModal from '../components/TestApiModal'
 
@@ -64,6 +66,25 @@ const getExpireColor = (dateStr) => {
   } catch {
     return '#FFA500'
   }
+}
+
+const DaysLeftBadge = ({ dateStr }) => {
+  if (!dateStr || dateStr === '—') return null;
+  try {
+    const parts = dateStr.split('/');
+    if (parts.length < 3) return null;
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const year = parseInt(parts[2].split(' ')[0]);
+    const expDate = new Date(year, month, day);
+    const now = new Date();
+    const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return <span style={{ marginLeft:6, fontSize:9, padding:'2px 5px', borderRadius:4, background:'rgba(239,68,68,0.15)', color:'#f87171', fontWeight:800 }}>VENCIDO</span>;
+    if (diffDays === 0) return <span style={{ marginLeft:6, fontSize:9, padding:'2px 5px', borderRadius:4, background:'rgba(251,191,36,0.15)', color:'#fbbf24', fontWeight:800 }}>HOJE</span>;
+    if (diffDays <= 7) return <span style={{ marginLeft:6, fontSize:9, padding:'2px 5px', borderRadius:4, background:'rgba(251,191,36,0.15)', color:'#fbbf24', fontWeight:800 }}>{diffDays}d</span>;
+    return <span style={{ marginLeft:6, fontSize:9, padding:'2px 5px', borderRadius:4, background:'rgba(52,211,153,0.15)', color:'#34d399', fontWeight:800 }}>+{diffDays}d</span>;
+  } catch { return null; }
 }
 
 // ═══════════════════════════════════════════
@@ -261,6 +282,11 @@ const Devices = () => {
   const [showConnectionsModal, setShowConnectionsModal] = useState(false);
   const [showMigrateModal, setShowMigrateModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showNewClientModal, setShowNewClientModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [editForm, setEditForm] = useState({ username: '', password: '', expire_date: '', max_connections: 1, package_name: '' });
+  const [newClientForm, setNewClientForm] = useState({ server_name: '', username: '', password: '', package_name: '', months: 1, max_connections: 1 });
 
   // Cores do Sigma Pro (Fiel ao Print)
   const colors = {
@@ -270,39 +296,60 @@ const Devices = () => {
     purple: '#7e22ce',
     green: '#15803d',
     red: '#be123c',
-    action: '#1d4ed8'
+    action: '#1d4ed8',
+    orange: '#FFA500',
+    cyan: '#0891b2',
+    teal: '#0d9488',
+    indigo: '#4f46e5',
+    pink: '#db2777'
   };
+
+  const GridActionButton = ({ icon: Icon, color, onClick, title, label, size = 42 }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%' }}>
+      <button 
+        onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
+        title={title}
+        style={{
+          width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: color, border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: `0 4px 12px ${color}33`,
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
+          e.currentTarget.style.boxShadow = `0 8px 20px ${color}55`;
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          e.currentTarget.style.boxShadow = `0 4px 12px ${color}33`;
+        }}
+      >
+        <Icon size={size * 0.45} />
+      </button>
+      {label && <span style={{ fontSize: 9, color: '#71717a', fontWeight: 600, textAlign: 'center', lineHeight: 1.1, whiteSpace: 'nowrap' }}>{label}</span>}
+    </div>
+  );
 
   const SigmaActionButton = ({ icon: Icon, color, onClick, title }) => (
     <button 
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick && onClick(e); }}
       title={title}
       style={{
         width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: color, border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer',
-        transition: 'transform 0.15s, opacity 0.2s'
+        background: color, border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer',
+        transition: 'all 0.2s',
+        boxShadow: `0 4px 12px ${color}33`,
       }}
-      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
-      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+      onMouseOver={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+        e.currentTarget.style.boxShadow = `0 6px 16px ${color}55`;
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+        e.currentTarget.style.boxShadow = `0 4px 12px ${color}33`;
+      }}
     >
       <Icon size={16} />
-    </button>
-  );
-
-  const PlanBadge = ({ letter, color, onClick }) => (
-    <button 
-      onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
-      style={{ 
-        width: 22, height: 22, borderRadius: 6, background: color, color: '#fff', 
-        fontSize: 10, fontWeight: 900, display: 'flex', alignItems: 'center', 
-        justifyContent: 'center', border: 'none', cursor: 'pointer', transition: 'transform 0.1s',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
-      }}
-      onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
-      onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-      title={`Renovar Plano ${letter}`}
-    >
-      {letter}
     </button>
   );
 
@@ -466,6 +513,24 @@ const Devices = () => {
     // Filtro de Categoria (Rápido)
     if (viewMode === 'devices') list = list.filter(i => i.type === 'device');
     if (viewMode === 'clients') list = list.filter(i => i.type === 'sigma_only');
+
+    if (statusFilter !== 'all') {
+      list = list.filter(item => {
+        if (item.type === 'device') {
+          if (statusFilter === 'online') return item.data.connection_status === 'online';
+          if (statusFilter === 'active') return item.data.status === 'ativo' || item.data.status === 'active';
+          if (statusFilter === 'expired') return item.data.status === 'inativo' || item.data.status === 'expired' || item.data.status === 'desativado';
+          return false;
+        } else {
+          const accounts = item.sigmaAccounts || [];
+          if (accounts.length === 0) return false;
+          if (statusFilter === 'active') return accounts.some(a => a.status === 'active' || a.status === 'ativo');
+          if (statusFilter === 'expired') return accounts.some(a => a.status !== 'active' && a.status !== 'ativo');
+          if (statusFilter === 'trial') return accounts.some(a => a.is_trial || a.package_name?.toLowerCase().includes('teste'));
+          return false;
+        }
+      });
+    }
 
     if (!searchTerm.trim()) { 
       setFilteredDevices(list); 
@@ -652,24 +717,52 @@ const Devices = () => {
             <span style={{ color:'#FFA500' }}>{filteredDevices.length} registros</span>
           </p>
           
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginTop: 12 }}>
-            {['unified', 'devices', 'clients'].map(m => (
-              <button 
-                key={m}
-                onClick={() => setViewMode(m)}
-                style={{
-                  padding: '6px 14px', borderRadius: 8, fontSize: 11, fontWeight: 700,
-                  background: viewMode === m ? 'rgba(255,165,0,0.15)' : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${viewMode === m ? '#FFA500' : 'rgba(255,255,255,0.08)'}`,
-                  color: viewMode === m ? '#FFA500' : '#71717a', cursor: 'pointer', transition: 'all 0.2s'
-                }}>
-                {m === 'unified' ? 'Tudo' : m === 'devices' ? 'Só TVs' : 'Só Painel'}
-              </button>
-            ))}
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginTop: 12, flexWrap:'wrap' }}>
+            <div style={{ display:'flex', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:3 }}>
+              {['unified', 'devices', 'clients'].map(m => (
+                <button 
+                  key={m}
+                  onClick={() => setViewMode(m)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: 'none',
+                    background: viewMode === m ? 'rgba(255,165,0,0.15)' : 'transparent',
+                    color: viewMode === m ? '#FFA500' : '#71717a', cursor: 'pointer', transition: 'all 0.2s'
+                  }}>
+                  {m === 'unified' ? 'Tudo' : m === 'devices' ? 'Só TVs' : 'Só Painel'}
+                </button>
+              ))}
+            </div>
+            
+            <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.1)' }} />
+            
+            <div style={{ display:'flex', gap:6 }}>
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'active', label: 'Ativos' },
+                { id: 'expired', label: 'Vencidos' },
+                { id: 'trial', label: 'Testes' },
+                { id: 'online', label: 'Online' }
+              ].map(f => (
+                 <button 
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                    background: statusFilter === f.id ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${statusFilter === f.id ? '#3b82f6' : 'rgba(255,255,255,0.08)'}`,
+                    color: statusFilter === f.id ? '#60a5fa' : '#71717a', cursor: 'pointer', transition: 'all 0.2s'
+                  }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          <button onClick={() => setShowNewClientModal(true)} style={btnPrimary}>
+            <Users size={15} /> + Novo Cliente
+          </button>
           {/* Busca */}
           <div style={{ position:'relative', width: isMobile ? '100%' : 'auto' }}>
             <Search size={15} color='#52525b' style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} />
@@ -720,109 +813,166 @@ const Devices = () => {
             </select>
             <span style={{ fontSize:12, color:'#52525b' }}>por página</span>
           </div>
-          <div style={{ fontSize:12, color:'#52525b' }}>
+          <div style={{ fontSize:12, color:'#52525b', display: 'flex', alignItems: 'center', gap: 10 }}>
+            {Object.values(relayProcessing).some(v => v) && (
+              <span style={{ display:'flex', alignItems:'center', gap:6, color:'#fbbf24', fontSize:11, fontWeight:800, background:'rgba(251,191,36,0.15)', padding:'4px 10px', borderRadius:8 }}>
+                <RefreshCw size={12} className="rotate" /> PROCESSANDO...
+              </span>
+            )}
             {searchTerm && <span style={{ color:'#FFA500', marginRight:8 }}>{filteredDevices.length} resultado(s)</span>}
             Pág. {currentPage}/{Math.max(totalPages,1)}
           </div>
         </div>
 
         {/* Corpo do Painel Unificado */}
-      <div style={{ flex:1, overflow:'auto', padding:'0 20px 20px' }}>
-        {isMobile ? (
-          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            {/* Layout Mobile Unificado */}
-            {paginatedDevices.map((item, idx) => {
-               const isExpandedSize = expandedClients[item.id];
-               if (item.type === 'device') {
-                 const device = item.data;
-                 return (
-                   <div key={item.id} style={{ background:'rgba(17,17,17,0.6)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:14, overflow:'hidden' }}>
-                     <div onClick={() => setExpandedClients(p => ({...p,[item.id]:!p[item.id]}))}
-                          style={{ padding:12, display:'flex', justifyContent:'space-between', alignItems:'flex-start', cursor:'pointer' }}>
-                        <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                          <Tv2 size={24} color="#FFA500" />
-                          <div>
-                            <p style={{ fontSize:14, fontWeight:800, color:'#e4e4e7' }}>{device.modelo || 'Android Device'}</p>
-                            <p style={{ fontSize:11, color:'#71717a' }}>MAC: {device.mac_address}</p>
-                          </div>
-                        </div>
-                        <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6 }}>
-                          <StatusBadge status={device.status} />
-                          {isExpandedSize ? <ChevronUp size={14} color="#52525b" /> : <ChevronDown size={14} color="#52525b" />}
-                        </div>
-                     </div>
-                     
-                     {isExpandedSize && (
-                       <div style={{ padding:12, borderTop:'1px solid rgba(255,255,255,0.05)', background:'rgba(255,165,0,0.02)', display:'flex', gap:6, justifyContent:'flex-end' }}>
-                          <SigmaActionButton color={colors.blue} icon={Package} onClick={() => openAppsModal(device)} title="Apps" />
-                          <SigmaActionButton color={colors.yellow} icon={Server} onClick={() => openIptvModal(device)} title="Config IPTV" />
-                          <SigmaActionButton color={colors.red} icon={Trash2} onClick={() => deleteDevice(device.id, device.mac_address)} title="Excluir" />
-                       </div>
-                     )}
-                   </div>
-                 );
-               } else {
-                 const client = item.data;
-                 return (
-                   <div key={item.id} style={{ background:'rgba(126,34,206,0.02)', border:'1px solid rgba(124,58,237,0.2)', borderRadius:14, overflow:'hidden' }}>
-                     <div onClick={() => setExpandedClients(p => ({...p,[item.id]:!p[item.id]}))}
-                          style={{ padding:12, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}>
-                        <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                          <Users size={24} color="#7c3aed" />
-                          <div>
-                            <p style={{ fontSize:14, fontWeight:800, color:'#e4e4e7' }}>{client.username}</p>
-                            <p style={{ fontSize:10, color:'#a78bfa', fontWeight:700 }}>PAINEL SIGMA (EXTERNO)</p>
-                          </div>
-                        </div>
-                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                          <div style={{ textAlign:'right' }}>
-                            <div style={{ fontSize:10, color:'#7c3aed', fontWeight:700 }}>{client.accounts?.length || 0} CONTAS</div>
-                            <div style={{ fontSize:9, color:'#52525b' }}>{client.accounts?.[0]?.expire_date || '—'}</div>
-                          </div>
-                          {isExpandedSize ? <ChevronUp size={16} color="#7c3aed" /> : <ChevronDown size={16} color="#7c3aed" />}
-                        </div>
-                     </div>
+        <div style={{ flex:1, overflow:'auto' }}>
+          {isMobile ? (
+            <div style={{ display:'flex', flexDirection:'column', gap:16, padding: '16px 0' }}>
+              {paginatedDevices.map((item) => {
+                if (item.type === 'device') {
+                   const device = item.data;
+                   return (
+                     <div key={item.id} style={{ background:'rgba(17,17,17,0.85)', border:'1px solid rgba(255,165,0,0.12)', borderRadius:20, overflow:'hidden', boxShadow:'0 10px 30px rgba(0,0,0,0.5)' }}>
+                       <div style={{ padding: 20 }}>
+                         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom: 16 }}>
+                            <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+                              <div style={{ width:48, height:48, borderRadius:12, background:'rgba(255,165,0,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <Tv2 size={24} color="#FFA500" />
+                              </div>
+                              <div>
+                                <p style={{ fontSize:15, fontWeight:900, color:'#fff' }}>{device.modelo || 'Android Device'}</p>
+                                <p style={{ fontSize:11, color:'#71717a', fontFamily:'monospace' }}>{device.mac_address}</p>
+                              </div>
+                            </div>
+                            <StatusBadge status={device.status} />
+                         </div>
+                         
+                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom: 16 }}>
+                            <button onClick={() => openAppsModal(device)} style={{ ...btnGhost, justifyContent:'center', background: 'rgba(30,64,175,0.15)', borderColor: 'rgba(30,64,175,0.3)', color: '#60a5fa' }}>
+                              <Package size={14} /> GERENCIAR APPS
+                            </button>
+                            <button onClick={() => openIptvModal(device)} style={{ ...btnGhost, justifyContent:'center', background: 'rgba(177,142,0,0.15)', borderColor: 'rgba(177,142,0,0.3)', color: '#fbbf24' }}>
+                              <Server size={14} /> CONFIG IPTV
+                            </button>
+                         </div>
 
-                     {isExpandedSize && (
-                       <div style={{ borderTop:'1px solid rgba(124,58,237,0.1)', background:'rgba(124,58,237,0.05)' }}>
-                         {client.accounts?.map((acc) => (
-                           <div key={acc.id} style={{ padding:12, borderBottom:'1px solid rgba(124,58,237,0.05)' }}>
-                             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                               <div>
-                                 <p style={{ fontSize:13, fontWeight:700, color:'#e4e4e7' }}>{acc.username}</p>
-                                 <p style={{ fontSize:10, color:'#71717a' }}>{acc.server_name}</p>
-                               </div>
-                               <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
-                                 <StatusBadge status={acc.status} isTrial={acc.is_trial || acc.package_name?.toLowerCase().includes('teste')} />
-                                 <p style={{ fontSize:9, color:'#52525b' }}>Vence: {acc.expire_date}</p>
-                               </div>
-                             </div>
-                             
-                             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                                <div style={{ display: 'flex', gap: 6 }}>
-                                   <PlanBadge letter="M" color="#B18E00" onClick={() => copyToClipboard(acc.m3u_url, 'M3U Plus')} />
-                                   <PlanBadge letter="S" color="#15803d" onClick={() => copyToClipboard(acc.m3u_url?.replace('get.php', 'siptv.php'), 'SIptv')} />
-                                   <PlanBadge letter="P" color="#1e40af" onClick={() => {
-                                      const pUrl = acc.player_url || (acc.panel_url ? `${acc.panel_url.replace('/panel/', '/player/')}` : '');
-                                      if (pUrl) window.open(pUrl, '_blank'); else toast.error('Player indisponível');
-                                   }} />
-                                </div>
-                                <div style={{ display:'flex', gap:4 }}>
-                                   <SigmaActionButton color={colors.green} icon={RefreshCw} onClick={() => sendRemoteAction(acc.id, 'sync_account', acc.remote_id, acc.panel_url)} title="Sync" />
-                                   <SigmaActionButton color={colors.red} icon={Trash2} onClick={() => sendRemoteAction(acc.id, 'delete_user', acc.remote_id, acc.panel_url)} title="Excluir" />
-                                </div>
-                             </div>
-                           </div>
-                         ))}
+                         <div style={{ display:'flex', justifyContent:'center', marginBottom: 16 }}>
+                            <button onClick={() => { setSelectedDevice(device); setShowTestApiModal(true); }} style={{ ...btnGhost, color:'#c084fc', borderColor:'rgba(168,85,247,0.3)', background:'rgba(168,85,247,0.15)', width:'100%', justifyContent:'center' }}>
+                              <TestTube size={14} /> WEBHOOK DE TESTES
+                            </button>
+                         </div>
+
+                         <div style={{ display:'flex', justifyContent:'center' }}>
+                            <button onClick={() => deleteDevice(device.id, device.mac_address)} style={{ ...btnGhost, color:'#ef4444', borderColor:'rgba(239,68,68,0.2)', width:'100%', justifyContent:'center' }}>
+                              <Trash2 size={14} /> REMOVER DISPOSITIVO DO SISTEMA
+                            </button>
+                         </div>
                        </div>
-                     )}
-                   </div>
-                 );
-               }
-            })}
-          </div>
-        ) : (
-          <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0 }}>
+                     </div>
+                   );
+                } else {
+                  const client = item.data;
+                  return (
+                    <div key={item.id} style={{ display:'flex', flexDirection:'column', gap:16, width: '100%' }}>
+                      {client.accounts?.map((acc) => (
+                        <div key={acc.id} style={{ background:'#09090b', border:'1px solid #1a1b1e', borderRadius:16, padding: '16px', boxShadow:'0 10px 40px rgba(0,0,0,0.8)', overflow:'hidden' }}>
+                          {/* Header Premium - ID em Azul */}
+                          <div style={{ marginBottom: 16 }}>
+                            <h2 style={{ fontSize: 18, color: '#3b82f6', fontWeight: 600, marginBottom: 4 }}>{acc.id || '621634247'}</h2>
+                            <h3 style={{ fontSize: 16, color: '#94a3b8', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                               {acc.server_name || 'PRIMELUX SERVER'} 💎
+                            </h3>
+                            <p style={{ fontSize: 15, color: '#64748b', fontWeight: 500 }}>{acc.package_name || 'ANUAL C/ ADULTOS'}</p>
+                            <p style={{ fontSize: 15, color: '#475569', fontWeight: 500 }}>{acc.username}</p>
+                          </div>
+
+                          {/* Datas com Borda Tracejada */}
+                          <div style={{ padding: '12px 16px', border: '1px dashed #2d2e32', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <div>
+                               <p style={{ fontSize: 14, color: '#fff', fontWeight: 700 }}>Vencimento</p>
+                               <p style={{ fontSize: 15, color: '#fff', fontWeight: 500, display: 'flex', alignItems: 'center' }}>{acc.expire_date} <DaysLeftBadge dateStr={acc.expire_date} /></p>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                               <p style={{ fontSize: 11, color: '#4b5563', fontWeight: 500 }}>Criado em</p>
+                               <p style={{ fontSize: 11, color: '#4b5563', fontWeight: 500 }}>{formatDate(acc.created_at)}</p>
+                            </div>
+                          </div>
+
+                          {/* Bar de Status - Botões Outlined */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                            <div style={{ border: '1px solid #064e3b', borderRadius: 8, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', fontSize: 14, fontWeight: 500 }}>Ativo</div>
+                            <div style={{ border: '1px solid #2e1065', borderRadius: 8, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed', fontSize: 14, fontWeight: 500 }}>IPTV</div>
+                          </div>
+
+                          {/* Info Plano - Borda Pontilhada */}
+                          <div style={{ padding: '12px 16px', border: '1px dotted #2d2e32', borderRadius: 8, marginBottom: 16 }}>
+                            <p style={{ fontSize: 15, color: '#fff', fontWeight: 500 }}>Plano: R$ 300,00</p>
+                            <p style={{ fontSize: 15, color: '#fff', fontWeight: 500 }}>Conexões: {acc.max_connections || 2}</p>
+                          </div>
+
+                          {/* Botão Principal Verde (Geralmente Renovação ou Ação Global) */}
+                          <button 
+                            onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)}
+                            style={{ width: '100%', height: 48, background: '#059669', border: 'none', borderRadius: 8, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                          >
+                            <LayoutGrid size={20} color="#fff" />
+                          </button>
+
+                          {/* Grade de Ações - Borda Pontilhada em volta de tudo */}
+                          <div style={{ border: '1px dotted #2d2e32', borderRadius: 12, padding: '16px 8px', display: 'flex', flexDirection: 'column', gap: 24, background: 'rgba(5,5,5,0.2)' }}>
+                             {/* Row 1: 4 icons */}
+                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
+                               <GridActionButton icon={Pencil} color="#475569" label="Editar" size={48} onClick={() => { setSelectedAccount(acc); setEditForm({ username: acc.username, password: acc.password || '', expire_date: acc.expire_date || '', max_connections: acc.max_connections || 1, package_name: acc.package_name || '' }); setShowEditModal(true); }} />
+                               <GridActionButton icon={Monitor} color="#2563eb" label="Playlist" size={48} onClick={() => {}} />
+                               <GridActionButton icon={CalendarCheck} color="#B18E00" label="Renovar" size={48} onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)} />
+                               <GridActionButton icon={Calendar} color="#B18E00" label="Renovar em Confiança" size={48} onClick={() => sendRemoteAction(acc.id, 'renew_trust', acc.remote_id, acc.panel_url)} />
+                             </div>
+
+                             {/* Row 2: 5 icons */}
+                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
+                               <GridActionButton icon={UserCheck} color="#7c3aed" label="Área do Cliente" size={44} onClick={() => acc.panel_url && window.open(acc.panel_url, '_blank')} />
+                               <GridActionButton icon={RefreshCw} color="#059669" label="Sincronizar com Servidor" size={44} onClick={() => sendRemoteAction(acc.id, 'sync_account', acc.remote_id, acc.panel_url)} />
+                               <GridActionButton icon={Repeat} color="#7c3aed" label="Migrar Servidor" size={44} onClick={() => { setSelectedAccount(acc); setShowMigrateModal(true); }} />
+                               <GridActionButton icon={Users} color="#2563eb" label="Alterar Conexões" size={44} onClick={() => { setSelectedAccount(acc); setShowConnectionsModal(true); }} />
+                               <GridActionButton icon={AppWindow} color="#7c3aed" label="Ativar Aplicativo" size={44} onClick={() => {}} />
+                             </div>
+
+                             {/* Row 3: 3 icons (M, S, P) - Large font */}
+                             <div style={{ display: 'flex', justifyContent: 'center', gap: 30 }}>
+                               <div style={{ textAlign: 'center' }}>
+                                 <button onClick={() => copyToClipboard(acc.m3u_url, 'M3U Plus')} style={{ width: 54, height: 54, background: '#B18E00', border: 'none', borderRadius: 8, color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer' }}>M</button>
+                                 <p style={{ fontSize: 9, color: '#71717a', marginTop: 6, fontWeight: 600 }}>Copiar M3U</p>
+                               </div>
+                               <div style={{ textAlign: 'center' }}>
+                                 <button onClick={() => copyToClipboard(acc.m3u_url?.replace('get.php', 'siptv.php'), 'SIptv')} style={{ width: 54, height: 54, background: '#059669', border: 'none', borderRadius: 8, color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer' }}>S</button>
+                                 <p style={{ fontSize: 9, color: '#71717a', marginTop: 6, fontWeight: 600 }}>Copiar M3U Curta</p>
+                               </div>
+                               <div style={{ textAlign: 'center' }}>
+                                 <button onClick={() => {
+                                    const pUrl = acc.player_url || (acc.panel_url ? `${acc.panel_url.replace('/panel/', '/player/')}` : '');
+                                    if (pUrl) window.open(pUrl, '_blank'); else showToast('Player indisponível', 'error');
+                                 }} style={{ width: 54, height: 54, background: '#2563eb', border: 'none', borderRadius: 8, color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer' }}>P</button>
+                                 <p style={{ fontSize: 9, color: '#71717a', marginTop: 6, fontWeight: 600 }}>Copiar Playlist</p>
+                               </div>
+                             </div>
+
+                             {/* Row 4: 4 icons */}
+                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
+                               <GridActionButton icon={MessageSquare} color="#059669" label="Lembrete de Renovação" size={44} onClick={() => generateReminder(acc)} />
+                               <GridActionButton icon={Power} color="#059669" label="Ativo" size={44} onClick={() => sendRemoteAction(acc.id, acc.status === 'active' ? 'disable_user' : 'enable_user', acc.remote_id, acc.panel_url)} />
+                               <GridActionButton icon={Trash2} color="#be123c" label="Excluir" size={44} onClick={() => sendRemoteAction(acc.id, 'delete_user', acc.remote_id, acc.panel_url)} />
+                               <GridActionButton icon={MoreVertical} color="#2563eb" label="Ações" size={44} onClick={() => setActiveMenu(acc.id)} />
+                             </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+              })}
+            </div>
+          ) : (
+            <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0 }}>
             <thead>
               <tr style={{ position:'sticky', top:0, zIndex:10, background:'#050505' }}>
                 <th style={{ padding:'12px 14px', textAlign:'left', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Usuário / Dispositivo</th>
@@ -872,6 +1022,7 @@ const Devices = () => {
                           <td style={{ padding:'12px 14px' }}><StatusBadge status={device.status} /></td>
                           <td style={{ padding:'12px 14px' }}>
                              <div style={{ display:'flex', gap:4 }}>
+                               <SigmaActionButton color={colors.purple} icon={TestTube} onClick={(e) => { e.stopPropagation(); setSelectedDevice(device); setShowTestApiModal(true); }} title="Webhook Testes" />
                                <SigmaActionButton color={colors.blue} icon={Package} onClick={(e) => { e.stopPropagation(); openAppsModal(device) }} title="Apps" />
                                <SigmaActionButton color={colors.yellow} icon={Server} onClick={(e) => { e.stopPropagation(); openIptvModal(device) }} title="Config" />
                              </div>
@@ -889,7 +1040,7 @@ const Devices = () => {
                                <div style={{ color: '#71717a', fontSize: 10, fontFamily: 'monospace' }}>{acc.device_mac}</div>
                             </td>
                             <td style={{ padding: '12px 14px' }}>
-                               <div style={{ color: '#a1a1aa', fontSize: 12 }}>{acc.expire_date}</div>
+                               <div style={{ color: '#a1a1aa', fontSize: 12, display: 'flex', alignItems: 'center' }}>{acc.expire_date} <DaysLeftBadge dateStr={acc.expire_date} /></div>
                                <div style={{ color: '#52525b', fontSize: 10, marginTop: 4 }}>Controle Remoto Disponível</div>
                             </td>
                             <td style={{ padding: '12px 14px' }}>
@@ -932,8 +1083,9 @@ const Devices = () => {
                                         {activeMenu === acc.id && (
                                           <>
                                             <div onClick={() => setActiveMenu(null)} style={{ position:'fixed', inset:0, zIndex:100 }} />
-                                            <div style={{ position:'absolute', top:'100%', right:0, marginTop:8, background:'#111', border:'1px solid #333', borderRadius:10, padding:6, width:180, zIndex:101, boxShadow: '0 10px 30px #000' }}>
+                                            <div style={{ position:'absolute', top:'100%', right:0, marginTop:8, background:'#111', border:'1px solid #333', borderRadius:10, padding:6, width:200, zIndex:101, boxShadow: '0 10px 30px #000' }}>
                                               <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); copyToClipboard(acc.m3u_url, 'M3U'); }}><Link size={14}/> Copiar M3U</button>
+                                              <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); copyToClipboard(`${acc.username}:${acc.password || 'senha_oculta'}`, 'Credenciais'); }}><Copy size={14}/> Copiar Credenciais</button>
                                               <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); generateReminder(acc); }}><MessageSquare size={14}/> Lembrete WhatsApp</button>
                                             </div>
                                           </>
@@ -969,7 +1121,7 @@ const Devices = () => {
                               <div style={{ fontSize:10, color:'#52525b' }}>{client.accounts?.length || 0} Servidor(es)</div>
                            </td>
                            <td style={{ padding:'12px 14px' }}>
-                              <div style={{ color:'#a1a1aa', fontSize:12 }}>{client.accounts?.[0]?.expire_date || '—'}</div>
+                              <div style={{ color:'#a1a1aa', fontSize:12, display: 'flex', alignItems: 'center' }}>{client.accounts?.[0]?.expire_date || '—'} <DaysLeftBadge dateStr={client.accounts?.[0]?.expire_date} /></div>
                            </td>
                            <td><div style={{ color:'#a78bfa', fontSize:10, fontWeight:900, border:'1px solid rgba(124,58,237,0.4)', width:'fit-content', padding:'1px 6px', borderRadius:4 }}>IPTV</div></td>
                            <td style={{ padding:'12px 14px' }}>
@@ -984,68 +1136,68 @@ const Devices = () => {
                         </tr>
                         {/* Sub-Contas Detalhadas para Clientes Sigma (Ações de volta!) */}
                         {isExpanded && client.accounts?.map((acc) => (
-                           <tr key={acc.id} style={{ background: 'rgba(5,5,5,0.4)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                              <td style={{ padding: '12px 14px 12px 48px' }}>
-                                 <div style={{ color: '#a78bfa', fontWeight: 700, fontSize: 13 }}>{acc.username}</div>
-                                 <div style={{ color: '#52525b', fontSize: 10, marginTop: 2 }}>{acc.server_name}</div>
-                                 <div style={{ color: '#71717a', fontSize: 10, fontFamily: 'monospace' }}>{acc.device_mac || 'SEM MAC'}</div>
+                           <tr key={acc.id} style={{ background: 'rgba(5,5,5,0.7)', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                              <td style={{ padding: '16px 14px 16px 48px' }}>
+                                 <div style={{ color: '#60a5fa', fontWeight: 900, fontSize: 13, marginBottom: 2 }}>ID: {acc.id}</div>
+                                 <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, textTransform:'uppercase' }}>{acc.server_name || 'IPTV'}</div>
+                                 <div style={{ color: '#71717a', fontSize: 11, marginTop: 4, fontFamily: 'monospace' }}>{acc.username}</div>
                               </td>
                               <td style={{ padding: '12px 14px' }}>
-                                 <div style={{ color: '#a1a1aa', fontSize: 12 }}>{acc.expire_date}</div>
+                                 <div style={{ color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center' }}>{acc.expire_date} <DaysLeftBadge dateStr={acc.expire_date} /></div>
+                                 <div style={{ color: '#52525b', fontSize: 10, marginTop: 4 }}>Criado: {formatDate(acc.created_at)}</div>
                               </td>
                               <td style={{ padding: '12px 14px' }}>
                                  <StatusBadge status={acc.status} isTrial={acc.is_trial || acc.package_name?.toLowerCase().includes('teste')} />
-                                 <div style={{ color: '#52525b', fontSize: 9, marginTop: 4 }}>Criado: {acc.created_at || '—'}</div>
+                                 <div style={{ color: '#a78bfa', fontSize: 10, fontWeight: 900, border:'1px solid rgba(124,58,237,0.3)', width:'fit-content', padding:'1px 5px', borderRadius:4, marginTop:6 }}>IPTV</div>
                               </td>
                               <td style={{ padding: '12px 14px' }}>
-                                 <div style={{ color: '#71717a', fontSize: 12 }}>Conexões: {acc.max_connections || 1}</div>
-                                 <div style={{ color: '#52525b', fontSize: 10 }}>Pkt: {acc.package_name || 'Standard'}</div>
+                                 <div style={{ color: '#e4e4e7', fontSize: 12, fontWeight: 700 }}>Conexões: {acc.max_connections || 1}</div>
+                                 <div style={{ color: '#71717a', fontSize: 11, marginTop: 4 }}>{acc.package_name || 'Standard'}</div>
                               </td>
-                              <td colSpan={2} style={{ padding: '12px 14px', position: 'relative' }}>
-                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-                                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                                       {relayProcessing[acc.id] ? (
-                                          <div style={{ color: '#fbbf24', fontSize: 10, fontWeight: 900 }}>PROCESSANDO...</div>
-                                       ) : (
-                                          <>
-                                             <SigmaActionButton color={colors.yellow} icon={ShieldCheck} onClick={() => sendRemoteAction(acc.id, 'renew_trust', acc.remote_id, acc.panel_url)} title="Renovar" />
-                                             <SigmaActionButton color={colors.purple} icon={Users} onClick={() => { setSelectedAccount(acc); setShowConnectionsModal(true); }} title="Conexões" />
-                                             <SigmaActionButton color={colors.green} icon={RefreshCw} onClick={() => sendRemoteAction(acc.id, 'sync_account', acc.remote_id, acc.panel_url)} title="Sync" />
-                                             <SigmaActionButton color={colors.purple} icon={Repeat} onClick={() => { setSelectedAccount(acc); setShowMigrateModal(true); }} title="Migrar" />
-                                             
-                                             <button 
-                                                onClick={() => setActiveMenu(activeMenu === acc.id ? null : acc.id)}
-                                                style={{ padding: '4px 10px', background: colors.action, border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer', marginLeft: 6 }}>
-                                                Ações
-                                             </button>
+                              <td style={{ padding: '12px 14px' }}>
+                                 <div style={{ display: 'flex', gap: 4 }}>
+                                    <button onClick={() => copyToClipboard(acc.m3u_url, 'M3U')} style={{ width:24, height:24, borderRadius:6, background:colors.yellow, color:'#fff', fontSize:10, fontWeight:900, border:'none', cursor:'pointer' }}>M</button>
+                                    <button onClick={() => copyToClipboard(acc.m3u_url?.replace('get.php', 'siptv.php'), 'SIptv')} style={{ width:24, height:24, borderRadius:6, background:colors.green, color:'#fff', fontSize:10, fontWeight:900, border:'none', cursor:'pointer' }}>S</button>
+                                    <button onClick={() => {
+                                       const pUrl = acc.player_url || (acc.panel_url ? `${acc.panel_url.replace('/panel/', '/player/')}` : '');
+                                       if (pUrl) window.open(pUrl, '_blank'); else showToast('Player indisponível', 'error');
+                                    }} style={{ width:24, height:24, borderRadius:6, background:colors.blue, color:'#fff', fontSize:10, fontWeight:900, border:'none', cursor:'pointer' }}>P</button>
+                                 </div>
+                              </td>
+                              <td style={{ padding: '12px 14px', position: 'relative' }}>
+                                 <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
+                                    {relayProcessing[acc.id] ? (
+                                       <div style={{ color: '#fbbf24', fontSize: 10, fontWeight: 900, marginRight: 15 }}>PROCESSANDO...</div>
+                                    ) : (
+                                       <>
+                                          <SigmaActionButton color={colors.blue} icon={Pencil} onClick={() => { setSelectedAccount(acc); setEditForm({ username: acc.username, password: acc.password || '', expire_date: acc.expire_date || '', max_connections: acc.max_connections || 1, package_name: acc.package_name || '' }); setShowEditModal(true); }} title="Editar" />
+                                          <SigmaActionButton color={colors.yellow} icon={CalendarCheck} onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)} title="Renovar" />
+                                          <SigmaActionButton color={colors.purple} icon={LogIn} onClick={() => acc.panel_url && window.open(acc.panel_url, '_blank')} title="Área do Cliente" />
+                                          <SigmaActionButton color={colors.green} icon={RefreshCw} onClick={() => sendRemoteAction(acc.id, 'sync_account', acc.remote_id, acc.panel_url)} title="Sincronizar" />
+                                          <SigmaActionButton color={colors.red} icon={Trash2} onClick={() => sendRemoteAction(acc.id, 'delete_user', acc.remote_id, acc.panel_url)} title="Excluir" />
+                                          
+                                          <button 
+                                             onClick={() => setActiveMenu(activeMenu === acc.id ? null : acc.id)}
+                                             style={{ padding: '6px 14px', background: colors.action, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(29,78,216,0.3)' }}
+                                             onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+                                          >
+                                             Ações
+                                          </button>
 
-                                             {activeMenu === acc.id && (
-                                                <>
-                                                   <div onClick={() => setActiveMenu(null)} style={{ position:'fixed', inset:0, zIndex:100 }} />
-                                                   <div style={{ position:'absolute', top:'100%', right:0, marginTop:8, background:'#111', border:'1px solid #333', borderRadius:10, padding:6, width:180, zIndex:101, boxShadow: '0 10px 30px #000' }}>
-                                                      <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); copyToClipboard(acc.m3u_url, 'M3U'); }}><Link size={14}/> Copiar M3U</button>
-                                                      <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); generateReminder(acc); }}><MessageSquare size={14}/> Lembrete WhatsApp</button>
-                                                   </div>
-                                                </>
-                                             )}
-                                          </>
-                                       )}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 4 }}>
-                                       <PlanBadge letter="M" color="#B18E00" 
-                                          onClick={() => copyToClipboard(acc.m3u_url, 'Link M3U Plus')} 
-                                          title="Copiar M3U Plus" />
-                                       <PlanBadge letter="S" color="#15803d" 
-                                          onClick={() => copyToClipboard(acc.m3u_url?.replace('get.php', 'siptv.php'), 'Link SIptv')} 
-                                          title="Copiar link SIptv" />
-                                       <PlanBadge letter="P" color="#1e40af" 
-                                          onClick={() => {
-                                            const playerUrl = acc.player_url || (acc.panel_url ? `${acc.panel_url.replace('/panel/', '/player/')}` : '');
-                                            if (playerUrl) window.open(playerUrl, '_blank');
-                                            else toast.error('Web Player não disponível para este servidor.');
-                                          }} 
-                                          title="Abrir Web Player" />
-                                    </div>
+                                          {activeMenu === acc.id && (
+                                             <>
+                                                <div onClick={() => setActiveMenu(null)} style={{ position:'fixed', inset:0, zIndex:100 }} />
+                                                <div style={{ position:'absolute', top:'100%', right:0, marginTop:10, background:'#111', border:'1.5px solid #333', borderRadius:14, padding:8, width:200, zIndex:101, boxShadow: '0 15px 40px #000' }}>
+                                                   <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); generateReminder(acc); }}><MessageSquare size={14}/> Lembrete WhatsApp</button>
+                                                   <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); setSelectedAccount(acc); setShowMigrateModal(true); }}><Repeat size={14}/> Migrar Servidor</button>
+                                                   <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); setSelectedAccount(acc); setShowConnectionsModal(true); }}><Users size={14}/> Alterar Conexões</button>
+                                                   <button style={dropdownItemStyle} onClick={() => { setActiveMenu(null); sendRemoteAction(acc.id, acc.status === 'active' ? 'disable_user' : 'enable_user', acc.remote_id, acc.panel_url); }}><Power size={14}/> {acc.status === 'active' ? 'Desativar' : 'Ativar'}</button>
+                                                </div>
+                                             </>
+                                          )}
+                                       </>
+                                    )}
                                  </div>
                               </td>
                            </tr>
@@ -1254,6 +1406,95 @@ const Devices = () => {
                 <CheckCircle size={15}/> Migrar Agora
               </button>
               <button onClick={() => setShowMigrateModal(false)} style={{ ...btnGhost, flex:1 }}>Cancelar</button>
+            </div>
+          </div>
+        </ModalBase>
+      )}
+
+      {/* ════ MODAL EDITAR CLIENTE ════ */}
+      {showEditModal && (
+        <ModalBase onClose={() => setShowEditModal(false)}>
+          <ModalHeader icon={Pencil} title="Editar Cliente" onClose={() => setShowEditModal(false)} />
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <p style={{ fontSize:12, color:'#a1a1aa', marginBottom:4 }}>Editando conta de <strong>{selectedAccount?.username}</strong> no servidor {selectedAccount?.server_name}</p>
+            
+            <FormField label="Nova Senha (deixe em branco para não alterar)">
+              <input style={inputStyle} value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="********" />
+            </FormField>
+            
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <FormField label="Vencimento (DD/MM/YYYY)">
+                <input style={inputStyle} value={editForm.expire_date} onChange={e => setEditForm({...editForm, expire_date: e.target.value})} placeholder="31/12/2025" />
+              </FormField>
+              <FormField label="Nº Conexões">
+                <input style={inputStyle} type="number" min="1" value={editForm.max_connections} onChange={e => setEditForm({...editForm, max_connections: Number(e.target.value)})} />
+              </FormField>
+            </div>
+            
+            <FormField label="Pacote / Plano">
+              <input style={inputStyle} value={editForm.package_name} onChange={e => setEditForm({...editForm, package_name: e.target.value})} placeholder="Nome do pacote" />
+            </FormField>
+            
+            <div style={{ display:'flex', gap:8, marginTop:10 }}>
+              <button 
+                onClick={() => {
+                  setShowEditModal(false);
+                  sendRemoteAction(selectedAccount.id, 'edit_user', selectedAccount.remote_id, selectedAccount.panel_url, editForm);
+                }}
+                style={{ ...btnPrimary, flex:1, justifyContent:'center' }}>
+                <Save size={15}/> Salvar Alterações
+              </button>
+              <button onClick={() => setShowEditModal(false)} style={{ ...btnGhost, flex:1 }}>Cancelar</button>
+            </div>
+          </div>
+        </ModalBase>
+      )}
+
+      {/* ════ MODAL NOVO CLIENTE ════ */}
+      {showNewClientModal && (
+        <ModalBase onClose={() => setShowNewClientModal(false)}>
+          <ModalHeader icon={Users} title="Novo Cliente" onClose={() => setShowNewClientModal(false)} />
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <p style={{ fontSize:12, color:'#a1a1aa', marginBottom:4 }}>Criar nova conta em um dos painéis Sigma conectados.</p>
+            
+            <FormField label="Servidor de Destino (Painel)">
+              <input style={inputStyle} value={newClientForm.server_name} onChange={e => setNewClientForm({...newClientForm, server_name: e.target.value})} placeholder="Ex: MEGA NOVELAS 4K" />
+            </FormField>
+            
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <FormField label="Usuário">
+                <input style={inputStyle} value={newClientForm.username} onChange={e => setNewClientForm({...newClientForm, username: e.target.value})} placeholder="usuario123" />
+              </FormField>
+              <FormField label="Senha">
+                <input style={inputStyle} value={newClientForm.password} onChange={e => setNewClientForm({...newClientForm, password: e.target.value})} placeholder="senha123" />
+              </FormField>
+            </div>
+            
+            <FormField label="Pacote / Plano Base">
+              <input style={inputStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})} placeholder="Ex: PACOTE COMPLETO" />
+            </FormField>
+            
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <FormField label="Duração (Meses)">
+                <input style={inputStyle} type="number" min="1" value={newClientForm.months} onChange={e => setNewClientForm({...newClientForm, months: Number(e.target.value)})} />
+              </FormField>
+              <FormField label="Conexões">
+                <input style={inputStyle} type="number" min="1" value={newClientForm.max_connections} onChange={e => setNewClientForm({...newClientForm, max_connections: Number(e.target.value)})} />
+              </FormField>
+            </div>
+            
+            <div style={{ display:'flex', gap:8, marginTop:10 }}>
+              <button 
+                onClick={() => {
+                  if (!newClientForm.server_name || !newClientForm.username || !newClientForm.password) return showToast("Preencha servidor, usuário e senha", "error");
+                  setShowNewClientModal(false);
+                  sendRemoteAction('new', 'create_user', 'new', null, newClientForm);
+                  setNewClientForm({ server_name: '', username: '', password: '', package_name: '', months: 1, max_connections: 1 });
+                }}
+                style={{ ...btnPrimary, flex:1, justifyContent:'center' }}>
+                <CheckCircle size={15}/> Criar Conta
+              </button>
+              <button onClick={() => setShowNewClientModal(false)} style={{ ...btnGhost, flex:1 }}>Cancelar</button>
             </div>
           </div>
         </ModalBase>

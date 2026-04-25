@@ -167,3 +167,82 @@ exports.getAppLogo = async (req, res) => {
     res.status(500).json({ error: 'Erro ao servir logo do app' });
   }
 };
+// Criar novo branding
+exports.criarBranding = async (req, res) => {
+  const { app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO branding_settings 
+       (app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url, ativo, criado_em)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, NOW())
+       RETURNING id`,
+      [app_name || 'Novo Tema', logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url]
+    );
+
+    res.status(201).json({ 
+      message: 'Novo tema criado com sucesso!', 
+      id: result.rows[0].id 
+    });
+  } catch (error) {
+    console.error('Erro ao criar branding:', error);
+    res.status(500).json({ error: 'Erro ao criar tema' });
+  }
+};
+
+// Ativar um branding específico
+exports.ativarBranding = async (req, res) => {
+  const { id } = req.params;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Desativar todos
+    await client.query('UPDATE branding_settings SET ativo = false');
+
+    // Ativar o selecionado
+    const result = await client.query(
+      'UPDATE branding_settings SET ativo = true, atualizado_em = NOW() WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Tema não encontrado' });
+    }
+
+    await client.query('COMMIT');
+    res.json({ message: 'Tema ativado com sucesso!' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao ativar branding:', error);
+    res.status(500).json({ error: 'Erro ao ativar tema' });
+  } finally {
+    client.release();
+  }
+};
+
+// Excluir um branding
+exports.excluirBranding = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verificar se é o ativo
+    const check = await pool.query('SELECT ativo FROM branding_settings WHERE id = $1', [id]);
+    
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: 'Tema não encontrado' });
+    }
+
+    if (check.rows[0].ativo) {
+      return res.status(400).json({ error: 'Não é possível excluir o tema que está ativo no momento.' });
+    }
+
+    await pool.query('DELETE FROM branding_settings WHERE id = $1', [id]);
+    res.json({ message: 'Tema excluído com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao excluir branding:', error);
+    res.status(500).json({ error: 'Erro ao excluir tema' });
+  }
+};

@@ -11,6 +11,17 @@ const initBot = () => {
 
   bot = new TelegramBot(token, { polling: true });
 
+  // Graceful shutdown para evitar "409 Conflict" em restarts do Nodemon
+  process.once('SIGUSR2', () => {
+    if (bot) bot.stopPolling();
+    process.kill(process.pid, 'SIGUSR2');
+  });
+
+  process.on('SIGINT', () => {
+    if (bot) bot.stopPolling();
+    process.exit(0);
+  });
+
   console.log('🤖 Bot do Telegram inicializado e pronto para 2FA.');
 
   // Listener para o comando /2fa start <email>

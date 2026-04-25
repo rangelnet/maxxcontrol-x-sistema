@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  base: '/',
   plugins: [react()],
   server: {
     port: 5173,
@@ -15,6 +16,14 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    minify: 'esbuild'
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-ui': ['lucide-react', 'react-router-dom'],
+          'vendor-core': ['axios']
+        }
+      }
+    }
   }
 })

@@ -7,7 +7,8 @@ exports.getOnlineUsers = async (req, res) => {
       `SELECT COUNT(DISTINCT user_id) as count 
        FROM devices 
        WHERE ultimo_acesso > NOW() - INTERVAL '5 minutes' 
-       AND status = 'ativo'`
+       AND status = 'ativo'
+       AND modelo != 'Web Browser'`
     );
 
     res.json({ online: result.rows[0].count });
@@ -22,7 +23,7 @@ exports.getDashboardStats = async (req, res) => {
   try {
     const [users, devices, bugs, logs] = await Promise.all([
       pool.query('SELECT COUNT(*) as count FROM users WHERE status = $1', ['ativo']),
-      pool.query('SELECT COUNT(*) as count FROM devices WHERE status = $1', ['ativo']),
+      pool.query("SELECT COUNT(*) as count FROM devices WHERE status = $1 AND modelo != 'Web Browser'", ['ativo']),
       pool.query('SELECT COUNT(*) as count FROM bugs WHERE resolvido = FALSE'),
       pool.query(`SELECT COUNT(*) as count FROM logs WHERE data > NOW() - INTERVAL '24 hours'`)
     ]);

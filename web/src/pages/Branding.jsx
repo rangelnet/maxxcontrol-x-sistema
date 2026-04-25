@@ -58,6 +58,7 @@ const InputField = ({ label, value, onChange, placeholder, type = 'text', hint }
 // ─── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const Branding = () => {
   const [branding, setBranding] = useState(null)
+  const [allBrandings, setAllBrandings] = useState([])
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -78,31 +79,43 @@ const Branding = () => {
   })
 
   useEffect(() => {
-    loadBranding()
+    loadAllBrandings()
     loadTemplates()
   }, [])
 
-  const loadBranding = async () => {
+  const loadAllBrandings = async () => {
     try {
-      const r = await api.get('/api/branding/current')
-      setBranding(r.data)
-      setFormData({
-        app_name:          r.data.app_name         || 'TV Maxx',
-        logo_url:          r.data.logo_url         || '',
-        logo_dark_url:     r.data.logo_dark_url    || '',
-        primary_color:     r.data.primary_color    || '#FFA500',
-        secondary_color:   r.data.secondary_color  || '#FF6A00',
-        background_color:  r.data.background_color || '#050505',
-        text_color:        r.data.text_color       || '#FFFFFF',
-        accent_color:      r.data.accent_color     || '#FF8C00',
-        splash_screen_url: r.data.splash_screen_url|| '',
-        hero_banner_url:   r.data.hero_banner_url  || '',
-      })
+      const r = await api.get('/api/branding')
+      setAllBrandings(r.data || [])
+      
+      // Tenta selecionar o ativo por padrão ou o primeiro da lista
+      const active = r.data.find(b => b.ativo)
+      if (active) {
+        selectBranding(active)
+      } else if (r.data.length > 0) {
+        selectBranding(r.data[0])
+      }
     } catch (e) {
-      console.error('Erro ao carregar branding:', e)
+      console.error('Erro ao listar brandings:', e)
     } finally {
       setLoading(false)
     }
+  }
+
+  const selectBranding = (b) => {
+    setBranding(b)
+    setFormData({
+      app_name:          b.app_name         || 'TV Maxx',
+      logo_url:          b.logo_url         || '',
+      logo_dark_url:     b.logo_dark_url    || '',
+      primary_color:     b.primary_color    || '#FFA500',
+      secondary_color:   b.secondary_color  || '#FF6A00',
+      background_color:  b.background_color || '#050505',
+      text_color:        b.text_color       || '#FFFFFF',
+      accent_color:      b.accent_color     || '#FF8C00',
+      splash_screen_url: b.splash_screen_url|| '',
+      hero_banner_url:   b.hero_banner_url  || '',
+    })
   }
 
   const loadTemplates = async () => {
@@ -124,7 +137,7 @@ const Branding = () => {
   }))
 
   const handleSave = async (e) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     setSaving(true)
     try {
       if (branding?.id) {
@@ -134,10 +147,55 @@ const Branding = () => {
       }
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-      loadBranding()
+      loadAllBrandings()
     } catch (err) {
       console.error('Erro ao salvar:', err)
-      alert('Erro ao salvar branding')
+      alert(err.response?.data?.error || 'Erro ao salvar branding')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCreateNew = () => {
+    setBranding(null)
+    setFormData({
+      app_name:         'Novo Tema',
+      logo_url:         '',
+      logo_dark_url:    '',
+      primary_color:    '#FFA500',
+      secondary_color:  '#FF6A00',
+      background_color: '#050505',
+      text_color:       '#FFFFFF',
+      accent_color:     '#FF8C00',
+      splash_screen_url:'',
+      hero_banner_url:  '',
+    })
+  }
+
+  const handleActivate = async () => {
+    if (!branding?.id) return
+    setSaving(true)
+    try {
+      await api.post(`/api/branding/${branding.id}/activate`)
+      alert('Tema ativado com sucesso! Este tema agora é o padrão do App.')
+      loadAllBrandings()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao ativar tema')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!branding?.id) return
+    if (!window.confirm('Tem certeza que deseja excluir este tema? Esta ação é irreversível.')) return
+    
+    setSaving(true)
+    try {
+      await api.delete(`/api/branding/${branding.id}`)
+      loadAllBrandings()
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao excluir tema')
     } finally {
       setSaving(false)
     }
@@ -162,34 +220,94 @@ const Branding = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-xl">
+            <div className="h-10 w-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
               🎨
             </div>
-            Gerenciar Branding
+            Fábrica de Temas Master
           </h1>
           <p className="text-zinc-400 text-sm mt-1">
-            Personalize a identidade visual do seu app Android TV.
+            Crie e gerencie múltiplas identidades visuais para o seu ecossistema.
           </p>
         </div>
-        <button
-          type="submit"
-          disabled={saving}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition transform active:scale-95 shadow-lg shrink-0
-            ${saved
-              ? 'bg-green-600 text-white shadow-green-500/20'
-              : 'bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white shadow-brand-500/25'
-            }`}
-        >
-          {saving ? <><span className="animate-spin">⏳</span> Salvando...</>
-            : saved ? <><span>✅</span> Salvo com sucesso!</>
-            : <><span>💾</span> Salvar Branding</>}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleCreateNew}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-zinc-800 hover:bg-zinc-700 text-white transition active:scale-95 border border-zinc-700"
+          >
+            ➕ Novo Tema
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs transition transform active:scale-95 shadow-lg shrink-0
+              ${saved
+                ? 'bg-green-600 text-white shadow-green-500/20'
+                : 'bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white shadow-brand-500/25'
+              }`}
+          >
+            {saving ? '⏳ Salvando...' : saved ? '✅ Salvo!' : '💾 Salvar Alterações'}
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="flex flex-col xl:flex-row gap-6">
+        
+        {/* ── BARRA LATERAL: MEUS TEMAS ──────────────────────── */}
+        <div className="xl:w-80 shrink-0 space-y-4">
+          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4 shadow-xl">
+            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Meus Temas Salvos</h3>
+            <div className="space-y-2">
+              {allBrandings.map(b => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => selectBranding(b)}
+                  className={`w-full group relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left
+                    ${branding?.id === b.id 
+                      ? 'bg-brand-500/10 border-brand-500' 
+                      : 'bg-dark-900 border-transparent hover:border-zinc-700'}`}
+                >
+                  <div className="h-10 w-10 rounded-lg border border-white/10 shrink-0 flex items-center justify-center overflow-hidden" 
+                    style={{ backgroundColor: b.background_color }}>
+                    {b.logo_url ? (
+                      <img src={b.logo_url} className="w-full h-full object-contain" onError={e => e.target.style.display='none'} />
+                    ) : (
+                      <span className="text-white text-xs font-black">{b.app_name?.charAt(0)}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-xs font-bold truncate ${branding?.id === b.id ? 'text-brand-400' : 'text-zinc-300'}`}>
+                      {b.app_name}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex -space-x-1">
+                        <div className="w-2 h-2 rounded-full border border-dark-900" style={{ backgroundColor: b.primary_color }} />
+                        <div className="w-2 h-2 rounded-full border border-dark-900" style={{ backgroundColor: b.accent_color }} />
+                      </div>
+                      {b.ativo && (
+                        <span className="text-[8px] font-black text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">Ativo</span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+              {allBrandings.length === 0 && (
+                <p className="text-center py-4 text-zinc-600 text-[10px]">Nenhum tema salvo.</p>
+              )}
+            </div>
+          </div>
 
-        {/* ── COLUNA ESQUERDA: CONFIG ─────────────────────────── */}
-        <div className="xl:col-span-2 space-y-5">
+          {/* Banner Ajuda */}
+          <div className="bg-brand-500/5 border border-brand-500/10 rounded-2xl p-4">
+            <p className="text-[10px] text-brand-400/80 leading-relaxed font-medium">
+              DICA: Após criar seu tema, clique em <b>ATIVAR</b> para que seu App Android TV mude instantaneamente de cor.
+            </p>
+          </div>
+        </div>
+
+        {/* ── COLUNA CENTRAL: EDITOR ─────────────────────────── */}
+        <div className="flex-1 space-y-5">
 
           {/* Abas de seção */}
           <div className="flex gap-1 bg-dark-800 border border-dark-700 rounded-xl p-1">
@@ -631,25 +749,42 @@ const Branding = () => {
             </div>
           </div>
 
-          {/* Info do Branding Atual */}
+          {/* Info do Branding Selecionado */}
           <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4 shadow-xl space-y-3">
-            <h3 className="font-bold text-white text-sm flex items-center gap-2">
-              <span>ℹ️</span> Status do Branding
-            </h3>
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                <span>ℹ️</span> Editor de Tema
+              </h3>
+              {branding?.id && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="p-2 text-zinc-500 hover:text-red-500 transition"
+                  title="Excluir Tema"
+                >
+                  🗑️
+                </button>
+              )}
+            </div>
+
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center py-2 border-b border-dark-700">
-                <span className="text-zinc-500">Status</span>
-                <span className="text-green-400 font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                  Ativo
-                </span>
+                <span className="text-zinc-500">Status no Sistema</span>
+                {branding?.ativo ? (
+                   <span className="text-green-400 font-bold flex items-center gap-1 uppercase text-[10px]">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                    Tema Ativo
+                  </span>
+                ) : (
+                  <span className="text-zinc-600 font-bold uppercase text-[10px]">Inativo</span>
+                )}
               </div>
               <div className="flex justify-between items-center py-2 border-b border-dark-700">
-                <span className="text-zinc-500">App Name</span>
-                <span className="text-white font-bold">{formData.app_name || '—'}</span>
+                <span className="text-zinc-500">ID do Tema</span>
+                <span className="text-white font-mono">{branding?.id || 'NOVO'}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-dark-700">
-                <span className="text-zinc-500">Cor Principal</span>
+                <span className="text-zinc-500">Cor Primária</span>
                 <div className="flex items-center gap-1.5">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: formData.primary_color }} />
                   <span className="font-mono text-white">{formData.primary_color}</span>
@@ -657,21 +792,30 @@ const Branding = () => {
               </div>
               {branding?.atualizado_em && (
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-zinc-500">Atualizado</span>
+                  <span className="text-zinc-500">Última Edição</span>
                   <span className="text-zinc-300">{new Date(branding.atualizado_em).toLocaleDateString('pt-BR')}</span>
                 </div>
               )}
             </div>
 
-            {/* Ação rápida salvar */}
-            <button
-              type="submit"
-              form="branding-form"
-              disabled={saving}
-              className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-brand-500/20 text-sm active:scale-95"
-            >
-              {saving ? '⏳ Salvando...' : saved ? '✅ Salvo!' : '💾 Salvar Branding'}
-            </button>
+            <div className="grid grid-cols-1 gap-2 mt-2">
+              {!branding?.ativo && branding?.id && (
+                <button
+                  type="button"
+                  onClick={handleActivate}
+                  className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-green-500/20 text-[11px] active:scale-95"
+                >
+                  🚀 ATIVAR ESTE TEMA
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-brand-500/20 text-[11px] active:scale-95"
+              >
+                {saving ? '⏳ SALVANDO...' : saved ? '✅ SALVO!' : '💾 SALVAR AS ALTERAÇÕES'}
+              </button>
+            </div>
           </div>
 
         </div>

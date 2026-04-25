@@ -132,13 +132,28 @@ exports.obterPopulares = async (req, res) => {
   const { tipo = 'movie', page = 1 } = req.query;
 
   try {
-    let resultados;
+    let data;
     if (tipo === 'movie') {
-      resultados = await tmdbService.buscarFilmesPopulares(page);
+      data = await tmdbService.buscarFilmesPopulares(page);
     } else {
-      resultados = await tmdbService.buscarSeriesPopulares(page);
+      data = await tmdbService.buscarSeriesPopulares(page);
     }
-    res.json(resultados);
+
+    // Normalizar resultados para o front-end
+    const resultados = (data.results || []).map(item => ({
+      id: item.id,
+      tmdb_id: item.id,
+      titulo: item.title || item.name,
+      titulo_original: item.original_title || item.original_name,
+      descricao: item.overview,
+      poster_path: item.poster_path,
+      backdrop_path: item.backdrop_path,
+      nota: item.vote_average,
+      ano: (item.release_date || item.first_air_date || '').substring(0, 4),
+      tipo: tipo === 'movie' ? 'filme' : 'serie'
+    }));
+
+    res.json({ resultados });
   } catch (error) {
     console.error('Erro ao buscar populares:', error);
     res.status(500).json({ error: 'Erro ao buscar populares' });

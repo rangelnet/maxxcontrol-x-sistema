@@ -6,61 +6,49 @@ const cache = require('./cache');
  * @param {string|number} source - 'global' ou deviceId
  * @returns {Promise<object|null>} Configuração com xtream_url, xtream_username, xtream_password
  */
-const getXtreamConfig = async (source) => {
+const getXtreamConfig = async (source, providerId = null) => {
   try {
+    // Se um ID de provedor (slot) for fornecido, prioriza ele (Sistema Master 6 Slots)
+    if (providerId) {
+      const result = await pool.query('SELECT * FROM iptv_providers WHERE id = $1', [providerId]);
+      if (result.rows.length > 0) {
+        const p = result.rows[0];
+        return {
+          xtream_url: p.url,
+          xtream_username: p.username,
+          xtream_password: p.password,
+          server_name: p.name
+        };
+      }
+    }
+
     if (source === 'global') {
-      // Buscar configuração global com nome do servidor (se existir)
+      // Fallback para configuração global antiga se necessário
       const result = await pool.query(`
-        SELECT 
-          isc.*,
-          s.name as server_name
+        SELECT isc.*, s.name as server_name
         FROM iptv_server_config isc
         LEFT JOIN servers s ON s.url = isc.xtream_url
         LIMIT 1
       `);
       
-      if (result.rows.length === 0) {
-        return null;
-      }
+      if (result.rows.length > 0) return result.rows[0];
       
-      return result.rows[0];
+      // Se não achar nada, tenta o primeiro slot da nova tabela
+      const firstSlot = await pool.query('SELECT * FROM iptv_providers ORDER BY slot_index ASC LIMIT 1');
+      if (firstSlot.rows.length > 0) {
+        const p = firstSlot.rows[0];
+        return { xtream_url:p.url, xtream_username:p.username, xtream_password:p.password, server_name:p.name };
+      }
+      return null;
     } else {
-      // Buscar configuração de dispositivo específico
+      // Dispositivo específico... (mantém lógica original de fallback)
       const deviceId = parseInt(source);
+      if (isNaN(deviceId)) return null;
       
-      if (isNaN(deviceId)) {
-        return null;
-      }
-      
-      // Primeiro tenta configuração específica do dispositivo
-      const deviceResult = await pool.query(`
-        SELECT 
-          dic.*,
-          s.name as server_name
-        FROM device_iptv_config dic
-        LEFT JOIN servers s ON s.url = dic.xtream_url
-        WHERE dic.device_id = $1
-      `, [deviceId]);
-      
-      if (deviceResult.rows.length > 0) {
-        return deviceResult.rows[0];
-      }
-      
-      // Fallback para configuração global
-      const globalResult = await pool.query(`
-        SELECT 
-          isc.*,
-          s.name as server_name
-        FROM iptv_server_config isc
-        LEFT JOIN servers s ON s.url = isc.xtream_url
-        LIMIT 1
-      `);
-      
-      if (globalResult.rows.length === 0) {
-        return null;
-      }
-      
-      return globalResult.rows[0];
+      const deviceResult = await pool.query('SELECT dic.*, s.name as server_name FROM device_iptv_config dic LEFT JOIN servers s ON s.url = dic.xtream_url WHERE dic.device_id = $1', [deviceId]);
+      if (deviceResult.rows.length > 0) return deviceResult.rows[0];
+
+      return await getXtreamConfig('global');
     }
   } catch (error) {
     console.error('❌ Erro ao buscar configuração Xtream:', error);
@@ -137,19 +125,10 @@ const fetchFromXtream = async (url) => {
 exports.getCategories = async (req, res) => {
   try {
     const { type } = req.params;
-    const { source = 'global' } = req.query;
-    
-    // Validar tipo
-    if (!['live', 'vod', 'series'].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        error: 'INVALID_TYPE',
-        message: 'Tipo deve ser: live, vod ou series'
-      });
-    }
+    const { source = 'global', provider_id = null } = req.query;
     
     // Obter configuração
-    const config = await getXtreamConfig(source);
+    const config = await getXtreamConfig(source, provider_id);
     if (!config || !config.xtream_url || !config.xtream_username || !config.xtream_password) {
       return res.status(400).json({
         success: false,
@@ -222,19 +201,10 @@ exports.getCategories = async (req, res) => {
 exports.getStreams = async (req, res) => {
   try {
     const { type, categoryId } = req.params;
-    const { source = 'global' } = req.query;
-    
-    // Validar tipo
-    if (!['live', 'vod'].includes(type)) {
-      return res.status(400).json({
-        success: false,
-        error: 'INVALID_TYPE',
-        message: 'Tipo deve ser: live ou vod'
-      });
-    }
+    const { source = 'global', provider_id = null } = req.query;
     
     // Obter configuração
-    const config = await getXtreamConfig(source);
+    const config = await getXtreamConfig(source, provider_id);
     if (!config || !config.xtream_url || !config.xtream_username || !config.xtream_password) {
       return res.status(400).json({
         success: false,

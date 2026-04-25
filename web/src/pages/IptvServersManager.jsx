@@ -1,14 +1,13 @@
-<<<<<<< HEAD
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import axios from 'axios';
-import { Plus, Trash2, Play, Globe, Users, Settings, Server, List, CheckCircle, Loader, Search, XCircle, TreePine } from 'lucide-react';
+import { 
+  Plus, Trash2, Play, Globe, Users, Settings, Server, List, 
+  CheckCircle, Loader, Search, XCircle, TreePine, RefreshCcw, 
+  Tv, MonitorPlay, Box, Cast, Radio 
+} from 'lucide-react';
 import IptvTreeViewer from './IptvTreeViewer';
-=======
-import React, { useState, useEffect } from 'react';
-import { Settings, Server, Plus, Trash2, Globe, CheckCircle, RefreshCcw, Loader, Tv, MonitorPlay, Box, Cast, RadioGroup, List, Play, TreePine, Users } from 'lucide-react';
-import api from '../../api/axios';
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
+import AiAgentTab from './AiAgentTab';
 
 // ─── Tab: Limpar qPanel (Plugin 1) ───────────────────────────────────────────
 const CleanQpanelTab = () => {
@@ -188,158 +187,9 @@ const CleanQpanelTab = () => {
   );
 };
 
-// ─── Novo Tab: Gerenciador de Árvore IPTV (Categorias) ─────────────────────────
+// ─── Aba: Explorador Master IPTV (Unificado) ─────────────────────────
 const IptvTreeTab = () => {
-  const [servers, setServers] = useState([]);
-  const [selectedServer, setSelectedServer] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [channels, setChannels] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [expandedCats, setExpandedCats] = useState({});
-  const [loadingCats, setLoadingCats] = useState({});
-
-  useEffect(() => {
-    loadServers();
-  }, []);
-
-  const loadServers = async () => {
-    try {
-      const response = await api.get('/api/iptv-tree/servers');
-      setServers(response.data.servers || []);
-    } catch (err) { console.error('Erro ao listar servidores na árvore', err); }
-  };
-
-  const handleServerSelect = async (e) => {
-    const srvId = e.target.value;
-    setSelectedServer(srvId);
-    setCategories([]);
-    setChannels({});
-    setExpandedCats({});
-    
-    if (!srvId) return;
-    
-    setLoading(true);
-    try {
-      const response = await api.get(`/api/iptv-tree/categories/${srvId}`);
-      setCategories(response.data.categories || []);
-    } catch (err) {
-      alert('Erro ao carregar categorias: ' + (err.response?.data?.error || err.message));
-    }
-    setLoading(false);
-  };
-
-  const toggleCategory = async (categoryId) => {
-    const isExpanded = !!expandedCats[categoryId];
-    
-    setExpandedCats(prev => ({ ...prev, [categoryId]: !isExpanded }));
-
-    // Se vai expandir e ainda não tem os canais em memória, busca na API
-    if (!isExpanded && !channels[categoryId]) {
-      setLoadingCats(prev => ({ ...prev, [categoryId]: true }));
-      try {
-        const res = await api.get(`/api/iptv-tree/channels/${selectedServer}/${categoryId}`);
-        setChannels(prev => ({ ...prev, [categoryId]: res.data.channels }));
-      } catch (err) {
-        alert('Erro ao carregar canais desta categoria.');
-        setExpandedCats(prev => ({ ...prev, [categoryId]: false }));
-      }
-      setLoadingCats(prev => ({ ...prev, [categoryId]: false }));
-    }
-  };
-
-  const inputSt = { width:'100%', padding:'12px 16px', background:'rgba(5,5,5,0.6)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#fff', outline:'none', fontSize:14 };
-
-  return (
-    <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.2)', borderRadius:16, padding:24 }}>
-      <h2 style={{ fontSize:18, fontWeight:800, color:'#fff', display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
-        <TreePine size={24} color="#FFA500"/> Explorador de Árvore IPTV
-      </h2>
-      <p style={{ color:'#a1a1aa', fontSize:13, marginBottom:24 }}>Explore as categorias e visualize todos os canais, filmes e séries contidos em cada servidor.</p>
-
-      <div style={{ marginBottom:20 }}>
-        <select style={inputSt} value={selectedServer} onChange={handleServerSelect}>
-          <option value="">Selecione um Servidor IPTV...</option>
-          {servers.map(s => (
-             <option key={s.id} value={s.id}>{s.server_name} ({s.xtream_url})</option>
-          ))}
-        </select>
-      </div>
-
-      {loading && (
-        <div style={{ padding:20, textAlign:'center', color:'#FFA500' }}>
-          <Loader size={24} style={{ animation:'spin 1s linear infinite', margin:'0 auto 10px' }}/>
-          <p>Buscando lista na API do servidor...</p>
-        </div>
-      )}
-
-      {!loading && selectedServer && categories.length > 0 && (
-        <div style={{ background:'rgba(5,5,5,0.4)', borderRadius:12, padding:16, border:'1px solid rgba(255,255,255,0.05)' }}>
-          <h3 style={{ fontSize:15, fontWeight:700, color:'#34d399', marginBottom:16 }}>📁 {categories.length} Categorias encontradas</h3>
-          
-          <div style={{ display:'flex', flexDirection:'column', gap:8, maxHeight:'500px', overflowY:'auto', paddingRight:10 }}>
-            {categories.map(cat => (
-              <div key={cat.category_id} style={{ border:'1px solid rgba(255,255,255,0.05)', borderRadius:8, overflow:'hidden' }}>
-                {/* Header (Categoria) */}
-                <div 
-                  onClick={() => toggleCategory(cat.category_id)}
-                  style={{ 
-                    padding:'12px 16px', background:'rgba(255,255,255,0.02)', cursor:'pointer',
-                    display:'flex', alignItems:'center', justifyContent:'space-between'
-                  }}
-                  onMouseOver={e=>e.currentTarget.style.background='rgba(255,165,0,0.1)'}
-                  onMouseOut={e=>e.currentTarget.style.background='rgba(255,255,255,0.02)'}
-                >
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontSize:16 }}>{expandedCats[cat.category_id] ? '📂' : '📁'}</span>
-                    <span style={{ fontSize:14, fontWeight:700, color:'#e4e4e7' }}>{cat.category_name}</span>
-                  </div>
-                  {loadingCats[cat.category_id] ? (
-                    <Loader size={14} color="#FFA500" style={{ animation:'spin 1s linear infinite' }}/>
-                  ) : (
-                    <span style={{ fontSize:11, color:'#71717a' }}>ID {cat.category_id}</span>
-                  )}
-                </div>
-
-                {/* Body (Canais) */}
-                {expandedCats[cat.category_id] && (
-                  <div style={{ padding:'10px 16px', background:'rgba(0,0,0,0.3)', borderTop:'1px solid rgba(255,255,255,0.05)' }}>
-                    {channels[cat.category_id] ? (
-                      channels[cat.category_id].length > 0 ? (
-                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:8 }}>
-                          {channels[cat.category_id].map(ch => (
-                            <div key={ch.stream_id} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px', background:'rgba(255,255,255,0.03)', borderRadius:6 }}>
-                              {ch.stream_icon ? (
-                                <img src={ch.stream_icon} alt="" style={{ width:24, height:24, borderRadius:4, objectFit:'cover', background:'#000' }} onError={e=>{e.target.src='https://via.placeholder.com/24?text=TV'}}/>
-                              ) : (
-                                <div style={{ width:24, height:24, borderRadius:4, background:'#27272a', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10 }}>📺</div>
-                              )}
-                              <div style={{ flex:1, minWidth:0 }}>
-                                <div style={{ fontSize:12, fontWeight:600, color:'#d4d4d8', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }} title={ch.name}>{ch.name}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p style={{ fontSize:12, color:'#71717a', padding:'8px 0' }}>Nenhum canal ativo nesta categoria.</p>
-                      )
-                    ) : (
-                      <p style={{ fontSize:12, color:'#71717a', padding:'8px 0' }}>Aguardando...</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!loading && selectedServer && categories.length === 0 && (
-         <div style={{ padding:20, textAlign:'center', color:'#f87171', background:'rgba(239,68,68,0.1)', borderRadius:10 }}>
-           Nenhuma categoria encontrada ou erro na conexão com a API.
-         </div>
-      )}
-    </div>
-  );
+  return <IptvTreeViewer />;
 };
 
 // ─── Componente do Playlist Manager ───────────────────────────────────────────
@@ -640,11 +490,7 @@ const IptvServersManager = () => {
   });
 
   const [qpanelForm, setQpanelForm] = useState({
-<<<<<<< HEAD
     panel_name: '', panel_url: '', panel_username: '', panel_password: ''
-=======
-    panel_name: '', panel_url: '', panel_username: ''
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
   });
 
   const [accountForm, setAccountForm] = useState({
@@ -761,11 +607,7 @@ const IptvServersManager = () => {
     try {
       await api.post('/api/iptv-plugin/add-qpanel', qpanelForm);
       alert('Painel qPanel adicionado!');
-<<<<<<< HEAD
       setQpanelForm({ panel_name: '', panel_url: '', panel_username: '', panel_password: '' });
-=======
-      setQpanelForm({ panel_name: '', panel_url: '', panel_username: '' });
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       setShowAddQpanel(false);
       loadQpanels();
     } catch (err) { alert('Erro: ' + (err.response?.data?.error || err.message)); }
@@ -786,7 +628,6 @@ const IptvServersManager = () => {
 
     try {
       setLoadState('waiting');
-<<<<<<< HEAD
       setStatus('⏳ Conectando diretamente ao backend...');
 
       let finalServers = [];
@@ -867,29 +708,6 @@ const IptvServersManager = () => {
     } catch (err) {
       console.error(err);
       setStatus('❌ Erro Fatal: ' + (err.response?.data?.error || err.message));
-=======
-      setStatus('⏳ Conectando diretamente ao qPanel...');
-
-      const saveResponse = await api.post('/api/iptv-plugin/qpanel-fetch-direct-servers', { 
-        panel_id: id 
-      });
-      
-      const { servers, total, message } = saveResponse.data;
-
-      if (total === 0) {
-        setStatus(`ℹ️ ${message || 'Nenhum servidor encontrado no painel.'}`);
-        setLoadState('done');
-      } else {
-        setStatus(`✅ ${total} servidor(es) carregado(s) com sucesso!`);
-        setLoadState('done');
-      }
-
-      // Recarregar lista de painéis para refletir os servidores salvos
-      await loadQpanels();
-    } catch (err) {
-      console.error(err);
-      setStatus('❌ Erro: ' + (err.response?.data?.error || err.message));
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       setLoadState('error');
     }
   };
@@ -988,7 +806,8 @@ const IptvServersManager = () => {
     { id: 'servers', label: 'Servidores IPTV', icon: Settings },
     { id: 'qpanel', label: 'Painéis qPanel', icon: Globe },
     { id: 'playlist', label: 'Playlist Manager', icon: List },
-    { id: 'tree', label: 'Árvore IPTV', icon: TreePine },
+    { id: 'tree', label: 'Árvore IPTV', icon: TreeBase },
+    { id: 'ai_agent', label: 'Agente Central (IA)', icon: Cpu },
     { id: 'clean', label: 'Limpar qPanel', icon: Trash2 },
   ];
 
@@ -1109,7 +928,6 @@ const IptvServersManager = () => {
 
             {showAddQpanel && (
               <form onSubmit={handleAddQpanel} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:18, marginBottom:16 }}>
-<<<<<<< HEAD
                 <h4 style={{ fontSize:13, fontWeight:800, color:'#fff', marginBottom:12 }}>📡 Conectar Painel qPanel</h4>
                 <div style={{ background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.2)', borderRadius:9, padding:'10px 14px', marginBottom:12, fontSize:11, color:'#93c5fd' }}>
                   ✅ <strong>Sem API key!</strong> O sistema usa seu <strong>usuário + senha</strong> de admin e tenta conectar automaticamente via:<br/>
@@ -1124,15 +942,6 @@ const IptvServersManager = () => {
                   <input style={inputSt} type='password' placeholder='Senha do admin' value={qpanelForm.panel_password} onChange={e=>setQpanelForm({...qpanelForm,panel_password:e.target.value})} required/>
                 </div>
                 <button type='submit' style={{ ...btnPri, width:'100%', justifyContent:'center' }}>🔗 Adicionar Painel</button>
-=======
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
-                  <input style={inputSt} type='text' placeholder='Nome do painel' value={qpanelForm.panel_name} onChange={e=>setQpanelForm({...qpanelForm,panel_name:e.target.value})} required/>
-                  <input style={inputSt} type='url' placeholder='URL do painel (http://...)' value={qpanelForm.panel_url} onChange={e=>setQpanelForm({...qpanelForm,panel_url:e.target.value})} required/>
-                  <input style={{ ...inputSt, gridColumn:'span 2' }} type='text' placeholder='Token API / Chave de Acesso (Ex: NDM4NTh12...)' value={qpanelForm.panel_username} onChange={e=>setQpanelForm({...qpanelForm,panel_username:e.target.value})} title="Necessário para acessar o painel via backend sem plugin"/>
-                </div>
-                <p style={{ fontSize:11, color:'#52525b', marginBottom:10 }}>ℹ️ Conexão direta segura API-to-API sem necessidade de Plugins locais.</p>
-                <button type='submit' style={{ ...btnPri, width:'100%', justifyContent:'center' }}>Adicionar Painel qPanel</button>
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
               </form>
             )}
 
@@ -1252,7 +1061,6 @@ const IptvServersManager = () => {
                   )}
 
                   {statusMsg && (
-<<<<<<< HEAD
                     <div style={{ marginBottom:10, padding:'8px 12px', borderRadius:9, background:stColor, fontSize:11, fontWeight:600, color:stTxt, lineHeight:1.5 }}>{statusMsg}</div>
                   )}
 
@@ -1260,18 +1068,11 @@ const IptvServersManager = () => {
                     <div style={{ marginBottom:8, padding:'6px 10px', borderRadius:8, background:'rgba(255,255,255,0.03)', fontSize:10, color:'#52525b' }}>
                       🔑 Usa usuário + senha · Tenta panel_api.php → player_api.php → REST automaticamente
                     </div>
-=======
-                    <div style={{ marginBottom:10, padding:'8px 12px', borderRadius:9, background:stColor, fontSize:11, fontWeight:600, color:stTxt }}>{statusMsg}</div>
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
                   )}
 
                   <button onClick={()=>handleLoadQpanelServers(qpanel)} disabled={isLoading}
                     style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:7, padding:'9px', background:isLoading?'rgba(255,255,255,0.04)':'linear-gradient(135deg,#FFA500,#FF6B00)', border:isLoading?'1px solid rgba(255,255,255,0.08)':'none', borderRadius:10, color:isLoading?'#52525b':'#fff', fontSize:12, fontWeight:700, cursor:isLoading?'not-allowed':'pointer', opacity:isLoading?0.7:1 }}>
-<<<<<<< HEAD
                     {isLoading ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Conectando ao painel...</> : <>{loadedServers.length>0?'🔄 Recarregar':'🔌 Carregar'} Servidores</> }
-=======
-                    {isLoading ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}}/>Carregando...</> : <>🔄 {loadedServers.length>0?'Recarregar':'Carregar'} Servidores</>}
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
                   </button>
                 </div>
               );
@@ -1303,6 +1104,9 @@ const IptvServersManager = () => {
 
       {/* ── Tab: Árvore IPTV ── */}
       {activeTab === 'tree' && <IptvTreeTab />}
+
+      {/* ── Tab: Agente Central (IA) ── */}
+      {activeTab === 'ai_agent' && <AiAgentTab />}
 
       {/* ── Tab: Limpar qPanel ── */}
       {activeTab === 'clean' && <CleanQpanelTab />}

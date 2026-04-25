@@ -139,7 +139,7 @@ const Login = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-dark-900/50 border border-dark-600 rounded-xl text-white placeholder-zinc-600 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-[#111111]/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:border-[#FFA500] focus:ring-1 focus:ring-[#FFA500] outline-none transition-all shadow-[0_0_15px_rgba(255,165,0,0.1)]"
                     placeholder="seu@email.com"
                     required
                   />

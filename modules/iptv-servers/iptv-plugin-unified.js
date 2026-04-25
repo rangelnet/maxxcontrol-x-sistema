@@ -533,15 +533,11 @@ router.post('/qpanel-load-servers', async (req, res) => {
 
 /**
  * POST /api/iptv-plugin/qpanel-fetch-direct-servers
-<<<<<<< HEAD
  * Busca servidores e pacotes do qPanel usando USUÁRIO + SENHA (sem API key).
  * Tenta 3 estratégias automaticamente:
  *   1. panel_api.php (Xtream UI — padrão no Brasil)
  *   2. player_api.php (Xtream Codes — fallback)
  *   3. REST /api/servers com Bearer/Cookie
-=======
- * Busca servidores e pacotes no qPanel DIRETAMENTE do backend Node.js
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
  */
 router.post('/qpanel-fetch-direct-servers', async (req, res) => {
   try {
@@ -563,7 +559,6 @@ router.post('/qpanel-fetch-direct-servers', async (req, res) => {
 
     const panel = panelResult.rows[0];
     const baseUrl = panel.panel_url.replace(/\/$/, '');
-<<<<<<< HEAD
     const { panel_username: username, panel_password: password } = panel;
 
     let finalServers = [];
@@ -667,73 +662,11 @@ router.post('/qpanel-fetch-direct-servers', async (req, res) => {
     }
 
     // Persistir no banco
-=======
-
-    // Requisição simultânea para Servers e Packages na API
-    const headers = {
-      'Accept': 'application/json',
-      'Authorization': `Bearer ${panel.panel_username}`
-    };
-
-    let serversResponse = { data: { data: [] } };
-    let packagesResponse = { data: { data: [] } };
-
-    try {
-      const [srvReq, pkgReq] = await Promise.allSettled([
-        axios.get(`${baseUrl}/api/servers`, { headers, timeout: 10000 }),
-        axios.get(`${baseUrl}/api/packages`, { headers, timeout: 10000 })
-      ]);
-
-      if (srvReq.status === 'fulfilled') serversResponse = srvReq.value;
-      if (pkgReq.status === 'fulfilled') packagesResponse = pkgReq.value;
-    } catch (e) {
-      console.warn(`⚠️ Aviso fetch API qPanel Direto: ${e.message}`);
-    }
-
-    const rawServers = serversResponse.data?.data || serversResponse.data?.servers || [];
-    const rawPackages = packagesResponse.data?.data || packagesResponse.data?.packages || [];
-
-    // Mapeando dados brutos da API para o formato esperado pelo painel
-    const finalServers = rawServers.map(s => {
-      const sId = s.id || s.server_id;
-      return {
-        id: sId,
-        name: s.server_name || s.name || `Servidor ${sId}`,
-        dns: s.server_dns || s.dns || s.url || '',
-        packages: rawPackages.length > 0 
-          ? rawPackages.filter(p => !p.server_id || Number(p.server_id) === Number(sId))
-          : []
-      }
-    });
-
-    // Fallback: caso a API não tenha devolvido Servidores, mas tenha devolvido Pacotes
-    if (finalServers.length === 0 && rawPackages.length > 0) {
-      finalServers.push({
-        id: 1, 
-        name: 'Servidor Principal', 
-        dns: '', 
-        packages: rawPackages
-      });
-    }
-
-    // O fallback 2: caso a API devolva vazio
-    if (finalServers.length === 0) {
-      return res.json({ 
-        success: true, 
-        message: 'Nenhum servidor/pacote retornado pela API direta. Verifique token/API.', 
-        servers: [], 
-        total: 0 
-      });
-    }
-
-    // Salvar e persistir a estrutura no nosso BD (usando lógica idêntica de sync)
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
     const seenDns = new Set();
     for (const server of finalServers) {
       const serverName = server.name || `Servidor ${server.id}`;
       const serverDns = server.dns || '';
       await pool.query(`
-<<<<<<< HEAD
         INSERT INTO qpanel_servers (panel_id, server_name, server_dns, server_data, created_at)
         VALUES ($1, $2, $3, $4, NOW())
         ON CONFLICT (panel_id, server_name)
@@ -742,98 +675,27 @@ router.post('/qpanel-fetch-direct-servers', async (req, res) => {
 
       if (serverDns && !seenDns.has(serverDns)) {
         seenDns.add(serverDns);
-=======
-        INSERT INTO qpanel_servers (
-          panel_id, server_name, server_dns, server_data, created_at
-        ) VALUES ($1, $2, $3, $4, NOW())
-        ON CONFLICT (panel_id, server_name) 
-        DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
-      `, [panel_id, serverName, serverDns, JSON.stringify(server)]);
-
-      // Insere na tabela 'servers' (Gerenciamento de Servidores IPTV base)
-      if (serverDns && !seenDns.has(serverDns)) {
-        seenDns.add(serverDns);
-        const serverUrl = `http://${serverDns}`;
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
         try {
           await pool.query(`
             INSERT INTO servers (name, url, region, priority, status)
             VALUES ($1, $2, 'Brasil', 100, 'ativo')
             ON CONFLICT (url) DO UPDATE SET name = $1, updated_at = NOW()
-<<<<<<< HEAD
           `, [serverName, `http://${serverDns}`]);
         } catch (e) {}
-=======
-          `, [serverName, serverUrl]);
-        } catch (syncErr) {}
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       }
     }
 
     res.json({
       success: true,
-<<<<<<< HEAD
       message: `✅ ${finalServers.length} servidor(es) carregado(s) via ${methodUsed}`,
       servers: finalServers,
       total: finalServers.length,
       method: methodUsed
-=======
-      message: `${finalServers.length} servidor(es) sincronizado(s) via API Direta`,
-      servers: finalServers,
-      total: finalServers.length
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
     });
 
   } catch (error) {
     console.error('❌ Erro no fetch direto do qPanel:', error.message);
-<<<<<<< HEAD
     res.status(500).json({ error: 'Erro de conexão com o painel', detail: error.message });
-  }
-});
-
-/**
- * POST /api/iptv-plugin/qpanel-sync-arrays
- * Usado pelo Frontend (Client-Side proxy) para salvar os servidores obtidos diretamente do navegador
- * (Bypass de Cloudflare).
- */
-router.post('/qpanel-sync-arrays', async (req, res) => {
-  try {
-    const { panel_id, servers } = req.body;
-    if (!panel_id || !servers) {
-      return res.status(400).json({ error: 'panel_id e servers são obrigatórios' });
-    }
-
-    const seenDns = new Set();
-    for (const server of servers) {
-      const serverName = server.name || `Servidor ${server.id}`;
-      const serverDns = server.dns || '';
-      
-      await pool.query(`
-        INSERT INTO qpanel_servers (panel_id, server_name, server_dns, server_data, created_at)
-        VALUES ($1, $2, $3, $4, NOW())
-        ON CONFLICT (panel_id, server_name)
-        DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()
-      `, [panel_id, serverName, serverDns, JSON.stringify(server)]);
-
-      if (serverDns && !seenDns.has(serverDns)) {
-        seenDns.add(serverDns);
-        try {
-          await pool.query(`
-            INSERT INTO servers (name, url, region, priority, status)
-            VALUES ($1, $2, 'Brasil', 100, 'ativo')
-            ON CONFLICT (url) DO UPDATE SET name = $1, updated_at = NOW()
-          `, [serverName, `http://${serverDns}`]);
-        } catch (e) {}
-      }
-    }
-
-    res.json({ success: true, message: `✅ ${servers.length} servidor(es) sincronizados pelo Client-Side` });
-  } catch (error) {
-    console.error('❌ Erro no sync-arrays do qPanel:', error.message);
-    res.status(500).json({ error: 'Erro interno ao salvar arrays' });
-=======
-    res.status(500).json({ error: 'Erro de conexão direta com API qPanel', detail: error.message });
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
   }
 });
 
@@ -878,28 +740,8 @@ router.post('/qpanel-create-accounts', async (req, res) => {
         const adminUser = panel.panel_username;
         const adminPass = panel.panel_password;
 
-<<<<<<< HEAD
         let created = false;
         let m3uUrl = null;
-=======
-        // Simular criação de conta via API do painel
-        const createResponse = await axios.post(`${panel.panel_url}/api/customers`, {
-          server_id: pkg.server_id,
-          package_id: pkg.package_id,
-          connections: 2,
-          bouquets: "",
-          parent_can_edit_personal_data: "YES",
-          username,
-          password
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${panel.panel_username}` // Token dinâmico
-          },
-          timeout: 10000
-        });
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
 
         // ── Estratégia 1: panel_api.php (Xtream UI padrão) ──
         try {
@@ -1328,7 +1170,12 @@ router.post('/relay-command', async (req, res) => {
       return res.status(400).json({ error: 'command_type e payload são obrigatórios' });
     }
 
-    const validTypes = ['search_user', 'delete_user', 'get_servers'];
+    const validTypes = [
+      'search_user', 'delete_user', 'get_servers', 'sync_account', 
+      'renew_user', 'renew_trust', 'change_connections', 'migrate_server',
+      'enable_user', 'disable_user'
+    ];
+
     if (!validTypes.includes(command_type)) {
       return res.status(400).json({ error: `command_type inválido. Use: ${validTypes.join(', ')}` });
     }
@@ -1355,7 +1202,6 @@ router.post('/relay-command', async (req, res) => {
 });
 
 /**
-<<<<<<< HEAD
  * POST /api/iptv-plugin/relay-sync-customers
  * Usado pelo Plugin do Chrome para derramar de volta TODOS os clientes lidos da tela "Usuários/Customers" do painel.
  * (Espelhamento do Sigma/qPanel).
@@ -1453,13 +1299,8 @@ router.post('/relay-sync-customers', async (req, res) => {
 });
 
 /**
- * GET /api/iptv-plugin/relay-pending
- * Plugin Chrome faz polling para buscar comandos pendentes
- * Query: ?panel_url=http://meupainel.com (opcional, para filtrar por painel)
-=======
  * GET /api/iptv-plugin/relay-poll
  * Plugin Chrome faz polling a cada 2s para ver se há comandos 'pending'
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
  */
 router.get('/relay-poll', async (req, res) => {
   try {
@@ -1474,58 +1315,12 @@ router.get('/relay-poll', async (req, res) => {
 
     const result = await pool.query(query);
 
-<<<<<<< HEAD
-    if (panel_url) {
-      // Buscar comandos do painel específico (por URL)
-      query = `
-        SELECT rc.id, rc.command_type, rc.payload, rc.created_at,
-               rc.panel_url
-        FROM relay_commands rc
-        WHERE rc.status = 'pending'
-          AND (rc.panel_url IS NULL OR rc.panel_url ILIKE $1)
-        ORDER BY rc.created_at ASC
-        LIMIT 10
-      `;
-      params = [`%${panel_url.replace(/\/$/, '')}%`];
-    } else {
-      // Buscar todos os comandos pendentes (plugin pega tudo)
-      query = `
-        SELECT rc.id, rc.command_type, rc.payload, rc.created_at,
-               rc.panel_url
-        FROM relay_commands rc
-        WHERE rc.status = 'pending'
-        ORDER BY rc.created_at ASC
-        LIMIT 10
-      `;
-      params = [];
-=======
     if (result.rows.length === 0) {
       return res.json({ commands: [] });
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
     }
 
     const ids = result.rows.map(r => r.id);
 
-<<<<<<< HEAD
-    // Marcar como 'executing' para evitar que outro plugin pegue o mesmo
-    if (result.rows.length > 0) {
-      const ids = result.rows.map(r => r.id);
-      await pool.query(
-        `UPDATE relay_commands SET status = 'executing', updated_at = NOW() WHERE id = ANY($1)`,
-        [ids]
-      );
-    }
-
-    res.json({
-      success: true,
-      commands: result.rows.map(r => ({
-        id: r.id,
-        panel_url: r.panel_url,
-        command_type: r.command_type,
-        payload: r.payload
-      }))
-    });
-=======
     // Marcar como 'processing'
     await pool.query(`
       UPDATE plugin_relay_commands 
@@ -1534,7 +1329,6 @@ router.get('/relay-poll', async (req, res) => {
     `, [ids]);
 
     res.json({ commands: result.rows });
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
 
   } catch (error) {
     console.error('❌ Erro no relay-poll:', error);
@@ -1554,23 +1348,6 @@ router.post('/relay-result', async (req, res) => {
       return res.status(400).json({ error: 'command_id e status são obrigatórios' });
     }
 
-<<<<<<< HEAD
-    const validStatuses = ['done', 'error'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: `status inválido. Use: ${validStatuses.join(', ')}` });
-    }
-
-    // result pode chegar como objeto (do background.js via fetch JSON) ou já como string
-    // Normalizar para string JSON para salvar no banco
-    let resultStr = null;
-    if (result !== undefined && result !== null) {
-      resultStr = typeof result === 'string' ? result : JSON.stringify(result);
-    }
-
-    const updateResult = await pool.query(`
-      UPDATE relay_commands
-      SET status = $1, result = $2, error_message = $3, updated_at = NOW()
-=======
     const query = `
       UPDATE plugin_relay_commands 
       SET 
@@ -1578,7 +1355,6 @@ router.post('/relay-result', async (req, res) => {
         result = $2, 
         error_message = $3, 
         updated_at = NOW()
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
       WHERE id = $4
       RETURNING id
     `;
@@ -1610,13 +1386,6 @@ router.get('/relay-result/:command_id', async (req, res) => {
   try {
     const { command_id } = req.params;
 
-<<<<<<< HEAD
-    const result = await pool.query(
-      `SELECT id, status, result, error_message, created_at, updated_at
-       FROM relay_commands WHERE id = $1`,
-      [command_id]
-    );
-=======
     const query = `
       SELECT status, result, error_message 
       FROM plugin_relay_commands 
@@ -1624,7 +1393,6 @@ router.get('/relay-result/:command_id', async (req, res) => {
     `;
 
     const result = await pool.query(query, [command_id]);
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Comando não encontrado' });
@@ -1650,7 +1418,6 @@ router.get('/relay-result/:command_id', async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 /**
  * POST /api/iptv-plugin/register-device-iptv
  * Registra credenciais IPTV em um dispositivo TV MAXX PRO
@@ -1789,6 +1556,3 @@ router.get('/qpanel-grouped-accounts', async (req, res) => {
 });
 
 module.exports = router;
-=======
-module.exports = router;
->>>>>>> 3c3854e05362c2ac37a66ad27250b54f25088cad

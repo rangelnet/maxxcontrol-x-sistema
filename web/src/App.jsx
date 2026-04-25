@@ -19,7 +19,6 @@ import BannerGenerator from './pages/BannerGenerator'
 import Landing from './pages/Landing'
 import Tickets from './pages/Tickets'
 import Store from './pages/Store'
-import AdminTemplates from './pages/AdminTemplates'
 import WhatsAppAuto from './pages/WhatsAppAuto'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
@@ -58,7 +57,6 @@ function App() {
             <Route path="settings" element={<Settings />} />
             <Route path="tickets" element={<Tickets />} />
             <Route path="banner-generator" element={<BannerGenerator />} />
-            <Route path="admin-templates" element={<AdminTemplates />} />
             <Route path="whatsapp-auto" element={<WhatsAppAuto />} />
           </Route>
         </Routes>
