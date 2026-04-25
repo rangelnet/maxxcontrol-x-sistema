@@ -1290,8 +1290,6 @@ const BannerGenerator = () => {
   )
 }
 
-export default BannerGenerator
-
 // ─── CONFIGURADOR DE FUTEBOL ───────────────────────────────────────────────────
 const FootballConfigurator = ({ theme, sportsData = [], loading }) => {
   const [matches, setMatches] = useState([])
