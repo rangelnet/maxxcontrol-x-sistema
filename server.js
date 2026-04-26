@@ -608,8 +608,20 @@ for (const p of possibleDistPaths) {
   }
 }
 
-app.use(express.static(distPath));
+app.use(express.static(distPath, { etag: false, lastModified: false }));
 console.log('📂 Servindo frontend de:', distPath);
+
+// DIAGNÓSTICO: logar qual index.html está no disco
+try {
+  const idxPath = path.join(distPath, 'index.html');
+  if (fs.existsSync(idxPath)) {
+    const idxContent = fs.readFileSync(idxPath, 'utf8');
+    const jsMatch = idxContent.match(/src="\/assets\/(index-[^"]+\.js)"/);
+    console.log('🔍 index.html aponta para JS:', jsMatch ? jsMatch[1] : 'NÃO ENCONTRADO');
+  } else {
+    console.log('❌ index.html NÃO encontrado em:', idxPath);
+  }
+} catch(e) { console.log('⚠️ Erro ao ler index.html:', e.message); }
 
 // ============================================
 // ROTAS DA API
@@ -764,6 +776,9 @@ app.get('*', (req, res) => {
     }
   }
 
+  // Sem cache no index.html para SPA
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('❌ Erro ao servir index.html:', err.message);
