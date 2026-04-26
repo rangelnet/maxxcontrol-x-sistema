@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "prebuild": "node -e \"const fs=require('fs'),path=require('path');const d=path.join(__dirname,'web','dist');if(fs.existsSync(d)){fs.rmSync(d,{recursive:true,force:true});console.log('limpando web/dist');}\"",
     "build": "cd web && npm install && npm run build"
   },
   "keywords": [
