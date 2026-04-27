@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node --input-type=commonjs -e \"const fs=require('fs');if(fs.existsSync('dist')){fs.rmSync('dist',{recursive:true,force:true});console.log('dist limpo');}\" && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
