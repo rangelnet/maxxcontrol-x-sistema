@@ -735,6 +735,27 @@ app.get('/health', async (req, res) => {
   });
 });
 
+// Rota de debug: mostra arquivos reais em web/dist/assets/
+app.get('/api/debug/dist', (req, res) => {
+  try {
+    const assetsPath = path.join(distPath, 'assets');
+    const idxPath = path.join(distPath, 'index.html');
+    const files = fs.existsSync(assetsPath) ? fs.readdirSync(assetsPath) : [];
+    const idxContent = fs.existsSync(idxPath) ? fs.readFileSync(idxPath, 'utf8') : 'NOT FOUND';
+    const jsMatch = idxContent.match(/src="\/assets\/(index-[^"]+\.js)"/);
+    res.json({
+      distPath,
+      indexHtmlJsRef: jsMatch ? jsMatch[1] : 'não encontrado',
+      assetsFiles: files,
+      cwd: process.cwd(),
+      dirname: __dirname
+    });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
 // Rota raiz da API
 app.get('/api', (req, res) => {
   res.json({ 
