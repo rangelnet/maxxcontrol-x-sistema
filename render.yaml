@@ -3,7 +3,7 @@ services:
     name: maxxcontrol-x-sistema
     env: node
     plan: free
-    buildCommand: npm install && cd web && npm install && npx vite build && cd ..
+    buildCommand: rm -rf web/dist && npm install && cd web && npm install && npx vite build --emptyOutDir && cd ..
     startCommand: npm start
     healthCheckPath: /health
     envVars:
