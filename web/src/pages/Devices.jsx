@@ -8,9 +8,10 @@ import {
   MoreVertical, Link, MessageSquare, Users, Repeat, Scissors,
   ExternalLink, Share2, Edit2, Tablet, ChevronDown, ChevronUp,
   Pencil, Play, Calendar, UserCheck, Monitor, Smartphone, 
-  Settings, LogIn, LayoutGrid, CalendarCheck, Power
+  Settings, LogIn, LayoutGrid, CalendarCheck, Power, AppWindow
 } from 'lucide-react'
 import TestApiModal from '../components/TestApiModal'
+import footballTeams from '../data/footballTeams'
 
 // ═══════════════════════════════════════════
 // HELPERS
@@ -219,6 +220,20 @@ const inputStyle = {
   transition: 'border-color .2s, background-color .2s',
 }
 
+// Select style — garante que as options tenham fundo escuro
+const selectStyle = {
+  ...inputStyle,
+  background: '#111111',
+  color: '#fff',
+  WebkitAppearance: 'none',
+  MozAppearance: 'none',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FFA500' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: 32,
+}
+
 const dropdownItemStyle = {
   display: 'flex',
   alignItems: 'center',
@@ -285,8 +300,14 @@ const Devices = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [editForm, setEditForm] = useState({ username: '', password: '', expire_date: '', max_connections: 1, package_name: '' });
-  const [newClientForm, setNewClientForm] = useState({ server_name: '', username: '', password: '', package_name: '', months: 1, max_connections: 1 });
+  const [editForm, setEditForm] = useState({ username: '', password: '', expire_date: '', max_connections: 1, package_name: '', nome: '', email: '', telefone: '', servidor_id: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', clube_id: '', events_clube: '' });
+  const [newClientForm, setNewClientForm] = useState({ selected_servers: [], username: '', password: '', package_name: '', months: 1, max_connections: 1, nome: '', email: '', telefone: '', vencimento: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', is_trial: false });
+  const [newClientTab, setNewClientTab] = useState('dados');
+  const [editClientTab, setEditClientTab] = useState('dados');
+  const [iptvServers, setIptvServers] = useState([]);
+  const [dynamicPlans, setDynamicPlans] = useState([]);
+  const [showM3uExtractor, setShowM3uExtractor] = useState(false);
+  const [showM3uExtractorEdit, setShowM3uExtractorEdit] = useState(false);
 
   // Cores do Sigma Pro (Fiel ao Print)
   const colors = {
@@ -360,18 +381,20 @@ const Devices = () => {
   };
 
   const sendRemoteAction = async (accountId, type, remoteId, panelUrl, extraPayload = {}) => {
-    if (!remoteId) {
-      alert("⚠️ Ops! Este cliente não tem um 'ID Remoto' sincronizado. Sincronize a página do painel primeiro.");
-      return;
-    }
-
     setRelayProcessing(p => ({ ...p, [accountId]: true }));
     try {
+      // Se for criação e não tiver panelUrl, tenta pegar do primeiro servidor selecionado
+      let finalPanelUrl = panelUrl;
+      if (!finalPanelUrl && type === 'create_user' && extraPayload.selected_servers?.length > 0) {
+        const firstServer = iptvServers.find(s => s.name === extraPayload.selected_servers[0]);
+        // Se o servidor tiver uma URL (DNS), usamos como referência ou buscamos o painel
+        finalPanelUrl = firstServer?.url || null;
+      }
       // 1. Criar o comando no servidor
       const res = await api.post('/api/iptv-plugin/relay-command', {
         command_type: type,
         payload: { customer_id: remoteId, account_id: accountId, ...extraPayload },
-        panel_url: panelUrl
+        panel_url: finalPanelUrl
       });
       
       if (!res.data.success) throw new Error(res.data.error);
@@ -434,7 +457,7 @@ const Devices = () => {
     // Carregamento Inicial Unificado
     const initLoad = async () => {
       setLoading(true);
-      await Promise.all([loadDevices(), loadClients()]);
+      await Promise.all([loadDevices(), loadClients(), loadServers(), loadPackages()]);
       setLoading(false);
     };
     initLoad();
@@ -572,6 +595,120 @@ const Devices = () => {
       console.error(e)
     }
   }
+
+  const loadServers = async () => {
+    try {
+      const r = await api.get('/api/iptv/servers/all')
+      setIptvServers(r.data || [])
+    } catch (e) {
+      console.error('Erro ao carregar servidores:', e)
+    }
+  }
+
+  const loadPackages = async () => {
+    try {
+      const r = await api.get('/api/iptv-plugin/all-packages')
+      if (r.data.success) setDynamicPlans(r.data.packages || [])
+    } catch (e) {
+      console.error('Erro ao carregar pacotes:', e)
+    }
+  }
+
+  const handleGenerateTest = () => {
+    const user = Math.floor(100000000 + Math.random() * 900000000).toString(); // 9 dígitos
+    const pass = Math.floor(100000000 + Math.random() * 900000000).toString(); // 9 dígitos
+    
+    // Define vencimento para hoje + 2 horas
+    const now = new Date();
+    const isoDate = now.toISOString().split('T')[0];
+
+    setNewClientForm({
+      ...newClientForm,
+      username: user,
+      password: pass,
+      is_trial: true,
+      months: 0,
+      vencimento: isoDate,
+      package_name: dynamicPlans.find(p => p.toLowerCase().includes('teste')) || 'TESTE 24H (SIGMA)',
+      notas: 'Teste numérico gerado pelo Nexus.'
+    });
+    showToast("Dados numéricos gerados!", "success");
+  };
+
+  const sendWhatsAppNotification = async (data) => {
+    if (data.notificacao_whatsapp !== '1' || !data.telefone) return;
+    
+    try {
+      const serverNames = Array.isArray(data.selected_servers) ? data.selected_servers.join(', ') : (data.server_name || 'Servidor');
+      const msg = `🚀 *ACESSO LIBERADO - TV MAXX PRO* 🚀\n\n` +
+                  `Olá *${data.nome || 'Cliente'}*, seu acesso foi gerado com sucesso!\n\n` +
+                  `🌐 *Servidor:* ${serverNames}\n` +
+                  `👤 *Usuário:* \`${data.username}\`\n` +
+                  `🔑 *Senha:* \`${data.password}\`\n` +
+                  `📅 *Vencimento:* ${data.vencimento || '2 Horas'}\n\n` +
+                  `📥 *Baixe nosso App:* https://bit.ly/m-player-pro\n\n` +
+                  `_Dúvidas? Estamos à disposição!_`;
+
+      await api.post('/api/whatsapp/chat/send', {
+        jid: data.telefone.includes('@') ? data.telefone : `${data.telefone}@s.whatsapp.net`,
+        text: msg
+      });
+      showToast("Credenciais enviadas via WhatsApp!", "success");
+    } catch (e) {
+      console.error('Erro ao enviar WhatsApp:', e);
+      showToast("Conta criada, mas erro ao enviar WhatsApp", "warning");
+    }
+  };
+
+  // Extrator M3U — extrai user/pass/dns de URL M3U
+  const extractM3U = (url, target = 'new') => {
+    if (!url) return;
+    try {
+      const u = new URL(url);
+      const user = u.searchParams.get('username') || '';
+      const pass = u.searchParams.get('password') || '';
+      const dns = u.origin;
+      if (target === 'new') {
+        setNewClientForm(f => ({ ...f, m3u_url: url, m3u_username: user, m3u_password: pass, dns }));
+      } else {
+        setEditForm(f => ({ ...f, m3u_url: url, m3u_username: user, m3u_password: pass, dns }));
+      }
+      showToast('M3U extraído com sucesso!');
+    } catch { showToast('URL M3U inválida', 'error'); }
+  };
+
+  // Planos padrão
+  const defaultPlans = [
+    'PLANO MENSAL (SIGMA)', 'PLANO TRIMESTRAL (SIGMA)', 'PLANO SEMESTRAL (SIGMA)', 
+    'PLANO ANUAL (SIGMA)', 'PACOTE COMPLETO + ADULTOS', 'PACOTE COMPLETO (SEM ADULTOS)',
+    'TESTE 24H (SIGMA)', 'TESTE 2H (SIGMA)', 'PACOTE LIGHT SIGMA', 'MAXX PREMIUM - SIGMA',
+    'PLAY MAXX - SIGMA', 'FIRE MAXX - SIGMA'
+  ];
+
+  const gestorLitePlans = [
+    'MAXX PREMIUM 3.5 - TELAS=2', 'MAXX PREMIUM 3.9 - TELAS=2', 'MAXX PREMIUM 4.9 - TELAS=2',
+    'MAXX ANUAL - TELAS=2', 'MAXX SEMESTRAL - TELAS=2', 'MAXX TRIMESTRAL - TELAS=2',
+    'MAXX MENSAL - TELAS=2', 'MAXX ANUAL 478 - TELAS=1', 'MAXX SEMESTRAL ULTRA 280 - TELAS=1',
+    'TRIMESTRAL MAXX 141 - TELAS=1', 'MAXX PREMIUM 8.9 - TELAS=2', 'MAXX PREMIUM 25 - TELAS=2',
+    'PLAY MAXX PREMIUM 15.0 - 3 TELAS', 'PLAY MAXX PREMIUN 8.0 - 2 TELAS',
+    'PLAY FIRE MAXX PREMIUN 4.0', 'PLAY MAXX PREMIUM ULTRA 12.4 - 4 TELAS',
+    'MAGO FIRE 12 ANUAL 5.0', 'MAXX ANUAL FIRE 478.8 - TELAS=2',
+    'MAXX SEMESTRAL ULTRA 249.9', 'Play Top Lite 7.0', 'TV BOX FIRE+PLAY MAXX 269.9',
+    'PLAY FAMÍLIA 4 MAXX 7.2', 'PLAY STORY AVANÇADO 4.4', 'MAXX PREMIER 4.9 - TELAS=1',
+    'PLAY MAXX ANUAL 12', 'TV BOX MAXX FIRE', 'VIRADA DE ANO 3.6',
+    'FIRE MAX AVANÇADO PREMIUM 3.9', 'TESTE', 'FIRE TV', 'MESHTV',
+  ];
+
+  // Tab pill style reutilizável
+  const TabPill = ({ label, active, onClick }) => (
+    <button onClick={onClick} style={{
+      padding: '8px 18px', borderRadius: 8, border: '1px solid',
+      borderColor: active ? '#FFA500' : 'rgba(255,255,255,0.08)',
+      background: active ? 'rgba(255,165,0,0.15)' : 'transparent',
+      color: active ? '#FFA500' : '#71717a', fontSize: 12, fontWeight: 800,
+      cursor: 'pointer', transition: 'all 0.2s',
+    }}>{label}</button>
+  );
 
   const blockDevice = async (id) => {
     if (!confirm('Deseja bloquear este dispositivo?')) return
@@ -1413,89 +1550,213 @@ const Devices = () => {
 
       {/* ════ MODAL EDITAR CLIENTE ════ */}
       {showEditModal && (
-        <ModalBase onClose={() => setShowEditModal(false)}>
+        <ModalBase onClose={() => setShowEditModal(false)} maxWidth={680}>
           <ModalHeader icon={Pencil} title="Editar Cliente" onClose={() => setShowEditModal(false)} />
-          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-            <p style={{ fontSize:12, color:'#a1a1aa', marginBottom:4 }}>Editando conta de <strong>{selectedAccount?.username}</strong> no servidor {selectedAccount?.server_name}</p>
-            
-            <FormField label="Nova Senha (deixe em branco para não alterar)">
-              <input style={inputStyle} value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="********" />
-            </FormField>
-            
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-              <FormField label="Vencimento (DD/MM/YYYY)">
-                <input style={inputStyle} value={editForm.expire_date} onChange={e => setEditForm({...editForm, expire_date: e.target.value})} placeholder="31/12/2025" />
-              </FormField>
-              <FormField label="Nº Conexões">
-                <input style={inputStyle} type="number" min="1" value={editForm.max_connections} onChange={e => setEditForm({...editForm, max_connections: Number(e.target.value)})} />
-              </FormField>
-            </div>
-            
-            <FormField label="Pacote / Plano">
-              <input style={inputStyle} value={editForm.package_name} onChange={e => setEditForm({...editForm, package_name: e.target.value})} placeholder="Nome do pacote" />
-            </FormField>
-            
-            <div style={{ display:'flex', gap:8, marginTop:10 }}>
-              <button 
-                onClick={() => {
-                  setShowEditModal(false);
-                  sendRemoteAction(selectedAccount.id, 'edit_user', selectedAccount.remote_id, selectedAccount.panel_url, editForm);
-                }}
-                style={{ ...btnPrimary, flex:1, justifyContent:'center' }}>
-                <Save size={15}/> Salvar Alterações
-              </button>
-              <button onClick={() => setShowEditModal(false)} style={{ ...btnGhost, flex:1 }}>Cancelar</button>
-            </div>
+          <p style={{ fontSize:12, color:'#a1a1aa', marginBottom:10 }}>Editando <strong>{selectedAccount?.username}</strong> — {selectedAccount?.server_name}</p>
+          {/* Tabs */}
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            <TabPill label="📋 Dados" active={editClientTab==='dados'} onClick={() => setEditClientTab('dados')} />
+            <TabPill label="⚡ Extras" active={editClientTab==='extras'} onClick={() => setEditClientTab('extras')} />
+            <TabPill label="⚽ Futebol" active={editClientTab==='futebol'} onClick={() => setEditClientTab('futebol')} />
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:12, maxHeight:420, overflowY:'auto', paddingRight:4 }}>
+            {editClientTab === 'dados' && (<>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Nome Completo"><input style={inputStyle} value={editForm.nome} onChange={e => setEditForm({...editForm, nome: e.target.value})} placeholder="Nome do cliente" /></FormField>
+                <FormField label="Email"><input style={inputStyle} type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} placeholder="email@exemplo.com" /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="WhatsApp"><input style={inputStyle} value={editForm.telefone} onChange={e => setEditForm({...editForm, telefone: e.target.value})} placeholder="5511999999999" /></FormField>
+                <FormField label={<>Senha <span style={{color:'#52525b',fontSize:10}}>(branco = não alterar)</span></>}><input style={inputStyle} value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="********" /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Vencimento (DD/MM/YYYY)"><input style={inputStyle} value={editForm.expire_date} onChange={e => setEditForm({...editForm, expire_date: e.target.value})} placeholder="31/12/2025" /></FormField>
+                <FormField label="Servidor"><select style={selectStyle} value={editForm.servidor_id} onChange={e => setEditForm({...editForm, servidor_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar...</option>{iptvServers.map(s => <option key={s.id} value={s.id} style={{background:'#111',color:'#fff'}}>{s.name}</option>)}</select></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="MAC (Opcional)"><input style={inputStyle} value={editForm.mac} onChange={e => setEditForm({...editForm, mac: e.target.value})} placeholder="00:1A:2B:3C:4D" maxLength={17} /></FormField>
+                <FormField label="Notificação WhatsApp"><select style={selectStyle} value={editForm.notificacao_whatsapp} onChange={e => setEditForm({...editForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Pacote / Plano"><select style={selectStyle} value={editForm.package_name} onChange={e => setEditForm({...editForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar...</option>{defaultPlans.map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
+                <FormField label="Nº Telas"><select style={selectStyle} value={editForm.max_connections} onChange={e => setEditForm({...editForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
+              </div>
+              <FormField label="Notas"><textarea style={{...inputStyle,minHeight:60,resize:'vertical'}} value={editForm.notas} onChange={e => setEditForm({...editForm, notas: e.target.value})} placeholder="Observações..." /></FormField>
+            </>)}
+            {editClientTab === 'extras' && (<>
+              <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
+                <FormField label="Link M3U" style={{flex:1}}><input style={inputStyle} value={editForm.m3u_url} onChange={e => setEditForm({...editForm, m3u_url: e.target.value})} placeholder="http://dns:port/get.php?username=X&password=Y&..." /></FormField>
+                <button onClick={() => extractM3U(editForm.m3u_url, 'edit')} style={{...btnPrimary, height:40, whiteSpace:'nowrap'}}><AppWindow size={14}/> Extrair</button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Username"><input style={inputStyle} value={editForm.m3u_username} onChange={e => setEditForm({...editForm, m3u_username: e.target.value})} placeholder="username" /></FormField>
+                <FormField label="Senha"><input style={inputStyle} value={editForm.m3u_password} onChange={e => setEditForm({...editForm, m3u_password: e.target.value})} placeholder="password" /></FormField>
+              </div>
+              <FormField label="DNS"><input style={inputStyle} value={editForm.dns} onChange={e => setEditForm({...editForm, dns: e.target.value})} placeholder="http://dns.servidor.com:8080" /></FormField>
+            </>)}
+            {editClientTab === 'futebol' && (<>
+              <FormField label="Notificar sobre eventos do time"><select style={selectStyle} value={editForm.events_clube} onChange={e => setEditForm({...editForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option></select></FormField>
+              <FormField label="Selecione o Time"><select style={selectStyle} value={editForm.clube_id} onChange={e => setEditForm({...editForm, clube_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecione...</option>{footballTeams.map(t => <option key={t} value={t} style={{background:'#111',color:'#fff'}}>{t}</option>)}</select></FormField>
+            </>)}
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:14 }}>
+            <button onClick={() => { setShowEditModal(false); sendRemoteAction(selectedAccount.id, 'edit_user', selectedAccount.remote_id, selectedAccount.panel_url, editForm); }} style={{ ...btnPrimary, flex:1, justifyContent:'center' }}><Save size={15}/> Salvar Alterações</button>
+            <button onClick={() => setShowEditModal(false)} style={{ ...btnGhost, flex:1 }}>Cancelar</button>
           </div>
         </ModalBase>
       )}
 
       {/* ════ MODAL NOVO CLIENTE ════ */}
       {showNewClientModal && (
-        <ModalBase onClose={() => setShowNewClientModal(false)}>
-          <ModalHeader icon={Users} title="Novo Cliente" onClose={() => setShowNewClientModal(false)} />
-          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-            <p style={{ fontSize:12, color:'#a1a1aa', marginBottom:4 }}>Criar nova conta em um dos painéis Sigma conectados.</p>
-            
-            <FormField label="Servidor de Destino (Painel)">
-              <input style={inputStyle} value={newClientForm.server_name} onChange={e => setNewClientForm({...newClientForm, server_name: e.target.value})} placeholder="Ex: MEGA NOVELAS 4K" />
-            </FormField>
-            
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-              <FormField label="Usuário">
-                <input style={inputStyle} value={newClientForm.username} onChange={e => setNewClientForm({...newClientForm, username: e.target.value})} placeholder="usuario123" />
-              </FormField>
-              <FormField label="Senha">
-                <input style={inputStyle} value={newClientForm.password} onChange={e => setNewClientForm({...newClientForm, password: e.target.value})} placeholder="senha123" />
-              </FormField>
-            </div>
-            
-            <FormField label="Pacote / Plano Base">
-              <input style={inputStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})} placeholder="Ex: PACOTE COMPLETO" />
-            </FormField>
-            
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-              <FormField label="Duração (Meses)">
-                <input style={inputStyle} type="number" min="1" value={newClientForm.months} onChange={e => setNewClientForm({...newClientForm, months: Number(e.target.value)})} />
-              </FormField>
-              <FormField label="Conexões">
-                <input style={inputStyle} type="number" min="1" value={newClientForm.max_connections} onChange={e => setNewClientForm({...newClientForm, max_connections: Number(e.target.value)})} />
-              </FormField>
-            </div>
-            
-            <div style={{ display:'flex', gap:8, marginTop:10 }}>
+        <ModalBase onClose={() => setShowNewClientModal(false)} maxWidth={680}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <ModalHeader icon={UserCheck} title="Novo Cliente" onClose={() => setShowNewClientModal(false)} />
               <button 
-                onClick={() => {
-                  if (!newClientForm.server_name || !newClientForm.username || !newClientForm.password) return showToast("Preencha servidor, usuário e senha", "error");
-                  setShowNewClientModal(false);
-                  sendRemoteAction('new', 'create_user', 'new', null, newClientForm);
-                  setNewClientForm({ server_name: '', username: '', password: '', package_name: '', months: 1, max_connections: 1 });
+                onClick={handleGenerateTest}
+                style={{ 
+                  background:'rgba(52,211,153,0.1)', border:'1px solid rgba(52,211,153,0.3)', 
+                  borderRadius:10, padding:'6px 12px', color:'#34d399', fontSize:11, fontWeight:800, 
+                  cursor:'pointer', display:'flex', alignItems:'center', gap:6, transition:'all 0.2s'
                 }}
-                style={{ ...btnPrimary, flex:1, justifyContent:'center' }}>
-                <CheckCircle size={15}/> Criar Conta
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(52,211,153,0.2)'}
+                onMouseOut={e => e.currentTarget.style.background = 'rgba(52,211,153,0.1)'}
+              >
+                <TestTube size={14} /> GERAR TESTE RÁPIDO
               </button>
-              <button onClick={() => setShowNewClientModal(false)} style={{ ...btnGhost, flex:1 }}>Cancelar</button>
             </div>
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            <TabPill label="📋 Dados" active={newClientTab==='dados'} onClick={() => setNewClientTab('dados')} />
+            <TabPill label="⚡ Extras" active={newClientTab==='extras'} onClick={() => setNewClientTab('extras')} />
+            <TabPill label="⚽ Futebol" active={newClientTab==='futebol'} onClick={() => setNewClientTab('futebol')} />
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:12, maxHeight:440, overflowY:'auto', paddingRight:4 }}>
+            {newClientTab === 'dados' && (<>
+              <FormField label="Nome Completo *"><input style={inputStyle} value={newClientForm.nome} onChange={e => setNewClientForm({...newClientForm, nome: e.target.value})} placeholder="Nome do cliente" /></FormField>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Email"><input style={inputStyle} type="email" value={newClientForm.email} onChange={e => setNewClientForm({...newClientForm, email: e.target.value})} placeholder="email@exemplo.com" /></FormField>
+                <FormField label="WhatsApp *"><input style={inputStyle} value={newClientForm.telefone} onChange={e => setNewClientForm({...newClientForm, telefone: e.target.value})} placeholder="5511999999999" /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Usuário"><input style={inputStyle} value={newClientForm.username} onChange={e => setNewClientForm({...newClientForm, username: e.target.value})} placeholder="usuario123" /></FormField>
+                <FormField label="Senha"><input style={inputStyle} value={newClientForm.password} onChange={e => setNewClientForm({...newClientForm, password: e.target.value})} placeholder="senha123" /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Data Vencimento *"><input style={inputStyle} type="date" value={newClientForm.vencimento} onChange={e => setNewClientForm({...newClientForm, vencimento: e.target.value})} /></FormField>
+                <FormField label="Selecionar Servidores *">
+                  <div style={{ display:'flex', gap:10, marginBottom:6 }}>
+                    <button onClick={() => setNewClientForm(f => ({...f, selected_servers: iptvServers.map(s => s.name)}))} style={{ background:'transparent', border:'none', color:'#FFA500', fontSize:10, fontWeight:800, cursor:'pointer' }}>MARCAR TODOS</button>
+                    <button onClick={() => setNewClientForm(f => ({...f, selected_servers: []}))} style={{ background:'transparent', border:'none', color:'#71717a', fontSize:10, fontWeight:800, cursor:'pointer' }}>DESMARCAR TODOS</button>
+                  </div>
+                  <div style={{ 
+                    background:'rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.08)', 
+                    borderRadius:12, padding:12, maxHeight:140, overflowY:'auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 
+                  }}>
+                    {iptvServers.map(s => {
+                      const isSelected = newClientForm.selected_servers.includes(s.name);
+                      return (
+                        <label key={s.id} style={{ 
+                          display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'6px 10px', borderRadius:8,
+                          background: isSelected ? 'rgba(255,165,0,0.08)' : 'transparent',
+                          border: isSelected ? '1px solid rgba(255,165,0,0.3)' : '1px solid transparent',
+                          transition: 'all 0.2s'
+                        }}>
+                          <input 
+                            type="checkbox" 
+                            style={{ accentColor:'#FFA500', width:16, height:16 }}
+                            checked={isSelected}
+                            onChange={e => {
+                              const current = newClientForm.selected_servers;
+                              const next = e.target.checked ? [...current, s.name] : current.filter(name => name !== s.name);
+                              setNewClientForm({ ...newClientForm, selected_servers: next });
+                            }}
+                          />
+                          <div style={{ display:'flex', flexDirection:'column' }}>
+                            <span style={{ fontSize:11, fontWeight:800, color: isSelected ? '#FFA500' : '#e4e4e7' }}>{s.name}</span>
+                            <span style={{ fontSize:9, color: s.status === 'ativo' ? '#34d399' : '#f87171' }}>{s.status === 'ativo' ? 'Online' : 'Offline'}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="MAC (Opcional)"><input style={inputStyle} value={newClientForm.mac} onChange={e => setNewClientForm({...newClientForm, mac: e.target.value})} placeholder="ID Externo" maxLength={17} /></FormField>
+                <FormField label="Notificação WhatsApp"><select style={selectStyle} value={newClientForm.notificacao_whatsapp} onChange={e => setNewClientForm({...newClientForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Plano *"><select style={selectStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar Plano</option>{[...new Set([...dynamicPlans, ...defaultPlans, ...gestorLitePlans])].map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
+                <FormField label="Nº Telas"><select style={selectStyle} value={newClientForm.max_connections} onChange={e => setNewClientForm({...newClientForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
+              </div>
+              <FormField label="Notas"><textarea style={{...inputStyle,minHeight:60,resize:'vertical'}} value={newClientForm.notas} onChange={e => setNewClientForm({...newClientForm, notas: e.target.value})} placeholder="Observações sobre o cliente..." /></FormField>
+            </>)}
+            {newClientTab === 'extras' && (<>
+              <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
+                <FormField label="Link M3U (colar para extrair dados)" style={{flex:1}}><input style={inputStyle} value={newClientForm.m3u_url} onChange={e => setNewClientForm({...newClientForm, m3u_url: e.target.value})} placeholder="http://dns:port/get.php?username=X&password=Y&..." /></FormField>
+                <button onClick={() => extractM3U(newClientForm.m3u_url, 'new')} style={{...btnPrimary, height:40, whiteSpace:'nowrap'}}><AppWindow size={14}/> Extrair</button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Username M3U"><input style={inputStyle} value={newClientForm.m3u_username} onChange={e => setNewClientForm({...newClientForm, m3u_username: e.target.value})} placeholder="username" /></FormField>
+                <FormField label="Senha M3U"><input style={inputStyle} value={newClientForm.m3u_password} onChange={e => setNewClientForm({...newClientForm, m3u_password: e.target.value})} placeholder="password" /></FormField>
+              </div>
+              <FormField label="DNS"><input style={inputStyle} value={newClientForm.dns} onChange={e => setNewClientForm({...newClientForm, dns: e.target.value})} placeholder="http://dns.servidor.com:8080" /></FormField>
+            </>)}
+            {newClientTab === 'futebol' && (<>
+              <FormField label="Notificar sobre eventos do time"><select style={selectStyle} value={newClientForm.events_clube || ''} onChange={e => setNewClientForm({...newClientForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option></select></FormField>
+              <FormField label="Selecione o Time"><select style={selectStyle} value={newClientForm.clube_id || ''} onChange={e => setNewClientForm({...newClientForm, clube_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecione...</option>{footballTeams.map(t => <option key={t} value={t} style={{background:'#111',color:'#fff'}}>{t}</option>)}</select></FormField>
+            </>)}
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:14 }}>
+            <button 
+              onClick={async () => {
+                if (newClientForm.selected_servers.length === 0 || !newClientForm.username || !newClientForm.password) return showToast("Preencha servidores, usuário e senha", "error");
+                setShowNewClientModal(false);
+                
+                const cmdType = newClientForm.is_trial ? 'create_test' : 'create_user';
+                
+                try {
+                  showToast(`Criando conta em ${newClientForm.selected_servers.length} servidor(es)...`, "info");
+                  
+                  const res = await api.post('/api/iptv-plugin/relay-command-multi', {
+                    command_type: cmdType,
+                    servers: newClientForm.selected_servers,
+                    credentials: {
+                      username: newClientForm.username,
+                      password: newClientForm.password,
+                      package_name: newClientForm.package_name,
+                      max_connections: newClientForm.max_connections,
+                      months: newClientForm.months,
+                      vencimento: newClientForm.vencimento,
+                      nome: newClientForm.nome,
+                      email: newClientForm.email,
+                      telefone: newClientForm.telefone,
+                      mac: newClientForm.mac,
+                      notas: newClientForm.notas,
+                      is_trial: newClientForm.is_trial
+                    }
+                  });
+
+                  if (res.data.success) {
+                    showToast(`✅ ${res.data.command_ids.length} comando(s) enviados para a extensão!`, "success");
+                  } else {
+                    showToast("Erro: " + (res.data.error || 'Falha desconhecida'), "error");
+                  }
+                } catch (err) {
+                  console.error('Erro multi-server:', err);
+                  showToast("Erro ao enviar comandos: " + err.message, "error");
+                }
+                
+                // Enviar notificação WhatsApp se ativo
+                if (newClientForm.notificacao_whatsapp === '1') {
+                  sendWhatsAppNotification(newClientForm);
+                }
+
+                setNewClientForm({ selected_servers: [], username: '', password: '', package_name: '', months: 1, max_connections: 1, nome: '', email: '', telefone: '', vencimento: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', events_clube: '', clube_id: '', is_trial: false });
+              }}
+              style={{ ...btnPrimary, flex:1, justifyContent:'center' }}>
+              <CheckCircle size={15}/> Criar Conta
+            </button>
+            <button onClick={() => setShowNewClientModal(false)} style={{ ...btnGhost, flex:1 }}>Cancelar</button>
           </div>
         </ModalBase>
       )}

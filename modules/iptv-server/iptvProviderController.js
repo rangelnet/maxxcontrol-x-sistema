@@ -30,3 +30,11 @@ exports.addToCuration = async (req, res) => {
     res.json(resu.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
+
+exports.deleteCurationItem = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const resu = await pool.query('DELETE FROM iptv_curation WHERE id=$1 RETURNING *', [id]);
+    res.json({ success: true, deleted: resu.rows[0] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};

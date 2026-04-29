@@ -72,3 +72,40 @@ exports.getStreams = async (req, res) => {
     res.json({ success: true, data: filtered });
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
+
+exports.getSeries = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { source = 'global', provider_id = null } = req.query;
+    const config = await getXtreamConfig(source, provider_id);
+    if (!config) return res.status(400).json({ error: 'CONFIG_NOT_FOUND' });
+    const cacheKey = `${provider_id || source}-series-${categoryId}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json({ success: true, data: cached });
+    const data = await fetchFromXtream(buildXtreamUrl(config, 'get_series', { category_id: categoryId }));
+    cache.set(cacheKey, data, 600);
+    res.json({ success: true, data });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+};
+
+exports.getSeriesInfo = async (req, res) => {
+  try {
+    const { seriesId } = req.params;
+    const { source = 'global', provider_id = null } = req.query;
+    const config = await getXtreamConfig(source, provider_id);
+    if (!config) return res.status(400).json({ error: 'CONFIG_NOT_FOUND' });
+    const cacheKey = `${provider_id || source}-seriesinfo-${seriesId}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return res.json({ success: true, data: cached });
+    const data = await fetchFromXtream(buildXtreamUrl(config, 'get_series_info', { series_id: seriesId }));
+    cache.set(cacheKey, data, 600);
+    res.json({ success: true, data });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+};
+
+exports.clearCache = async (req, res) => {
+  try {
+    if (cache.clearAll) cache.clearAll();
+    res.json({ success: true, message: 'Cache limpo com sucesso' });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+};

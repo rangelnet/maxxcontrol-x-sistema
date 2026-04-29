@@ -1160,11 +1160,11 @@ router.post('/qpanel-delete-user', async (req, res) => {
 /**
  * POST /api/iptv-plugin/relay-command
  * Painel insere um comando na fila para o plugin Chrome executar
- * Body: { panel_id, command_type, payload }
+ * Body: { panel_id, panel_url, command_type, payload }
  */
 router.post('/relay-command', async (req, res) => {
   try {
-    const { panel_id, command_type, payload } = req.body;
+    const { panel_id, panel_url, command_type, payload } = req.body;
 
     if (!command_type || !payload) {
       return res.status(400).json({ error: 'command_type e payload são obrigatórios' });
@@ -1173,7 +1173,7 @@ router.post('/relay-command', async (req, res) => {
     const validTypes = [
       'search_user', 'delete_user', 'get_servers', 'sync_account', 
       'renew_user', 'renew_trust', 'change_connections', 'migrate_server',
-      'enable_user', 'disable_user'
+      'enable_user', 'disable_user', 'create_user', 'create_test'
     ];
 
     if (!validTypes.includes(command_type)) {
@@ -1182,12 +1182,12 @@ router.post('/relay-command', async (req, res) => {
 
     const query = `
       INSERT INTO plugin_relay_commands (
-        panel_id, command_type, payload, status
-      ) VALUES ($1, $2, $3, 'pending')
+        panel_id, panel_url, command_type, payload, status
+      ) VALUES ($1, $2, $3, $4, 'pending')
       RETURNING id
     `;
 
-    const result = await pool.query(query, [panel_id || null, command_type, payload]);
+    const result = await pool.query(query, [panel_id || null, panel_url || null, command_type, payload]);
 
     res.json({
       success: true,
@@ -1198,6 +1198,81 @@ router.post('/relay-command', async (req, res) => {
   } catch (error) {
     console.error('❌ Erro no relay-command:', error);
     res.status(500).json({ error: 'Erro ao processar comando de relay' });
+  }
+});
+
+/**
+ * POST /api/iptv-plugin/relay-command-multi
+ * Cria o MESMO usuário em MÚLTIPLOS servidores (1 comando por servidor)
+ * Body: { command_type, servers: ['Server1','Server2',...], credentials: { username, password, package_name, ... } }
+ */
+router.post('/relay-command-multi', async (req, res) => {
+  try {
+    const { command_type, servers, credentials } = req.body;
+
+    if (!command_type || !servers || !Array.isArray(servers) || servers.length === 0) {
+      return res.status(400).json({ error: 'command_type e servers[] são obrigatórios' });
+    }
+
+    if (!credentials || !credentials.username || !credentials.password) {
+      return res.status(400).json({ error: 'credentials com username e password são obrigatórios' });
+    }
+
+    const validTypes = ['create_user', 'create_test'];
+    if (!validTypes.includes(command_type)) {
+      return res.status(400).json({ error: `Para multi-servidor, use: ${validTypes.join(', ')}` });
+    }
+
+    // Buscar o DNS de cada servidor na tabela qpanel_servers
+    const serverLookup = await pool.query(
+      `SELECT s.server_name, s.server_dns, p.panel_url 
+       FROM qpanel_servers s 
+       JOIN qpanel_panels p ON s.panel_id = p.id 
+       WHERE s.server_name = ANY($1) AND s.status = 'active'`,
+      [servers]
+    );
+
+    const serverMap = {};
+    serverLookup.rows.forEach(r => {
+      serverMap[r.server_name] = { dns: r.server_dns, panel_url: r.panel_url };
+    });
+
+    const commandIds = [];
+    const results = [];
+
+    for (const serverName of servers) {
+      const serverInfo = serverMap[serverName] || {};
+      
+      const payload = {
+        ...credentials,
+        server_name: serverName,
+        server_dns: serverInfo.dns || null
+      };
+
+      const result = await pool.query(
+        `INSERT INTO plugin_relay_commands (
+          panel_url, command_type, payload, status
+        ) VALUES ($1, $2, $3, 'pending') RETURNING id`,
+        [serverInfo.panel_url || null, command_type, payload]
+      );
+
+      const cmdId = result.rows[0].id;
+      commandIds.push(cmdId);
+      results.push({ server: serverName, command_id: cmdId, dns: serverInfo.dns || 'não mapeado' });
+    }
+
+    console.log(`✅ ${commandIds.length} comandos criados para ${servers.length} servidores | User: ${credentials.username}`);
+
+    res.json({
+      success: true,
+      message: `${commandIds.length} comandos enfileirados (1 por servidor)`,
+      command_ids: commandIds,
+      details: results
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no relay-command-multi:', error);
+    res.status(500).json({ error: 'Erro ao processar comandos multi-servidor' });
   }
 });
 
@@ -1552,6 +1627,70 @@ router.get('/qpanel-grouped-accounts', async (req, res) => {
   } catch (error) {
     console.error('❌ Erro no qpanel-grouped-accounts:', error.message);
     res.status(500).json({ error: 'Erro ao agrupar clientes', detail: error.message });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/all-packages
+ * Busca todos os nomes de pacotes únicos de todos os painéis Sigma cadastrados
+ */
+router.get('/all-packages', async (req, res) => {
+  try {
+    const packageNames = new Set();
+
+    // 1. Buscar pacotes de todas as contas sincronizadas do qPanel/Sigma
+    const accountsResult = await pool.query(`
+      SELECT DISTINCT package_name FROM qpanel_accounts 
+      WHERE package_name IS NOT NULL AND package_name != ''
+    `);
+    accountsResult.rows.forEach(row => packageNames.add(row.package_name));
+
+    // 2. Varredura nos servidores do Sigma (onde os pacotes ficam guardados)
+    const serversResult = await pool.query(`
+      SELECT server_data FROM qpanel_servers 
+      WHERE server_data IS NOT NULL AND server_data != ''
+    `);
+    
+    serversResult.rows.forEach(row => {
+      try {
+        const data = typeof row.server_data === 'string' ? JSON.parse(row.server_data) : row.server_data;
+        
+        // O Sigma pode enviar um array de servidores ou um objeto único
+        const servers = Array.isArray(data) ? data : [data];
+        
+        servers.forEach(srv => {
+          // No Sigma os planos podem estar em 'packages', 'groups' ou 'all_packages'
+          const pkgs = srv.packages || srv.groups || srv.all_packages || [];
+          if (Array.isArray(pkgs)) {
+            pkgs.forEach(p => {
+              const name = p.package_name || p.name || p.group_name || p.text;
+              if (name && typeof name === 'string') packageNames.add(name.trim());
+            });
+          }
+        });
+      } catch (e) {}
+    });
+
+    // 3. Fallback: Se o banco estiver vazio (primeiro acesso), fornecer planos padrão do Sigma/Xtream
+    if (packageNames.size === 0) {
+      const sigmaDefaults = [
+        'PLANO MENSAL (SIGMA)', 'PLANO TRIMESTRAL (SIGMA)', 'PLANO SEMESTRAL (SIGMA)', 
+        'PLANO ANUAL (SIGMA)', 'PACOTE COMPLETO + ADULTOS', 'PACOTE COMPLETO (SEM ADULTOS)',
+        'TESTE 24H', 'TESTE 2H', 'PACOTE LIGHT'
+      ];
+      sigmaDefaults.forEach(p => packageNames.add(p));
+    }
+
+    const finalPackages = Array.from(packageNames).sort();
+    console.log(`✅ Foram identificados ${finalPackages.length} planos para o Sigma.`);
+
+    res.json({
+      success: true,
+      packages: finalPackages
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar pacotes Sigma:', error);
+    res.status(500).json({ error: 'Erro ao carregar planos do Sigma' });
   }
 });
 

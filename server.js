@@ -54,6 +54,19 @@ async function runPendingMigrations() {
     {
       name: 'banner_templates',
       sql: `CREATE TABLE IF NOT EXISTS banner_templates (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, type VARCHAR(50) DEFAULT 'movie', bg_url TEXT, overlay_url TEXT, config JSONB DEFAULT '{}', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
+    },
+    {
+      name: 'servers',
+      sql: `CREATE TABLE IF NOT EXISTS servers (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        url VARCHAR(255) UNIQUE NOT NULL,
+        region VARCHAR(50),
+        priority INTEGER DEFAULT 100,
+        status VARCHAR(20) DEFAULT 'ativo',
+        users INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
     }
   ];
 
@@ -208,18 +221,22 @@ async function runPendingMigrations() {
     
     // Criar tabela de comandos de relay se não existir
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS relay_commands (
+      CREATE TABLE IF NOT EXISTS plugin_relay_commands (
         id SERIAL PRIMARY KEY,
+        panel_id INTEGER REFERENCES qpanel_panels(id) ON DELETE CASCADE,
+        panel_url TEXT,
         command_type VARCHAR(50) NOT NULL,
         payload JSONB DEFAULT '{}',
         status VARCHAR(20) DEFAULT 'pending',
-        panel_url TEXT,
         result JSONB,
         error_message TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    
+    // Garantir que panel_url existe caso a tabela já exista
+    await pool.query(`ALTER TABLE plugin_relay_commands ADD COLUMN IF NOT EXISTS panel_url TEXT`);
 
     console.log('✅ Migrações de colunas e tabela de relay concluídas');
   } catch (err) {
@@ -250,6 +267,22 @@ async function runPendingMigrations() {
     console.log('  ✅ Slots de provedores IPTV sincronizados');
   } catch (err) {
     console.error('  ⚠️ Erro ao inserir slots padrão:', err.message);
+  }
+
+  // Inserir servidores padrão se necessário
+  try {
+    const serverCount = await pool.query('SELECT COUNT(*) as cnt FROM servers');
+    if (parseInt(serverCount.rows[0].cnt) === 0) {
+      await pool.query(`
+        INSERT INTO servers (name, url, region, priority, status) VALUES
+        ('Servidor Brasil 1', 'http://br1.maxxcontrol.pro:8080', 'Brasil', 1, 'ativo'),
+        ('Servidor Brasil 2', 'http://br2.maxxcontrol.pro:8080', 'Brasil', 2, 'ativo'),
+        ('Servidor EUA', 'http://us1.maxxcontrol.pro:8080', 'EUA', 3, 'ativo')
+      `);
+      console.log('  ✅ Servidores IPTV padrão inseridos');
+    }
+  } catch (err) {
+    console.error('  ⚠️ Erro ao inserir servidores padrão:', err.message);
   }
 
   // Migração: tabela plugin_relay_commands (Relay Plugin Chrome ↔ Painel)
@@ -552,7 +585,7 @@ async function runPendingMigrations() {
 
     await pool.query(`
       INSERT INTO global_settings (key, value) 
-      VALUES ('reseller_welcome_template', '"Olá {nome}! Bem-vindo ao MaxxControl PRO.\n\n🌐 Site: {url}\n👤 Login: {login}\n🔑 Senha: {senha}\n⌛ Seu teste expira em: {expiracao}"')
+      VALUES ('reseller_welcome_template', '"Olá {nome}! Bem-vindo ao MaxxControl PRO.\\n\\n🌐 Site: {url}\\n👤 Login: {login}\\n🔑 Senha: {senha}\\n⌛ Seu teste expira em: {expiracao}"')
       ON CONFLICT (key) DO NOTHING;
     `);
 
@@ -665,49 +698,6 @@ app.use('/api/playlist-manager', require('./modules/playlist-manager/playlistMan
 app.use('/api/iptv-plugin', require('./modules/iptv-servers/iptv-plugin-unified'));
 
 // ============================================
-// SISTEMA DE RELAY (Controle Remoto via Extensão)
-// ============================================
-
-// Pegar comandos pendentes (Extensão faz polling aqui)
-app.get('/api/iptv-plugin/relay-pending', async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT * FROM relay_commands WHERE status = 'pending' ORDER BY created_at ASC"
-    );
-    res.json({ commands: result.rows });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Registrar resultado de um comando (Extensão envia aqui)
-app.post('/api/iptv-plugin/relay-result', async (req, res) => {
-  const { command_id, status, result, error_message } = req.body;
-  try {
-    await pool.query(
-      "UPDATE relay_commands SET status = $1, result = $2, error_message = $3, updated_at = NOW() WHERE id = $4",
-      [status, result, error_message, command_id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Criar novo comando (Painel Mxxcontrol envia aqui)
-app.post('/api/iptv-plugin/relay-command', async (req, res) => {
-  const { command_type, payload, panel_url } = req.body;
-  try {
-    const result = await pool.query(
-      "INSERT INTO relay_commands (command_type, payload, panel_url) VALUES ($1, $2, $3) RETURNING id",
-      [command_type, payload, panel_url]
-    );
-    res.json({ success: true, command_id: result.rows[0].id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ============================================
 // OUTROS SERVIÇOS E FALLBACK SPA
 // ============================================
@@ -847,5 +837,5 @@ server.listen(PORT, async () => {
   await runPendingMigrations();
   
   // Iniciar Sentinela de Manutenção
-  sentinela.init();
+  if (sentinela.iniciar) sentinela.iniciar();
 });
