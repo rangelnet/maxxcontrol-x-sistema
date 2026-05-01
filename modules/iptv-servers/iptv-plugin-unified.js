@@ -10,6 +10,15 @@ const pool = require('../../config/database');
 const axios = require('axios');
 
 // ============================================
+// AUTO-MIGRAÇÃO DE BANCO DE DADOS (REVENDA)
+// ============================================
+pool.query(`
+    ALTER TABLE qpanel_panels 
+    ADD COLUMN IF NOT EXISTS reseller_email VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS reseller_dns_code VARCHAR(255);
+`).catch(err => console.error("Erro na migração automática de qpanel_panels:", err));
+
+// ============================================
 // GERENCIAMENTO BÁSICO DE SERVIDORES IPTV
 // ============================================
 
@@ -17,6 +26,181 @@ const axios = require('axios');
  * GET /api/iptv-plugin/servers
  * Lista todos os servidores IPTV cadastrados
  */
+/**
+ * POST /api/iptv-plugin/sync-servers-batch
+ * Recebe servidores e pacotes lidos pela extensão e salva no banco
+ */
+router.post('/sync-servers-batch', async (req, res) => {
+  try {
+    const { panel_name, panel_url, servers } = req.body;
+    console.log(`📡 Recebido batch de servidores para [${panel_name}] (${panel_url}):`, servers?.length, 'itens');
+    
+    if (!panel_url || !servers) {
+      console.warn('⚠️ Dados incompletos no sync-servers-batch');
+      return res.status(400).json({ error: 'Dados incompletos' });
+    }
+    const hostname = new URL(panel_url).hostname;
+    let panelId;
+    const existing = await pool.query('SELECT id FROM qpanel_panels WHERE panel_url LIKE $1 AND status = $2', [`%${hostname}%`, 'active']);
+    if (existing.rows.length > 0) { 
+      panelId = existing.rows[0].id; 
+      await pool.query('UPDATE qpanel_panels SET last_sync_at = NOW(), updated_at = NOW() WHERE id = $1', [panelId]);
+    } else {
+      const newP = await pool.query('INSERT INTO qpanel_panels (panel_name, panel_url, status, created_at, last_sync_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id', [panel_name || hostname, panel_url, 'active']);
+      panelId = newP.rows[0].id;
+    }
+    const baseUrl = new URL(panel_url).origin;
+    const baseDns = new URL(panel_url).hostname;
+
+    let firstLog = true;
+    for (const srv of servers) {
+      if (firstLog) {
+        console.log('📦 Exemplo de objeto de servidor recebido:', JSON.stringify(srv, null, 2));
+        firstLog = false;
+      }
+      // Tentar capturar um nome minimamente legível
+      let srvName = srv.name || srv.server_name || srv.server_name_original;
+      let srvDns = srv.dns || srv.server_dns || srv.domain || srv.server_domain || srv.host || srv.server_host || srv.url || srv.server_url || '';
+      let dnsFromCrossRef = false;
+      
+      // Se tiver m3u_url, extrair o DNS dela (muito comum no Sigma)
+      const possibleM3u = srv.m3u_url || srv.m3u_url_short || (srv.server_data?.m3u_url) || (srv.url);
+      if (!srvDns && possibleM3u && typeof possibleM3u === 'string' && possibleM3u.includes('http')) {
+        try { srvDns = new URL(possibleM3u).hostname; } catch(e) {}
+      }
+
+      // Se ainda estiver vazio, fazer uma busca profunda no objeto por algo que pareça um DNS/URL (ignorando o DNS do painel se possível)
+      if (!srvDns) {
+        for (const key in srv) {
+          const val = srv[key];
+          if (typeof val === 'string' && val.includes('.') && !val.includes(' ') && val.length > 4) {
+            // Ignorar se for a URL do painel ou pedaço dela
+            if (val.includes(baseDns) && val.length < baseDns.length + 5) continue; 
+            
+            if (val.includes('http') || val.match(/^[a-z0-9.-]+\.[a-z]{2,}/i)) {
+              try {
+                const host = val.includes('http') ? new URL(val).hostname : val.split(':')[0];
+                if (host && host.includes('.') && host !== baseDns) {
+                   srvDns = val.includes('http') ? new URL(val).host : val; // Mantém porta se tiver
+                   break;
+                }
+              } catch(e) {}
+            }
+          }
+        }
+      }
+      
+      // Fallback 1: Tentar buscar no banco de dados principal por um servidor com o mesmo nome que já tenha DNS
+      let cleanSrvDns = srvDns;
+      try { cleanSrvDns = new URL(srvDns.startsWith('http') ? srvDns : `http://${srvDns}`).hostname; } catch(e) {}
+      
+      if (!srvDns || cleanSrvDns === baseDns) {
+        try {
+          // Limpar nome para busca (remover emojis e termos genéricos)
+          const cleanName = srvName.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').replace(/[^\w\s]/g, '').replace(/SERVER|OFICIAL|OFFICIAL|VIP/gi, '').trim();
+          
+          // Busca 1: nome exato ou parcial
+          let findBetter = await pool.query(
+            "SELECT url FROM servers WHERE (name ILIKE $1 OR name ILIKE $2 OR $3 ILIKE '%' || name || '%') AND url NOT LIKE $4 AND url LIKE '%.%' LIMIT 1", 
+            [srvName, `%${cleanName}%`, srvName, `%${baseDns}%`]
+          );
+          
+          // Busca 2: por palavras-chave individuais (ex: "CORE" encontra "PRIMELUX CORE")
+          if (findBetter.rows.length === 0) {
+            const words = cleanName.split(/\s+/).filter(w => w.length >= 3);
+            for (const word of words) {
+              // Ignorar palavras muito genéricas como "PRIME" que podem dar match errado
+              if (['PRIME', 'SUPER', 'MEGA', 'ULTRA', 'PLUS', 'PRO', 'MAX'].includes(word.toUpperCase())) continue;
+              
+              findBetter = await pool.query(
+                "SELECT url FROM servers WHERE name ILIKE $1 AND url NOT LIKE $2 AND url LIKE '%.%' LIMIT 1",
+                [`%${word}%`, `%${baseDns}%`]
+              );
+              if (findBetter.rows.length > 0) break;
+            }
+          }
+          
+          // Busca 3: verificar na tabela iptv_servers (pode ter o DNS original se a tabela servers foi corrompida)
+          if (findBetter.rows.length === 0) {
+            const words = cleanName.split(/\s+/).filter(w => w.length >= 3);
+            for (const word of words) {
+              if (['PRIME', 'SUPER', 'MEGA', 'ULTRA', 'PLUS', 'PRO', 'MAX'].includes(word.toUpperCase())) continue;
+              
+              const iptFind = await pool.query(
+                "SELECT xtream_url FROM iptv_servers WHERE server_name ILIKE $1 AND xtream_url NOT LIKE $2 AND xtream_url LIKE '%.%' LIMIT 1",
+                [`%${word}%`, `%${baseDns}%`]
+              );
+              if (iptFind.rows.length > 0) {
+                findBetter = { rows: [{ url: iptFind.rows[0].xtream_url }] };
+                break;
+              }
+            }
+          }
+          
+          if (findBetter.rows.length > 0) {
+            const betterUrl = findBetter.rows[0].url;
+            srvDns = betterUrl.replace(/^https?:\/\//, '').split('/')[0];
+            dnsFromCrossRef = true; // DNS veio do próprio banco — NÃO sobrescrever!
+            console.log(`✨ DNS recuperado (Busca Flexível) para [${srvName}]: ${srvDns}`);
+          } else {
+            // Diagnóstico: ver o que existe no banco para este nome
+            const searchWord = cleanName.split(/\s+/).filter(w => w.length >= 3 && !['PRIME','SUPER','MEGA','ULTRA','PLUS','PRO','MAX'].includes(w.toUpperCase()))[0] || cleanName;
+            const diagServers = await pool.query("SELECT name, url FROM servers WHERE name ILIKE $1", [`%${searchWord}%`]);
+            console.log(`⚠️ Nenhum DNS encontrado para [${srvName}] (palavra-chave: "${searchWord}"). No banco:`, diagServers.rows);
+            
+            // Se a extensão trouxe o próprio painel e não achou substituto, esvaziamos a DNS
+            if (cleanSrvDns === baseDns) {
+              srvDns = '';
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao buscar DNS alternativo:', e);
+        }
+      }
+
+      // Fallback final: DNS do próprio painel
+      if (!srvDns) srvDns = baseDns;
+
+      if (!srvName || srvName.match(/^\d+$/)) {
+        srvName = srvDns ? srvDns.replace(/^https?:\/\//, '').split('/')[0] : `Servidor ${srv.id || '?'}`;
+      }
+      
+      console.log(`🔎 Processando servidor [${srvName}]: DNS=${srvDns}${dnsFromCrossRef ? ' (ref.cruzada, não toca no banco)' : ''}`);
+      
+      // 1. Salvar no cache de painéis Sigma (SEMPRE)
+      await pool.query('INSERT INTO qpanel_servers (panel_id, server_name, server_dns, server_data, created_at) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (panel_id, server_name) DO UPDATE SET server_dns = $3, server_data = $4, updated_at = NOW()', [panelId, srvName, srvDns, JSON.stringify(srv)]);
+      
+      // 2. SÓ mexer nas tabelas servers/iptv_servers se o DNS veio DIRETO do qPanel (não por referência cruzada)
+      //    Quando veio por referência cruzada, o dado já está correto no banco — não tocar!
+      if (srvDns && !dnsFromCrossRef) {
+        const fullUrl = srvDns.startsWith('http') ? srvDns : `http://${srvDns}`;
+        const isRealDns = !fullUrl.includes(baseDns);
+
+        if (isRealDns) {
+          // Inserir SOMENTE se não existir (DO NOTHING = nunca sobrescreve)
+          await pool.query(
+            `INSERT INTO iptv_servers (server_name, xtream_url, server_type, status, created_at) 
+             VALUES ($1, $2, 'sigma', 'active', NOW()) 
+             ON CONFLICT (xtream_url) DO NOTHING`,
+            [srvName, fullUrl]
+          );
+          
+          await pool.query(
+            `INSERT INTO servers (name, url, region, priority, status) 
+             VALUES ($1, $2, 'Detectado', 100, 'ativo') 
+             ON CONFLICT (url) DO NOTHING`,
+            [srvName, fullUrl]
+          );
+        }
+      }
+    }
+    res.json({ success: true, message: `Sincronizado: ${servers.length} servidores.` });
+  } catch (error) {
+    console.error('Erro sync:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/servers', async (req, res) => {
   try {
     const result = await pool.query(
@@ -324,8 +508,10 @@ router.post('/add-qpanel', async (req, res) => {
     const { 
       panel_name, 
       panel_url, 
-      panel_username,
-      panel_password 
+      panel_username = null,
+      panel_password = null,
+      reseller_email = null,
+      reseller_dns_code = null
     } = req.body;
 
     // Validar dados
@@ -340,9 +526,19 @@ router.post('/add-qpanel', async (req, res) => {
         panel_url, 
         panel_username, 
         panel_password,
+        reseller_email,
+        reseller_dns_code,
         status,
         created_at
-      ) VALUES ($1, $2, $3, $4, 'active', NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'active', NOW())
+      ON CONFLICT (panel_url) DO UPDATE SET
+        panel_name = EXCLUDED.panel_name,
+        panel_username = EXCLUDED.panel_username,
+        panel_password = EXCLUDED.panel_password,
+        reseller_email = EXCLUDED.reseller_email,
+        reseller_dns_code = EXCLUDED.reseller_dns_code,
+        status = 'active',
+        updated_at = NOW()
       RETURNING *
     `;
 
@@ -396,14 +592,12 @@ router.get('/qpanels', async (req, res) => {
             : {};
           const packages = rawData.packages || [];
           return {
+            ...rawData,
             id: r.id,
             name: r.server_name,
-            dns: r.server_dns,
+            dns: r.server_dns || rawData.dns,
             packages,
-            server_data: rawData,
-            ...rawData,
-            // garantir que packages não seja sobrescrito pelo spread
-            packages,
+            server_data: rawData
           };
         });
       } catch (e) {
@@ -1214,13 +1408,13 @@ router.post('/relay-command-multi', async (req, res) => {
       return res.status(400).json({ error: 'command_type e servers[] são obrigatórios' });
     }
 
-    if (!credentials || !credentials.username || !credentials.password) {
-      return res.status(400).json({ error: 'credentials com username e password são obrigatórios' });
-    }
-
-    const validTypes = ['create_user', 'create_test'];
+    const validTypes = ['create_user', 'create_test', 'sync_servers'];
     if (!validTypes.includes(command_type)) {
       return res.status(400).json({ error: `Para multi-servidor, use: ${validTypes.join(', ')}` });
+    }
+
+    if (command_type !== 'sync_servers' && (!credentials || !credentials.username || !credentials.password)) {
+      return res.status(400).json({ error: 'credentials com username e password são obrigatórios' });
     }
 
     // Buscar o DNS de cada servidor na tabela qpanel_servers
@@ -1240,28 +1434,66 @@ router.post('/relay-command-multi', async (req, res) => {
     const commandIds = [];
     const results = [];
 
-    for (const serverName of servers) {
-      const serverInfo = serverMap[serverName] || {};
-      
-      const payload = {
-        ...credentials,
-        server_name: serverName,
-        server_dns: serverInfo.dns || null
-      };
+    if (servers.includes('broadcast')) {
+      if (command_type === 'sync_servers') {
+        // Modo Sync: buscar TODOS os painéis cadastrados e criar 1 comando por painel
+        const panels = await pool.query("SELECT id, panel_name, panel_url FROM qpanel_panels WHERE status = 'active'");
+        
+        if (panels.rows.length === 0) {
+          // Nenhum painel cadastrado — criar 1 comando genérico como fallback
+          const result = await pool.query(
+            `INSERT INTO plugin_relay_commands (panel_url, command_type, payload, status) VALUES ($1, $2, $3, 'pending') RETURNING id`,
+            [null, command_type, credentials || {}]
+          );
+          commandIds.push(result.rows[0].id);
+          results.push({ server: 'broadcast', command_id: result.rows[0].id });
+        } else {
+          // Criar 1 comando para CADA painel cadastrado
+          for (const panel of panels.rows) {
+            const result = await pool.query(
+              `INSERT INTO plugin_relay_commands (panel_url, command_type, payload, status) VALUES ($1, $2, $3, 'pending') RETURNING id`,
+              [panel.panel_url, command_type, credentials || {}]
+            );
+            const cmdId = result.rows[0].id;
+            commandIds.push(cmdId);
+            results.push({ server: panel.panel_name, panel_url: panel.panel_url, command_id: cmdId });
+            console.log(`📡 Comando sync criado para painel [${panel.panel_name}] (${panel.panel_url}) → cmd #${cmdId}`);
+          }
+        }
+      } else {
+        // Modo Broadcast genérico (não é sync)
+        const result = await pool.query(
+          `INSERT INTO plugin_relay_commands (panel_url, command_type, payload, status) VALUES ($1, $2, $3, 'pending') RETURNING id`,
+          [null, command_type, credentials || {}]
+        );
+        commandIds.push(result.rows[0].id);
+        results.push({ server: 'broadcast', command_id: result.rows[0].id });
+      }
+    } else {
+      // Modo Normal: loop pelos servidores (Mantém lógica original do Gera Teste)
+      for (const serverName of servers) {
+        const serverInfo = serverMap[serverName] || {};
+        
+        const payload = {
+          ...credentials,
+          server_name: serverName,
+          server_dns: serverInfo.dns || null
+        };
 
-      const result = await pool.query(
-        `INSERT INTO plugin_relay_commands (
-          panel_url, command_type, payload, status
-        ) VALUES ($1, $2, $3, 'pending') RETURNING id`,
-        [serverInfo.panel_url || null, command_type, payload]
-      );
+        const result = await pool.query(
+          `INSERT INTO plugin_relay_commands (
+            panel_url, command_type, payload, status
+          ) VALUES ($1, $2, $3, 'pending') RETURNING id`,
+          [serverInfo.panel_url || null, command_type, payload]
+        );
 
-      const cmdId = result.rows[0].id;
-      commandIds.push(cmdId);
-      results.push({ server: serverName, command_id: cmdId, dns: serverInfo.dns || 'não mapeado' });
+        const cmdId = result.rows[0].id;
+        commandIds.push(cmdId);
+        results.push({ server: serverName, command_id: cmdId, dns: serverInfo.dns || 'não mapeado' });
+      }
     }
 
-    console.log(`✅ ${commandIds.length} comandos criados para ${servers.length} servidores | User: ${credentials.username}`);
+    console.log(`✅ ${commandIds.length} comandos criados para ${servers.length} servidores | User: ${credentials?.username || 'N/A'}`);
 
     res.json({
       success: true,
@@ -1381,7 +1613,7 @@ router.get('/relay-poll', async (req, res) => {
   try {
     // Buscar comandos pendentes
     const query = `
-      SELECT id, panel_id, command_type, payload 
+      SELECT id, panel_id, panel_url, command_type, payload 
       FROM plugin_relay_commands 
       WHERE status = 'pending' 
       ORDER BY created_at ASC 
@@ -1417,8 +1649,14 @@ router.get('/relay-poll', async (req, res) => {
  */
 router.post('/relay-result', async (req, res) => {
   try {
-    const { command_id, status, result, error_message } = req.body;
+    const { command_id, status, result, error_message, debug_info } = req.body;
 
+    // [TELEMETRIA REMOTA] Se a extensão nos mandou logs internos de debug, vamos printar no terminal!
+    if (result && result.debug_logs && Array.isArray(result.debug_logs)) {
+        console.log(`\n📋 --- LOGS INTERNOS DA EXTENSÃO PARA O PAINEL: ${result.panel_name || 'Desconhecido'} ---`);
+        result.debug_logs.forEach(log => console.log(`[EXTENSÃO] ${log}`));
+        console.log(`-------------------------------------------------------------------\n`);
+    }
     if (!command_id || !status) {
       return res.status(400).json({ error: 'command_id e status são obrigatórios' });
     }
@@ -1445,6 +1683,12 @@ router.post('/relay-result', async (req, res) => {
       return res.status(404).json({ error: 'Comando não encontrado' });
     }
 
+    const serverCount = result?.servers?.length || result?.total || 0;
+    const panelUrl = result?.panel_url || 'N/A';
+    console.log(`📨 Relay resultado recebido: cmd #${command_id} → ${status} | Painel: ${panelUrl} | Servidores: ${serverCount}${error_message ? ' | Erro: ' + error_message : ''}`);
+    if (status === 'done' && serverCount === 0) {
+      console.log(`⚠️ Cmd #${command_id} retornou ZERO servidores. Resultado:`, JSON.stringify(result).substring(0, 300));
+    }
     res.json({ success: true, message: 'Resultado processado' });
 
   } catch (error) {
@@ -1648,13 +1892,14 @@ router.get('/all-packages', async (req, res) => {
     // 2. Varredura nos servidores do Sigma (onde os pacotes ficam guardados)
     const serversResult = await pool.query(`
       SELECT server_data FROM qpanel_servers 
-      WHERE server_data IS NOT NULL AND server_data != ''
+      WHERE server_data IS NOT NULL
     `);
     
     serversResult.rows.forEach(row => {
       try {
         const data = typeof row.server_data === 'string' ? JSON.parse(row.server_data) : row.server_data;
-        
+        if (!data) return;
+
         // O Sigma pode enviar um array de servidores ou um objeto único
         const servers = Array.isArray(data) ? data : [data];
         
@@ -1691,6 +1936,27 @@ router.get('/all-packages', async (req, res) => {
   } catch (error) {
     console.error('❌ Erro ao buscar pacotes Sigma:', error);
     res.status(500).json({ error: 'Erro ao carregar planos do Sigma' });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/relay-status/:ids
+ * Usado pelo Frontend (Gestor Lite) para fazer polling do resultado dos comandos
+ * despachados para a extensão Chrome.
+ */
+router.get('/relay-status/:ids', async (req, res) => {
+  try {
+    const ids = req.params.ids.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (ids.length === 0) return res.json({ success: true, commands: [] });
+    
+    const result = await pool.query(
+      `SELECT id, status, result, error_message FROM plugin_relay_commands WHERE id = ANY($1::int[])`,
+      [ids]
+    );
+    res.json({ success: true, commands: result.rows });
+  } catch (error) {
+    console.error('❌ Erro no relay-status:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

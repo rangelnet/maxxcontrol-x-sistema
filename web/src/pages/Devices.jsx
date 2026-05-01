@@ -45,10 +45,9 @@ const formatQuality = (quality) => {
 }
 
 const getExpireColor = (dateStr) => {
-  if (!dateStr || dateStr === '—') return '#71717a'
+  if (!dateStr || dateStr === '—' || typeof dateStr !== 'string') return '#71717a'
   
   try {
-    // Tenta parsear formato PT-BR (dd/mm/yyyy)
     const parts = dateStr.split('/')
     if (parts.length < 3) return '#FFA500'
     
@@ -70,7 +69,7 @@ const getExpireColor = (dateStr) => {
 }
 
 const DaysLeftBadge = ({ dateStr }) => {
-  if (!dateStr || dateStr === '—') return null;
+  if (!dateStr || dateStr === '—' || typeof dateStr !== 'string') return null;
   try {
     const parts = dateStr.split('/');
     if (parts.length < 3) return null;
@@ -299,6 +298,7 @@ const Devices = () => {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewClientModal, setShowNewClientModal] = useState(false);
+  const [creationLogs, setCreationLogs] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [editForm, setEditForm] = useState({ username: '', password: '', expire_date: '', max_connections: 1, package_name: '', nome: '', email: '', telefone: '', servidor_id: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', clube_id: '', events_clube: '' });
   const [newClientForm, setNewClientForm] = useState({ selected_servers: [], username: '', password: '', package_name: '', months: 1, max_connections: 1, nome: '', email: '', telefone: '', vencimento: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', is_trial: false });
@@ -432,6 +432,28 @@ const Devices = () => {
     }
   };
 
+  const handleGenerateTest = () => {
+    const user = Math.floor(100000000 + Math.random() * 900000000).toString(); // 9 dígitos
+    const pass = Math.floor(100000000 + Math.random() * 900000000).toString(); // 9 dígitos
+    
+    // Define vencimento para hoje + 2 horas
+    const now = new Date();
+    const isoDate = now.toISOString().split('T')[0];
+
+    setNewClientForm({
+      ...newClientForm,
+      username: user,
+      password: pass,
+      is_trial: true,
+      months: 0,
+      vencimento: isoDate,
+      package_name: dynamicPlans.find(p => p.toLowerCase().includes('teste')) || 'TESTE 24H (SIGMA)',
+      notas: 'Teste numérico gerado pelo Nexus.'
+    });
+    showToast("Dados numéricos gerados!", "success");
+  };
+
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
@@ -497,9 +519,9 @@ const Devices = () => {
   // ── Lógica de Unificação (Merge) ────────────────
   useEffect(() => {
     // 1. Mapear dispositivos
-    const list = devices.map(dev => {
+    const list = (devices || []).filter(d => d).map(dev => {
       // Encontrar contas do Sigma vinculadas a este MAC
-      const linkedAccounts = panelClients.find(pc => 
+      const linkedAccounts = (panelClients || []).filter(c => c).find(pc => 
         pc.username === dev.current_iptv_username || 
         (pc.accounts && pc.accounts.some(acc => acc.device_mac === dev.mac_address))
       );
@@ -513,8 +535,8 @@ const Devices = () => {
     });
 
     // 2. Adicionar clientes do painel "Órfãos" (que não estão em nenhum device físico)
-    const orphans = panelClients.filter(pc => {
-      const isLinked = devices.some(dev => 
+    const orphans = (panelClients || []).filter(pc => pc).filter(pc => {
+      const isLinked = (devices || []).filter(d => d).some(dev => 
         dev.current_iptv_username === pc.username ||
         (pc.accounts && pc.accounts.some(acc => acc.device_mac === dev.mac_address))
       );
@@ -582,17 +604,21 @@ const Devices = () => {
   const loadDevices = async () => {
     try {
       const r = await api.get('/api/device/list-all')
-      setDevices(r.data.devices)
+      setDevices(r.data.devices || [])
       setLastUpdate(new Date())
-    } catch {}
+    } catch (e) {
+      console.error('Erro ao carregar dispositivos:', e)
+      setDevices([])
+    }
   }
 
   const loadClients = async () => {
     try {
       const r = await api.get('/api/iptv-plugin/qpanel-grouped-accounts')
-      setPanelClients(r.data.data || [])
+      setPanelClients(r.data.data || r.data.accounts || [])
     } catch (e) {
-      console.error(e)
+      console.error('Erro ao carregar clientes:', e)
+      setPanelClients([])
     }
   }
 
@@ -602,6 +628,7 @@ const Devices = () => {
       setIptvServers(r.data || [])
     } catch (e) {
       console.error('Erro ao carregar servidores:', e)
+      setIptvServers([])
     }
   }
 
@@ -611,29 +638,11 @@ const Devices = () => {
       if (r.data.success) setDynamicPlans(r.data.packages || [])
     } catch (e) {
       console.error('Erro ao carregar pacotes:', e)
+      setDynamicPlans([])
     }
   }
 
-  const handleGenerateTest = () => {
-    const user = Math.floor(100000000 + Math.random() * 900000000).toString(); // 9 dígitos
-    const pass = Math.floor(100000000 + Math.random() * 900000000).toString(); // 9 dígitos
-    
-    // Define vencimento para hoje + 2 horas
-    const now = new Date();
-    const isoDate = now.toISOString().split('T')[0];
 
-    setNewClientForm({
-      ...newClientForm,
-      username: user,
-      password: pass,
-      is_trial: true,
-      months: 0,
-      vencimento: isoDate,
-      package_name: dynamicPlans.find(p => p.toLowerCase().includes('teste')) || 'TESTE 24H (SIGMA)',
-      notas: 'Teste numérico gerado pelo Nexus.'
-    });
-    showToast("Dados numéricos gerados!", "success");
-  };
 
   const sendWhatsAppNotification = async (data) => {
     if (data.notificacao_whatsapp !== '1' || !data.telefone) return;
@@ -790,9 +799,9 @@ const Devices = () => {
   const totalTvs      = devices.length
   
   // Stats do Sigma (Contas IPTV Reais)
-  const allAccounts   = panelClients.reduce((acc, curr) => [...acc, ...(curr.accounts || [])], [])
-  const sigmaActive   = allAccounts.filter(a => a.status === 'active' || a.status === 'ativo').length
-  const sigmaTests    = allAccounts.filter(a => a.is_trial || a.package_name?.toLowerCase().includes('teste')).length
+  const allAccounts   = (panelClients || []).filter(c => c).reduce((acc, curr) => [...acc, ...(curr.accounts || [])], [])
+  const sigmaActive   = allAccounts.filter(a => a && (a.status === 'active' || a.status === 'ativo')).length
+  const sigmaTests    = allAccounts.filter(a => a && (a.is_trial || a.package_name?.toLowerCase().includes('teste'))).length
   const sigmaAssinantes = sigmaActive - sigmaTests
 
   const formatLastUpdate = () => {
@@ -1009,9 +1018,10 @@ const Devices = () => {
                    );
                 } else {
                   const client = item.data;
+                  if (!client) return null;
                   return (
                     <div key={item.id} style={{ display:'flex', flexDirection:'column', gap:16, width: '100%' }}>
-                      {client.accounts?.map((acc) => (
+                      {(client.accounts || []).filter(a => a).map((acc) => (
                         <div key={acc.id} style={{ background:'#09090b', border:'1px solid #1a1b1e', borderRadius:16, padding: '16px', boxShadow:'0 10px 40px rgba(0,0,0,0.8)', overflow:'hidden' }}>
                           {/* Header Premium - ID em Azul */}
                           <div style={{ marginBottom: 16 }}>
@@ -1342,6 +1352,7 @@ const Devices = () => {
                       </Fragment>
                     );
                   }
+                  return null;
                 })
               )}
             </tbody>
@@ -1705,17 +1716,41 @@ const Devices = () => {
               <FormField label="Notificar sobre eventos do time"><select style={selectStyle} value={newClientForm.events_clube || ''} onChange={e => setNewClientForm({...newClientForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option></select></FormField>
               <FormField label="Selecione o Time"><select style={selectStyle} value={newClientForm.clube_id || ''} onChange={e => setNewClientForm({...newClientForm, clube_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecione...</option>{footballTeams.map(t => <option key={t} value={t} style={{background:'#111',color:'#fff'}}>{t}</option>)}</select></FormField>
             </>)}
+
+            {/* TERMINAL DE LOGS DA EXTENSÃO */}
+            <div style={{ marginTop: 20, background: '#050505', border: '1px solid rgba(255,165,0,0.3)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 120, maxHeight: 180, overflowY: 'auto', fontFamily: 'monospace' }}>
+               <div style={{ color: '#FFA500', fontSize: 10, fontWeight: 900, marginBottom: 4, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={12}/> MaxxControl Injector Terminal</div>
+               {creationLogs.length === 0 ? (
+                 <div style={{ color: '#52525b', fontSize: 11 }}>Aguardando o envio do comando...</div>
+               ) : (
+                 creationLogs.map((log, i) => (
+                   <div key={i} style={{ color: log.isError ? '#f87171' : '#d4d4d8', fontSize: 11, display: 'flex', gap: 8 }}>
+                     <span style={{ color: '#52525b' }}>[{log.time}]</span>
+                     <span>{log.text}</span>
+                   </div>
+                 ))
+               )}
+            </div>
+
           </div>
           <div style={{ display:'flex', gap:8, marginTop:14 }}>
             <button 
               onClick={async () => {
                 if (newClientForm.selected_servers.length === 0 || !newClientForm.username || !newClientForm.password) return showToast("Preencha servidores, usuário e senha", "error");
-                setShowNewClientModal(false);
+                
+                const addLog = (text, isError=false) => {
+                   setCreationLogs(prev => [...prev, { time: new Date().toLocaleTimeString('pt-BR'), text, isError }]);
+                };
+                
+                setCreationLogs([]);
+                addLog('Iniciando processamento interno MaxxControl...', false);
                 
                 const cmdType = newClientForm.is_trial ? 'create_test' : 'create_user';
                 
                 try {
+                  addLog(`Preparando pacote para ${newClientForm.selected_servers.length} servidor(es)...`, false);
                   showToast(`Criando conta em ${newClientForm.selected_servers.length} servidor(es)...`, "info");
+                  addLog(`Contatando API MaxxControl (aguardando retorno)...`, false);
                   
                   const res = await api.post('/api/iptv-plugin/relay-command-multi', {
                     command_type: cmdType,
@@ -1734,24 +1769,72 @@ const Devices = () => {
                       notas: newClientForm.notas,
                       is_trial: newClientForm.is_trial
                     }
-                  });
+                  }, { timeout: 15000 });
 
-                  if (res.data.success) {
-                    showToast(`✅ ${res.data.command_ids.length} comando(s) enviados para a extensão!`, "success");
+                  if (res.data.success && res.data.command_ids) {
+                    const cmdIds = res.data.command_ids;
+                    addLog(`✅ Payload despachado! ${cmdIds.length} comando(s) enviados para a Extensão.`, false);
+                    addLog(`Aguardando retorno da Extensão Chrome no Sigma...`, false);
+                    showToast(`✅ ${cmdIds.length} comando(s) enviados para a extensão!`, "success");
+                    
+                    let loggedDone = new Set();
+                    let attempts = 0;
+                    const maxAttempts = 30; // 30 * 3s = 90s total de espera
+
+                    const checkStatus = setInterval(async () => {
+                      attempts++;
+                      try {
+                        const statusRes = await api.get(`/api/iptv-plugin/relay-status/${cmdIds.join(',')}`);
+                        if (statusRes.data.success) {
+                          const commands = statusRes.data.commands;
+                          let pendingCount = 0;
+                          
+                          commands.forEach(cmd => {
+                            if (loggedDone.has(cmd.id)) return;
+
+                            if (cmd.status === 'done') {
+                              addLog(`✅ SUCESSO [${cmd.payload?.server_name || 'Servidor'}]: Servidor processou a conta!`, false);
+                              if (cmd.result && (cmd.result.m3u_url || cmd.result.m3u_url_short)) {
+                                addLog(`🔗 Link M3U: ${cmd.result.m3u_url || cmd.result.m3u_url_short}`, false);
+                              }
+                              loggedDone.add(cmd.id);
+                            } else if (cmd.status === 'error') {
+                              addLog(`❌ ERRO NO SIGMA [${cmd.payload?.server_name || 'Servidor'}]: ${cmd.error_message}`, true);
+                              loggedDone.add(cmd.id);
+                            } else {
+                              pendingCount++;
+                            }
+                          });
+                          
+                          if (pendingCount === 0 || attempts >= maxAttempts) {
+                            clearInterval(checkStatus);
+                            if (attempts >= maxAttempts && pendingCount > 0) {
+                              addLog(`⚠️ Timeout: A extensão demorou demais para responder. Verifique se a aba do Sigma está aberta e se a extensão está ativa.`, true);
+                            } else {
+                              addLog(`✨ Processamento Multi-Servidor Finalizado.`, false);
+                            }
+                          }
+                        }
+                      } catch (e) {
+                        console.error("Erro polling status:", e);
+                      }
+                    }, 3000);
+
                   } else {
+                    addLog(`❌ Erro da API: ${res.data.error || 'Falha desconhecida'}`, true);
                     showToast("Erro: " + (res.data.error || 'Falha desconhecida'), "error");
                   }
                 } catch (err) {
                   console.error('Erro multi-server:', err);
+                  addLog(`❌ Erro de Conexão: ${err.message}`, true);
                   showToast("Erro ao enviar comandos: " + err.message, "error");
                 }
                 
                 // Enviar notificação WhatsApp se ativo
                 if (newClientForm.notificacao_whatsapp === '1') {
+                  addLog(`Enfileirando notificação WhatsApp para ${newClientForm.telefone}...`, false);
                   sendWhatsAppNotification(newClientForm);
                 }
-
-                setNewClientForm({ selected_servers: [], username: '', password: '', package_name: '', months: 1, max_connections: 1, nome: '', email: '', telefone: '', vencimento: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', events_clube: '', clube_id: '', is_trial: false });
               }}
               style={{ ...btnPrimary, flex:1, justifyContent:'center' }}>
               <CheckCircle size={15}/> Criar Conta

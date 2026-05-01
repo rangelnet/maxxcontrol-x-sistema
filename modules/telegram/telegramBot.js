@@ -11,14 +11,36 @@ const initBot = () => {
 
   bot = new TelegramBot(token, { polling: true });
 
+  // Tratamento de erros de polling (ex: 409 Conflict)
+  bot.on('polling_error', (error) => {
+    if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
+      console.warn('⚠️ Telegram: Conflito de polling detectado. Aguardando instância anterior encerrar...');
+      // Não mata o processo, apenas avisa. O node-telegram-bot-api tentará reconectar.
+    } else {
+      console.error('❌ Erro no polling do Telegram:', error.message);
+    }
+  });
+
   // Graceful shutdown para evitar "409 Conflict" em restarts do Nodemon
-  process.once('SIGUSR2', () => {
-    if (bot) bot.stopPolling();
+  const shutdown = async () => {
+    if (bot && bot.isPolling()) {
+      console.log('🛑 Encerrando polling do Telegram...');
+      await bot.stopPolling();
+    }
+  };
+
+  process.once('SIGUSR2', async () => {
+    await shutdown();
     process.kill(process.pid, 'SIGUSR2');
   });
 
-  process.on('SIGINT', () => {
-    if (bot) bot.stopPolling();
+  process.on('SIGINT', async () => {
+    await shutdown();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    await shutdown();
     process.exit(0);
   });
 

@@ -17,7 +17,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*/#/customers", "*://*/#/users", "*://megga99.shop/*"],
+      "matches": ["*://*/*"],
       "js": ["content.js"],
       "run_at": "document_end"
     }

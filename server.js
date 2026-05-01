@@ -22,7 +22,7 @@ async function runPendingMigrations() {
       sql: `CREATE TABLE IF NOT EXISTS iptv_servers (
         id SERIAL PRIMARY KEY,
         server_name VARCHAR(255) NOT NULL,
-        xtream_url VARCHAR(500) NOT NULL,
+        xtream_url VARCHAR(500) NOT NULL UNIQUE,
         xtream_username VARCHAR(255),
         xtream_password VARCHAR(255),
         server_type VARCHAR(50) DEFAULT 'custom',
@@ -38,7 +38,7 @@ async function runPendingMigrations() {
       sql: `CREATE TABLE IF NOT EXISTS qpanel_panels (
         id SERIAL PRIMARY KEY,
         panel_name VARCHAR(255) NOT NULL,
-        panel_url VARCHAR(500) NOT NULL,
+        panel_url VARCHAR(500) NOT NULL UNIQUE,
         panel_username VARCHAR(255),
         panel_password VARCHAR(255),
         status VARCHAR(50) DEFAULT 'active',
@@ -65,7 +65,8 @@ async function runPendingMigrations() {
         priority INTEGER DEFAULT 100,
         status VARCHAR(20) DEFAULT 'ativo',
         users INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
     }
   ];
@@ -178,7 +179,9 @@ async function runPendingMigrations() {
     { name: 'idx_qpanel_servers_panel_name', sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_qpanel_servers_panel_name ON qpanel_servers(panel_id, server_name)` },
     { name: 'idx_iptv_servers_status', sql: `CREATE INDEX IF NOT EXISTS idx_iptv_servers_status ON iptv_servers(status)` },
     { name: 'idx_qpanel_panels_status', sql: `CREATE INDEX IF NOT EXISTS idx_qpanel_panels_status ON qpanel_panels(status)` },
-    { name: 'idx_qpanel_accounts_device', sql: `CREATE INDEX IF NOT EXISTS idx_qpanel_accounts_device ON qpanel_accounts(device_mac)` }
+    { name: 'idx_qpanel_accounts_device', sql: `CREATE INDEX IF NOT EXISTS idx_qpanel_accounts_device ON qpanel_accounts(device_mac)` },
+    { name: 'idx_qpanel_panels_url_unique', sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_qpanel_panels_url_unique ON qpanel_panels(panel_url)` },
+    { name: 'idx_iptv_servers_url_unique', sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_iptv_servers_url_unique ON iptv_servers(xtream_url)` }
   ];
 
   for (const { name, sql } of iptvStatementsPhase1) {
@@ -243,6 +246,30 @@ async function runPendingMigrations() {
     if (!IGNORE_CODES.includes(err.code)) {
       console.warn('⚠️ Aviso na migração de colunas qpanel_accounts:', err.message);
     }
+  }
+
+  // Garantir restrições UNIQUE necessárias para o ON CONFLICT funcionar
+  try {
+    // 1. qpanel_panels
+    await pool.query(`
+      DELETE FROM qpanel_panels a USING qpanel_panels b 
+      WHERE a.id < b.id AND a.panel_url = b.panel_url
+    `);
+    await pool.query(`ALTER TABLE qpanel_panels ADD CONSTRAINT qpanel_panels_panel_url_key UNIQUE (panel_url)`).catch(() => {});
+
+    // 2. iptv_servers
+    await pool.query(`
+      DELETE FROM iptv_servers a USING iptv_servers b 
+      WHERE a.id < b.id AND a.xtream_url = b.xtream_url
+    `);
+    await pool.query(`ALTER TABLE iptv_servers ADD CONSTRAINT iptv_servers_xtream_url_key UNIQUE (xtream_url)`).catch(() => {});
+    
+    // 3. servers (adicionar updated_at se não existir)
+    await pool.query(`ALTER TABLE servers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`).catch(() => {});
+
+    console.log('✅ Restrições UNIQUE e Colunas validadas');
+  } catch (err) {
+    console.warn('⚠️ Nota: Algumas restrições UNIQUE já existem ou não puderam ser criadas:', err.message);
   }
 
   for (const { name, sql } of iptvIndexes) {

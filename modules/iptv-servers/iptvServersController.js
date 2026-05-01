@@ -37,7 +37,7 @@ exports.listServers = async (req, res) => {
 exports.listAllServers = async (req, res) => {
   try {
     const query = `
-      SELECT id, name, url, region, priority, status, users, created_at
+      SELECT id, name, url, region, priority, status, users, created_at, updated_at
       FROM servers 
       ORDER BY priority ASC
     `;

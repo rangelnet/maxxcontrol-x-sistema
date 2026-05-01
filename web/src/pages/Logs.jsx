@@ -187,8 +187,12 @@ const Logs = () => {
       if (filters.severity)  p.append('severity',  filters.severity)
       if (filters.type)      p.append('type',       filters.type)
       const r = await api.get(`/api/bug?${p}`)
-      setBugs(r.data.bugs || [])
-    } catch { setError('Erro ao carregar bugs.') }
+      setBugs(r?.data?.bugs || [])
+    } catch (e) { 
+      console.error('Erro ao carregar bugs:', e)
+      setError('Erro ao carregar bugs.') 
+      setBugs([])
+    }
     finally { setLoading(false) }
   }
 
@@ -199,8 +203,12 @@ const Logs = () => {
       if (filters.severity) p.append('severity', filters.severity)
       if (filters.type)     p.append('type',     filters.type)
       const r = await api.get(`/api/logs?${p}`)
-      setLogs(r.data.logs || [])
-    } catch { setError('Erro ao carregar logs.') }
+      setLogs(r?.data?.logs || [])
+    } catch (e) { 
+      console.error('Erro ao carregar logs:', e)
+      setError('Erro ao carregar logs.') 
+      setLogs([])
+    }
     finally { setLoading(false) }
   }
 
