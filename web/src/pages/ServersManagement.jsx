@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Server, Plus, Edit, Trash2, Settings, CheckCircle, AlertCircle, Users, X, Save, RefreshCw, Globe } from 'lucide-react'
+import { Server, Plus, Edit, Trash2, Settings, CheckCircle, AlertCircle, Users, X, Save, RefreshCw, Globe, Zap, Radio, Link2 } from 'lucide-react'
 
 const inputStyle = {
   width:'100%', padding:'10px 14px', background:'rgba(5,5,5,0.6)',
@@ -35,11 +35,133 @@ const ServersManagement = () => {
   const [editingServer, setEditingServer] = useState(null)
   const [saving, setSaving]           = useState(false)
   const [toast, setToast]             = useState(null)
+  const [syncing, setSyncing]         = useState(false)
   const [formData, setFormData]       = useState({ name:'', url:'', region:'', priority:100, status:'ativo' })
 
-  useEffect(() => { loadServers() }, [])
+  // === Estados Painéis qPanel ===
+  const [qpanels, setQpanels]         = useState([])
+  const [loadingPanels, setLoadingPanels] = useState(false)
+  const [panelName, setPanelName]     = useState('')
+  const [panelUrl, setPanelUrl]       = useState('')
+  const [savingPanel, setSavingPanel] = useState(false)
+
+  useEffect(() => { loadServers(); loadQpanels() }, [])
+
+  const [resellerEmail, setResellerEmail] = useState('')
+  const [resellerDnsCode, setResellerDnsCode] = useState('')
+
+  // === CRUD Painéis qPanel ===
+  const loadQpanels = async () => {
+    setLoadingPanels(true)
+    try {
+      const r = await api.get('/api/iptv-plugin/qpanels')
+      setQpanels(r.data.panels || [])
+    } catch (err) {
+      console.error('Erro ao carregar painéis:', err)
+    } finally { setLoadingPanels(false) }
+  }
+
+  const handleAddPanel = async () => {
+    if (!panelName.trim() || !panelUrl.trim()) { showToast('Nome e URL são obrigatórios', 'error'); return }
+    
+    // Auto-corrigir URL sem protocolo
+    let finalUrl = panelUrl.trim()
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = 'https://' + finalUrl
+    }
+    
+    try { new URL(finalUrl) } catch { showToast('URL inválida. Ex: https://painel.exemplo.com', 'error'); return }
+    
+    setSavingPanel(true)
+    try {
+      console.log('📡 Salvando painel:', { panel_name: panelName.trim(), panel_url: finalUrl })
+      const payload = { 
+        panel_name: panelName.trim(), 
+        panel_url: finalUrl,
+        reseller_email: resellerEmail.trim() || null,
+        reseller_dns_code: resellerDnsCode.trim() || null
+      }
+      const res = await api.post('/api/iptv-plugin/add-qpanel', payload)
+      console.log('✅ Resposta:', res.data)
+      showToast(`Painel "${panelName}" adicionado com sucesso!`)
+      setPanelName(''); setPanelUrl(''); setResellerEmail(''); setResellerDnsCode('')
+      loadQpanels()
+    } catch (err) {
+      console.error('❌ Erro ao salvar painel:', err.response?.data || err.message)
+      showToast(err.response?.data?.error || err.response?.data?.detail || 'Erro ao salvar painel. Verifique o console.', 'error')
+    }
+    finally { setSavingPanel(false) }
+  }
+
+  const handleDeletePanel = async (id, name) => {
+    if (!confirm(`Remover o painel "${name}"?`)) return
+    try {
+      await api.delete(`/api/iptv-plugin/qpanel/${id}`)
+      showToast(`Painel "${name}" removido!`)
+      loadQpanels()
+    } catch (err) { showToast('Erro ao remover painel', 'error') }
+  }
 
   const showToast = (msg, type='success') => { setToast({msg,type}); setTimeout(()=>setToast(null),2800) }
+
+  const handleSyncFromSigma = async () => {
+    setSyncing(true);
+    showToast('Iniciando varredura em todos os painéis Sigma...', 'info');
+    try {
+      const res = await api.post('/api/iptv-plugin/relay-command-multi', {
+        command_type: 'sync_servers',
+        payload: { force: true },
+        servers: ['broadcast']
+      });
+
+      if (res.data.success && res.data.command_ids && res.data.command_ids.length > 0) {
+        let completed = 0;
+        const total = res.data.command_ids.length;
+        
+        // Processar CADA comando (1 por painel cadastrado)
+        for (const cmdId of res.data.command_ids) {
+          let attempts = 0;
+          await new Promise((resolve) => {
+            const check = setInterval(async () => {
+              attempts++;
+              try {
+                const statusRes = await api.get(`/api/iptv-plugin/relay-status/${cmdId}`);
+                const cmd = statusRes.data.commands?.[0];
+
+                if (cmd?.status === 'done' && cmd.result) {
+                  clearInterval(check);
+                  // Enviar para o batch de sincronização
+                  await api.post('/api/iptv-plugin/sync-servers-batch', {
+                    panel_name: cmd.result.panel_name || cmd.result.panel_url,
+                    panel_url: cmd.result.panel_url,
+                    servers: cmd.result.servers
+                  });
+                  completed++;
+                  showToast(`Sincronizado ${completed}/${total} painéis...`, 'info');
+                  resolve();
+                } else if (cmd?.status === 'error' || attempts > 20) {
+                  clearInterval(check);
+                  completed++;
+                  resolve();
+                }
+              } catch (e) {
+                clearInterval(check);
+                completed++;
+                resolve();
+              }
+            }, 3000);
+          });
+        }
+        
+        showToast(`✅ Sincronização concluída! ${completed} painel(is) processados.`);
+        loadServers();
+        loadQpanels();
+      }
+    } catch (err) {
+      showToast('Falha ao iniciar sincronização', 'error');
+    }
+    setSyncing(false);
+  }
 
   const loadServers = async () => {
     try {
@@ -103,8 +225,8 @@ const ServersManagement = () => {
     <div>
       {/* Toast */}
       {toast && (
-        <div style={{ position:'fixed', top:24, right:24, zIndex:200, background:toast.type==='error'?'rgba(239,68,68,0.95)':'rgba(16,185,129,0.95)', backdropFilter:'blur(12px)', borderRadius:12, padding:'12px 20px', color:'#fff', fontSize:13, fontWeight:700, boxShadow:'0 12px 30px rgba(0,0,0,0.4)', display:'flex', alignItems:'center', gap:8 }}>
-          {toast.type==='error'?<AlertCircle size={16}/>:<CheckCircle size={16}/>} {toast.msg}
+        <div style={{ position:'fixed', top:24, right:24, zIndex:200, background:toast.type==='error'?'rgba(239,68,68,0.95)':toast.type==='info'?'rgba(59,130,246,0.95)':'rgba(16,185,129,0.95)', backdropFilter:'blur(12px)', borderRadius:12, padding:'12px 20px', color:'#fff', fontSize:13, fontWeight:700, boxShadow:'0 12px 30px rgba(0,0,0,0.4)', display:'flex', alignItems:'center', gap:8 }}>
+          {toast.type==='error'?<AlertCircle size={16}/>:toast.type==='info'?<RefreshCw size={16} style={{animation:'spin 2s linear infinite'}}/>:<CheckCircle size={16}/>} {toast.msg}
         </div>
       )}
 
@@ -120,6 +242,9 @@ const ServersManagement = () => {
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <button onClick={() => loadServers()} style={btnGhost}><RefreshCw size={14}/> Atualizar</button>
+          <button onClick={handleSyncFromSigma} disabled={syncing} style={{ ...btnGhost, color:'#FFA500', borderColor:'rgba(255,165,0,0.3)' }}>
+            <Zap size={14} fill={syncing?'#FFA500':'none'}/> {syncing?'Sincronizando...':'Sincronizar com Sigma'}
+          </button>
           <button onClick={openCreate} style={btnPrimary}><Plus size={15}/> Adicionar Servidor</button>
         </div>
       </div>
@@ -142,7 +267,7 @@ const ServersManagement = () => {
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
-                  {['Servidor','URL','Região','Prioridade','Status','Usuários','Criado em','Ações'].map(h => (
+                  {['Servidor','URL','Região','Prioridade','Status','Usuários','Sincronizado','Ações'].map(h => (
                     <th key={h} style={{ padding:'11px 16px', textAlign:'left', fontSize:10, fontWeight:700, color:'#52525b', textTransform:'uppercase', letterSpacing:'0.08em', whiteSpace:'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -174,7 +299,7 @@ const ServersManagement = () => {
                         <Users size={13}/> <span style={{ fontWeight:700, color:'#a1a1aa' }}>{s.users||0}</span>
                       </button>
                     </td>
-                    <td style={{ padding:'12px 16px', fontSize:11, color:'#52525b', whiteSpace:'nowrap' }}>{formatDate(s.created_at)}</td>
+                    <td style={{ padding:'12px 16px', fontSize:11, color:'#52525b', whiteSpace:'nowrap' }}>{formatDate(s.updated_at || s.created_at)}</td>
                     <td style={{ padding:'12px 16px' }}>
                       <div style={{ display:'flex', gap:4 }}>
                         <button onClick={() => openEdit(s)} title='Editar'
@@ -204,6 +329,118 @@ const ServersManagement = () => {
             </table>
           </div>
         )}
+      </div>
+
+      {/* ══════ SEÇÃO PAINÉIS QPANEL ══════ */}
+      <div style={{ marginTop:28 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:36, height:36, borderRadius:10, background:'rgba(168,85,247,0.15)', border:'1px solid rgba(168,85,247,0.25)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Radio size={18} color='#a855f7'/>
+            </div>
+            <div>
+              <h2 style={{ fontSize:18, fontWeight:800, color:'#fff', margin:0 }}>📡 Painéis qPanel</h2>
+              <p style={{ fontSize:11, color:'#52525b', margin:0 }}>Cadastre painéis Sigma para usar com revendas (DNS alternativo)</p>
+            </div>
+          </div>
+          <button onClick={loadQpanels} style={btnGhost}><RefreshCw size={14}/> Atualizar</button>
+        </div>
+
+        {/* Card de cadastro + lista */}
+        <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(168,85,247,0.15)', borderRadius:16, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
+
+          {/* Formulário Adicionar Painel */}
+          <div style={{ padding:'20px 24px', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', alignItems:'flex-end', gap:12, flexWrap:'wrap' }}>
+            <div style={{ flex:'1 1 180px', minWidth:160 }}>
+              <label style={labelStyle}>Nome do Painel</label>
+              <input style={inputStyle} value={panelName} onChange={e=>setPanelName(e.target.value)} placeholder='Ex: Painel Principal'/>
+            </div>
+            <div style={{ flex:'2 1 200px', minWidth:180 }}>
+              <label style={labelStyle}>URL do Painel</label>
+              <input style={inputStyle} value={panelUrl} onChange={e=>setPanelUrl(e.target.value)} placeholder='https://painel.exemplo.com'/>
+            </div>
+            <div style={{ flex:'1 1 180px', minWidth:160 }}>
+              <label style={labelStyle}>Email Revenda (Opcional)</label>
+              <input style={inputStyle} value={resellerEmail} onChange={e=>setResellerEmail(e.target.value)} placeholder='email@revenda.com'/>
+            </div>
+            <div style={{ flex:'1 1 180px', minWidth:160 }}>
+              <label style={labelStyle}>Código Integração (Opcional)</label>
+              <input style={inputStyle} value={resellerDnsCode} onChange={e=>setResellerDnsCode(e.target.value)} placeholder='Ex: COD123'/>
+            </div>
+            <button onClick={handleAddPanel} disabled={savingPanel || !panelName.trim() || !panelUrl.trim()}
+              style={{ ...btnPrimary, height:42, opacity:(savingPanel || !panelName.trim() || !panelUrl.trim())?0.5:1, background:'linear-gradient(135deg,#a855f7,#7c3aed)' }}>
+              <Plus size={15}/> {savingPanel ? 'Salvando…' : 'Salvar Painel'}
+            </button>
+          </div>
+
+          {/* Lista de painéis */}
+          {loadingPanels ? (
+            <div style={{ textAlign:'center', padding:32, color:'#52525b' }}>
+              <RefreshCw size={20} color='#a855f7' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 8px' }}/>
+              Carregando painéis...
+            </div>
+          ) : qpanels.length === 0 ? (
+            <div style={{ textAlign:'center', padding:32, color:'#52525b' }}>
+              <Radio size={28} color='#27272a' style={{ display:'block', margin:'0 auto 8px' }}/>
+              <p style={{ fontSize:13 }}>Nenhum painel cadastrado.</p>
+              <p style={{ fontSize:11, color:'#3f3f46' }}>Adicione painéis Sigma acima para que revendas possam usar DNS alternativos.</p>
+            </div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column' }}>
+              {qpanels.map((p, idx) => (
+                <div key={p.id} style={{
+                  display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 24px',
+                  borderBottom: idx < qpanels.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  transition:'background .15s',
+                }} onMouseEnter={e=>e.currentTarget.style.background='rgba(168,85,247,0.04)'}
+                   onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                  <div style={{ display:'flex', alignItems:'center', gap:12, flex:1, minWidth:0 }}>
+                    <div style={{ width:36, height:36, borderRadius:10, background:'rgba(168,85,247,0.1)', border:'1px solid rgba(168,85,247,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Radio size={15} color='#a855f7'/>
+                    </div>
+                    <div style={{ minWidth:0 }}>
+                      <p style={{ fontSize:13, fontWeight:700, color:'#e4e4e7', margin:0, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.panel_name}</p>
+                      <p style={{ fontSize:11, fontFamily:'monospace', color:'#52525b', margin:0, display:'flex', alignItems:'center', gap:4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                        <Link2 size={11}/> {p.panel_url}
+                      </p>
+                      {(p.reseller_email || p.reseller_dns_code) && (
+                        <div style={{ display:'flex', gap:8, marginTop:4, flexWrap:'wrap' }}>
+                          {p.reseller_email && <span style={{ fontSize:10, color:'#a855f7', background:'rgba(168,85,247,0.1)', padding:'2px 6px', borderRadius:4, border:'1px solid rgba(168,85,247,0.2)' }}>📧 {p.reseller_email}</span>}
+                          {p.reseller_dns_code && <span style={{ fontSize:10, color:'#f59e0b', background:'rgba(245,158,11,0.1)', padding:'2px 6px', borderRadius:4, border:'1px solid rgba(245,158,11,0.2)' }}>🔑 {p.reseller_dns_code}</span>}
+                        </div>
+                      )}
+                      {p.servers && p.servers.length > 0 && (
+                        <div style={{ marginTop: 8, display:'flex', flexDirection:'column', gap:4 }}>
+                          {p.servers.map((s, sIdx) => (
+                            <span key={sIdx} style={{ fontSize:10, color:'#a1a1aa', display:'flex', alignItems:'center', gap:4 }}>
+                              <Server size={10} color='#34d399'/> {s.name || s.server_name || 'Sem Nome'}: <span style={{ color:'#e4e4e7' }}>{s.dns || s.server_dns || 'Sem DNS'}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {p.last_sync_at && (
+                        <p style={{ fontSize:10, color:'#71717a', margin:'6px 0 0 0' }}>
+                          Última sincronização: {formatDate(p.last_sync_at)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
+                    {p.servers && p.servers.length > 0 && (
+                      <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:999, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', color:'#34d399', fontSize:10, fontWeight:700 }}>
+                        <Server size={10}/> {p.servers.length} capturado(s)
+                      </span>
+                    )}
+                    <button onClick={()=>handleDeletePanel(p.id, p.panel_name)} title='Remover painel'
+                      style={{ width:32, height:32, borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#f87171', transition:'all .15s' }}>
+                      <X size={14}/>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal Add/Edit */}
