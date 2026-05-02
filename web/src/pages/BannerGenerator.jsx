@@ -454,7 +454,7 @@ const BannerGenerator = () => {
     name: '', type: 'movie', bg_url: '', overlay_url: '',
     config: { 
       poster_x: 50, poster_y: 50, poster_scale: 1, 
-      text_color: '#FFA500', font_family: 'Inter', show_synopsis: true,
+      text_color: '#FC5F16', font_family: 'Inter', show_synopsis: true,
       brand_name: 'TV MAXX', brand_logo_url: ''
     }
   })

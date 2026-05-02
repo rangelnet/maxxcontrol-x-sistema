@@ -63,7 +63,7 @@ const IptvServer = () => {
     setMessage({ type:'info', text:`Lista "${t.name}" carregada. Clique em "Testar Conexão" para verificar.` })
   }
 
-  const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(255,165,0,0.3)', whiteSpace:'nowrap' }
+  const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FC5F16,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(252, 95, 22,0.3)', whiteSpace:'nowrap' }
   const btnGhost   = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#a1a1aa', fontSize:13, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }
 
   return (
@@ -71,7 +71,7 @@ const IptvServer = () => {
       {/* Header */}
       <div style={{ marginBottom:28 }}>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-          <Server size={26} color='#FFA500'/> Servidor IPTV Global
+          <Server size={26} color='#FC5F16'/> Servidor IPTV Global
         </h1>
         <p style={{ fontSize:12, color:'#52525b' }}>Configuração padrão aplicada a todos os dispositivos</p>
       </div>
@@ -85,9 +85,9 @@ const IptvServer = () => {
       </div>
 
       {/* Card config */}
-      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:28, boxShadow:'0 8px 32px rgba(0,0,0,0.35)', marginBottom:20 }}>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, padding:28, boxShadow:'0 8px 32px rgba(0,0,0,0.35)', marginBottom:20 }}>
         <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', marginBottom:20, display:'flex', alignItems:'center', gap:8 }}>
-          <div style={{ width:6, height:6, borderRadius:'50%', background:'#FFA500', boxShadow:'0 0 8px #FFA500' }}/> Configuração Xtream Codes
+          <div style={{ width:6, height:6, borderRadius:'50%', background:'#FC5F16', boxShadow:'0 0 8px #FC5F16' }}/> Configuração Xtream Codes
         </h2>
 
         <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
@@ -139,7 +139,7 @@ const IptvServer = () => {
         <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:20 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
             <h3 style={{ fontSize:14, fontWeight:800, color:'#fff', display:'flex', alignItems:'center', gap:8 }}>
-              <TestTube size={15} color='#FFA500'/> Servidores de Teste Públicos
+              <TestTube size={15} color='#FC5F16'/> Servidores de Teste Públicos
             </h3>
             <button onClick={() => setShowTestLists(false)} style={{ background:'none', border:'none', color:'#52525b', cursor:'pointer', display:'flex' }}>
               <X size={16}/>
@@ -151,10 +151,10 @@ const IptvServer = () => {
                 <div>
                   <p style={{ fontSize:13, fontWeight:700, color:'#e4e4e7', marginBottom:2 }}>{t.name}</p>
                   <p style={{ fontSize:11, color:'#52525b' }}>{t.description}</p>
-                  <p style={{ fontFamily:'monospace', fontSize:11, color:'#FFA500', marginTop:3 }}>{t.url}</p>
+                  <p style={{ fontFamily:'monospace', fontSize:11, color:'#FC5F16', marginTop:3 }}>{t.url}</p>
                 </div>
                 <button onClick={() => loadTestList(t)}
-                  style={{ padding:'7px 14px', background:'rgba(255,165,0,0.12)', border:'1px solid rgba(255,165,0,0.25)', borderRadius:9, color:'#FFA500', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', marginLeft:12 }}>
+                  style={{ padding:'7px 14px', background:'rgba(252, 95, 22,0.12)', border:'1px solid rgba(252, 95, 22,0.25)', borderRadius:9, color:'#FC5F16', fontSize:12, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', marginLeft:12 }}>
                   Usar
                 </button>
               </div>

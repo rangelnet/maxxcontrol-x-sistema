@@ -16,7 +16,7 @@ const DevicesWithLogs = () => {
       {/* Header */}
       <div style={{ marginBottom:24 }}>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-          <Tv2 size={26} color='#FFA500'/> Dispositivos & Logs
+          <Tv2 size={26} color='#FC5F16'/> Dispositivos & Logs
         </h1>
         <p style={{ fontSize:12, color:'#52525b' }}>Monitore dispositivos, bugs e eventos do sistema em tempo real</p>
       </div>
@@ -29,9 +29,9 @@ const DevicesWithLogs = () => {
               display:'flex', alignItems:'center', gap:8, padding:'9px 22px',
               borderRadius:10, border:'none', cursor:'pointer', fontSize:13, fontWeight:700,
               transition:'all .2s',
-              background: activeTab===tab.key ? 'rgba(255,165,0,0.15)' : 'transparent',
-              color: activeTab===tab.key ? '#FFA500' : '#71717a',
-              boxShadow: activeTab===tab.key ? '0 2px 10px rgba(255,165,0,0.15)' : 'none',
+              background: activeTab===tab.key ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+              color: activeTab===tab.key ? '#FC5F16' : '#71717a',
+              boxShadow: activeTab===tab.key ? '0 2px 10px rgba(252, 95, 22,0.15)' : 'none',
             }}>
             <tab.Icon size={15}/> {tab.label}
           </button>

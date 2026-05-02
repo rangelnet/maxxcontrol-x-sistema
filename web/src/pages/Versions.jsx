@@ -58,9 +58,9 @@ const Versions = () => {
 
   const btnPrimary = {
     display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px',
-    background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none',
+    background:'linear-gradient(135deg,#FC5F16,#FF6B00)', border:'none',
     borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-    boxShadow:'0 4px 12px rgba(255,165,0,0.3)',
+    boxShadow:'0 4px 12px rgba(252, 95, 22,0.3)',
   }
 
   return (
@@ -83,7 +83,7 @@ const Versions = () => {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:28, flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-            <Rocket size={26} color='#FFA500'/> Versões do App
+            <Rocket size={26} color='#FC5F16'/> Versões do App
           </h1>
           <p style={{ fontSize:12, color:'#52525b' }}>Gerencie as versões do aplicativo TV MAXX</p>
         </div>
@@ -116,24 +116,24 @@ const Versions = () => {
               <div key={v.id} style={{
                 background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)',
                 border:'1px solid rgba(255,255,255,0.06)',
-                borderLeft: idx===0 ? '3px solid #FFA500' : '3px solid rgba(255,255,255,0.06)',
+                borderLeft: idx===0 ? '3px solid #FC5F16' : '3px solid rgba(255,255,255,0.06)',
                 borderRadius:14, padding:'18px 22px',
                 boxShadow:'0 4px 20px rgba(0,0,0,0.3)',
                 transition:'border-color .2s',
               }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(255,165,0,0.25)'}
+                onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(252, 95, 22,0.25)'}
                 onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'}
               >
                 <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, flexWrap:'wrap' }}>
                   {/* Versão info */}
                   <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-                    <div style={{ width:48, height:48, borderRadius:12, background:'rgba(255,165,0,0.12)', border:'1px solid rgba(255,165,0,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <Package size={22} color='#FFA500'/>
+                    <div style={{ width:48, height:48, borderRadius:12, background:'rgba(252, 95, 22,0.12)', border:'1px solid rgba(252, 95, 22,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <Package size={22} color='#FC5F16'/>
                     </div>
                     <div>
                       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                         <h3 style={{ fontSize:18, fontWeight:800, color:'#fff' }}>v{v.versao}</h3>
-                        {idx===0 && <span style={{ fontSize:10, padding:'2px 8px', borderRadius:999, background:'rgba(255,165,0,0.15)', border:'1px solid rgba(255,165,0,0.3)', color:'#FFA500', fontWeight:800 }}>MAIS RECENTE</span>}
+                        {idx===0 && <span style={{ fontSize:10, padding:'2px 8px', borderRadius:999, background:'rgba(252, 95, 22,0.15)', border:'1px solid rgba(252, 95, 22,0.3)', color:'#FC5F16', fontWeight:800 }}>MAIS RECENTE</span>}
                       </div>
                       <p style={{ fontSize:12, color:'#52525b' }}>{formatDate(v.criado_em)}</p>
                     </div>
@@ -164,7 +164,7 @@ const Versions = () => {
 
                 {v.link_download && (
                   <a href={v.link_download} target='_blank' rel='noopener noreferrer'
-                    style={{ marginTop:10, marginLeft:62, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, color:'#FFA500', fontWeight:700, textDecoration:'none' }}>
+                    style={{ marginTop:10, marginLeft:62, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, color:'#FC5F16', fontWeight:700, textDecoration:'none' }}>
                     <Download size={13}/> Download APK →
                   </a>
                 )}
@@ -178,12 +178,12 @@ const Versions = () => {
       {showModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
           onClick={e => e.target===e.currentTarget && setShowModal(false)}>
-          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:460, boxShadow:'0 25px 60px rgba(0,0,0,0.6)' }}>
+          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(252, 95, 22,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:460, boxShadow:'0 25px 60px rgba(0,0,0,0.6)' }}>
             {/* Modal Header */}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <div style={{ width:36, height:36, borderRadius:10, background:'rgba(255,165,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Package size={18} color='#FFA500'/>
+                <div style={{ width:36, height:36, borderRadius:10, background:'rgba(252, 95, 22,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <Package size={18} color='#FC5F16'/>
                 </div>
                 <h2 style={{ fontSize:16, fontWeight:800, color:'#fff' }}>Nova Versão</h2>
               </div>
@@ -208,8 +208,8 @@ const Versions = () => {
               {/* Checkbox obrigatória */}
               <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
                 <div onClick={() => setFormData({...formData,obrigatoria:!formData.obrigatoria})}
-                  style={{ width:20, height:20, borderRadius:6, border:`2px solid ${formData.obrigatoria?'#FFA500':'rgba(255,255,255,0.15)'}`, background: formData.obrigatoria?'rgba(255,165,0,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s', flexShrink:0 }}>
-                  {formData.obrigatoria && <CheckCircle size={12} color='#FFA500'/>}
+                  style={{ width:20, height:20, borderRadius:6, border:`2px solid ${formData.obrigatoria?'#FC5F16':'rgba(255,255,255,0.15)'}`, background: formData.obrigatoria?'rgba(252, 95, 22,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s', flexShrink:0 }}>
+                  {formData.obrigatoria && <CheckCircle size={12} color='#FC5F16'/>}
                 </div>
                 <span style={{ fontSize:13, color:'#a1a1aa' }}>Atualização obrigatória</span>
               </label>

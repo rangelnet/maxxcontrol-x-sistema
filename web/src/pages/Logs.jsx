@@ -25,7 +25,7 @@ const typeConfig = {
   crash:      { icon: '💥', color: '#ef4444', label: 'Crash'      },
   navigation: { icon: '🧭', color: '#60a5fa', label: 'Navigation' },
   player:     { icon: '▶️', color: '#34d399', label: 'Player'     },
-  api:        { icon: '🔌', color: '#FFA500', label: 'API'        },
+  api:        { icon: '🔌', color: '#FC5F16', label: 'API'        },
   ui:         { icon: '🎨', color: '#f472b6', label: 'UI'         },
   network:    { icon: '📡', color: '#38bdf8', label: 'Network'    },
   system:     { icon: '⚙️', color: '#94a3b8', label: 'System'    },
@@ -45,7 +45,7 @@ const selectStyle = {
 const StatCard = ({ value, label, color, Icon }) => (
   <div style={{
     background: 'rgba(17,17,17,0.7)', backdropFilter: 'blur(14px)',
-    border: '1px solid rgba(255,165,0,0.1)', borderRadius: 14,
+    border: '1px solid rgba(252, 95, 22,0.1)', borderRadius: 14,
     padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14,
     boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
   }}>
@@ -87,9 +87,9 @@ const ItemCard = ({ item, isBug, onResolve }) => {
       background: 'rgba(17,17,17,0.65)', backdropFilter: 'blur(12px)',
       border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14,
       overflow: 'hidden', transition: 'border-color .2s',
-      borderLeft: `3px solid ${severityConfig[item.severity]?.color || '#FFA500'}`,
+      borderLeft: `3px solid ${severityConfig[item.severity]?.color || '#FC5F16'}`,
     }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,165,0,0.3)'}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(252, 95, 22,0.3)'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
     >
       <div style={{ padding: '16px 20px' }}>
@@ -137,7 +137,7 @@ const ItemCard = ({ item, isBug, onResolve }) => {
         {hasTrace && (
           <>
             <button onClick={() => setExpanded(v => !v)}
-              style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#FFA500', fontSize:12, fontWeight:700, padding:0, marginBottom: expanded ? 10 : 0 }}>
+              style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#FC5F16', fontSize:12, fontWeight:700, padding:0, marginBottom: expanded ? 10 : 0 }}>
               {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
               {expanded ? 'Ocultar' : 'Ver'} {item.stack_trace ? 'Stack Trace' : 'Mensagem'}
             </button>
@@ -241,14 +241,14 @@ const Logs = () => {
       {/* ── Header ── */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-          <Bug size={26} color='#FFA500' /> Logs & Bugs
+          <Bug size={26} color='#FC5F16' /> Logs & Bugs
         </h1>
         <p style={{ fontSize:12, color:'#52525b' }}>Monitoramento em tempo real de erros e logs do sistema</p>
       </div>
 
       {/* ── Stats Cards ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:12, marginBottom:24 }}>
-        <StatCard value={bugsTotal}   label="Bugs Total"   color="#FFA500" Icon={Bug}           />
+        <StatCard value={bugsTotal}   label="Bugs Total"   color="#FC5F16" Icon={Bug}           />
         <StatCard value={bugsPending}  label="Pendentes"    color="#ef4444" Icon={AlertOctagon}  />
         <StatCard value={bugsResolved} label="Resolvidos"   color="#34d399" Icon={CheckCircle}   />
         <StatCard value={critical}     label="Críticos"     color="#f97316" Icon={Zap}           />
@@ -265,9 +265,9 @@ const Logs = () => {
             style={{
               display:'flex', alignItems:'center', gap:7, padding:'8px 18px', borderRadius:9,
               border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all .2s',
-              background: activeTab===tab.key ? 'rgba(255,165,0,0.15)' : 'transparent',
-              color: activeTab===tab.key ? '#FFA500' : '#71717a',
-              boxShadow: activeTab===tab.key ? '0 2px 10px rgba(255,165,0,0.15)' : 'none',
+              background: activeTab===tab.key ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+              color: activeTab===tab.key ? '#FC5F16' : '#71717a',
+              boxShadow: activeTab===tab.key ? '0 2px 10px rgba(252, 95, 22,0.15)' : 'none',
             }}>
             <tab.Icon size={15}/> {tab.label}
           </button>
@@ -331,7 +331,7 @@ const Logs = () => {
 
         {/* Botão Atualizar */}
         <button onClick={() => activeTab==='bugs' ? fetchBugs() : fetchLogs()}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'rgba(255,165,0,0.1)', border:'1px solid rgba(255,165,0,0.2)', borderRadius:10, color:'#FFA500', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'9px 14px', background:'rgba(252, 95, 22,0.1)', border:'1px solid rgba(252, 95, 22,0.2)', borderRadius:10, color:'#FC5F16', fontSize:13, fontWeight:700, cursor:'pointer' }}>
           <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }}/> Atualizar
         </button>
 
@@ -356,7 +356,7 @@ const Logs = () => {
       {/* ── Loading ── */}
       {loading && !error && (
         <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
-          <RefreshCw size={26} color='#FFA500' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
+          <RefreshCw size={26} color='#FC5F16' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
           Carregando {activeTab === 'bugs' ? 'bugs' : 'logs'}...
         </div>
       )}
@@ -372,7 +372,7 @@ const Logs = () => {
             Nenhum {activeTab === 'bugs' ? 'bug' : 'log'} encontrado com os filtros aplicados.
           </p>
           <button onClick={clearFilters}
-            style={{ marginTop:12, padding:'8px 18px', background:'rgba(255,165,0,0.12)', border:'1px solid rgba(255,165,0,0.25)', borderRadius:9, color:'#FFA500', fontSize:13, cursor:'pointer', fontWeight:700 }}>
+            style={{ marginTop:12, padding:'8px 18px', background:'rgba(252, 95, 22,0.12)', border:'1px solid rgba(252, 95, 22,0.25)', borderRadius:9, color:'#FC5F16', fontSize:13, cursor:'pointer', fontWeight:700 }}>
             Limpar Filtros
           </button>
         </div>
@@ -382,7 +382,7 @@ const Logs = () => {
       {!loading && !error && data.length > 0 && (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           <p style={{ fontSize:11, color:'#52525b', marginBottom:4 }}>
-            Exibindo <span style={{ color:'#FFA500', fontWeight:700 }}>{data.length}</span> {activeTab === 'bugs' ? 'bugs' : 'logs'}
+            Exibindo <span style={{ color:'#FC5F16', fontWeight:700 }}>{data.length}</span> {activeTab === 'bugs' ? 'bugs' : 'logs'}
             {filters.search && <span> para "<strong>{filters.search}</strong>"</span>}
           </p>
           {data.map(item => (

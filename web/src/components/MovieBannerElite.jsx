@@ -14,7 +14,7 @@ const MovieBannerElite = ({ movie, contact, theme, config = {} }) => {
     poster_x = 50, 
     poster_y = 50, 
     poster_scale = 1,
-    text_color = '#FFA500',
+    text_color = '#FC5F16',
     font_family = 'Inter',
     show_synopsis = true,
     custom_bg = null,

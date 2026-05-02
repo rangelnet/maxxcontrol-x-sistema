@@ -10,9 +10,9 @@ const tabBtn = (active) => ({
   display:'flex', alignItems:'center', gap:8, padding:'11px 24px',
   borderRadius:12, border:'none', cursor:'pointer', fontSize:13,
   fontWeight:700, transition:'all .25s',
-  background: active ? 'rgba(255,165,0,0.15)' : 'transparent',
-  color: active ? '#FFA500' : '#71717a',
-  boxShadow: active ? '0 2px 12px rgba(255,165,0,0.15)' : 'none',
+  background: active ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+  color: active ? '#FC5F16' : '#71717a',
+  boxShadow: active ? '0 2px 12px rgba(252, 95, 22,0.15)' : 'none',
 });
 
 const tabs = [
@@ -30,10 +30,10 @@ const IptvServersManager = () => {
       {/* ══════ HEADER ══════ */}
       <div style={{ marginBottom:24 }}>
         <h1 style={{ fontSize:28, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
-          <div style={{ width:44, height:44, borderRadius:14, background:'linear-gradient(135deg,#FFA500,#FF6B00)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 6px 20px rgba(255,165,0,0.35)' }}>
+          <div style={{ width:44, height:44, borderRadius:14, background:'linear-gradient(135deg,#FC5F16,#FF6B00)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 6px 20px rgba(252, 95, 22,0.35)' }}>
             <Zap size={22} color='#000'/>
           </div>
-          Plugin IPTV <span style={{ color:'#FFA500' }}>Unificado</span>
+          Plugin IPTV <span style={{ color:'#FC5F16' }}>Unificado</span>
         </h1>
         <p style={{ fontSize:12, color:'#52525b', marginLeft:56 }}>
           Hub central de gerenciamento IPTV — Servidores, Curadoria, Playlists e Configuração Global
@@ -43,7 +43,7 @@ const IptvServersManager = () => {
       {/* ══════ STATS MINI ══════ */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:24 }}>
         {[
-          { label:'Módulos Ativos', value:'4', color:'#FFA500', icon: BarChart3 },
+          { label:'Módulos Ativos', value:'4', color:'#FC5F16', icon: BarChart3 },
           { label:'Servidores',     value:'—', color:'#3b82f6', icon: Server },
           { label:'Curadoria',     value:'—', color:'#a855f7', icon: Tv },
           { label:'Playlists',     value:'—', color:'#22c55e', icon: Play },

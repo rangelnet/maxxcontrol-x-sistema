@@ -40,7 +40,15 @@ router.post('/block-by-mac', authMiddleware, macController.blockDeviceByMac);
 // Desbloquear por MAC (para o app Android)
 router.post('/unblock-by-mac', authMiddleware, macController.unblockDeviceByMac);
 
-// Excluir dispositivo
-router.delete('/delete/:device_id', authMiddleware, macController.deleteDevice);
+const deviceController = require('./deviceController');
+
+// Strategic Device Services (Vizzion Style)
+router.post('/device-login', deviceController.deviceLogin);
+router.get('/playlists/:mac', deviceController.getPlaylists);
+router.post('/playlists/save', deviceController.savePlaylist);
+router.post('/migrate-license', deviceController.migrateLicense);
+router.post('/update-dns', deviceController.updateDNS);
+router.get('/generate-code/:mac_address', deviceController.generateCode);
+router.post('/login-by-code', deviceController.loginByCode);
 
 module.exports = router;

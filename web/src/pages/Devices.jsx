@@ -49,7 +49,7 @@ const getExpireColor = (dateStr) => {
   
   try {
     const parts = dateStr.split('/')
-    if (parts.length < 3) return '#FFA500'
+    if (parts.length < 3) return '#FC5F16'
     
     const day = parseInt(parts[0])
     const month = parseInt(parts[1]) - 1
@@ -64,7 +64,7 @@ const getExpireColor = (dateStr) => {
     if (diffDays <= 7) return '#fbbf24' // Próximo (Yellow/Orange)
     return '#34d399' // OK (Green)
   } catch {
-    return '#FFA500'
+    return '#FC5F16'
   }
 }
 
@@ -90,11 +90,11 @@ const DaysLeftBadge = ({ dateStr }) => {
 // ═══════════════════════════════════════════
 // SUB-COMPONENTES
 // ═══════════════════════════════════════════
-const StatCard = ({ icon: Icon, label, value, color = '#FFA500', sub }) => (
+const StatCard = ({ icon: Icon, label, value, color = '#FC5F16', sub }) => (
   <div style={{
     background: 'rgba(17,17,17,0.7)',
     backdropFilter: 'blur(14px)',
-    border: '1px solid rgba(255,165,0,0.12)',
+    border: '1px solid rgba(252, 95, 22,0.12)',
     borderRadius: 16,
     padding: '20px 24px',
     display: 'flex', alignItems: 'center', gap: 16,
@@ -150,7 +150,7 @@ const ModalBase = ({ onClose, children, maxWidth = 480 }) => (
     <div style={{
       background: 'rgba(17,17,17,0.95)',
       backdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255,165,0,0.18)',
+      border: '1px solid rgba(252, 95, 22,0.18)',
       borderRadius: 20,
       padding: 28,
       width: '100%',
@@ -186,8 +186,8 @@ const PlanBadge = ({ letter, color, onClick, title }) => (
 const ModalHeader = ({ icon: Icon, title, onClose }) => (
   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-      <div style={{ width:36, height:36, borderRadius:10, background:'rgba(255,165,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <Icon size={18} color='#FFA500' />
+      <div style={{ width:36, height:36, borderRadius:10, background:'rgba(252, 95, 22,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <Icon size={18} color='#FC5F16' />
       </div>
       <h2 style={{ fontSize:16, fontWeight:800, color:'#fff' }}>{title}</h2>
     </div>
@@ -200,7 +200,7 @@ const ModalHeader = ({ icon: Icon, title, onClose }) => (
 const DeviceInfo = ({ device }) => (
   <div style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:'10px 14px', marginBottom:16 }}>
     <p style={{ fontSize:10, color:'#52525b', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:4 }}>Dispositivo</p>
-    <p style={{ fontFamily:'monospace', fontSize:13, color:'#FFA500', fontWeight:700 }}>{device?.mac_address}</p>
+    <p style={{ fontFamily:'monospace', fontSize:13, color:'#FC5F16', fontWeight:700 }}>{device?.mac_address}</p>
     <p style={{ fontSize:12, color:'#71717a', marginTop:2 }}>{device?.modelo}</p>
   </div>
 )
@@ -249,7 +249,7 @@ const dropdownItemStyle = {
   cursor: 'pointer',
   transition: 'all 0.2s',
   '&:hover': {
-    background: 'rgba(255,165,0,0.1)',
+    background: 'rgba(252, 95, 22,0.1)',
     color: '#fff'
   }
 }
@@ -306,6 +306,7 @@ const Devices = () => {
   const [editClientTab, setEditClientTab] = useState('dados');
   const [iptvServers, setIptvServers] = useState([]);
   const [dynamicPlans, setDynamicPlans] = useState([]);
+  const [financePlans, setFinancePlans] = useState([]);
   const [showM3uExtractor, setShowM3uExtractor] = useState(false);
   const [showM3uExtractorEdit, setShowM3uExtractorEdit] = useState(false);
 
@@ -318,7 +319,7 @@ const Devices = () => {
     green: '#15803d',
     red: '#be123c',
     action: '#1d4ed8',
-    orange: '#FFA500',
+    orange: '#FC5F16',
     cyan: '#0891b2',
     teal: '#0d9488',
     indigo: '#4f46e5',
@@ -479,7 +480,7 @@ const Devices = () => {
     // Carregamento Inicial Unificado
     const initLoad = async () => {
       setLoading(true);
-      await Promise.all([loadDevices(), loadClients(), loadServers(), loadPackages()]);
+      await Promise.all([loadDevices(), loadClients(), loadServers(), loadPackages(), loadFinancePlans()]);
       setLoading(false);
     };
     initLoad();
@@ -642,6 +643,16 @@ const Devices = () => {
     }
   }
 
+  const loadFinancePlans = async () => {
+    try {
+      const r = await api.get('/api/finance/plans')
+      setFinancePlans(r.data || [])
+    } catch (e) {
+      console.error('Erro ao carregar planos financeiros:', e)
+      setFinancePlans([])
+    }
+  }
+
 
 
   const sendWhatsAppNotification = async (data) => {
@@ -712,9 +723,9 @@ const Devices = () => {
   const TabPill = ({ label, active, onClick }) => (
     <button onClick={onClick} style={{
       padding: '8px 18px', borderRadius: 8, border: '1px solid',
-      borderColor: active ? '#FFA500' : 'rgba(255,255,255,0.08)',
-      background: active ? 'rgba(255,165,0,0.15)' : 'transparent',
-      color: active ? '#FFA500' : '#71717a', fontSize: 12, fontWeight: 800,
+      borderColor: active ? '#FC5F16' : 'rgba(255,255,255,0.08)',
+      background: active ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+      color: active ? '#FC5F16' : '#71717a', fontSize: 12, fontWeight: 800,
       cursor: 'pointer', transition: 'all 0.2s',
     }}>{label}</button>
   );
@@ -854,13 +865,13 @@ const Devices = () => {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24, gap:16, flexWrap:'wrap' }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', marginBottom:4, display:'flex', alignItems:'center', gap:10 }}>
-            <Tv2 size={26} color='#FFA500' />
+            <Tv2 size={26} color='#FC5F16' />
             Gestão de Aparelhos e Clientes
           </h1>
           <p style={{ fontSize:12, color:'#52525b' }}>
             {lastUpdate ? `Atualizado ${formatLastUpdate()}` : 'Carregando...'}
             {' · '}
-            <span style={{ color:'#FFA500' }}>{filteredDevices.length} registros</span>
+            <span style={{ color:'#FC5F16' }}>{filteredDevices.length} registros</span>
           </p>
           
           <div style={{ display:'flex', alignItems:'center', gap:10, marginTop: 12, flexWrap:'wrap' }}>
@@ -871,8 +882,8 @@ const Devices = () => {
                   onClick={() => setViewMode(m)}
                   style={{
                     padding: '6px 14px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: 'none',
-                    background: viewMode === m ? 'rgba(255,165,0,0.15)' : 'transparent',
-                    color: viewMode === m ? '#FFA500' : '#71717a', cursor: 'pointer', transition: 'all 0.2s'
+                    background: viewMode === m ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+                    color: viewMode === m ? '#FC5F16' : '#71717a', cursor: 'pointer', transition: 'all 0.2s'
                   }}>
                   {m === 'unified' ? 'Tudo' : m === 'devices' ? 'Só TVs' : 'Só Painel'}
                 </button>
@@ -934,7 +945,7 @@ const Devices = () => {
 
       {/* ── Stats Cards ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14, marginBottom:24 }}>
-        <StatCard icon={Tv2}        label="TVs Físicas"  value={totalTvs}    color="#FFA500" sub={`${onlineCount} Online agora`} />
+        <StatCard icon={Tv2}        label="TVs Físicas"  value={totalTvs}    color="#FC5F16" sub={`${onlineCount} Online agora`} />
         <StatCard icon={Users}      label="Assinantes"   value={sigmaAssinantes} color="#60a5fa" sub="Contas Ativas Sigma" />
         <StatCard icon={TestTube}   label="Testes"       value={sigmaTests}      color="#fbbf24" sub="Contas Experimentais" />
         <StatCard icon={Activity}   label="Total Geral"  value={totalTvs + allAccounts.length} color="#34d399" sub="Ecossistema Maxx" />
@@ -943,7 +954,7 @@ const Devices = () => {
       {/* ── Tabela ── */}
       <div style={{
         background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)',
-        border:'1px solid rgba(255,165,0,0.1)', borderRadius:16,
+        border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16,
         overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.35)',
       }}>
         {/* Barra superior da tabela */}
@@ -965,7 +976,7 @@ const Devices = () => {
                 <RefreshCw size={12} className="rotate" /> PROCESSANDO...
               </span>
             )}
-            {searchTerm && <span style={{ color:'#FFA500', marginRight:8 }}>{filteredDevices.length} resultado(s)</span>}
+            {searchTerm && <span style={{ color:'#FC5F16', marginRight:8 }}>{filteredDevices.length} resultado(s)</span>}
             Pág. {currentPage}/{Math.max(totalPages,1)}
           </div>
         </div>
@@ -978,12 +989,12 @@ const Devices = () => {
                 if (item.type === 'device') {
                    const device = item.data;
                    return (
-                     <div key={item.id} style={{ background:'rgba(17,17,17,0.85)', border:'1px solid rgba(255,165,0,0.12)', borderRadius:20, overflow:'hidden', boxShadow:'0 10px 30px rgba(0,0,0,0.5)' }}>
+                     <div key={item.id} style={{ background:'rgba(17,17,17,0.85)', border:'1px solid rgba(252, 95, 22,0.12)', borderRadius:20, overflow:'hidden', boxShadow:'0 10px 30px rgba(0,0,0,0.5)' }}>
                        <div style={{ padding: 20 }}>
                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom: 16 }}>
                             <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-                              <div style={{ width:48, height:48, borderRadius:12, background:'rgba(255,165,0,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                                <Tv2 size={24} color="#FFA500" />
+                              <div style={{ width:48, height:48, borderRadius:12, background:'rgba(252, 95, 22,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <Tv2 size={24} color="#FC5F16" />
                               </div>
                               <div>
                                 <p style={{ fontSize:15, fontWeight:900, color:'#fff' }}>{device.modelo || 'Android Device'}</p>
@@ -1148,7 +1159,7 @@ const Devices = () => {
                           onMouseOut={e=>e.currentTarget.style.background='transparent'}>
                           <td style={{ padding:'12px 14px' }}>
                              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                               <Tv2 size={24} color="#FFA500" />
+                               <Tv2 size={24} color="#FC5F16" />
                                <div>
                                  <div style={{ fontWeight:800, color:'#e4e4e7' }}>{device.modelo || 'Android Device'}</div>
                                  <div style={{ fontSize:10, color:'#71717a' }}>MAC: {device.mac_address}</div>
@@ -1374,9 +1385,9 @@ const Devices = () => {
                 return (
                   <button key={p} onClick={() => setCurrentPage(p)}
                     style={{ width:32, height:32, borderRadius:8, border:'1px solid', cursor:'pointer', fontSize:12, fontWeight:700,
-                      borderColor: currentPage===p ? '#FFA500' : 'rgba(255,255,255,0.08)',
-                      background: currentPage===p ? 'rgba(255,165,0,0.15)' : 'transparent',
-                      color: currentPage===p ? '#FFA500' : '#71717a',
+                      borderColor: currentPage===p ? '#FC5F16' : 'rgba(255,255,255,0.08)',
+                      background: currentPage===p ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+                      color: currentPage===p ? '#FC5F16' : '#71717a',
                     }}>
                     {p}
                   </button>
@@ -1652,10 +1663,36 @@ const Devices = () => {
                 <FormField label="Senha"><input style={inputStyle} value={newClientForm.password} onChange={e => setNewClientForm({...newClientForm, password: e.target.value})} placeholder="senha123" /></FormField>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <FormField label="Plano Comercial (Financeiro)"><select style={selectStyle} onChange={(e) => {
+                  const planId = e.target.value;
+                  if (!planId) {
+                    setNewClientForm(f => ({...f, finance_plan_id: null, finance_plan_price: null}));
+                    return;
+                  }
+                  const plan = financePlans.find(p => p.id == planId);
+                  if (plan) {
+                    const now = new Date();
+                    now.setDate(now.getDate() + plan.duration_days);
+                    const isoDate = now.toISOString().split('T')[0];
+                    setNewClientForm(f => ({
+                      ...f,
+                      finance_plan_id: plan.id,
+                      finance_plan_price: plan.price,
+                      vencimento: isoDate,
+                      max_connections: plan.max_connections,
+                      package_name: plan.sigma_package || f.package_name
+                    }));
+                  }
+                }}>
+                  <option value="" style={{background:'#111',color:'#fff'}}>Sem Plano (Avulso)</option>
+                  {financePlans.map(p => <option key={p.id} value={p.id} style={{background:'#111',color:'#fff'}}>{p.name} (R$ {p.price} - {p.duration_days} dias)</option>)}
+                </select></FormField>
                 <FormField label="Data Vencimento *"><input style={inputStyle} type="date" value={newClientForm.vencimento} onChange={e => setNewClientForm({...newClientForm, vencimento: e.target.value})} /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:12 }}>
                 <FormField label="Selecionar Servidores *">
                   <div style={{ display:'flex', gap:10, marginBottom:6 }}>
-                    <button onClick={() => setNewClientForm(f => ({...f, selected_servers: iptvServers.map(s => s.name)}))} style={{ background:'transparent', border:'none', color:'#FFA500', fontSize:10, fontWeight:800, cursor:'pointer' }}>MARCAR TODOS</button>
+                    <button onClick={() => setNewClientForm(f => ({...f, selected_servers: iptvServers.map(s => s.name)}))} style={{ background:'transparent', border:'none', color:'#FC5F16', fontSize:10, fontWeight:800, cursor:'pointer' }}>MARCAR TODOS</button>
                     <button onClick={() => setNewClientForm(f => ({...f, selected_servers: []}))} style={{ background:'transparent', border:'none', color:'#71717a', fontSize:10, fontWeight:800, cursor:'pointer' }}>DESMARCAR TODOS</button>
                   </div>
                   <div style={{ 
@@ -1667,13 +1704,13 @@ const Devices = () => {
                       return (
                         <label key={s.id} style={{ 
                           display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'6px 10px', borderRadius:8,
-                          background: isSelected ? 'rgba(255,165,0,0.08)' : 'transparent',
-                          border: isSelected ? '1px solid rgba(255,165,0,0.3)' : '1px solid transparent',
+                          background: isSelected ? 'rgba(252, 95, 22,0.08)' : 'transparent',
+                          border: isSelected ? '1px solid rgba(252, 95, 22,0.3)' : '1px solid transparent',
                           transition: 'all 0.2s'
                         }}>
                           <input 
                             type="checkbox" 
-                            style={{ accentColor:'#FFA500', width:16, height:16 }}
+                            style={{ accentColor:'#FC5F16', width:16, height:16 }}
                             checked={isSelected}
                             onChange={e => {
                               const current = newClientForm.selected_servers;
@@ -1682,7 +1719,7 @@ const Devices = () => {
                             }}
                           />
                           <div style={{ display:'flex', flexDirection:'column' }}>
-                            <span style={{ fontSize:11, fontWeight:800, color: isSelected ? '#FFA500' : '#e4e4e7' }}>{s.name}</span>
+                            <span style={{ fontSize:11, fontWeight:800, color: isSelected ? '#FC5F16' : '#e4e4e7' }}>{s.name}</span>
                             <span style={{ fontSize:9, color: s.status === 'ativo' ? '#34d399' : '#f87171' }}>{s.status === 'ativo' ? 'Online' : 'Offline'}</span>
                           </div>
                         </label>
@@ -1696,7 +1733,7 @@ const Devices = () => {
                 <FormField label="Notificação WhatsApp"><select style={selectStyle} value={newClientForm.notificacao_whatsapp} onChange={e => setNewClientForm({...newClientForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <FormField label="Plano *"><select style={selectStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar Plano</option>{[...new Set([...dynamicPlans, ...defaultPlans, ...gestorLitePlans])].map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
+                <FormField label="Pacote no Painel Sigma *"><select style={selectStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar Pacote</option>{[...new Set([...dynamicPlans, ...defaultPlans, ...gestorLitePlans])].map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
                 <FormField label="Nº Telas"><select style={selectStyle} value={newClientForm.max_connections} onChange={e => setNewClientForm({...newClientForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
               </div>
               <FormField label="Notas"><textarea style={{...inputStyle,minHeight:60,resize:'vertical'}} value={newClientForm.notas} onChange={e => setNewClientForm({...newClientForm, notas: e.target.value})} placeholder="Observações sobre o cliente..." /></FormField>
@@ -1718,8 +1755,8 @@ const Devices = () => {
             </>)}
 
             {/* TERMINAL DE LOGS DA EXTENSÃO */}
-            <div style={{ marginTop: 20, background: '#050505', border: '1px solid rgba(255,165,0,0.3)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 120, maxHeight: 180, overflowY: 'auto', fontFamily: 'monospace' }}>
-               <div style={{ color: '#FFA500', fontSize: 10, fontWeight: 900, marginBottom: 4, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={12}/> MaxxControl Injector Terminal</div>
+            <div style={{ marginTop: 20, background: '#050505', border: '1px solid rgba(252, 95, 22,0.3)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 120, maxHeight: 180, overflowY: 'auto', fontFamily: 'monospace' }}>
+               <div style={{ color: '#FC5F16', fontSize: 10, fontWeight: 900, marginBottom: 4, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={12}/> MaxxControl Injector Terminal</div>
                {creationLogs.length === 0 ? (
                  <div style={{ color: '#52525b', fontSize: 11 }}>Aguardando o envio do comando...</div>
                ) : (
@@ -1772,6 +1809,17 @@ const Devices = () => {
                   }, { timeout: 15000 });
 
                   if (res.data.success && res.data.command_ids) {
+                    if (newClientForm.finance_plan_id) {
+                       addLog(`Registrando venda do plano no Financeiro e CRM...`, false);
+                       await api.post('/api/finance/revenue', {
+                          plan_id: newClientForm.finance_plan_id,
+                          amount: newClientForm.finance_plan_price,
+                          client_name: newClientForm.nome || newClientForm.username,
+                          whatsapp: newClientForm.telefone,
+                          payment_method: 'PIX',
+                          status: 'pago'
+                       }).catch(e => console.error("Erro ao registrar receita:", e));
+                    }
                     const cmdIds = res.data.command_ids;
                     addLog(`✅ Payload despachado! ${cmdIds.length} comando(s) enviados para a Extensão.`, false);
                     addLog(`Aguardando retorno da Extensão Chrome no Sigma...`, false);

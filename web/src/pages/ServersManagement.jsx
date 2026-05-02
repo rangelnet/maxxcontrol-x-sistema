@@ -218,7 +218,7 @@ const ServersManagement = () => {
   const formatDate = (date) => date ? new Date(date).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—'
 
   const ativo = servers.filter(s=>s.status==='ativo').length
-  const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(255,165,0,0.3)' }
+  const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FC5F16,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(252, 95, 22,0.3)' }
   const btnGhost   = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#a1a1aa', fontSize:13, fontWeight:600, cursor:'pointer' }
 
   return (
@@ -234,7 +234,7 @@ const ServersManagement = () => {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24, flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-            <Globe size={26} color='#FFA500'/> Servidores IPTV
+            <Globe size={26} color='#FC5F16'/> Servidores IPTV
           </h1>
           <p style={{ fontSize:12, color:'#52525b' }}>
             {servers.length} servidor(es) · <span style={{ color:'#34d399' }}>{ativo} ativo(s)</span>
@@ -242,18 +242,18 @@ const ServersManagement = () => {
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <button onClick={() => loadServers()} style={btnGhost}><RefreshCw size={14}/> Atualizar</button>
-          <button onClick={handleSyncFromSigma} disabled={syncing} style={{ ...btnGhost, color:'#FFA500', borderColor:'rgba(255,165,0,0.3)' }}>
-            <Zap size={14} fill={syncing?'#FFA500':'none'}/> {syncing?'Sincronizando...':'Sincronizar com Sigma'}
+          <button onClick={handleSyncFromSigma} disabled={syncing} style={{ ...btnGhost, color:'#FC5F16', borderColor:'rgba(252, 95, 22,0.3)' }}>
+            <Zap size={14} fill={syncing?'#FC5F16':'none'}/> {syncing?'Sincronizando...':'Sincronizar com Sigma'}
           </button>
           <button onClick={openCreate} style={btnPrimary}><Plus size={15}/> Adicionar Servidor</button>
         </div>
       </div>
 
       {/* Tabela */}
-      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
         {loading ? (
           <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
-            <RefreshCw size={26} color='#FFA500' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
+            <RefreshCw size={26} color='#FC5F16' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
             Carregando servidores...
           </div>
         ) : servers.length===0 ? (
@@ -275,13 +275,13 @@ const ServersManagement = () => {
               <tbody>
                 {servers.map((s,idx) => (
                   <tr key={s.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', background:idx%2===0?'transparent':'rgba(255,255,255,0.01)', transition:'background .15s' }}
-                    onMouseEnter={e=>e.currentTarget.style.background='rgba(255,165,0,0.04)'}
+                    onMouseEnter={e=>e.currentTarget.style.background='rgba(252, 95, 22,0.04)'}
                     onMouseLeave={e=>e.currentTarget.style.background=idx%2===0?'transparent':'rgba(255,255,255,0.01)'}
                   >
                     <td style={{ padding:'12px 16px', whiteSpace:'nowrap' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        <div style={{ width:32, height:32, borderRadius:8, background:'rgba(255,165,0,0.1)', border:'1px solid rgba(255,165,0,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <Server size={14} color='#FFA500'/>
+                        <div style={{ width:32, height:32, borderRadius:8, background:'rgba(252, 95, 22,0.1)', border:'1px solid rgba(252, 95, 22,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          <Server size={14} color='#FC5F16'/>
                         </div>
                         <span style={{ fontSize:13, fontWeight:700, color:'#e4e4e7' }}>{s.name}</span>
                       </div>
@@ -447,11 +447,11 @@ const ServersManagement = () => {
       {showModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
           onClick={e=>e.target===e.currentTarget&&setShowModal(false)}>
-          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:480, boxShadow:'0 25px 60px rgba(0,0,0,0.6)' }}>
+          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(252, 95, 22,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:480, boxShadow:'0 25px 60px rgba(0,0,0,0.6)' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <div style={{ width:36, height:36, borderRadius:10, background:'rgba(255,165,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Server size={18} color='#FFA500'/>
+                <div style={{ width:36, height:36, borderRadius:10, background:'rgba(252, 95, 22,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <Server size={18} color='#FC5F16'/>
                 </div>
                 <h2 style={{ fontSize:16, fontWeight:800, color:'#fff' }}>{editingServer?'Editar Servidor':'Adicionar Servidor'}</h2>
               </div>

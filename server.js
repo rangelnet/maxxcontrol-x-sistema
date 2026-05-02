@@ -547,6 +547,8 @@ async function runPendingMigrations() {
     
     // Garantir que a coluna 'type' existe caso a tabela já tenha sido criada antes
     await pool.query(`ALTER TABLE mp_transactions ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'pix'`);
+    await pool.query(`ALTER TABLE mp_transactions ADD COLUMN IF NOT EXISTS mac_address VARCHAR(100)`);
+    await pool.query(`ALTER TABLE mp_transactions ADD COLUMN IF NOT EXISTS app_id INTEGER`);
     await pool.query(`ALTER TABLE mp_transactions ALTER COLUMN payment_id DROP NOT NULL`);
     await pool.query(`ALTER TABLE mp_transactions ALTER COLUMN package_id DROP NOT NULL`);
     console.log('  ✅ Tabela mp_transactions verificada/criada');
@@ -596,6 +598,74 @@ async function runPendingMigrations() {
   try {
     // 1. Adicionar data de expiração aos usuários
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP`);
+    console.log('  ✅ Coluna expires_at verificada/criada');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration Trial System:', err.message);
+    }
+  }
+
+  // Migração: Sistema Estratégico de Playlists e Dispositivos (Vizzion Style)
+  console.log('📺 Executando migration: Strategic Device Services...');
+  try {
+    // 1. Tabela de Chaves de Acesso (Device Key)
+    await pool.query(`CREATE TABLE IF NOT EXISTS device_keys (
+      mac_address VARCHAR(100) PRIMARY KEY,
+      device_key VARCHAR(50) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // 2. Tabela de Playlists por Dispositivo
+    await pool.query(`CREATE TABLE IF NOT EXISTS device_playlists (
+      id SERIAL PRIMARY KEY,
+      mac_address VARCHAR(100) NOT NULL,
+      name VARCHAR(100) DEFAULT 'Minha Lista',
+      type VARCHAR(20) DEFAULT 'url', -- 'url', 'xtream', 'code'
+      content TEXT NOT NULL, -- URL M3U ou JSON com credenciais
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // 3. Tabela de Configurações de DNS
+    await pool.query(`CREATE TABLE IF NOT EXISTS device_configs (
+      mac_address VARCHAR(100) PRIMARY KEY,
+      dns_url TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // 4. Tabela de Códigos de Acesso Temporários (Login por Código)
+    await pool.query(`CREATE TABLE IF NOT EXISTS device_codes (
+      code VARCHAR(6) PRIMARY KEY,
+      mac_address VARCHAR(100) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    console.log('  ✅ Tabelas de Dispositivos, Playlists e Códigos verificadas/criadas');
+
+    // 3. Tabela de Ativação de Apps (MAXX PLAYER, etc)
+    await pool.query(`CREATE TABLE IF NOT EXISTS app_activation_packages (
+      id SERIAL PRIMARY KEY,
+      app_name VARCHAR(100) NOT NULL UNIQUE,
+      logo_url TEXT,
+      monthly_price DECIMAL(10, 2) NOT NULL,
+      yearly_price DECIMAL(10, 2) NOT NULL,
+      description TEXT,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    
+    // Inserir pacotes padrão
+    await pool.query(`
+      INSERT INTO app_activation_packages (app_name, logo_url, monthly_price, yearly_price, description)
+      VALUES 
+      ('MAXX PLAYER PRO', 'https://tvmaxx.pro/logo.png', 14.90, 119.00, 'Ativação oficial para TV Box e Android TV.'),
+      ('SMARTONE IPTV', 'https://smartone-iptv.com/favicon.ico', 19.90, 149.00, 'Ativação vitalícia ou anual.'),
+      ('IBO PLAYER', 'https://iboplayer.com/favicon.ico', 24.90, 189.00, 'Ativação anual premium.')
+      ON CONFLICT (app_name) DO NOTHING
+    `);
+    console.log('  ✅ Tabela app_activation_packages e dados iniciais OK');
     
     // 2. Configurações padrão iniciais
     await pool.query(`
@@ -619,7 +689,7 @@ async function runPendingMigrations() {
     console.log('  ✅ Migrações de Trial e Configurações concluídas');
   } catch (err) {
     if (!IGNORE_CODES.includes(err.code)) {
-      console.error('❌ Erro na migration de Trial:', err.message);
+      console.error('❌ Erro na migration Strategic Services / Trial:', err.message);
     }
   }
 }
@@ -723,6 +793,9 @@ app.use('/api/playlist-manager', require('./modules/playlist-manager/playlistMan
 
 // Rotas do Plugin IPTV Unificado (integração com MaxxControl)
 app.use('/api/iptv-plugin', require('./modules/iptv-servers/iptv-plugin-unified'));
+
+// Rotas do Módulo Financeiro e Planos Comerciais
+app.use('/api/finance', require('./modules/finance/finance-plans'));
 
 // ============================================
 // ============================================

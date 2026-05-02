@@ -1,9 +1,21 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Users, Plus, Edit2, Trash2, Power, PowerOff, Shield, Link2, KeyRound, ShoppingCart, History, QrCode, X, CheckCircle, MessageCircle, Zap, Loader2 } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, Power, PowerOff, Shield, Link2, KeyRound, ShoppingCart, History, QrCode, X, CheckCircle, MessageCircle, Zap, Loader2, CreditCard, Smartphone, Key, RefreshCw, FileJson, Globe, HelpCircle, ChevronRight, Layout, List } from 'lucide-react';
 
 const Resale = () => {
-  const [activeTab, setActiveTab] = useState('resellers'); // 'resellers' | 'shop'
+  const [activeTab, setActiveTab] = useState('resellers'); // 'resellers' | 'shop' | 'apps' | 'playlists' | 'tools'
+  const [deviceSession, setDeviceSession] = useState(null);
+  const [deviceLoginMode, setDeviceLoginMode] = useState('mac'); // 'mac' | 'code'
+  const [deviceCode, setDeviceCode] = useState('');
+  const [deviceLoginForm, setDeviceLoginForm] = useState({ mac: '', key: '' });
+  const [devicePlaylists, setDevicePlaylists] = useState([]);
+  const [showPlaylistForm, setShowPlaylistForm] = useState(false);
+  const [playlistFormData, setPlaylistFormData] = useState({ name: '', type: 'url', content: '' });
+  const [migrationForm, setMigrationForm] = useState({ oldMac: '', newMac: '', key: '' });
+  const [dnsForm, setDnsForm] = useState({ mac: '', dns: '' });
+  
+  const [apps, setApps] = useState([]);
+  const [activationForm, setActivationForm] = useState({ mac: '', appId: '', type: 'monthly' });
   
   // States - Resellers
   const [revendedores, setRevendedores] = useState([]);
@@ -16,6 +28,14 @@ const Resale = () => {
   const [paymentData, setPaymentData] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const [checkoutMethod, setCheckoutMethod] = useState('pix'); // 'pix' | 'card'
+  const [cardForm, setCardForm] = useState({
+    number: '',
+    expiry: '',
+    cvv: '',
+    name: '',
+    doc: ''
+  });
 
   const [editandoRevendedor, setEditandoRevendedor] = useState(null);
   const [formData, setFormData] = useState({ 
@@ -39,19 +59,32 @@ const Resale = () => {
   const [tfaMode, setTfaMode] = useState(false);
   const [tfaCode, setTfaCode] = useState('');
 
-  const creditPackages = [
-      { id: 1, credits: 10, price: 100, unitPrice: 10.00 },
-      { id: 2, credits: 30, price: 240, unitPrice: 8.00 },
-      { id: 3, credits: 50, price: 350, unitPrice: 7.00 },
-      { id: 4, credits: 100, price: 650, unitPrice: 6.50 },
-      { id: 5, credits: 500, price: 3000, unitPrice: 6.00 },
-      { id: 6, credits: 1000, price: 5000, unitPrice: 5.00 },
-  ];
+  const [creditPackages, setCreditPackages] = useState([]);
 
   useEffect(() => { 
     carregarRevendedores(); 
     carregarHistorico();
+    carregarPacotesCreditos();
+    carregarApps();
   }, []);
+
+  const carregarApps = async () => {
+    try {
+      const res = await api.get('/api/finance/app-packages');
+      setApps(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const carregarPacotesCreditos = async () => {
+    try {
+      const response = await api.get('/api/finance/credit-packages');
+      setCreditPackages(response.data);
+    } catch (err) {
+      console.error('Erro ao carregar pacotes de créditos:', err);
+    }
+  };
 
   const carregarHistorico = async () => {
     try {
@@ -170,28 +203,148 @@ const Resale = () => {
   }
 
   // --- Funções Shop ---
-  const handleCheckout = async (pkg) => {
+  const handleGeneratePix = async (pkg) => {
+    setPaymentLoading(true);
+    setPaymentError('');
+    try {
+      const response = await api.post('/api/payments/pix', {
+        package_id: pkg.id,
+        credits: pkg.credits,
+        amount: pkg.price,
+        mac_address: pkg.mac_address || null,
+        app_id: pkg.app_id || null
+      });
+      setPaymentData(response.data);
+    } catch (err) {
+      setPaymentError('Erro ao gerar PIX. Tente novamente.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleCardCheckout = async (e) => {
+    if (e) e.preventDefault();
+    setPaymentLoading(true);
+    setPaymentError('');
+
+    try {
+      const response = await api.post('/api/payments/card', {
+        ...cardForm,
+        package_id: selectedPackage.id,
+        credits: selectedPackage.credits,
+        amount: selectedPackage.price,
+        mac_address: selectedPackage.mac_address || null,
+        app_id: selectedPackage.app_id || null
+      });
+
+      if (response.data.status === 'approved') {
+        setPaymentData({ status: 'approved' });
+        carregarHistorico();
+        carregarRevendedores();
+      } else {
+        setPaymentError(`Pagamento ${response.data.status}: ${response.data.status_detail || 'Verifique os dados'}`);
+      }
+    } catch (err) {
+      setPaymentError(err.response?.data?.error || 'Erro ao processar cartão.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleCheckout = (pkg) => {
       setSelectedPackage(pkg);
       setShowPixModal(true);
-      setPaymentLoading(true);
       setPaymentError('');
       setPaymentData(null);
+      setCheckoutMethod('pix');
+      handleGeneratePix(pkg);
+  };
 
-      try {
-        const response = await api.get(`/api/payments/pix?package_id=${pkg.id}&credits=${pkg.credits}&amount=${pkg.price}`);
-        // Nota: O controller usa req.body, vou ajustar para POST real conforme o controller
-        const postResponse = await api.post('/api/payments/pix', {
-           package_id: pkg.id,
-           credits: pkg.credits,
-           amount: pkg.price
+  // --- Funções Estratégicas (Dispositivos) ---
+  const handleDeviceLogin = async (e) => {
+    if (e) e.preventDefault();
+    setPaymentLoading(true);
+    try {
+      let response;
+      if (deviceLoginMode === 'mac') {
+        response = await api.post('/api/mac/device-login', { 
+          mac_address: deviceLoginForm.mac, 
+          device_key: deviceLoginForm.key 
         });
-        setPaymentData(postResponse.data);
-      } catch(err) {
-        setPaymentError(err.response?.data?.error || 'Erro ao gerar PIX. Verifique suas configurações Mercado Pago.');
-      } finally {
-        setPaymentLoading(false);
+      } else {
+        response = await api.post('/api/mac/login-by-code', { code: deviceCode });
       }
-  }
+      
+      setDeviceSession(response.data);
+      carregarDevicePlaylists(response.data.mac_address);
+      if (response.data.first_login) {
+        alert(`Bem-vindo! Sua chave de acesso gerada é: ${response.data.device_key}. Guarde-a para futuros acessos.`);
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao fazer login no dispositivo.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const carregarDevicePlaylists = async (mac) => {
+    try {
+      const res = await api.get(`/api/mac/playlists/${mac}`);
+      setDevicePlaylists(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSavePlaylist = async (e) => {
+    if (e) e.preventDefault();
+    try {
+      await api.post('/api/mac/playlists/save', {
+        mac_address: deviceSession.mac_address,
+        ...playlistFormData
+      });
+      setShowPlaylistForm(false);
+      setPlaylistFormData({ name: '', type: 'url', content: '' });
+      carregarDevicePlaylists(deviceSession.mac_address);
+    } catch (e) {
+      alert('Erro ao salvar playlist');
+    }
+  };
+
+  const handleMigrateLicense = async (e) => {
+    if (e) e.preventDefault();
+    setPaymentLoading(true);
+    try {
+      const res = await api.post('/api/mac/migrate-license', {
+        old_mac: migrationForm.oldMac,
+        new_mac: migrationForm.newMac,
+        device_key: migrationForm.key
+      });
+      alert(res.data.message);
+      setMigrationForm({ oldMac: '', newMac: '', key: '' });
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro na migração');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleUpdateDNS = async (e) => {
+    if (e) e.preventDefault();
+    setPaymentLoading(true);
+    try {
+      const res = await api.post('/api/mac/update-dns', {
+        mac_address: dnsForm.mac,
+        dns_url: dnsForm.dns
+      });
+      alert(res.data.message);
+      setDnsForm({ mac: '', dns: '' });
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erro ao atualizar DNS');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   // Polling de pagamento (a cada 5 seg)
   useEffect(() => {
@@ -202,6 +355,8 @@ const Resale = () => {
              const res = await api.get(`/api/payments/status/${paymentData.payment_id}`);
              if (res.data.status === 'approved') {
                  setPaymentData(prev => ({...prev, status: 'approved'}));
+                 carregarHistorico();
+                 carregarRevendedores();
                  clearInterval(intervalId);
              }
           } catch(e) {}
@@ -234,6 +389,9 @@ const Resale = () => {
             <button onClick={() => setActiveTab('shop')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all ${activeTab === 'shop' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-zinc-500 hover:text-yellow-500/50'}`}>
                 <ShoppingCart className="w-4 h-4" /> Loja de Créditos
             </button>
+            <button onClick={() => setActiveTab('apps')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all ${activeTab === 'apps' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 'text-zinc-500 hover:text-blue-500/50'}`}>
+                <Smartphone className="w-4 h-4" /> Ativação de Apps
+            </button>
         </div>
       </div>
 
@@ -249,7 +407,6 @@ const Resale = () => {
         </div>
         <div className="glass-effect rounded-2xl overflow-hidden border border-dark-700 shadow-xl bg-dark-800/60">
             <div className="overflow-x-auto">
-                {/* ... (Resto da Tabela de Revendedores mantida intacta) ... */}
                 <table className="min-w-full divide-y divide-dark-700">
                 <thead className="bg-dark-900/50">
                     <tr>
@@ -352,21 +509,31 @@ const Resale = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-[50px] -mr-16 -mt-16 group-hover:bg-yellow-500/20 transition-all"></div>
 
                         {/* Ícone ou Badge de Desconto Baseado no Valor */}
-                        {pkg.credits >= 100 && (
+                        {pkg.promo_price && (
                             <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow shadow-red-600/30 uppercase">
                                 Promocional
                             </span>
                         )}
 
-                        <h3 className="text-4xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-bottom">{pkg.credits}</h3>
-                        <p className="text-xs font-bold tracking-widest text-zinc-500 mt-1 uppercase">Créditos</p>
+                        <h3 className="text-4xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-bottom">{pkg.credit_amount}</h3>
+                        <p className="text-xs font-bold tracking-widest text-zinc-500 mt-1 uppercase">{pkg.name || 'Créditos'}</p>
                         
                         <div className="w-full h-px bg-gradient-to-r from-transparent via-dark-600 to-transparent my-4"></div>
 
-                        <div className="text-2xl font-bold text-white">R$ {pkg.price.toFixed(2).replace('.',',')}</div>
-                        <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {pkg.unitPrice.toFixed(2).replace('.',',')} / unidade</p>
+                        {pkg.promo_price ? (
+                           <>
+                             <div className="text-sm font-bold text-zinc-500 line-through">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
+                             <div className="text-2xl font-bold text-white">R$ {parseFloat(pkg.promo_price).toFixed(2).replace('.',',')}</div>
+                             <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {(parseFloat(pkg.promo_price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
+                           </>
+                        ) : (
+                           <>
+                             <div className="text-2xl font-bold text-white mt-4">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
+                             <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {(parseFloat(pkg.price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
+                           </>
+                        )}
 
-                        <button onClick={() => handleCheckout(pkg)} className="w-full py-2.5 rounded-lg bg-dark-700 text-zinc-300 font-bold border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all shadow-lg flex items-center justify-center gap-2">
+                        <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.promo_price || pkg.price })} className="w-full py-2.5 rounded-lg bg-dark-700 text-zinc-300 font-bold border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all shadow-lg flex items-center justify-center gap-2">
                            <ShoppingCart className="w-4 h-4" /> Comprar Agora
                         </button>
                     </div>
@@ -378,8 +545,13 @@ const Resale = () => {
         {/* PARTE 2: HISTÓRICO DE COMPRAS (Lado Direito/Ocupa 1/3) */}
         <div className="lg:col-span-1">
             <div className="glass-effect rounded-2xl border border-dark-700 bg-dark-800/80 p-5 sticky top-24">
-                <h2 className="text-lg font-bold flex items-center gap-2 border-b border-dark-700 pb-3 mb-4">
-                    <History className="text-orange-500 w-5 h-5"/> Extrato de Créditos
+                <h2 className="text-lg font-bold flex items-center justify-between border-b border-dark-700 pb-3 mb-4">
+                    <div className="flex items-center gap-2">
+                        <History className="text-orange-500 w-5 h-5"/> Extrato de Créditos
+                    </div>
+                    <button onClick={carregarHistorico} className="p-2 hover:bg-dark-700 rounded-lg transition-colors text-zinc-500 hover:text-zinc-300">
+                        <Zap className={`w-3.5 h-3.5 ${historyLoading ? 'animate-spin' : ''}`} />
+                    </button>
                 </h2>
 
                 <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
@@ -430,12 +602,11 @@ const Resale = () => {
 
 
       {/* ========================================================================= */}
-      {/* MODAL 1: CRIAR/EDITAR REVENDEDOR (MANTIDA) */}
+      {/* MODAL 1: CRIAR/EDITAR REVENDEDOR */}
       {/* ========================================================================= */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="glass-effect relative w-full max-w-2xl shadow-2xl rounded-2xl border border-dark-700 bg-dark-900/90 p-1 flex flex-col max-h-[90vh]">
-            {/* Header Modal */}
             <div className="px-5 py-3 border-b border-dark-700 bg-dark-800/50 flex justify-between items-center rounded-t-2xl shrink-0">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                  <Shield className="w-5 h-5 text-orange-500" /> {editandoRevendedor ? 'Atualizar Revendedor & DNS' : 'Nova Franquia de Revenda'}
@@ -460,12 +631,9 @@ const Resale = () => {
                   </div>
               </div>
 
-              {/* MÓDULOS DE ACESSO (PERMISSÕES) - ALL ITEMS */}
               <div className="bg-dark-800/50 rounded-xl p-4 border border-dark-600 mb-5 max-h-[180px] overflow-y-auto custom-scrollbar">
                   <h4 className="text-sm font-bold text-zinc-300 mb-4 flex items-center gap-2 sticky top-0 bg-dark-800/90 py-1 backdrop-blur-sm z-10"><Shield className="w-4 h-4 text-zinc-400" /> Permissões de Acesso Ao Menu</h4>
-                  
                   <div className="space-y-4">
-                      {/* Grupo 1: Principal */}
                       <div>
                           <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 border-b border-dark-700 pb-1">Principal</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -487,8 +655,6 @@ const Resale = () => {
                              ))}
                           </div>
                       </div>
-
-                      {/* Grupo 2: IPTV & Servidores */}
                       <div>
                           <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 border-b border-dark-700 pb-1">IPTV & Servidores</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -508,8 +674,6 @@ const Resale = () => {
                              ))}
                           </div>
                       </div>
-
-                      {/* Grupo 3: Ferramentas */}
                       <div>
                           <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 border-b border-dark-700 pb-1">Ferramentas & Extras</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -561,14 +725,16 @@ const Resale = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: CHECKOUT PIX (NOVA) */}
+      {/* MODAL 2: CHECKOUT PIX */}
       {/* ========================================================================= */}
       {showPixModal && selectedPackage && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="glass-effect relative w-full max-w-sm shadow-2xl rounded-2xl border border-dark-700 bg-dark-900 p-1">
-            
-            {/* BOTÃO FECHAR X DA MODAL */}
-            <button onClick={() => { setShowPixModal(false); setPaymentData(null); }} className="absolute z-10 top-3 right-3 w-8 h-8 flex items-center justify-center bg-dark-800 text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 rounded-full transition-all border border-dark-600">
+            <button onClick={() => { 
+                setShowPixModal(false); 
+                setPaymentData(null); 
+                setCardForm({ number: '', expiry: '', cvv: '', name: '', doc: '' });
+            }} className="absolute z-10 top-3 right-3 w-8 h-8 flex items-center justify-center bg-dark-800 text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 rounded-full transition-all border border-dark-600">
                 <X className="w-4 h-4" />
             </button>
 
@@ -576,26 +742,56 @@ const Resale = () => {
                 <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
                     <QrCode className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold">Pague R$ {selectedPackage.price.toFixed(2).replace('.',',')}</h3>
+                <h3 className="text-xl font-bold">Pague R$ {parseFloat(selectedPackage.price).toFixed(2).replace('.',',')}</h3>
                 <p className="text-sm text-zinc-400 mt-1">E receba <strong className="text-yellow-500">{selectedPackage.credits} Créditos</strong> na hora!</p>
             </div>
             
-            <div className="p-6 pt-4 text-center">
-                
+            <div className="flex px-6 gap-2 mb-2">
+                <button 
+                  onClick={() => { 
+                    setCheckoutMethod('pix'); 
+                    setPaymentError(''); 
+                    if (!paymentData) handleGeneratePix(selectedPackage);
+                  }}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
+                    checkoutMethod === 'pix' 
+                    ? 'bg-green-500/10 border-green-500/50 text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
+                    : 'bg-dark-800 border-dark-700 text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                    <QrCode size={14} /> PIX
+                </button>
+                <button 
+                  onClick={() => { 
+                    setCheckoutMethod('card'); 
+                    setPaymentError(''); 
+                    setPaymentData(null);
+                  }}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
+                    checkoutMethod === 'card' 
+                    ? 'bg-blue-500/10 border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)]' 
+                    : 'bg-dark-800 border-dark-700 text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                    <CreditCard size={14} /> CARTÃO
+                </button>
+            </div>
+            
+            <div className="p-6 pt-2 text-center">
                 {paymentLoading && (
                    <div className="py-10 text-zinc-500 flex flex-col items-center">
                       <i className="fas fa-circle-notch fa-spin text-3xl mb-3 text-orange-500"></i>
-                      <p className="text-sm">Gerando PIX Inteligente...</p>
+                      <p className="text-sm">Processando {checkoutMethod === 'pix' ? 'PIX' : 'Cartão'}...</p>
                    </div>
                 )}
 
                 {paymentError && (
-                   <div className="py-5 px-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl mb-4 text-sm font-bold">
+                   <div className="py-5 px-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl mb-4 text-xs font-bold">
                        {paymentError}
                    </div>
                 )}
 
-                {paymentData && paymentData.status !== 'approved' && !paymentError && !paymentLoading && (
+                {checkoutMethod === 'pix' && paymentData && paymentData.status !== 'approved' && !paymentError && !paymentLoading && (
                   <>
                     <div className="bg-white rounded-xl p-4 flex justify-center mb-4">
                         <img src={`data:image/png;base64,${paymentData.qr_code_base64}`} alt="QR Code Pix" className="rounded-lg shadow-sm w-48 h-48" />
@@ -611,6 +807,72 @@ const Resale = () => {
                   </>
                 )}
 
+                {checkoutMethod === 'card' && !paymentData && !paymentLoading && (
+                  <form onSubmit={handleCardCheckout} className="space-y-3 text-left">
+                     <div>
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">Número do Cartão</label>
+                        <input 
+                          type="text" 
+                          placeholder="0000 0000 0000 0000"
+                          className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                          value={cardForm.number}
+                          onChange={e => setCardForm({...cardForm, number: e.target.value})}
+                          required
+                        />
+                     </div>
+                     <div className="grid grid-cols-2 gap-3">
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">Validade</label>
+                           <input 
+                             type="text" 
+                             placeholder="MM/AA"
+                             className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                             value={cardForm.expiry}
+                             onChange={e => setCardForm({...cardForm, expiry: e.target.value})}
+                             required
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">CVV</label>
+                           <input 
+                             type="text" 
+                             placeholder="123"
+                             className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                             value={cardForm.cvv}
+                             onChange={e => setCardForm({...cardForm, cvv: e.target.value})}
+                             required
+                           />
+                        </div>
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">Nome no Cartão</label>
+                        <input 
+                          type="text" 
+                          placeholder="COMO ESTÁ NO CARTÃO"
+                          className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors uppercase"
+                          value={cardForm.name}
+                          onChange={e => setCardForm({...cardForm, name: e.target.value})}
+                          required
+                        />
+                     </div>
+                     <div>
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">CPF do Titular</label>
+                        <input 
+                          type="text" 
+                          placeholder="000.000.000-00"
+                          className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                          value={cardForm.doc}
+                          onChange={e => setCardForm({...cardForm, doc: e.target.value})}
+                          required
+                        />
+                     </div>
+                     
+                     <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 mt-4 flex items-center justify-center gap-2">
+                        <Shield size={16} /> Finalizar Compra
+                     </button>
+                  </form>
+                )}
+
                 {paymentData && paymentData.status === 'approved' && (
                   <div className="py-5 text-green-500">
                     <CheckCircle className="w-16 h-16 mx-auto mb-3 text-green-500 animate-bounce" />
@@ -624,12 +886,173 @@ const Resale = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: RECIBO PREMIUM (NOVA) */}
+      {/* ABA: ATIVAÇÃO DE APPS (MAXX PLAYER) */}
       {/* ========================================================================= */}
+      {activeTab === 'apps' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-500 pb-20">
+           <div className="glass-effect rounded-[2rem] p-8 border border-dark-700 bg-dark-900/50 flex flex-col">
+              <div className="flex items-center gap-4 mb-8">
+                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                    <Smartphone className="w-7 h-7 text-blue-500" />
+                 </div>
+                 <div>
+                    <h2 className="text-xl font-black text-white">Ativar Aplicativo</h2>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Liberação instantânea via MAC Address</p>
+                 </div>
+              </div>
+
+              <div className="space-y-6 flex-1">
+                 <div>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 block ml-1">1. Endereço MAC do Dispositivo</label>
+                    <input 
+                      type="text" 
+                      placeholder="00:11:22:AA:BB:CC"
+                      value={activationForm.mac}
+                      onChange={e => setActivationForm({...activationForm, mac: e.target.value.toUpperCase()})}
+                      className="w-full bg-dark-800 border-2 border-dark-700 rounded-2xl px-6 py-4 text-white focus:border-blue-500 transition-all outline-none font-mono text-xl placeholder:text-zinc-700"
+                    />
+                    <div className="flex items-center gap-2 mt-3 px-1">
+                        <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                        <p className="text-[10px] text-zinc-500 font-bold italic">O MAC fica no canto inferior direito da tela inicial do App.</p>
+                    </div>
+                 </div>
+
+                 <div>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 block ml-1">2. Selecione o Aplicativo</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                       {apps.length === 0 ? (
+                           <div className="col-span-full py-4 text-center text-zinc-600 text-xs italic">Nenhum app configurado pelo administrador.</div>
+                       ) : apps.map(app => (
+                          <button 
+                            key={app.id}
+                            onClick={() => setActivationForm({...activationForm, appId: app.id})}
+                            className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${activationForm.appId === app.id ? 'bg-blue-500/10 border-blue-500 text-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500 hover:border-dark-600'}`}
+                          >
+                             <div className="w-12 h-12 rounded-xl bg-dark-700 flex items-center justify-center overflow-hidden border border-white/5">
+                                {app.logo_url ? <img src={app.logo_url} className="w-full h-full object-cover" /> : <Smartphone size={24} />}
+                             </div>
+                             <span className="text-[11px] font-black truncate w-full text-center uppercase tracking-tighter">{app.app_name}</span>
+                          </button>
+                       ))}
+                    </div>
+                 </div>
+
+                 {activationForm.appId && (
+                    <div className="animate-in slide-in-from-top-4 duration-300">
+                       <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 block ml-1">3. Escolha a Vigência</label>
+                       <div className="flex gap-3">
+                          <button 
+                            onClick={() => setActivationForm({...activationForm, type: 'monthly'})}
+                            className={`flex-1 p-5 rounded-2xl border-2 transition-all flex flex-col items-center relative overflow-hidden ${activationForm.type === 'monthly' ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500'}`}
+                          >
+                             <span className="text-[9px] font-black uppercase tracking-widest mb-1">PLANO MENSAL</span>
+                             <span className="text-xl font-black tracking-tighter">R$ {parseFloat(apps.find(a => a.id === activationForm.appId)?.monthly_price || 0).toFixed(2)}</span>
+                             {activationForm.type === 'monthly' && <div className="absolute top-0 right-0 w-6 h-6 bg-orange-500 flex items-center justify-center rounded-bl-xl"><CheckCircle size={10} color="#fff" /></div>}
+                          </button>
+                          <button 
+                            onClick={() => setActivationForm({...activationForm, type: 'yearly'})}
+                            className={`flex-1 p-5 rounded-2xl border-2 transition-all flex flex-col items-center relative overflow-hidden ${activationForm.type === 'yearly' ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500'}`}
+                          >
+                             <span className="text-[9px] font-black uppercase tracking-widest mb-1">PLANO ANUAL</span>
+                             <span className="text-xl font-black tracking-tighter">R$ {parseFloat(apps.find(a => a.id === activationForm.appId)?.yearly_price || 0).toFixed(2)}</span>
+                             {activationForm.type === 'yearly' && <div className="absolute top-0 right-0 w-6 h-6 bg-orange-500 flex items-center justify-center rounded-bl-xl"><CheckCircle size={10} color="#fff" /></div>}
+                          </button>
+                       </div>
+                    </div>
+                 )}
+              </div>
+
+              <button 
+                disabled={!activationForm.mac || !activationForm.appId}
+                onClick={() => {
+                   const app = apps.find(a => a.id === activationForm.appId);
+                   const price = activationForm.type === 'monthly' ? app.monthly_price : app.yearly_price;
+                   handleCheckout({ 
+                     id: `APP_${app.id}_${activationForm.type}`, 
+                     name: `Ativação ${app.app_name} (${activationForm.type === 'monthly' ? 'Mensal' : 'Anual'}) - MAC: ${activationForm.mac}`,
+                     price: price,
+                     credits: 0,
+                     mac_address: activationForm.mac,
+                     app_id: app.id
+                   });
+                }}
+                className={`w-full py-5 mt-8 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${(!activationForm.mac || !activationForm.appId) ? 'bg-dark-800 text-zinc-600 cursor-not-allowed border border-dark-700' : 'bg-orange-500 text-white shadow-[0_10px_30px_rgba(255,165,0,0.2)] hover:scale-[1.02] active:scale-95 hover:bg-orange-400'}`}
+              >
+                 ATIVAR AGORA NO MAC
+              </button>
+
+              {/* FAQ ESTRATÉGICO */}
+              <div className="mt-12 border-t border-dark-700 pt-8">
+                 <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+                    <HelpCircle className="text-orange-500" /> Perguntas Frequentes
+                 </h3>
+                 <div className="space-y-4">
+                    {[
+                      { q: 'O que é o MAC Address?', a: 'É o código único da sua TV. Você encontra ele no canto inferior direito do app MAXX PLAYER.' },
+                      { q: 'A liberação é automática?', a: 'Sim! Após a confirmação do PIX, sua TV é liberada instantaneamente pelo nosso servidor.' },
+                      { q: 'Posso transferir para outra TV?', a: 'Sim, use a ferramenta de "Migração" na aba de Ferramentas usando sua chave de acesso.' }
+                    ].map((faq, i) => (
+                       <details key={i} className="group bg-dark-800/50 rounded-2xl border border-dark-700 overflow-hidden">
+                          <summary className="p-4 cursor-pointer font-bold text-sm text-zinc-300 flex justify-between items-center hover:bg-dark-700/50 transition-colors list-none">
+                             {faq.q}
+                             <ChevronRight className="w-4 h-4 group-open:rotate-90 transition-transform" />
+                          </summary>
+                          <div className="p-4 pt-0 text-xs text-zinc-500 leading-relaxed border-t border-dark-700/50">
+                             {faq.a}
+                          </div>
+                       </details>
+                    ))}
+                 </div>
+              </div>
+           </div>
+
+           <div className="flex flex-col gap-6">
+              <div className="glass-effect rounded-[2rem] p-8 border border-dark-700 bg-dark-900/30 flex flex-col h-full">
+                 <h3 className="text-sm font-black text-white mb-6 uppercase tracking-widest flex items-center justify-between">
+                    Histórico de Ativações
+                    <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full border border-blue-500/20">{history.filter(t => t.mac_address).length} TOTAL</span>
+                 </h3>
+                 
+                 <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                    {history.filter(t => t.mac_address).length === 0 ? (
+                        <div className="text-center py-20 opacity-30">
+                            <History size={40} className="mx-auto mb-3" />
+                            <p className="text-xs font-bold">Nenhuma ativação encontrada.</p>
+                        </div>
+                    ) : history.filter(t => t.mac_address).map((trx, i) => (
+                        <div key={i} className="bg-dark-800 border border-dark-700 rounded-2xl p-4 hover:border-blue-500/30 transition-all group">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-lg bg-dark-700 flex items-center justify-center text-blue-500">
+                                        <Smartphone size={16} />
+                                    </div>
+                                    <div>
+                                        <span className="text-[11px] font-black text-white block uppercase tracking-tighter truncate max-w-[120px]">{trx.mac_address}</span>
+                                        <span className="text-[9px] text-zinc-500 font-bold">{trx.date} às {trx.time}</span>
+                                    </div>
+                                </div>
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${trx.status === 'approved' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
+                                    {trx.status === 'approved' ? 'ATIVO ✓' : 'PENDENTE'}
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between border-t border-dark-700 pt-3">
+                                <span className="text-[9px] text-zinc-400 font-bold uppercase truncate max-w-[150px]">{trx.package_name || 'Ativação MAXX'}</span>
+                                <span className="text-xs font-black text-white">R$ {trx.amount}</span>
+                            </div>
+                        </div>
+                    ))}
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+
+      {/* MODAL 3: RECIBO PREMIUM */}
       {showReceiptModal && selectedTrx && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-in zoom-in duration-200">
               <div className="w-full max-w-[320px] bg-white rounded-[2rem] overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-5">
-                  {/* Cabeçalho do Recibo */}
                   <div className={`p-6 text-center ${selectedTrx.type === 'pix' ? 'bg-green-500' : 'bg-orange-500'} relative`}>
                       <button onClick={() => setShowReceiptModal(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
                           <X className="w-5 h-5" />
@@ -641,7 +1064,6 @@ const Resale = () => {
                       <p className="text-white/80 text-[10px] uppercase font-bold tracking-widest mt-1">TV MAXX PRO — {selectedTrx.status === 'approved' ? 'AUTENTICADO' : 'PENDENTE'}</p>
                   </div>
 
-                  {/* Corpo do Recibo */}
                   <div className="p-8 space-y-6 bg-zinc-50">
                       <div className="text-center">
                           <div className="text-[10px] text-zinc-400 font-bold uppercase mb-1">Total Recebido</div>
@@ -682,9 +1104,7 @@ const Resale = () => {
           </div>
       )}
 
-      {/* ========================================================================= */}
       {/* MODAL 4: TRANSFERÊNCIA SEGURA (2FA) */}
-      {/* ========================================================================= */}
       {showTransferModal && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
               <div className="w-full max-w-sm glass-effect rounded-[2.5rem] border border-white/10 p-8 shadow-2xl overflow-hidden relative">
@@ -751,7 +1171,6 @@ const Resale = () => {
           </div>
       )}
 
-      {/* FOOTER MOBILE */}
       <div className="h-16 md:h-0"></div>
     </div>
   );

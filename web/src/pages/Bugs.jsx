@@ -30,7 +30,7 @@ const BugCard = ({ bug, onResolve }) => {
       borderLeft: `3px solid ${sev.color}`,
       borderRadius: 14, overflow: 'hidden', transition: 'border-color .2s',
     }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,165,0,0.25)'}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(252, 95, 22,0.25)'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
     >
       <div style={{ padding: '16px 20px' }}>
@@ -70,7 +70,7 @@ const BugCard = ({ bug, onResolve }) => {
         {bug.stack_trace && (
           <>
             <button onClick={() => setExpanded(v => !v)}
-              style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#FFA500', fontSize:12, fontWeight:700, padding:0, marginBottom: expanded ? 10 : 0 }}>
+              style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#FC5F16', fontSize:12, fontWeight:700, padding:0, marginBottom: expanded ? 10 : 0 }}>
               {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
               {expanded ? 'Ocultar' : 'Ver'} Stack Trace
             </button>
@@ -136,7 +136,7 @@ const Bugs = () => {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24, flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-            <Bug size={26} color='#FFA500'/> Bugs Reportados
+            <Bug size={26} color='#FC5F16'/> Bugs Reportados
           </h1>
           <p style={{ fontSize:12, color:'#52525b' }}>Erros reportados pelos dispositivos Android</p>
         </div>
@@ -144,7 +144,7 @@ const Bugs = () => {
         {/* Stats rápidas */}
         <div style={{ display:'flex', gap:10 }}>
           {[
-            { label:'Total',     val:bugs.length, color:'#FFA500' },
+            { label:'Total',     val:bugs.length, color:'#FC5F16' },
             { label:'Pendentes', val:pending,      color:'#ef4444' },
             { label:'Resolvidos',val:resolved,     color:'#34d399' },
           ].map(s => (
@@ -163,8 +163,8 @@ const Bugs = () => {
             <button key={opt.key} onClick={() => setFilter(opt.key)}
               style={{
                 padding:'7px 16px', borderRadius:9, border:'none', cursor:'pointer', fontSize:12, fontWeight:700, transition:'all .2s',
-                background: filter===opt.key ? 'rgba(255,165,0,0.15)' : 'transparent',
-                color: filter===opt.key ? '#FFA500' : '#71717a',
+                background: filter===opt.key ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+                color: filter===opt.key ? '#FC5F16' : '#71717a',
               }}>
               {opt.label}
             </button>
@@ -179,7 +179,7 @@ const Bugs = () => {
       {/* Loading */}
       {loading && (
         <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
-          <RefreshCw size={26} color='#FFA500' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
+          <RefreshCw size={26} color='#FC5F16' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
           Carregando bugs...
         </div>
       )}

@@ -26,9 +26,11 @@ const Layout = () => {
         { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { path: '/devices', icon: Smartphone, label: 'Dispositivos' },
         { path: '/resale', icon: DollarSign, label: 'Revenda', badge: 'NOVO' },
+        { path: '/finance-plans', icon: DollarSign, label: 'Planos & Receitas', badge: 'NOVO' },
         { path: '/game-schedule', icon: Trophy, label: 'Grade de Jogos', badge: 'NOVO' },
         { path: '/banner-generator', icon: Image, label: 'Gerador de Banners', badge: 'NOVO' },
         { path: '/whatsapp-auto?tab=livechat', icon: MessageSquare, label: 'Chat Ao Vivo', badge: 'NOVO' },
+        { path: '/agents', icon: Sparkles, label: 'Agentes IA', badge: 'PRO' },
       ]
     },
     {
@@ -94,7 +96,7 @@ const Layout = () => {
       <div className="h-36 flex items-center justify-center px-4 border-b border-dark-700 bg-dark-900/50 py-4 shrink-0">
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center justify-center transition hover:scale-105">
-            <img src="/logo-maxx.svg" alt="Maxx Control" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(255,165,0,0.4)]" />
+            <img src="/logo-maxx.svg" alt="Maxx Control" className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(252, 95, 22,0.4)]" />
           </div>
           <div className="text-center">
             <h2 className="text-white font-bold text-lg tracking-tight">MAXX Control</h2>

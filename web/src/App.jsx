@@ -20,8 +20,10 @@ import Landing from './pages/Landing'
 import Tickets from './pages/Tickets'
 import Store from './pages/Store'
 import WhatsAppAuto from './pages/WhatsAppAuto'
+import FinancePlans from './pages/FinancePlans'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
+import NexusAgent from './pages/NexusAgent'
 
 function App() {
   return (
@@ -58,6 +60,8 @@ function App() {
             <Route path="tickets" element={<Tickets />} />
             <Route path="banner-generator" element={<BannerGenerator />} />
             <Route path="whatsapp-auto" element={<WhatsAppAuto />} />
+            <Route path="finance-plans" element={<FinancePlans />} />
+            <Route path="agents" element={<NexusAgent />} />
           </Route>
         </Routes>
       </BrowserRouter>

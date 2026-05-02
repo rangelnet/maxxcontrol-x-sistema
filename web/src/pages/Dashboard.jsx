@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
-import { Users, Smartphone, TrendingUp, DollarSign, UserPlus, Tv, Wifi, Zap, Server, Activity, Image, ShoppingBag } from 'lucide-react'
+import { Users, Smartphone, TrendingUp, DollarSign, UserPlus, Tv, Wifi, Zap, Server, Activity, Image, ShoppingBag, Sparkles } from 'lucide-react'
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null)
@@ -168,6 +168,20 @@ const Dashboard = () => {
       cta: 'Explorar →',
       path: '/iptv-tree',
       badge: null,
+    },
+    {
+      title: 'Centro de Agentes',
+      description: 'Monitore a inteligência artificial Nexus e os robôs de automação do sistema.',
+      icon: Sparkles,
+      iconColor: 'text-orange-400',
+      iconBg: 'bg-orange-500/10 border-orange-500/20',
+      hoverBorder: 'hover:border-orange-500/50',
+      hoverShadow: 'hover:shadow-orange-500/10',
+      textColor: 'text-orange-400',
+      cta: 'Ver Agentes →',
+      path: '/agents',
+      badge: 'PRO',
+      badgeColor: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
     },
   ]
 

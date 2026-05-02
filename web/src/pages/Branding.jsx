@@ -3,7 +3,7 @@ import api from '../services/api'
 
 // ─── PALETAS RÁPIDAS ───────────────────────────────────────────────────────────
 const PALETTES = [
-  { name: 'MAXX Orange',  primary: '#FFA500', secondary: '#FF6A00', bg: '#050505', text: '#FFFFFF', accent: '#FF8C00' },
+  { name: 'MAXX Orange',  primary: '#FC5F16', secondary: '#FF6A00', bg: '#050505', text: '#FFFFFF', accent: '#FF8C00' },
   { name: 'Netflix Red',  primary: '#E50914', secondary: '#B20710', bg: '#141414', text: '#FFFFFF', accent: '#FF1E2D' },
   { name: 'Prime Blue',   primary: '#00A8E1', secondary: '#0094CB', bg: '#0F171E', text: '#FFFFFF', accent: '#1EC1F0' },
   { name: 'Disney+',      primary: '#113CCF', secondary: '#0B2AA0', bg: '#040B2A', text: '#FFFFFF', accent: '#1A4DE0' },
@@ -69,7 +69,7 @@ const Branding = () => {
     app_name:         'TV Maxx',
     logo_url:         '/branding/ic_maxx_player.png',
     logo_dark_url:    '/branding/ic_launcher.png',
-    primary_color:    '#FFA500',
+    primary_color:    '#FC5F16',
     secondary_color:  '#FF6A00',
     background_color: '#050505',
     text_color:       '#FFFFFF',
@@ -108,7 +108,7 @@ const Branding = () => {
       app_name:          b.app_name         || 'TV Maxx',
       logo_url:          b.logo_url         || '',
       logo_dark_url:     b.logo_dark_url    || '',
-      primary_color:     b.primary_color    || '#FFA500',
+      primary_color:     b.primary_color    || '#FC5F16',
       secondary_color:   b.secondary_color  || '#FF6A00',
       background_color:  b.background_color || '#050505',
       text_color:        b.text_color       || '#FFFFFF',
@@ -162,7 +162,7 @@ const Branding = () => {
       app_name:         'Novo Tema',
       logo_url:         '',
       logo_dark_url:    '',
-      primary_color:    '#FFA500',
+      primary_color:    '#FC5F16',
       secondary_color:  '#FF6A00',
       background_color: '#050505',
       text_color:       '#FFFFFF',

@@ -56,7 +56,7 @@ const AiAgentTab = () => {
       {/* HEADER MASTER AGENT */}
       <div className="bg-gradient-to-r from-orange-500/20 to-transparent p-8 rounded-[2rem] border-l-4 border-orange-500 backdrop-blur-md">
         <div className="flex items-center gap-4">
-          <div className="p-4 bg-orange-500 text-black rounded-2xl shadow-[0_0_30px_rgba(255,165,0,0.3)] animate-pulse">
+          <div className="p-4 bg-orange-500 text-black rounded-2xl shadow-[0_0_30px_rgba(252, 95, 22,0.3)] animate-pulse">
             <Cpu size={32} />
           </div>
           <div>
@@ -137,7 +137,7 @@ const AiAgentTab = () => {
                 {commits.map((commit, idx) => (
                   <div key={commit.sha} className="relative group">
                     {/* Linha de conexão */}
-                    <div className="absolute -left-[41px] top-0 w-4 h-4 rounded-full bg-[#111] border-2 border-orange-500 group-hover:scale-125 transition-all shadow-[0_0_10px_rgba(255,165,0,0.5)]"></div>
+                    <div className="absolute -left-[41px] top-0 w-4 h-4 rounded-full bg-[#111] border-2 border-orange-500 group-hover:scale-125 transition-all shadow-[0_0_10px_rgba(252, 95, 22,0.5)]"></div>
                     
                     <div className="bg-black/40 p-5 rounded-3xl border border-white/5 hover:border-orange-500/30 transition-all">
                       <div className="flex items-start justify-between mb-2">

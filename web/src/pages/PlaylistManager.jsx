@@ -11,7 +11,7 @@ const labelStyle = {
   display:'block', fontSize:11, fontWeight:700, color:'#71717a',
   textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:7,
 }
-const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(255,165,0,0.3)' }
+const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FC5F16,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(252, 95, 22,0.3)' }
 const btnGhost   = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#a1a1aa', fontSize:13, fontWeight:600, cursor:'pointer' }
 
 const platforms = [
@@ -96,7 +96,7 @@ const PlaylistManager = () => {
 
   if (loading) return (
     <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
-      <Loader size={28} color='#FFA500' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
+      <Loader size={28} color='#FC5F16' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
       Carregando...
     </div>
   )
@@ -106,20 +106,20 @@ const PlaylistManager = () => {
       {/* Header */}
       <div>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-          <Play size={26} color='#FFA500'/> Playlist Manager 4-em-1
+          <Play size={26} color='#FC5F16'/> Playlist Manager 4-em-1
         </h1>
         <p style={{ fontSize:12, color:'#52525b' }}>Cadastre playlists IPTV em 4 plataformas simultaneamente</p>
       </div>
 
       {/* Estatísticas */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
-        <StatCard label='Total Cadastrado' value={stats.total}   color='#FFA500'/>
+        <StatCard label='Total Cadastrado' value={stats.total}   color='#FC5F16'/>
         <StatCard label='Sucesso'          value={stats.success} color='#34d399'/>
         <StatCard label='Erros'            value={stats.error}   color='#f87171'/>
       </div>
 
       {/* Seleção de Plataforma */}
-      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:24 }}>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, padding:24 }}>
         <p style={{ fontSize:12, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14 }}>1 — Selecione a Plataforma</p>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))', gap:10 }}>
           {platforms.map(p => {
@@ -136,7 +136,7 @@ const PlaylistManager = () => {
       </div>
 
       {/* Gerenciamento de Servidores */}
-      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:24 }}>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, padding:24 }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
           <p style={{ fontSize:12, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.08em' }}>2 — Servidores</p>
           <button onClick={() => setShowAddModal(true)} style={btnPrimary}><Plus size={14}/> Adicionar</button>
@@ -144,8 +144,8 @@ const PlaylistManager = () => {
 
         {servers.length > 0 && (
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12, padding:'8px 12px', background:'rgba(255,255,255,0.03)', borderRadius:9 }}>
-            <div onClick={selectAll} style={{ width:18, height:18, borderRadius:5, border:`2px solid ${selectedServers.length===servers.length?'#FFA500':'rgba(255,255,255,0.15)'}`, background:selectedServers.length===servers.length?'rgba(255,165,0,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
-              {selectedServers.length===servers.length && <CheckCircle size={11} color='#FFA500'/>}
+            <div onClick={selectAll} style={{ width:18, height:18, borderRadius:5, border:`2px solid ${selectedServers.length===servers.length?'#FC5F16':'rgba(255,255,255,0.15)'}`, background:selectedServers.length===servers.length?'rgba(252, 95, 22,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', flexShrink:0 }}>
+              {selectedServers.length===servers.length && <CheckCircle size={11} color='#FC5F16'/>}
             </div>
             <span style={{ fontSize:12, color:'#71717a' }}>Selecionar todos · <strong style={{ color:'#a1a1aa' }}>{selectedServers.length}/{servers.length}</strong> selecionados</span>
           </div>
@@ -153,13 +153,13 @@ const PlaylistManager = () => {
 
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {servers.map(s => (
-            <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:11, border:`2px solid ${selectedServers.includes(s.id)?'rgba(255,165,0,0.3)':'rgba(255,255,255,0.05)'}`, background: selectedServers.includes(s.id)?'rgba(255,165,0,0.06)':'rgba(255,255,255,0.01)', transition:'all .15s', cursor:'pointer' }}
+            <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:11, border:`2px solid ${selectedServers.includes(s.id)?'rgba(252, 95, 22,0.3)':'rgba(255,255,255,0.05)'}`, background: selectedServers.includes(s.id)?'rgba(252, 95, 22,0.06)':'rgba(255,255,255,0.01)', transition:'all .15s', cursor:'pointer' }}
               onClick={() => toggleServer(s.id)}>
-              <div style={{ width:18, height:18, borderRadius:5, border:`2px solid ${selectedServers.includes(s.id)?'#FFA500':'rgba(255,255,255,0.15)'}`, background:selectedServers.includes(s.id)?'rgba(255,165,0,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                {selectedServers.includes(s.id) && <CheckCircle size={11} color='#FFA500'/>}
+              <div style={{ width:18, height:18, borderRadius:5, border:`2px solid ${selectedServers.includes(s.id)?'#FC5F16':'rgba(255,255,255,0.15)'}`, background:selectedServers.includes(s.id)?'rgba(252, 95, 22,0.2)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                {selectedServers.includes(s.id) && <CheckCircle size={11} color='#FC5F16'/>}
               </div>
-              <div style={{ width:32, height:32, borderRadius:8, background:'rgba(255,165,0,0.1)', border:'1px solid rgba(255,165,0,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Server size={14} color='#FFA500'/>
+              <div style={{ width:32, height:32, borderRadius:8, background:'rgba(252, 95, 22,0.1)', border:'1px solid rgba(252, 95, 22,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Server size={14} color='#FC5F16'/>
               </div>
               <div style={{ flex:1 }}>
                 <p style={{ fontSize:13, fontWeight:700, color:'#e4e4e7' }}>{s.name}</p>
@@ -189,7 +189,7 @@ const PlaylistManager = () => {
       </div>
 
       {/* Log de Atividades */}
-      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:24 }}>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, padding:24 }}>
         <p style={{ fontSize:12, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
           <Activity size={13}/> Log de Atividades
         </p>
@@ -209,9 +209,9 @@ const PlaylistManager = () => {
       {showAddModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
           onClick={e=>e.target===e.currentTarget&&setShowAddModal(false)}>
-          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:420 }}>
+          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(252, 95, 22,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:420 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-              <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', display:'flex',alignItems:'center',gap:8 }}><Server size={16} color='#FFA500'/> Adicionar Servidor</h2>
+              <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', display:'flex',alignItems:'center',gap:8 }}><Server size={16} color='#FC5F16'/> Adicionar Servidor</h2>
               <button onClick={()=>setShowAddModal(false)} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}><X size={14}/></button>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
@@ -233,14 +233,14 @@ const PlaylistManager = () => {
       {showRegModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
           onClick={e=>e.target===e.currentTarget&&!registering&&setShowRegModal(false)}>
-          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:440 }}>
+          <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(252, 95, 22,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:440 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
               <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', display:'flex',alignItems:'center',gap:8 }}><Play size={16} color='#22c55e'/> Registro em Lote</h2>
               {!registering && <button onClick={()=>setShowRegModal(false)} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}><X size={14}/></button>}
             </div>
 
             <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:'10px 14px', marginBottom:16 }}>
-              <p style={{ fontSize:12, color:'#71717a', marginBottom:4 }}>Plataforma: <strong style={{ color:'#FFA500' }}>{platforms.find(p=>p.id===currentPlatform)?.name}</strong></p>
+              <p style={{ fontSize:12, color:'#71717a', marginBottom:4 }}>Plataforma: <strong style={{ color:'#FC5F16' }}>{platforms.find(p=>p.id===currentPlatform)?.name}</strong></p>
               <p style={{ fontSize:12, color:'#71717a', marginBottom:4 }}>Servidores: <strong style={{ color:'#a1a1aa' }}>{selectedServers.length}</strong></p>
               <p style={{ fontSize:11, color:'#3f3f46' }}>{servers.filter(s=>selectedServers.includes(s.id)).map(s=>s.name).join(', ')}</p>
             </div>

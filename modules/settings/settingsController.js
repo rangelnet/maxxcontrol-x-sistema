@@ -40,3 +40,28 @@ exports.updateSetting = async (req, res) => {
     res.status(500).json({ error: 'Erro ao atualizar configuração' });
   }
 };
+
+exports.bulkUpdateSettings = async (req, res) => {
+  try {
+    const settings = req.body;
+    
+    // Process each key-value pair in the request body
+    for (const [key, value] of Object.entries(settings)) {
+      const jsonValue = JSON.stringify(value);
+      
+      await pool.query(
+        `INSERT INTO global_settings (key, value, updated_at) 
+         VALUES ($1, $2, CURRENT_TIMESTAMP)
+         ON CONFLICT (key) 
+         DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+        [key, jsonValue]
+      );
+    }
+    
+    res.json({ message: 'Configurações atualizadas com sucesso' });
+  } catch (error) {
+    console.error('Erro ao atualizar configurações em lote:', error);
+    res.status(500).json({ error: 'Erro ao atualizar configurações' });
+  }
+};
+

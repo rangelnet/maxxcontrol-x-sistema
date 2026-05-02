@@ -88,7 +88,7 @@ const IptvTreeViewer = () => {
           const p = providers.find(x => x.slot_index === i);
           const active = activeSlot === i;
           return (
-            <button key={i} onClick={() => setActiveSlot(i)} className={`flex-shrink-0 w-44 p-5 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-2 group ${active ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_25px_rgba(255,165,0,0.15)] scale-105' : 'bg-[#111] border-white/5 text-zinc-500 hover:border-white/10'}`}>
+            <button key={i} onClick={() => setActiveSlot(i)} className={`flex-shrink-0 w-44 p-5 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-2 group ${active ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_25px_rgba(252, 95, 22,0.15)] scale-105' : 'bg-[#111] border-white/5 text-zinc-500 hover:border-white/10'}`}>
               <div className={`p-3 rounded-2xl ${active ? 'bg-orange-500 text-black' : 'bg-[#222] group-hover:bg-[#333]'}`}><Monitor size={24} /></div>
               <div className="font-black text-[12px] uppercase tracking-wider">{p?.name || `SERVIDOR ${i}`}</div>
               {active && <div className="text-[9px] font-black bg-orange-500 text-black px-2 py-0.5 rounded-full animate-pulse">MASTER ACTIVE</div>}
@@ -101,7 +101,7 @@ const IptvTreeViewer = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-black text-white flex items-center gap-4">
-            <span className="p-3 bg-orange-500 text-black rounded-2xl shadow-[0_0_20px_rgba(255,165,0,0.3)]"><Star size={24} fill="currentColor" /></span>
+            <span className="p-3 bg-orange-500 text-black rounded-2xl shadow-[0_0_20px_rgba(252, 95, 22,0.3)]"><Star size={24} fill="currentColor" /></span>
             CURADORIA MASTER <span className="text-orange-500">IPTV</span>
           </h1>
           <p className="text-zinc-500 mt-2 font-medium">Selecione um dos 6 provedores e escolha conteúdos para o marketing.</p>
@@ -163,7 +163,7 @@ const IptvTreeViewer = () => {
 
       {showConfig && editProvider && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl flex items-center justify-center z-50 p-6">
-          <form onSubmit={handleSaveConfig} className="bg-[#111] p-10 rounded-[2.5rem] border-2 border-orange-500/30 w-full max-w-lg space-y-6 shadow-[0_0_100px_rgba(255,165,0,0.1)] relative">
+          <form onSubmit={handleSaveConfig} className="bg-[#111] p-10 rounded-[2.5rem] border-2 border-orange-500/30 w-full max-w-lg space-y-6 shadow-[0_0_100px_rgba(252, 95, 22,0.1)] relative">
             <h2 className="text-white font-black text-3xl uppercase tracking-tighter">Configurar Slot {activeSlot}</h2>
             <div className="space-y-4">
                <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.name || ''} onChange={e=>setEditProvider({...editProvider, name: e.target.value})} placeholder="Ex: Servidor VIP" />

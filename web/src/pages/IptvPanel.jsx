@@ -14,9 +14,9 @@ const labelStyle = {
 }
 const btnPrimary = {
   display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px',
-  background:'linear-gradient(135deg,#FFA500,#FF6B00)', border:'none',
+  background:'linear-gradient(135deg,#FC5F16,#FF6B00)', border:'none',
   borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer',
-  boxShadow:'0 4px 12px rgba(255,165,0,0.3)',
+  boxShadow:'0 4px 12px rgba(252, 95, 22,0.3)',
 }
 const btnGhost = {
   display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px',
@@ -68,11 +68,11 @@ const ServerModal = ({ onClose, onSave, editing }) => {
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,165,0,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:460, boxShadow:'0 25px 60px rgba(0,0,0,0.6)' }}>
+      <div style={{ background:'rgba(17,17,17,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(252, 95, 22,0.18)', borderRadius:20, padding:28, width:'100%', maxWidth:460, boxShadow:'0 25px 60px rgba(0,0,0,0.6)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{ width:36, height:36, borderRadius:10, background:'rgba(255,165,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Server size={18} color='#FFA500'/>
+            <div style={{ width:36, height:36, borderRadius:10, background:'rgba(252, 95, 22,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Server size={18} color='#FC5F16'/>
             </div>
             <h2 style={{ fontSize:16, fontWeight:800, color:'#fff' }}>{editing?'Editar':'Adicionar'} Servidor</h2>
           </div>
@@ -190,7 +190,7 @@ const IptvPanel = () => {
       {/* Header */}
       <div style={{ marginBottom:24 }}>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-          <Server size={26} color='#FFA500'/> IPTV
+          <Server size={26} color='#FC5F16'/> IPTV
         </h1>
         <p style={{ fontSize:12, color:'#52525b' }}>Servidor global e gerenciamento de servidores IPTV</p>
       </div>
@@ -199,7 +199,7 @@ const IptvPanel = () => {
       <div style={{ display:'flex', gap:4, marginBottom:24, background:'rgba(17,17,17,0.6)', padding:5, borderRadius:14, width:'fit-content', border:'1px solid rgba(255,255,255,0.06)' }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 22px', borderRadius:10, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all .2s', background:activeTab===t.key?'rgba(255,165,0,0.15)':'transparent', color:activeTab===t.key?'#FFA500':'#71717a', boxShadow:activeTab===t.key?'0 2px 10px rgba(255,165,0,0.15)':'none' }}>
+            style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 22px', borderRadius:10, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, transition:'all .2s', background:activeTab===t.key?'rgba(252, 95, 22,0.15)':'transparent', color:activeTab===t.key?'#FC5F16':'#71717a', boxShadow:activeTab===t.key?'0 2px 10px rgba(252, 95, 22,0.15)':'none' }}>
             <t.Icon size={15}/> {t.label}
           </button>
         ))}
@@ -212,9 +212,9 @@ const IptvPanel = () => {
             <Zap size={16} color='#60a5fa'/><p style={{ fontSize:12, color:'#93c5fd' }}>Configuração global aplicada a todos os dispositivos. Servidores por dispositivo podem ser configurados na aba Dispositivos.</p>
           </div>
 
-          <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, padding:28, boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
+          <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, padding:28, boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
             <h2 style={{ fontSize:16, fontWeight:800, color:'#fff', marginBottom:20, display:'flex', alignItems:'center', gap:8 }}>
-              <div style={{ width:6, height:6, borderRadius:'50%', background:'#FFA500', boxShadow:'0 0 8px #FFA500' }}/> Xtream Codes
+              <div style={{ width:6, height:6, borderRadius:'50%', background:'#FC5F16', boxShadow:'0 0 8px #FC5F16' }}/> Xtream Codes
             </h2>
             <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div><label style={labelStyle}>URL do Servidor</label><input style={inputStyle} value={config.xtream_url} onChange={e=>setConfig({...config,xtream_url:e.target.value})} placeholder='http://exemplo.com:8080' required/></div>
@@ -247,13 +247,13 @@ const IptvPanel = () => {
             <button onClick={()=>{setEditingServer(null);setShowModal(true)}} style={btnPrimary}><Plus size={15}/> Adicionar Servidor</button>
           </div>
 
-          <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, overflow:'hidden' }}>
+          <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, overflow:'hidden' }}>
             {loadingSrv ? (
               <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>Carregando servidores...</div>
             ) : servers.length===0 ? (
               <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
                 <Server size={36} color='#27272a' style={{ display:'block', margin:'0 auto 12px' }}/>
-                <p>Nenhum servidor. <button onClick={()=>setShowModal(true)} style={{ color:'#FFA500', background:'none', border:'none', cursor:'pointer', fontWeight:700 }}>Adicionar</button></p>
+                <p>Nenhum servidor. <button onClick={()=>setShowModal(true)} style={{ color:'#FC5F16', background:'none', border:'none', cursor:'pointer', fontWeight:700 }}>Adicionar</button></p>
               </div>
             ) : (
               <div style={{ overflowX:'auto' }}>
@@ -268,11 +268,11 @@ const IptvPanel = () => {
                   <tbody>
                     {servers.map((s,idx) => (
                       <tr key={s.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', background:idx%2===0?'transparent':'rgba(255,255,255,0.01)', transition:'background .15s' }}
-                        onMouseEnter={e=>e.currentTarget.style.background='rgba(255,165,0,0.04)'}
+                        onMouseEnter={e=>e.currentTarget.style.background='rgba(252, 95, 22,0.04)'}
                         onMouseLeave={e=>e.currentTarget.style.background=idx%2===0?'transparent':'rgba(255,255,255,0.01)'}>
                         <td style={{ padding:'12px 16px', whiteSpace:'nowrap' }}>
                           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                            <div style={{ width:30, height:30, borderRadius:8, background:'rgba(255,165,0,0.1)', border:'1px solid rgba(255,165,0,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Server size={13} color='#FFA500'/></div>
+                            <div style={{ width:30, height:30, borderRadius:8, background:'rgba(252, 95, 22,0.1)', border:'1px solid rgba(252, 95, 22,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><Server size={13} color='#FC5F16'/></div>
                             <span style={{ fontSize:13, fontWeight:700, color:'#e4e4e7' }}>{s.name}</span>
                           </div>
                         </td>

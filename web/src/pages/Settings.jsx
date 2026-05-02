@@ -58,11 +58,6 @@ export default function Settings() {
   ])
   const [sessionsLoading, setSessionsLoading] = useState(false)
 
-  // === Gateway Mercado Pago State ===
-  const [mpAccessToken, setMpAccessToken] = useState('')
-  const [mpPublicKey, setMpPublicKey] = useState('')
-  const [showMpToken, setShowMpToken] = useState(false)
-
   // === WhatsApp Automation State ===
   const [waStatus, setWaStatus] = useState('disconnected') // 'loading' | 'disconnected' | 'connected'
   const [waQrCode, setWaQrCode] = useState('')
@@ -146,8 +141,6 @@ export default function Settings() {
         setPanelUrl(response.data.panel_url || '')
         setTrialHours(response.data.trial_hours || '24')
         setWelcomeTemplate(response.data.welcome_template || '')
-        setMpAccessToken(response.data.mp_access_token || '')
-        setMpPublicKey(response.data.mp_public_key || '')
         
         if (response.data.showEarnings !== undefined) setShowEarnings(response.data.showEarnings)
         if (response.data.persistFilters !== undefined) setPersistFilters(response.data.persistFilters)
@@ -224,11 +217,6 @@ export default function Settings() {
       if (key === 'telegram' || key === 'tel') {
         value = telegramId
         payloadKey = 'telegram_id'
-      }
-      if (key === 'mp' || key === 'mp_credentials') {
-        await api.post('/settings', { mp_access_token: mpAccessToken, mp_public_key: mpPublicKey })
-        showFeedback('Credenciais Mercado Pago salvas!')
-        return
       }
       if (key === 'profile') {
         await api.post('/settings', { name: profileName, email: profileEmail, phone: profilePhone, telegram_username: profileTg })
@@ -696,37 +684,6 @@ export default function Settings() {
             </div>
          </div>
 
-         {/* Mercado Pago */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-2">
-              <CreditCard className="h-5 w-5 text-sky-500" />
-              <h2 className="text-lg font-bold text-white">Mercado Pago</h2>
-            </div>
-            <p className="text-xs text-zinc-500 mb-6">Conecte suas credenciais para processar Pix e Cartão na sua Loja de Créditos.</p>
-            <div className="space-y-4">
-              <input 
-                type="password"
-                value={mpAccessToken}
-                onChange={e => setMpAccessToken(e.target.value)}
-                placeholder="Access Token (APP_USR-...)"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none shadow-inner"
-              />
-              <input 
-                type="text"
-                value={mpPublicKey}
-                onChange={e => setMpPublicKey(e.target.value)}
-                placeholder="Public Key (APP_USR-...)"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none shadow-inner"
-              />
-              <button 
-                onClick={() => handleSave('mp')}
-                disabled={saving.mp}
-                className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-black transition shadow-lg shadow-sky-500/20"
-              >
-                {saving.mp ? 'Conectando...' : 'Conectar Gateway'}
-              </button>
-            </div>
-         </div>
 
          {/* Alterar Senha */}
          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">

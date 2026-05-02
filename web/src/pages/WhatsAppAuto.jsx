@@ -761,7 +761,7 @@ export default function WhatsAppAuto() {
                  {waGroups.map(g => (
                    <label key={g.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group/item ${waSelectedGroups.includes(g.id) ? 'bg-brand-500/10 border-brand-500/30' : 'bg-dark-800 border-dark-700 hover:border-dark-600'}`}>
                      <input type="checkbox" className="hidden" checked={waSelectedGroups.includes(g.id)} onChange={() => toggleGroupSelection(g.id)} />
-                     <div className={`h-4 w-4 rounded-md border flex items-center justify-center transition-all ${waSelectedGroups.includes(g.id) ? 'bg-brand-500 border-brand-500 shadow-[0_0_10px_rgba(255,165,0,0.3)]' : 'bg-dark-900 border-dark-600 group-hover/item:border-zinc-500'}`}>
+                     <div className={`h-4 w-4 rounded-md border flex items-center justify-center transition-all ${waSelectedGroups.includes(g.id) ? 'bg-brand-500 border-brand-500 shadow-[0_0_10px_rgba(252, 95, 22,0.3)]' : 'bg-dark-900 border-dark-600 group-hover/item:border-zinc-500'}`}>
                        {waSelectedGroups.includes(g.id) && <Check className="h-3 w-3 text-white stroke-[4px]" />}
                      </div>
                      <span className={`text-xs font-semibold truncate ${waSelectedGroups.includes(g.id) ? 'text-white' : 'text-zinc-400'}`}>{g.name}</span>
@@ -1426,12 +1426,12 @@ export default function WhatsAppAuto() {
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-dark-900/40 backdrop-invert-[0.02]">
               <div className="max-w-xl mx-auto space-y-12 relative">
                 {/* Linha conectora visual */}
-                <div className="absolute left-[24px] top-10 bottom-10 w-0.5 bg-gradient-to-b from-brand-500/50 via-brand-500/20 to-transparent z-0 shadow-[0_0_15px_rgba(255,165,0,0.1)]" />
+                <div className="absolute left-[24px] top-10 bottom-10 w-0.5 bg-gradient-to-b from-brand-500/50 via-brand-500/20 to-transparent z-0 shadow-[0_0_15px_rgba(252, 95, 22,0.1)]" />
 
                 {editingFlow.content.nodes.map((node, idx) => (
                   <div key={idx} className="relative z-10 animate-slideUp" style={{ animationDelay: `${idx * 0.1}s` }}>
                     <div className="flex gap-6">
-                      <div className="h-12 w-12 rounded-2xl bg-dark-800 border-2 border-brand-500/40 flex items-center justify-center text-brand-400 font-black text-sm shadow-[0_0_20px_rgba(255,165,0,0.1)] shrink-0">
+                      <div className="h-12 w-12 rounded-2xl bg-dark-800 border-2 border-brand-500/40 flex items-center justify-center text-brand-400 font-black text-sm shadow-[0_0_20px_rgba(252, 95, 22,0.1)] shrink-0">
                         {idx + 1}
                       </div>
 
@@ -1559,7 +1559,7 @@ export default function WhatsAppAuto() {
 
             <div className="p-6 border-t border-dark-700 bg-dark-900/60 flex items-center justify-between gap-4">
                <div className="flex items-center gap-4 text-zinc-500 text-[10px] font-black uppercase tracking-widest hidden md:flex">
-                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_5px_rgba(255,165,0,0.5)]" /> Auto-Save Local Ativo</div>
+                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_5px_rgba(252, 95, 22,0.5)]" /> Auto-Save Local Ativo</div>
                </div>
                <div className="flex flex-1 md:flex-none gap-3">
                  <button onClick={() => setEditingFlow(null)} className="flex-1 md:flex-none px-8 py-3 bg-dark-900 border border-dark-700 text-zinc-400 font-black rounded-2xl hover:text-white transition-all text-[10px] uppercase tracking-widest">Sair sem salvar</button>
