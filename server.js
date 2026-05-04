@@ -436,6 +436,7 @@ async function runPendingMigrations() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+    await pool.query(`ALTER TABLE global_settings ADD CONSTRAINT global_settings_key_unique UNIQUE (key)`).catch(() => {});
     console.log('  ✅ Tabela global_settings verificada/criada');
   } catch (err) {
     if (!IGNORE_CODES.includes(err.code)) {

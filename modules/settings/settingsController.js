@@ -13,11 +13,21 @@ exports.getSettings = async (req, res) => {
       }
     });
 
-    // 2. Pegar dados do perfil do usuário logado
-    const userResult = await pool.query(
-      'SELECT nome as name, email, telefone as phone, telegram_username, tfa_enabled, telegram_chat_id FROM users WHERE id = $1',
-      [req.userId]
-    );
+    // 2. Pegar dados do perfil do usuário logado (usamos query dinâmica ou try/catch caso colunas não existam)
+    let userResult;
+    try {
+      userResult = await pool.query(
+        'SELECT nome as name, email, telefone as phone, telegram_username, tfa_enabled, telegram_chat_id FROM users WHERE id = $1',
+        [req.userId]
+      );
+    } catch (columnError) {
+      // Se der erro de coluna (ex: telefone não existe), faz fallback para query básica
+      console.warn('Fallback na busca do usuário. Algumas colunas (ex: telefone) não existem na tabela users.');
+      userResult = await pool.query(
+        'SELECT nome as name, email FROM users WHERE id = $1',
+        [req.userId]
+      );
+    }
 
     if (userResult.rows.length > 0) {
       const user = userResult.rows[0];

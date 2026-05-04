@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Plus, Settings, Activity, Trash2, Edit3, Monitor, Clock, CheckCircle, Search, Filter, Phone, User, CreditCard, ShoppingCart, Tag, Smartphone, Image } from 'lucide-react';
-import axios from 'axios';
+import axios from '../services/api';
 
 const FinancePlans = () => {
   const [plans, setPlans] = useState([]);

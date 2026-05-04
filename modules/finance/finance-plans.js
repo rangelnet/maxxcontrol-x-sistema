@@ -47,11 +47,24 @@ pool.query(`
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS app_activation_packages (
+        id SERIAL PRIMARY KEY,
+        app_name VARCHAR(255) NOT NULL,
+        logo_url VARCHAR(255),
+        monthly_price NUMERIC(10, 2) NOT NULL,
+        yearly_price NUMERIC(10, 2) NOT NULL,
+        description TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 `).then(async () => {
     // Seed default credit packages se a tabela estiver vazia
     const { rows } = await pool.query('SELECT COUNT(*) FROM credit_packages');
     if (parseInt(rows[0].count) === 0) {
         const defaultPackages = [
+            { name: 'PACOTE TESTE', credits: 1, price: 1.00, promo_price: 0.50 },
             { name: 'Pacote 10 Créditos', credits: 10, price: 100 },
             { name: 'Pacote 30 Créditos', credits: 30, price: 240 },
             { name: 'Pacote 50 Créditos', credits: 50, price: 350 },
