@@ -168,7 +168,7 @@ const IptvTreeViewer = () => {
             <div className="space-y-4">
                <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.name || ''} onChange={e=>setEditProvider({...editProvider, name: e.target.value})} placeholder="Ex: Servidor VIP" />
                <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-mono text-sm" value={editProvider.url || ''} onChange={e=>setEditProvider({...editProvider, url: e.target.value})} placeholder="http://dominio.com:8080" />
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.username || ''} onChange={e=>setEditProvider({...editProvider, username: e.target.value})} placeholder="Username" />
                   <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.password || ''} onChange={e=>setEditProvider({...editProvider, password: e.target.value})} placeholder="Password" type="password" />
                </div>

@@ -377,13 +377,7 @@ const FinancePlans = () => {
   });
 
   // Botão Primário Laranja Oficial
-  const btnPrimary = { 
-    display: 'inline-flex', alignItems: 'center', gap: '8px', 
-    padding: '12px 24px', background: '#FC5F16', border: 'none', 
-    borderRadius: '12px', color: '#fff', fontSize: '14px', 
-    fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)',
-    transition: 'all 0.2s'
-  };
+  const btnPrimaryClass = "inline-flex items-center gap-2 px-6 py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-sm font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
 
   return (
     <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', color: '#f4f4f5', fontFamily: 'Inter, sans-serif' }}>
@@ -400,12 +394,12 @@ const FinancePlans = () => {
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           {activeTab === 'planos' && (
-            <button onClick={() => setShowModal(true)} style={btnPrimary} onMouseOver={e => e.currentTarget.style.transform='scale(1.02)'} onMouseOut={e => e.currentTarget.style.transform='scale(1)'}>
+            <button onClick={() => setShowModal(true)} className={btnPrimaryClass}>
               <Plus size={18} /> Novo Plano
             </button>
           )}
           {activeTab === 'loja' && (
-            <button onClick={() => setShowCreditModal(true)} style={btnPrimary} onMouseOver={e => e.currentTarget.style.transform='scale(1.02)'} onMouseOut={e => e.currentTarget.style.transform='scale(1)'}>
+            <button onClick={() => setShowCreditModal(true)} className={btnPrimaryClass}>
               <Plus size={18} /> Novo Pacote
             </button>
           )}
@@ -414,36 +408,21 @@ const FinancePlans = () => {
 
       {/* ABAS */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', borderBottom: '1px solid #27272a', paddingBottom: '15px' }}>
-        <button 
-          onClick={() => setActiveTab('planos')}
-          style={{ padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', border: 'none', background: activeTab === 'planos' ? 'rgba(252,95,22,0.1)' : 'transparent', color: activeTab === 'planos' ? '#FC5F16' : '#a1a1aa' }}
-        >
-          Planos Comerciais
-        </button>
-        <button 
-          onClick={() => setActiveTab('crm')}
-          style={{ padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', border: 'none', background: activeTab === 'crm' ? 'rgba(252,95,22,0.1)' : 'transparent', color: activeTab === 'crm' ? '#FC5F16' : '#a1a1aa' }}
-        >
-          CRM de Vendas
-        </button>
-        <button 
-          onClick={() => setActiveTab('loja')}
-          style={{ padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', border: 'none', background: activeTab === 'loja' ? 'rgba(252,95,22,0.1)' : 'transparent', color: activeTab === 'loja' ? '#FC5F16' : '#a1a1aa' }}
-        >
-          Loja de Créditos
-        </button>
-        <button 
-          onClick={() => setActiveTab('gateways')}
-          style={{ padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', border: 'none', background: activeTab === 'gateways' ? 'rgba(252,95,22,0.1)' : 'transparent', color: activeTab === 'gateways' ? '#FC5F16' : '#a1a1aa' }}
-        >
-          Gateways de Pagamentos
-        </button>
-        <button 
-          onClick={() => setActiveTab('apps')}
-          style={{ padding: '10px 20px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', border: 'none', background: activeTab === 'apps' ? 'rgba(252,95,22,0.1)' : 'transparent', color: activeTab === 'apps' ? '#FC5F16' : '#a1a1aa' }}
-        >
-          Ativação de Apps
-        </button>
+        {[
+          { id: 'planos', label: 'Planos Comerciais' },
+          { id: 'crm', label: 'CRM de Vendas' },
+          { id: 'loja', label: 'Loja de Créditos' },
+          { id: 'gateways', label: 'Gateways de Pagamentos' },
+          { id: 'apps', label: 'Ativação de Apps' }
+        ].map(tab => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-5 py-2.5 rounded-xl font-black cursor-pointer border-none transition-all transform active:scale-95 ${activeTab === tab.id ? 'bg-brand-500/10 text-brand-500' : 'bg-transparent text-zinc-500 hover:text-zinc-300'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* DASHBOARD CARDS */}
@@ -515,10 +494,10 @@ const FinancePlans = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', borderTop: '1px solid #27272a' }}>
-                <button style={{ flex: 1, background: '#27272a', border: 'none', color: '#fff', padding: '10px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                <button className="flex-1 bg-dark-700 hover:bg-dark-600 active:scale-95 text-white py-2.5 rounded-lg font-bold border border-white/5 transition-all flex items-center justify-center gap-2">
                   <Edit3 size={16} /> Editar
                 </button>
-                <button onClick={() => handleDelete(plan.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer' }}>
+                <button onClick={() => handleDelete(plan.id)} className="px-3 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all active:scale-95 flex items-center justify-center border border-red-500/20">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -560,6 +539,7 @@ const FinancePlans = () => {
           </div>
 
           <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: '#09090b', borderBottom: '1px solid #27272a' }}>
@@ -628,6 +608,7 @@ const FinancePlans = () => {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}
@@ -769,8 +750,8 @@ const FinancePlans = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
-                <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>Cancelar</button>
-                <button type="submit" style={{ flex: 2, padding: '14px', background: '#FC5F16', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)' }}>Salvar Plano</button>
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3.5 bg-transparent border border-white/10 hover:border-white/20 active:scale-95 text-white font-black rounded-xl transition-all">Cancelar</button>
+                <button type="submit" className="flex-2 py-3.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-black rounded-xl shadow-[0_4px_15px_rgba(252,95,22,0.3)] transition-all">Salvar Plano</button>
               </div>
             </form>
           </div>
@@ -913,7 +894,7 @@ const FinancePlans = () => {
 
               <div style={{ padding: '30px' }}>
                 {/* Linha Principal: Access Token e Status */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '25px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px', marginBottom: '25px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: '700', color: '#f4f4f5', marginBottom: '8px', display: 'block' }}>Informe o Access Token de sua conta *</label>
                     <input 

@@ -327,28 +327,20 @@ const Devices = () => {
   };
 
   const GridActionButton = ({ icon: Icon, color, onClick, title, label, size = 42 }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%' }}>
+    <div className="flex flex-col items-center gap-1.5 w-full">
       <button 
         onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
         title={title}
+        className="flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1 active:scale-90 shadow-lg hover:brightness-110"
         style={{
-          width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: size, height: size,
           background: color, border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           boxShadow: `0 4px 12px ${color}33`,
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
-          e.currentTarget.style.boxShadow = `0 8px 20px ${color}55`;
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.transform = 'translateY(0) scale(1)';
-          e.currentTarget.style.boxShadow = `0 4px 12px ${color}33`;
         }}
       >
         <Icon size={size * 0.45} />
       </button>
-      {label && <span style={{ fontSize: 9, color: '#71717a', fontWeight: 600, textAlign: 'center', lineHeight: 1.1, whiteSpace: 'nowrap' }}>{label}</span>}
+      {label && <span className="text-[9px] text-zinc-500 font-bold text-center leading-tight uppercase tracking-tighter whitespace-nowrap">{label}</span>}
     </div>
   );
 
@@ -356,19 +348,10 @@ const Devices = () => {
     <button 
       onClick={(e) => { e.stopPropagation(); onClick && onClick(e); }}
       title={title}
+      className="w-8 h-8 flex items-center justify-center transition-all duration-200 transform hover:-translate-y-0.5 active:scale-90 rounded-lg text-white border-none cursor-pointer"
       style={{
-        width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: color, border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer',
-        transition: 'all 0.2s',
+        background: color,
         boxShadow: `0 4px 12px ${color}33`,
-      }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
-        e.currentTarget.style.boxShadow = `0 6px 16px ${color}55`;
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-        e.currentTarget.style.boxShadow = `0 4px 12px ${color}33`;
       }}
     >
       <Icon size={16} />
@@ -721,13 +704,9 @@ const Devices = () => {
 
   // Tab pill style reutilizável
   const TabPill = ({ label, active, onClick }) => (
-    <button onClick={onClick} style={{
-      padding: '8px 18px', borderRadius: 8, border: '1px solid',
-      borderColor: active ? '#FC5F16' : 'rgba(255,255,255,0.08)',
-      background: active ? 'rgba(252, 95, 22,0.15)' : 'transparent',
-      color: active ? '#FC5F16' : '#71717a', fontSize: 12, fontWeight: 800,
-      cursor: 'pointer', transition: 'all 0.2s',
-    }}>{label}</button>
+    <button onClick={onClick} className={`px-4.5 py-2 rounded-lg border font-black text-xs transition-all transform active:scale-95 ${active ? 'bg-orange-500/15 border-orange-500 text-orange-500 shadow-[0_0_15px_rgba(252,95,22,0.1)]' : 'bg-transparent border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'}`}>
+      {label}
+    </button>
   );
 
   const blockDevice = async (id) => {
@@ -1130,6 +1109,7 @@ const Devices = () => {
               })}
             </div>
           ) : (
+            <div style={{ overflowX: 'auto', width: '100%' }}>
             <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0 }}>
             <thead>
               <tr style={{ position:'sticky', top:0, zIndex:10, background:'#050505' }}>
@@ -1368,6 +1348,7 @@ const Devices = () => {
               )}
             </tbody>
           </table>
+          </div>
         )}
       </div>
         {/* Paginação */}
@@ -1583,23 +1564,23 @@ const Devices = () => {
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:12, maxHeight:420, overflowY:'auto', paddingRight:4 }}>
             {editClientTab === 'dados' && (<>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Nome Completo"><input style={inputStyle} value={editForm.nome} onChange={e => setEditForm({...editForm, nome: e.target.value})} placeholder="Nome do cliente" /></FormField>
                 <FormField label="Email"><input style={inputStyle} type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} placeholder="email@exemplo.com" /></FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="WhatsApp"><input style={inputStyle} value={editForm.telefone} onChange={e => setEditForm({...editForm, telefone: e.target.value})} placeholder="5511999999999" /></FormField>
                 <FormField label={<>Senha <span style={{color:'#52525b',fontSize:10}}>(branco = não alterar)</span></>}><input style={inputStyle} value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="********" /></FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Vencimento (DD/MM/YYYY)"><input style={inputStyle} value={editForm.expire_date} onChange={e => setEditForm({...editForm, expire_date: e.target.value})} placeholder="31/12/2025" /></FormField>
                 <FormField label="Servidor"><select style={selectStyle} value={editForm.servidor_id} onChange={e => setEditForm({...editForm, servidor_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar...</option>{iptvServers.map(s => <option key={s.id} value={s.id} style={{background:'#111',color:'#fff'}}>{s.name}</option>)}</select></FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="MAC (Opcional)"><input style={inputStyle} value={editForm.mac} onChange={e => setEditForm({...editForm, mac: e.target.value})} placeholder="00:1A:2B:3C:4D" maxLength={17} /></FormField>
                 <FormField label="Notificação WhatsApp"><select style={selectStyle} value={editForm.notificacao_whatsapp} onChange={e => setEditForm({...editForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Pacote / Plano"><select style={selectStyle} value={editForm.package_name} onChange={e => setEditForm({...editForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar...</option>{defaultPlans.map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
                 <FormField label="Nº Telas"><select style={selectStyle} value={editForm.max_connections} onChange={e => setEditForm({...editForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
               </div>
@@ -1610,7 +1591,7 @@ const Devices = () => {
                 <FormField label="Link M3U" style={{flex:1}}><input style={inputStyle} value={editForm.m3u_url} onChange={e => setEditForm({...editForm, m3u_url: e.target.value})} placeholder="http://dns:port/get.php?username=X&password=Y&..." /></FormField>
                 <button onClick={() => extractM3U(editForm.m3u_url, 'edit')} style={{...btnPrimary, height:40, whiteSpace:'nowrap'}}><AppWindow size={14}/> Extrair</button>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Username"><input style={inputStyle} value={editForm.m3u_username} onChange={e => setEditForm({...editForm, m3u_username: e.target.value})} placeholder="username" /></FormField>
                 <FormField label="Senha"><input style={inputStyle} value={editForm.m3u_password} onChange={e => setEditForm({...editForm, m3u_password: e.target.value})} placeholder="password" /></FormField>
               </div>
@@ -1654,15 +1635,15 @@ const Devices = () => {
           <div style={{ display:'flex', flexDirection:'column', gap:12, maxHeight:440, overflowY:'auto', paddingRight:4 }}>
             {newClientTab === 'dados' && (<>
               <FormField label="Nome Completo *"><input style={inputStyle} value={newClientForm.nome} onChange={e => setNewClientForm({...newClientForm, nome: e.target.value})} placeholder="Nome do cliente" /></FormField>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Email"><input style={inputStyle} type="email" value={newClientForm.email} onChange={e => setNewClientForm({...newClientForm, email: e.target.value})} placeholder="email@exemplo.com" /></FormField>
                 <FormField label="WhatsApp *"><input style={inputStyle} value={newClientForm.telefone} onChange={e => setNewClientForm({...newClientForm, telefone: e.target.value})} placeholder="5511999999999" /></FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Usuário"><input style={inputStyle} value={newClientForm.username} onChange={e => setNewClientForm({...newClientForm, username: e.target.value})} placeholder="usuario123" /></FormField>
                 <FormField label="Senha"><input style={inputStyle} value={newClientForm.password} onChange={e => setNewClientForm({...newClientForm, password: e.target.value})} placeholder="senha123" /></FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Plano Comercial (Financeiro)"><select style={selectStyle} onChange={(e) => {
                   const planId = e.target.value;
                   if (!planId) {
@@ -1697,7 +1678,7 @@ const Devices = () => {
                   </div>
                   <div style={{ 
                     background:'rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.08)', 
-                    borderRadius:12, padding:12, maxHeight:140, overflowY:'auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 
+                    borderRadius:12, padding:12, maxHeight:140, overflowY:'auto', display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:8 
                   }}>
                     {iptvServers.map(s => {
                       const isSelected = newClientForm.selected_servers.includes(s.name);
@@ -1728,11 +1709,11 @@ const Devices = () => {
                   </div>
                 </FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="MAC (Opcional)"><input style={inputStyle} value={newClientForm.mac} onChange={e => setNewClientForm({...newClientForm, mac: e.target.value})} placeholder="ID Externo" maxLength={17} /></FormField>
                 <FormField label="Notificação WhatsApp"><select style={selectStyle} value={newClientForm.notificacao_whatsapp} onChange={e => setNewClientForm({...newClientForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Pacote no Painel Sigma *"><select style={selectStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar Pacote</option>{[...new Set([...dynamicPlans, ...defaultPlans, ...gestorLitePlans])].map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
                 <FormField label="Nº Telas"><select style={selectStyle} value={newClientForm.max_connections} onChange={e => setNewClientForm({...newClientForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
               </div>
@@ -1743,7 +1724,7 @@ const Devices = () => {
                 <FormField label="Link M3U (colar para extrair dados)" style={{flex:1}}><input style={inputStyle} value={newClientForm.m3u_url} onChange={e => setNewClientForm({...newClientForm, m3u_url: e.target.value})} placeholder="http://dns:port/get.php?username=X&password=Y&..." /></FormField>
                 <button onClick={() => extractM3U(newClientForm.m3u_url, 'new')} style={{...btnPrimary, height:40, whiteSpace:'nowrap'}}><AppWindow size={14}/> Extrair</button>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Username M3U"><input style={inputStyle} value={newClientForm.m3u_username} onChange={e => setNewClientForm({...newClientForm, m3u_username: e.target.value})} placeholder="username" /></FormField>
                 <FormField label="Senha M3U"><input style={inputStyle} value={newClientForm.m3u_password} onChange={e => setNewClientForm({...newClientForm, m3u_password: e.target.value})} placeholder="password" /></FormField>
               </div>

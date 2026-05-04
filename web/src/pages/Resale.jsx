@@ -382,14 +382,14 @@ const Resale = () => {
         </div>
         
         {/* TABS DE NAVEGAÇÃO */}
-        <div className="flex bg-dark-900 border border-dark-700 rounded-lg p-1">
-            <button onClick={() => setActiveTab('resellers')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all ${activeTab === 'resellers' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}>
+        <div className="flex bg-dark-900 border border-dark-700 rounded-lg p-1 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
+            <button onClick={() => setActiveTab('resellers')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'resellers' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}>
                 <Users className="w-4 h-4" /> Revendedores
             </button>
-            <button onClick={() => setActiveTab('shop')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all ${activeTab === 'shop' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-zinc-500 hover:text-yellow-500/50'}`}>
+            <button onClick={() => setActiveTab('shop')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'shop' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-zinc-500 hover:text-yellow-500/50'}`}>
                 <ShoppingCart className="w-4 h-4" /> Loja de Créditos
             </button>
-            <button onClick={() => setActiveTab('apps')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all ${activeTab === 'apps' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 'text-zinc-500 hover:text-blue-500/50'}`}>
+            <button onClick={() => setActiveTab('apps')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'apps' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 'text-zinc-500 hover:text-blue-500/50'}`}>
                 <Smartphone className="w-4 h-4" /> Ativação de Apps
             </button>
         </div>
@@ -401,12 +401,12 @@ const Resale = () => {
       {activeTab === 'resellers' && (
       <div>
         <div className="flex justify-end mb-4">
-            <button onClick={handleOpenNew} className="bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20 border border-orange-500/50">
+            <button onClick={handleOpenNew} className="bg-orange-600 hover:bg-orange-500 active:scale-95 text-white px-5 py-2.5 rounded-lg font-black flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20 border border-orange-500/50">
             <Plus className="w-5 h-5 flex-shrink-0" /> Criar Revendedor
             </button>
         </div>
-        <div className="glass-effect rounded-2xl overflow-hidden border border-dark-700 shadow-xl bg-dark-800/60">
-            <div className="overflow-x-auto">
+        <div className="glass-effect rounded-2xl border border-dark-700 shadow-xl bg-dark-800/60 overflow-hidden">
+            <div className="overflow-x-auto custom-scrollbar">
                 <table className="min-w-full divide-y divide-dark-700">
                 <thead className="bg-dark-900/50">
                     <tr>
@@ -459,7 +459,7 @@ const Resale = () => {
                             </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                        <button onClick={() => handleToggleStatus(revendedor.id, revendedor.ativo)} className={`px-3 py-1 inline-flex text-xs font-bold rounded-full transition-all border ${revendedor.ativo ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
+                        <button onClick={() => handleToggleStatus(revendedor.id, revendedor.ativo)} className={`px-3 py-1 inline-flex text-xs font-bold rounded-full transition-all border transform active:scale-90 ${revendedor.ativo ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
                             {revendedor.ativo ? 'ATIVO' : 'BLOQUEADO'}
                         </button>
                         </td>
@@ -467,11 +467,11 @@ const Resale = () => {
                             <div className="flex gap-2">
                                 <button 
                                     onClick={() => { setTransferData({revendedor_id: revendedor.id, nome: revendedor.nome, quantidade: 5}); setShowTransferModal(true); }}
-                                    className="h-8 px-3 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 border border-yellow-500/20 flex items-center gap-1.5 transition-all text-[10px] font-black uppercase">
+                                    className="h-8 px-3 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 border border-yellow-500/20 flex items-center gap-1.5 transition-all active:scale-95 text-[10px] font-black uppercase">
                                     <Plus className="w-3.5 h-3.5" /> Adicionar Créditos
                                 </button>
-                                <button onClick={() => handleEdit(revendedor)} className="h-8 w-8 rounded-lg bg-dark-700 text-zinc-300 hover:text-white hover:bg-orange-500/80 border border-dark-600 flex items-center justify-center transition-all"><Edit2 className="w-4 h-4" /></button>
-                                <button onClick={() => handleDelete(revendedor.id)} className="h-8 w-8 rounded-lg bg-dark-700 text-zinc-300 hover:text-white hover:bg-red-600/80 border border-dark-600 flex items-center justify-center transition-all"><Trash2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleEdit(revendedor)} className="h-8 w-8 rounded-lg bg-dark-700 text-zinc-300 hover:text-white hover:bg-orange-500/80 border border-dark-600 flex items-center justify-center transition-all active:scale-90"><Edit2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleDelete(revendedor.id)} className="h-8 w-8 rounded-lg bg-dark-700 text-zinc-300 hover:text-white hover:bg-red-600/80 border border-dark-600 flex items-center justify-center transition-all active:scale-90"><Trash2 className="w-4 h-4" /></button>
                             </div>
                         </td>
                     </tr>
@@ -530,12 +530,12 @@ const Resale = () => {
                            <>
                              <div className="text-2xl font-bold text-white mt-4">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
                              <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {(parseFloat(pkg.price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
+                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.promo_price || pkg.price })} className="w-full py-2.5 rounded-lg bg-dark-700 text-zinc-300 font-black border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
+                           <ShoppingCart className="w-4 h-4" /> Comprar Agora
+                        </button>
                            </>
                         )}
 
-                        <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.promo_price || pkg.price })} className="w-full py-2.5 rounded-lg bg-dark-700 text-zinc-300 font-bold border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all shadow-lg flex items-center justify-center gap-2">
-                           <ShoppingCart className="w-4 h-4" /> Comprar Agora
-                        </button>
                     </div>
                 ))}
             </div>
@@ -611,24 +611,26 @@ const Resale = () => {
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                  <Shield className="w-5 h-5 text-orange-500" /> {editandoRevendedor ? 'Atualizar Revendedor & DNS' : 'Nova Franquia de Revenda'}
               </h3>
-              <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="text-zinc-500 hover:text-white"><i className="fas fa-times"></i></button>
+              <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="text-zinc-500 hover:text-white"><X className="h-5 w-5" /></button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-5 flex-1 overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+            <form onSubmit={handleSubmit} className="p-4 md:p-5 flex-1 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-5">
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome Completo *</label><input type="text" required value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome da Empresa</label><input type="text" value={formData.empresa} onChange={(e) => setFormData({ ...formData, empresa: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Email (Painel Web) *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Telefone/WhatsApp</label><input type="text" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
               </div>
 
+
               <div className="bg-dark-800/80 rounded-xl p-5 border border-brand-500/30 mb-5 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
                   <h4 className="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><Link2 className="w-4 h-4" /> Integração DNS Local</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Provider Code</label><div className="relative"><input type="text" maxLength={8} required value={formData.provider_code} onChange={(e) => setFormData({ ...formData, provider_code: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-brand-400 font-mono font-bold text-lg rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-brand-500" /><KeyRound className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3.5" /></div></div>
                       <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">URL DNS do Revendedor</label><input type="url" value={formData.dns_url} onChange={(e) => setFormData({ ...formData, dns_url: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-brand-500" /></div>
                   </div>
+
               </div>
 
               <div className="bg-dark-800/50 rounded-xl p-4 border border-dark-600 mb-5 max-h-[180px] overflow-y-auto custom-scrollbar">
@@ -700,24 +702,25 @@ const Resale = () => {
                   </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5 border-t border-dark-700 pt-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 mb-5 border-t border-dark-700 pt-5">
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Limite de Acessos *</label><input type="number" required min="1" value={formData.limite_dispositivos} onChange={(e) => setFormData({ ...formData, limite_dispositivos: parseInt(e.target.value) })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div><label className="block text-xs font-bold w-full text-yellow-500 mb-1.5 uppercase"><i className="fas fa-coins"></i> Créditos Para Ativação *</label><input type="number" required min="0" value={formData.creditos} onChange={(e) => setFormData({ ...formData, creditos: parseInt(e.target.value) || 0 })} className="w-full bg-dark-900 border border-yellow-500/30 text-yellow-500 font-bold rounded-lg px-4 py-2.5 focus:outline-none focus:border-yellow-500" /></div>
-                <div className="flex items-center justify-end">
-                  <label className="flex items-center cursor-pointer mt-5">
-                    <span className="mr-3 text-sm font-bold text-white">Revendedor Ativo</span>
+                <div className="flex items-center justify-start sm:justify-end">
+                  <label className="flex items-center cursor-pointer mt-2 sm:mt-5">
+                    <span className="mr-3 text-sm font-bold text-white">Ativo</span>
                     <div className="relative">
                       <input type="checkbox" className="sr-only" checked={formData.ativo} onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })} />
-                      <div className={`block w-12 h-6 rounded-full transition-colors ${formData.ativo ? 'bg-green-500' : 'bg-dark-600'}`}></div>
-                      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.ativo ? 'transform translate-x-6' : ''}`}></div>
+                      <div className={`block w-10 h-5 md:w-12 md:h-6 rounded-full transition-colors ${formData.ativo ? 'bg-green-500' : 'bg-dark-600'}`}></div>
+                      <div className={`dot absolute left-0.5 top-0.5 md:left-1 md:top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.ativo ? 'transform translate-x-5 md:translate-x-6' : ''}`}></div>
                     </div>
                   </label>
                 </div>
               </div>
 
+
               <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-dark-700 sticky bottom-0 bg-dark-900/95 py-2 backdrop-blur-sm z-10">
-                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-5 py-2.5 bg-dark-700 text-zinc-300 font-bold rounded-lg border border-dark-600">Cancelar</button>
-                <button type="submit" className="px-5 py-2.5 bg-orange-600 text-white font-bold rounded-lg shadow border border-orange-500/50 flex flex-center gap-2"><Shield className="w-4 h-4" /> Salvar Configurações</button>
+                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-5 py-2.5 bg-dark-700 hover:bg-dark-600 active:scale-95 text-zinc-300 font-black rounded-lg border border-dark-600 transition-all">Cancelar</button>
+                <button type="submit" className="px-5 py-2.5 bg-orange-600 hover:bg-orange-500 active:scale-95 text-white font-black rounded-lg shadow border border-orange-500/50 flex items-center gap-2 transition-all"><Shield className="w-4 h-4" /> Salvar Configurações</button>
               </div>
             </form>
           </div>

@@ -771,7 +771,7 @@ const BannerGenerator = () => {
 
       {/* ── MODO MANUAL/AUTO (apenas Futebol) ───────────────────── */}
       {activeCategory === 'futebol' && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div
             onClick={() => setMode('manual')}
             className={`group bg-dark-800 border-2 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 relative overflow-hidden text-center
@@ -1369,7 +1369,7 @@ const FootballConfigurator = ({ theme, sportsData = [], loading }) => {
         )}
 
         {/* Título e Data */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Título</label>
             <input value={title} onChange={e => setTitle(e.target.value)}

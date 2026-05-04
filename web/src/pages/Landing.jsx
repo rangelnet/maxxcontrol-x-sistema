@@ -239,10 +239,10 @@ export default function Landing() {
             <a href="#solucoes" className="hover:text-white transition">Soluções</a>
             <a href="#precos" className="hover:text-white transition">Preços</a>
             <a href="#apps" className="hover:text-white transition">Dispositivos</a>
+            <button onClick={() => setShowClientModal(true)} className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-6 py-2.5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(252,95,22,0.4)] hover:shadow-[0_0_25px_rgba(252,95,22,0.6)]">
+              Área do Cliente
+            </button>
           </div>
-          <button onClick={() => setShowClientModal(true)} className="bg-brand-500 hover:bg-brand-600 text-white font-bold px-6 py-2.5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(252, 95, 22,0.4)] hover:scale-105">
-            Área do Cliente
-          </button>
         </div>
       </nav>
 
@@ -296,11 +296,11 @@ export default function Landing() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center">
-                    <Link to="/login" className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white rounded-2xl font-black text-lg shadow-[0_0_40px_rgba(252, 95, 22,0.4)] transition transform hover:-translate-y-1 flex items-center justify-center gap-3 relative overflow-hidden group">
+                    <Link to="/login" className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white rounded-2xl font-black text-lg shadow-[0_0_40px_rgba(252, 95, 22,0.4)] transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden group">
                         <div className="absolute inset-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                         <Play size={20} className="fill-current text-yellow-300" /> ACESSAR SISTEMA
                     </Link>
-                    <a href="#apps" className="w-full sm:w-auto px-10 py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-bold text-lg transition backdrop-blur-md flex items-center justify-center gap-2">
+                    <a href="#apps" className="w-full sm:w-auto px-10 py-5 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white rounded-2xl font-bold text-lg transition-all backdrop-blur-md flex items-center justify-center gap-2">
                         <Play size={20} className="text-brand-400" /> Visualizar Apps
                     </a>
                 </div>
@@ -352,7 +352,7 @@ export default function Landing() {
                       <button 
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all border-2 ${activeTab === tab.id ? 'bg-brand-500 border-brand-500 text-white shadow-[0_0_30px_rgba(252,95,22,0.4)] scale-105' : 'bg-white/5 border-white/5 text-zinc-500 hover:border-white/10 hover:text-white'}`}
+                        className={`flex items-center justify-center gap-2 md:gap-3 px-4 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-[10px] md:text-sm uppercase tracking-widest transition-all transform active:scale-95 border-2 w-full sm:w-auto ${activeTab === tab.id ? 'bg-brand-500 border-brand-500 text-white shadow-[0_0_30px_rgba(252,95,22,0.4)] lg:scale-105' : 'bg-white/5 border-white/5 text-zinc-500 hover:border-white/10 hover:text-white'}`}
                       >
                          {tab.icon} {tab.label}
                       </button>
@@ -388,11 +388,11 @@ export default function Landing() {
                                       </select>
                                    </div>
 
-                                   <div className="grid grid-cols-2 gap-4">
+                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                       <button 
                                         type="button"
                                         onClick={() => setActivationForm({...activationForm, type: 'monthly'})}
-                                        className={`py-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-1 ${activationForm.type === 'monthly' ? 'border-brand-500 bg-brand-500/20' : 'border-white/10 hover:border-white/20 bg-[#0D1D2D91]'}`}
+                                        className={`py-3 rounded-xl border transition-all transform active:scale-95 flex flex-col items-center justify-center gap-1 ${activationForm.type === 'monthly' ? 'border-brand-500 bg-brand-500/20 shadow-[0_0_15px_rgba(252,95,22,0.1)]' : 'border-white/10 hover:border-white/20 bg-[#0D1D2D91]'}`}
                                       >
                                          <span className="text-[10px] font-bold uppercase text-zinc-400">Plano Mensal</span>
                                          <span className="text-sm font-black text-white">R$ 14,90</span>
@@ -400,28 +400,28 @@ export default function Landing() {
                                       <button 
                                         type="button"
                                         onClick={() => setActivationForm({...activationForm, type: 'yearly'})}
-                                        className={`py-3 rounded-xl border transition-all flex flex-col items-center justify-center gap-1 ${activationForm.type === 'yearly' ? 'border-brand-500 bg-brand-500/20' : 'border-white/10 hover:border-white/20 bg-[#0D1D2D91]'}`}
+                                        className={`py-3 rounded-xl border transition-all transform active:scale-95 flex flex-col items-center justify-center gap-1 ${activationForm.type === 'yearly' ? 'border-brand-500 bg-brand-500/20 shadow-[0_0_15px_rgba(252,95,22,0.1)]' : 'border-white/10 hover:border-white/20 bg-[#0D1D2D91]'}`}
                                       >
                                          <span className="text-[10px] font-bold uppercase text-zinc-400">Plano Anual</span>
                                          <span className="text-sm font-black text-white">R$ 119,00</span>
                                       </button>
                                    </div>
 
-                                   <div className="relative mt-6">
+                                   <div className="relative mt-6 flex flex-col md:block">
                                       <input 
                                         type="text" 
                                         required
                                         placeholder="Endereço MAC" 
                                         value={activationForm.mac}
                                         onChange={e => setActivationForm({...activationForm, mac: e.target.value.toUpperCase()})}
-                                        className="w-full px-4 rounded-xl text-white placeholder-zinc-500 focus:outline-none pr-[140px] h-[60px] bg-[#0D1D2D91] border border-brand-500/50 focus:border-brand-500 font-mono text-lg"
+                                        className="w-full px-4 rounded-xl text-white placeholder-zinc-500 focus:outline-none md:pr-[140px] h-[60px] bg-[#0D1D2D91] border border-brand-500/50 focus:border-brand-500 font-mono text-lg text-center md:text-left mb-4 md:mb-0"
                                         maxLength="17"
                                       />
-                                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                      <div className="md:absolute right-2 top-1/2 md:-translate-y-1/2 w-full md:w-auto">
                                           <button 
                                             type="submit"
                                             disabled={paymentLoading || !activationForm.mac || !activationForm.appId}
-                                            className="bg-gradient-to-r from-orange-600 to-brand-500 hover:from-orange-500 hover:to-brand-400 text-white py-2.5 px-6 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(252,95,22,0.4)] flex items-center gap-2"
+                                            className="w-full md:w-auto justify-center bg-gradient-to-r from-orange-600 to-brand-500 hover:from-orange-500 hover:to-brand-400 active:scale-95 text-white py-3 md:py-2.5 px-6 rounded-xl md:rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(252,95,22,0.4)] flex items-center gap-2"
                                           >
                                             {paymentLoading ? <Loader2 className="animate-spin" size={20} /> : 'Ativar'}
                                           </button>
@@ -445,8 +445,10 @@ export default function Landing() {
                                    <div className="w-full space-y-3">
                                       <button 
                                         type="button"
-                                        onClick={() => navigator.clipboard.writeText(qrCode.qr_code)}
-                                        className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition"
+                                        onClick={() => {
+                                           navigator.clipboard.writeText(qrCode.qr_code);
+                                        }}
+                                        className="w-full py-3 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
                                       >
                                          Copiar Linha Digitável <CreditCard size={14} />
                                       </button>
@@ -593,17 +595,17 @@ export default function Landing() {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                    <div className="lg:col-span-2 space-y-6">
-                                      <div className="flex items-center justify-between">
+                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                          <h3 className="text-xl font-black text-white uppercase tracking-tighter">Minhas Playlists</h3>
                                          <button 
                                            onClick={() => setShowPlaylistForm(true)}
-                                           className="bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2"
+                                           className="w-full sm:w-auto justify-center bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2"
                                          >
                                             <Plus size={16} /> Nova Lista
                                          </button>
                                       </div>
 
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                          {devicePlaylists.map(pl => (
                                             <div key={pl.id} className="bg-white/5 border border-white/10 p-6 rounded-3xl hover:border-brand-500/50 transition-all group">
                                                <div className="flex justify-between items-start mb-4">
@@ -617,8 +619,8 @@ export default function Landing() {
                                                <h4 className="text-white font-bold mb-2">{pl.name}</h4>
                                                <p className="text-zinc-500 text-xs truncate mb-4">{pl.url || pl.username}</p>
                                                <div className="flex gap-2">
-                                                  <button className="flex-1 py-2 bg-black rounded-xl text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-white transition-all">Editar</button>
-                                                  <button className="flex-1 py-2 bg-brand-500/10 rounded-xl text-[10px] font-black text-brand-500 uppercase tracking-widest hover:bg-brand-500 hover:text-white transition-all">Sincronizar</button>
+                                                  <button className="flex-1 py-2 bg-black rounded-xl text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-white active:scale-95 transition-all">Editar</button>
+                                                  <button className="flex-1 py-2 bg-brand-500/10 rounded-xl text-[10px] font-black text-brand-500 uppercase tracking-widest hover:bg-brand-500 hover:text-white active:scale-95 transition-all">Sincronizar</button>
                                                </div>
                                             </div>
                                          ))}
@@ -647,7 +649,7 @@ export default function Landing() {
                                                  className="w-full bg-black border-2 border-white/5 rounded-2xl px-4 py-3 text-white text-sm focus:border-blue-500 transition-all outline-none"
                                                />
                                             </div>
-                                            <button className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl text-xs uppercase tracking-widest transition-all">
+                                            <button className="w-full py-4 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black rounded-xl text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)] hover:shadow-[0_0_20px_rgba(37,99,235,0.4)]">
                                                Atualizar DNS
                                             </button>
                                          </form>
@@ -717,7 +719,7 @@ export default function Landing() {
                                          />
                                       </div>
                                       <div className="pt-4">
-                                         <button type="submit" className="w-full py-5 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-500/20 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                                         <button type="submit" className="w-full py-5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-black rounded-2xl shadow-xl shadow-brand-500/20 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2">
                                             Transferir Agora <ChevronRight size={18} />
                                          </button>
                                       </div>
@@ -756,7 +758,7 @@ export default function Landing() {
                         className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-bold"
                       />
                    </div>
-                   <div className="grid grid-cols-2 gap-4">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <button 
                         type="button" 
                         onClick={() => setPlaylistForm({...playlistForm, type: 'm3u'})}
@@ -787,7 +789,7 @@ export default function Landing() {
                             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Servidor (Host:Porta)</label>
                             <input type="text" placeholder="http://host.com:80" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-medium" value={playlistForm.url} onChange={e => setPlaylistForm({...playlistForm, url: e.target.value})} />
                          </div>
-                         <div className="grid grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Usuário</label>
                                <input type="text" placeholder="User" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-bold" value={playlistForm.username} onChange={e => setPlaylistForm({...playlistForm, username: e.target.value})} />
@@ -1203,10 +1205,10 @@ export default function Landing() {
                      </div>
                  </div>
 
-                 <div className="mt-16 bg-[#111] border border-brand-500/30 p-8 rounded-3xl max-w-2xl mx-auto flex flex-col md:flex-row items-center justify-between">
-                     <span className="text-zinc-300 font-bold mb-4 md:mb-0">Código de Instalação Downloader (Android)</span>
+                 <div className="mt-16 bg-[#111] border border-brand-500/30 p-6 md:p-8 rounded-3xl max-w-2xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0 text-center md:text-left">
+                     <span className="text-zinc-300 font-bold mb-2 md:mb-0 text-sm md:text-base">Código de Instalação Downloader (Android)</span>
                      <div className="flex gap-4 items-center">
-                         <span className="text-3xl font-black text-brand-500 tracking-widest">533810</span>
+                         <span className="text-3xl md:text-4xl font-black text-brand-500 tracking-widest">533810</span>
                      </div>
                  </div>
              </div>
@@ -1214,13 +1216,13 @@ export default function Landing() {
 
         {/* FOOTER */}
         <footer className="bg-[#050505] border-t border-white/5 py-12">
-            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
                 <div className="flex items-center gap-3 group cursor-pointer">
                     <img src="/logo-maxx.svg" alt="Maxx Control" className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(252, 95, 22,0.3)] transition-transform group-hover:scale-110" />
                     <span className="font-black text-zinc-300 text-lg tracking-tighter">MAXX Control</span>
                 </div>
                 
-                <div className="flex gap-6 text-sm text-zinc-500 font-medium">
+                <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 text-xs md:text-sm text-zinc-500 font-medium">
                     <a href="#" className="hover:text-white transition">Política de Privacidade</a>
                     <a href="#" className="hover:text-white transition">Termos de Uso</a>
                 </div>

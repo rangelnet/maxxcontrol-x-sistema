@@ -640,20 +640,20 @@ export default function WhatsAppAuto() {
         </div>
 
         {/* ── TAB SWITCHER ── */}
-        <div className="bg-dark-800 p-1 rounded-xl border border-dark-700 flex self-start md:self-auto">
+        <div className="bg-dark-800 p-1 rounded-xl border border-dark-700 flex self-start md:self-auto overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
           <button 
             onClick={() => setActiveTab('bulk')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'bulk' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'bulk' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
             <Send className="h-3.5 w-3.5" /> Disparo em Massa
           </button>
           <button 
             onClick={() => setActiveTab('maxxflow')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'maxxflow' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'maxxflow' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
             <Bot className="h-3.5 w-3.5" /> MaxxFlow (Chatbot)
           </button>
           <button 
             onClick={() => setActiveTab('livechat')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'livechat' ? 'bg-green-600 text-white shadow-lg shadow-green-600/20' : 'text-zinc-500 hover:text-white'}`}>
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'livechat' ? 'bg-green-600 text-white shadow-lg shadow-green-600/20' : 'text-zinc-500 hover:text-white'}`}>
             <MessageSquare className="h-3.5 w-3.5" /> Chat ao Vivo
             {chatConversations.reduce((a, c) => a + (c.unread_count || 0), 0) > 0 && (
               <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center animate-pulse">
@@ -702,7 +702,7 @@ export default function WhatsAppAuto() {
                   </div>
                   <p className="text-zinc-500 text-xs mb-5 px-4">Conecte o serviço para habilitar a IA e os disparos em massa.</p>
                   <button onClick={() => connectWhatsApp()} disabled={waLoading}
-                    className="w-full bg-maxx hover:brightness-110 text-white font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-maxx/20 uppercase tracking-widest text-xs">
+                    className="w-full bg-maxx hover:brightness-110 active:scale-95 text-white font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-maxx/20 uppercase tracking-widest text-xs">
                     {waLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
                     Gerar Novo QR Code
                   </button>
@@ -726,8 +726,8 @@ export default function WhatsAppAuto() {
                   </div>
                   <p className="text-white font-bold text-sm mb-1">Conexão Estabelecida</p>
                   <p className="text-zinc-500 text-[11px] mb-5">Sua sessão está ativa e protegida localmente.</p>
-                  <button onClick={disconnect} disabled={waLoading}
-                    className="w-full bg-dark-900 border border-red-500/30 text-red-400 py-2.5 rounded-xl text-[10px] font-black hover:bg-red-500/10 transition-colors uppercase tracking-widest">
+                   <button onClick={disconnect} disabled={waLoading}
+                    className="w-full bg-dark-900 border border-red-500/30 text-red-400 py-2.5 rounded-xl text-[10px] font-black hover:bg-red-500/10 active:scale-95 transition-all uppercase tracking-widest">
                     Desvincular Aparelho
                   </button>
                 </div>
@@ -859,7 +859,7 @@ export default function WhatsAppAuto() {
                                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2"><MousePointerClick className="h-3 w-3" /> Botões Interativos</p>
                                  <button onClick={addButton} className="text-[10px] text-maxx hover:brightness-125 font-black uppercase tracking-widest">+ ADICIONAR LINK</button>
                                </div>
-                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                  {editButtons.map((btn, idx) => (
                                    <div key={btn.id} className="bg-dark-900 border border-dark-600 rounded-2xl p-3 space-y-3 shadow-lg group/btn relative">
                                      <button onClick={() => removeButton(idx)} className="absolute top-2 right-2 text-zinc-700 hover:text-red-500 transition-colors"><X className="h-3 w-3" /></button>
@@ -969,7 +969,7 @@ export default function WhatsAppAuto() {
                 {flowsLoading ? (
                   <div className="py-20 text-center"><Loader2 className="h-10 w-10 animate-spin text-maxx mx-auto opacity-20" /></div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {flows.length === 0 && <div className="col-span-2 py-20 bg-dark-800/50 border border-dashed border-dark-700 rounded-3xl text-center opacity-30 italic">Nenhum robô configurado ainda.</div>}
                     {flows.map(f => (
                       <div key={f.id} className={`bg-dark-800 border rounded-2xl p-5 transition-all shadow-xl hover:translate-y-[-2px] ${f.is_active ? 'border-brand-500/40 bg-brand-500/[0.02]' : 'border-dark-700'}`}>
@@ -1152,8 +1152,8 @@ export default function WhatsAppAuto() {
                     <div className="flex items-center gap-2 lg:gap-3">
                       <button 
                         onClick={() => updateConvStatus(chatActiveJid, 'resolved')}
-                        className="px-3 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hidden sm:flex items-center gap-2"
-                      ><Check className="h-3.5 w-3.5" /> Resolver</button>
+                        className="px-3 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                      ><Check className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Resolver</span></button>
                       <button 
                         onClick={() => setChatSidebarOpen(!chatSidebarOpen)}
                         className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all ${chatSidebarOpen ? 'bg-brand-500/10 text-brand-400 border-brand-500/30' : 'bg-dark-800 text-zinc-400 border-dark-700 hover:text-white'}`}
@@ -1431,11 +1431,11 @@ export default function WhatsAppAuto() {
                 {editingFlow.content.nodes.map((node, idx) => (
                   <div key={idx} className="relative z-10 animate-slideUp" style={{ animationDelay: `${idx * 0.1}s` }}>
                     <div className="flex gap-6">
-                      <div className="h-12 w-12 rounded-2xl bg-dark-800 border-2 border-brand-500/40 flex items-center justify-center text-brand-400 font-black text-sm shadow-[0_0_20px_rgba(252, 95, 22,0.1)] shrink-0">
+                      <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-dark-800 border-2 border-brand-500/40 flex items-center justify-center text-brand-400 font-black text-sm shadow-[0_0_20px_rgba(252, 95, 22,0.1)] shrink-0">
                         {idx + 1}
                       </div>
 
-                      <div className="flex-1 bg-dark-800 border-2 border-dark-700 rounded-3xl p-5 shadow-2xl relative group hover:border-brand-500/30 transition-all">
+                      <div className="flex-1 bg-dark-800 border-2 border-dark-700 rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-2xl relative group hover:border-brand-500/30 transition-all min-w-0">
                         <div className="flex items-center justify-between mb-4 border-b border-dark-700/50 pb-4">
                            <div className="flex items-center gap-3">
                              {node.type === 'message' && <div className="bg-blue-500/10 text-blue-400 p-2 rounded-xl"><MessageSquare className="h-4 w-4" /></div>}
@@ -1450,9 +1450,9 @@ export default function WhatsAppAuto() {
                                 }}
                                 className="bg-dark-900 border border-dark-600 rounded-lg px-3 py-1.5 text-xs font-black text-zinc-300 uppercase tracking-widest outline-none appearance-none cursor-pointer"
                              >
-                               <option value="message">💬 MENSAGEM</option>
-                               <option value="choice">🔘 MENU / CONDIÇÕES</option>
-                               <option value="input">⌨️ ENTRADA DE DADOS</option>
+                               <option value="message">💬 MSG</option>
+                               <option value="choice">🔘 MENU</option>
+                               <option value="input">⌨️ DADOS</option>
                              </select>
                            </div>
                            <button onClick={() => {
@@ -1507,7 +1507,7 @@ export default function WhatsAppAuto() {
                                       placeholder="Ex: Teste Grátis"
                                     />
                                   </div>
-                                  <div className="flex items-center gap-2 w-full lg:w-auto justify-end">
+                                  <div className="flex items-center gap-2 w-full lg:w-auto justify-end mt-2 lg:mt-0">
                                      <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest whitespace-nowrap">VAI PARA</span>
                                      <select 
                                        value={opt.next_node_id} 
@@ -1516,10 +1516,10 @@ export default function WhatsAppAuto() {
                                          newNodes[idx].options[oIdx].next_node_id = e.target.value
                                          setEditingFlow({...editingFlow, content: { nodes: newNodes }})
                                        }}
-                                       className="bg-brand-500/5 text-brand-400 text-[11px] font-black uppercase border border-brand-500/20 rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                                       className="flex-1 lg:flex-none bg-brand-500/5 text-brand-400 text-[11px] font-black uppercase border border-brand-500/20 rounded-lg px-2 py-1.5 outline-none cursor-pointer"
                                      >
                                        <option value="">(ESCOLHA)</option>
-                                       {editingFlow.content.nodes.map((n, ni) => <option key={ni} value={n.id}>ETAPA {ni+1}: {n.type === 'message' ? '💬' : n.type === 'input' ? '⌨️' : '🔘'}</option>)}
+                                       {editingFlow.content.nodes.map((n, ni) => <option key={ni} value={n.id}>E{ni+1}: {n.type === 'message' ? '💬' : n.type === 'input' ? '⌨️' : '🔘'}</option>)}
                                      </select>
                                      <button onClick={() => {
                                        const newNodes = [...editingFlow.content.nodes]

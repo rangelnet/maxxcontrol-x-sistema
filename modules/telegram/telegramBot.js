@@ -61,15 +61,18 @@ const initBot = () => {
       }
 
       const user = result.rows[0];
+      const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-      // Vincular o chatId ao usuário e ativar 2FA
+      // Salvar Chat ID e Código de Verificação (mas manter tfa_enabled false por enquanto)
       await pool.query(
-        'UPDATE users SET telegram_chat_id = $1, tfa_enabled = TRUE WHERE id = $2',
-        [chatId, user.id]
+        'UPDATE users SET telegram_chat_id = $1, tfa_code = $2 WHERE id = $3',
+        [chatId, verifyCode, user.id]
       );
 
-      bot.sendMessage(chatId, `✅ Sucesso, ${user.nome}!\nSua conta vinculada ao e-mail ${email} agora está protegida com 2FA via Telegram.`);
-      console.log(`🔗 Conta vinculada: ${email} -> ChatID: ${chatId}`);
+      const responseMsg = `🚀 *Vínculo de Segurança Mxxcontrol*\n\nOlá ${user.nome}!\nPara ativar a proteção 2FA na sua conta (${email}), utilize o código abaixo no seu Painel de Configurações:\n\n\`${verifyCode}\`\n\n_Este código expira se você solicitar um novo._`;
+      
+      bot.sendMessage(chatId, responseMsg, { parse_mode: 'Markdown' });
+      console.log(`🔑 Código de ativação gerado para: ${email}`);
 
     } catch (error) {
       console.error('Erro ao vincular 2FA no Telegram:', error);

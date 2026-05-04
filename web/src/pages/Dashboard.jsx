@@ -278,14 +278,14 @@ const Dashboard = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 to-transparent" />
 
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 sm:gap-0">
             <div>
               <h2 className="text-xl font-bold text-white">Evolução das Vendas</h2>
               <p className="text-zinc-500 text-xs mt-1">Últimos 7 meses</p>
             </div>
             <Link
               to="/resale"
-              className="flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl transition-all duration-300 font-semibold text-sm shadow-lg shadow-brand-500/20 hover:scale-105"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl transition-all duration-300 font-semibold text-sm shadow-lg shadow-brand-500/20 hover:scale-105"
             >
               <UserPlus size={16} />
               Criar Usuário

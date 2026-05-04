@@ -2,18 +2,31 @@ const pool = require('../../config/database');
 
 exports.getSettings = async (req, res) => {
   try {
-    const result = await pool.query('SELECT key, value FROM global_settings');
+    // 1. Pegar configurações globais
+    const globalResult = await pool.query('SELECT key, value FROM global_settings');
     const settings = {};
-    result.rows.forEach(row => {
+    globalResult.rows.forEach(row => {
       try {
         settings[row.key] = JSON.parse(row.value);
       } catch (e) {
         settings[row.key] = row.value;
       }
     });
+
+    // 2. Pegar dados do perfil do usuário logado
+    const userResult = await pool.query(
+      'SELECT nome as name, email, telefone as phone, telegram_username, tfa_enabled, telegram_chat_id FROM users WHERE id = $1',
+      [req.userId]
+    );
+
+    if (userResult.rows.length > 0) {
+      const user = userResult.rows[0];
+      Object.assign(settings, user);
+    }
+
     res.json(settings);
   } catch (error) {
-    console.error('Erro ao buscar configurações globais:', error);
+    console.error('Erro ao buscar configurações:', error);
     res.status(500).json({ error: 'Erro ao buscar configurações' });
   }
 };

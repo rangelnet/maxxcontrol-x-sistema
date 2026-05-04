@@ -218,8 +218,8 @@ const APIConfig = () => {
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-2">Nome da API *</label>
                   <input
                     type="text"
@@ -231,7 +231,7 @@ const APIConfig = () => {
                   />
                 </div>
 
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-2">Descrição</label>
                   <textarea
                     value={formData.descricao}
@@ -242,7 +242,7 @@ const APIConfig = () => {
                   />
                 </div>
 
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-2">URL *</label>
                   <input
                     type="url"
@@ -298,7 +298,7 @@ const APIConfig = () => {
                   />
                 </div>
 
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-2">Headers (JSON)</label>
                   <textarea
                     value={formData.headers}
@@ -309,7 +309,7 @@ const APIConfig = () => {
                   />
                 </div>
 
-                <div className="col-span-2 flex gap-4">
+                <div className="col-span-1 sm:col-span-2 flex gap-4">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"

@@ -83,7 +83,7 @@ const ServerModal = ({ onClose, onSave, editing }) => {
         <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
           <div><label style={labelStyle}>Nome *</label><input style={inputStyle} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder='Servidor Brasil' required/></div>
           <div><label style={labelStyle}>URL *</label><input style={inputStyle} type='url' value={form.url} onChange={e=>setForm({...form,url:e.target.value})} placeholder='http://servidor.com:8080' required/></div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:12 }}>
             <div><label style={labelStyle}>Região</label><input style={inputStyle} value={form.region} onChange={e=>setForm({...form,region:e.target.value})} placeholder='Brasil...'/></div>
             <div><label style={labelStyle}>Prioridade</label><input style={inputStyle} type='number' value={form.priority} onChange={e=>setForm({...form,priority:parseInt(e.target.value)})} min={1} max={999}/></div>
           </div>
@@ -218,7 +218,7 @@ const IptvPanel = () => {
             </h2>
             <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div><label style={labelStyle}>URL do Servidor</label><input style={inputStyle} value={config.xtream_url} onChange={e=>setConfig({...config,xtream_url:e.target.value})} placeholder='http://exemplo.com:8080' required/></div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:12 }}>
                 <div><label style={labelStyle}>Usuário</label><input style={inputStyle} value={config.xtream_username} onChange={e=>setConfig({...config,xtream_username:e.target.value})} placeholder='usuario' required/></div>
                 <div>
                   <label style={labelStyle}>Senha</label>

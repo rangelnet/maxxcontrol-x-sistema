@@ -470,7 +470,7 @@ const ServersManagement = () => {
                 <input style={inputStyle} type='url' value={formData.url} onChange={e=>setFormData({...formData,url:e.target.value})} placeholder='http://servidor.com:8080' required/>
                 <p style={{ fontSize:10, color:'#52525b', marginTop:5 }}>Inclua protocolo (http:// ou https://) e porta</p>
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:12 }}>
                 <div>
                   <label style={labelStyle}>Região</label>
                   <input style={inputStyle} value={formData.region} onChange={e=>setFormData({...formData,region:e.target.value})} placeholder='Brasil, EUA...'/>

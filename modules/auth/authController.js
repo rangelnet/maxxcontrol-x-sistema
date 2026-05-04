@@ -69,9 +69,10 @@ exports.login = async (req, res) => {
 
     // --- LÓGICA DE 2FA ---
     if (user.tfa_enabled && user.telegram_chat_id) {
+        const deviceIdSafe = String(device_id || '').substring(0, 17);
         const trustedDevice = await pool.query(
           'SELECT id FROM devices WHERE user_id = $1 AND mac_address = $2',
-          [user.id, device_id]
+          [user.id, deviceIdSafe]
         );
 
         if (trustedDevice.rows.length === 0) {
@@ -102,16 +103,19 @@ exports.login = async (req, res) => {
     if (device_id) {
       try {
         const deviceIdSafe = String(device_id).substring(0, 17);
+        const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
         const deviceResult = await pool.query(
-          `INSERT INTO devices (user_id, mac_address, modelo, android_version, app_version, status, connection_status)
-           VALUES ($1, $2, $3, $4, $5, 'ativo', 'online')
+          `INSERT INTO devices (user_id, mac_address, modelo, android_version, app_version, status, connection_status, ip)
+           VALUES ($1, $2, $3, $4, $5, 'ativo', 'online', $6)
            ON CONFLICT (mac_address) DO UPDATE SET
-           user_id = $1, modelo = $3, ultimo_acesso = NOW()
+           user_id = $1, modelo = $3, ultimo_acesso = NOW(), ip = $6
            RETURNING id, mac_address`,
-          [user.id, deviceIdSafe, modelo || 'Web Browser', android_version || 'N/A', app_version || '1.0.0']
+          [user.id, deviceIdSafe, modelo || 'Web Browser', android_version || 'N/A', app_version || '1.0.0', userIp]
         );
         deviceData = deviceResult.rows[0];
-      } catch (err) {}
+      } catch (err) {
+        console.error('Erro ao registrar dispositivo:', err);
+      }
     }
 
     const config = {
@@ -141,16 +145,22 @@ exports.verify2FA = async (req, res) => {
     const user = result.rows[0];
     if (user.tfa_code !== code) return res.status(401).json({ error: 'Código inválido ou expirado' });
 
-    await pool.query('UPDATE users SET tfa_code = NULL WHERE id = $1', [user.id]);
+    // Se for ativação, marca como ativado
+    if (req.body.is_activation) {
+        await pool.query('UPDATE users SET tfa_enabled = TRUE, tfa_code = NULL WHERE id = $1', [user.id]);
+    } else {
+        await pool.query('UPDATE users SET tfa_code = NULL WHERE id = $1', [user.id]);
+    }
 
     if (device_id) {
       try {
         const deviceIdSafe = String(device_id).substring(0, 17);
+        const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
         await pool.query(
-          `INSERT INTO devices (user_id, mac_address, modelo, android_version, app_version, status, connection_status)
-           VALUES ($1, $2, $3, $4, $5, 'ativo', 'online')
-           ON CONFLICT (mac_address) DO UPDATE SET user_id = $1, ultimo_acesso = NOW()`,
-          [user.id, deviceIdSafe, modelo || 'Web Browser', android_version || 'N/A', app_version || '1.0.0']
+          `INSERT INTO devices (user_id, mac_address, modelo, android_version, app_version, status, connection_status, ip)
+           VALUES ($1, $2, $3, $4, $5, 'ativo', 'online', $6)
+           ON CONFLICT (mac_address) DO UPDATE SET user_id = $1, ultimo_acesso = NOW(), ip = $6`,
+          [user.id, deviceIdSafe, modelo || 'Web Browser', android_version || 'N/A', app_version || '1.0.0', userIp]
         );
       } catch (devError) {
         console.error('Erro silencioso ao registrar dispositivo no 2FA:', devError);
@@ -206,7 +216,12 @@ exports.getDevices = async (req, res) => {
     const result = await pool.query(
       `SELECT id, mac_address as device_id, modelo as device, 
               TO_CHAR(ultimo_acesso, 'DD/MM/YYYY HH24:MI') as time, 
-              status, 
+              status, ip,
+              CASE 
+                WHEN modelo ILIKE '%iPhone%' OR modelo ILIKE '%Android%' OR modelo ILIKE '%Phone%' THEN 'phone'
+                WHEN modelo ILIKE '%MacBook%' OR modelo ILIKE '%Laptop%' THEN 'laptop'
+                ELSE 'monitor'
+              END as icon,
               CASE WHEN mac_address = $2 THEN true ELSE false END as active
        FROM devices 
        WHERE user_id = $1 
@@ -229,6 +244,28 @@ exports.deleteDevice = async (req, res) => {
   } catch (error) {
     console.error('Erro ao remover dispositivo:', error);
     res.status(500).json({ error: 'Erro ao remover dispositivo' });
+  }
+};
+
+// Status do 2FA (usado pela tela de Settings)
+exports.get2FAStatus = async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT tfa_enabled, telegram_chat_id FROM users WHERE id = $1',
+      [req.userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    const user = result.rows[0];
+    res.json({
+      enabled: !!user.tfa_enabled,
+      telegram_enabled: !!(user.telegram_chat_id && user.telegram_chat_id.trim() !== ''),
+      telegram: !!(user.telegram_chat_id && user.telegram_chat_id.trim() !== '')
+    });
+  } catch (error) {
+    console.error('Erro ao verificar status 2FA:', error);
+    res.status(500).json({ error: 'Erro ao verificar status 2FA' });
   }
 };
 

@@ -20,6 +20,7 @@ router.post('/verify-2fa', authController.verify2FA);
 router.get('/validate-token', authMiddleware, authController.validateToken);
 router.get('/devices', authMiddleware, authController.getDevices);
 router.delete('/devices/:id', authMiddleware, authController.deleteDevice);
+router.get('/2fa/status', authMiddleware, authController.get2FAStatus);
 router.put('/toggle-tfa', authMiddleware, authController.toggleTFA);
 router.delete('/logout', authMiddleware, authController.logout);
 

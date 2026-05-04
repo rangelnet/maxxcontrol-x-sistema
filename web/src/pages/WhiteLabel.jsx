@@ -230,7 +230,7 @@ export default function WhiteLabel() {
             {/* Tema de Cor */}
             <div>
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider block mb-2">Tema de Cor</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {TEMAS.map(tema => (
                   <button
                     key={tema.id}
@@ -398,7 +398,7 @@ export default function WhiteLabel() {
                 </div>
                 
                 <form onSubmit={handleSavePlan} className="p-5 flex-1 overflow-y-auto custom-scrollbar space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-xs font-bold text-zinc-500 uppercase block mb-1">Nome do Plano *</label>
                       <input type="text" required value={planForm.nome} onChange={e => setPlanForm({...planForm, nome: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white text-sm focus:border-brand/50 focus:outline-none" placeholder="Ex: Mensal Básico" />
@@ -414,7 +414,7 @@ export default function WhiteLabel() {
                     <input type="text" value={planForm.descricao} onChange={e => setPlanForm({...planForm, descricao: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white text-sm focus:border-brand/50 focus:outline-none" placeholder="Ex: Acesso completo por 30 dias" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-xs font-bold text-zinc-500 uppercase block mb-1">Badge de Destaque</label>
                       <input type="text" value={planForm.badge} onChange={e => setPlanForm({...planForm, badge: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white text-sm focus:border-brand/50 focus:outline-none" placeholder="Ex: Mais Vendido" />

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { Plus, Edit, Trash2, Save, X, CheckCircle, XCircle, Activity, Clock, AlertTriangle } from 'lucide-react'
 
@@ -163,15 +163,15 @@ const APIPanel = () => {
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white"><X size={24} /></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2"><label className="block text-sm font-medium mb-2">Nome da API *</label><input type="text" value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" placeholder="Ex: Auth API" required /></div>
-                <div className="col-span-2"><label className="block text-sm font-medium mb-2">Descricao</label><textarea value={formData.descricao} onChange={(e) => setFormData({...formData, descricao: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" rows="2" /></div>
-                <div className="col-span-2"><label className="block text-sm font-medium mb-2">URL *</label><input type="url" value={formData.url} onChange={(e) => setFormData({...formData, url: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" placeholder="https://api.exemplo.com/" required /></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-1 sm:col-span-2"><label className="block text-sm font-medium mb-2">Nome da API *</label><input type="text" value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" placeholder="Ex: Auth API" required /></div>
+                <div className="col-span-1 sm:col-span-2"><label className="block text-sm font-medium mb-2">Descricao</label><textarea value={formData.descricao} onChange={(e) => setFormData({...formData, descricao: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" rows="2" /></div>
+                <div className="col-span-1 sm:col-span-2"><label className="block text-sm font-medium mb-2">URL *</label><input type="url" value={formData.url} onChange={(e) => setFormData({...formData, url: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" placeholder="https://api.exemplo.com/" required /></div>
                 <div><label className="block text-sm font-medium mb-2">Categoria</label><input type="text" value={formData.categoria} onChange={(e) => setFormData({...formData, categoria: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" list="cats" /><datalist id="cats">{categories.map(c => <option key={c} value={c} />)}</datalist></div>
                 <div><label className="block text-sm font-medium mb-2">Metodo HTTP</label><select value={formData.metodo} onChange={(e) => setFormData({...formData, metodo: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option><option>PATCH</option></select></div>
                 <div><label className="block text-sm font-medium mb-2">Timeout (ms)</label><input type="number" value={formData.timeout} onChange={(e) => setFormData({...formData, timeout: parseInt(e.target.value)})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded" min="1000" max="30000" /></div>
-                <div className="col-span-2"><label className="block text-sm font-medium mb-2">Headers (JSON)</label><textarea value={formData.headers} onChange={(e) => setFormData({...formData, headers: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm" rows="3" placeholder='{"Authorization": "Bearer token"}' /></div>
-                <div className="col-span-2 flex gap-4">
+                <div className="col-span-1 sm:col-span-2"><label className="block text-sm font-medium mb-2">Headers (JSON)</label><textarea value={formData.headers} onChange={(e) => setFormData({...formData, headers: e.target.value})} className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded font-mono text-sm" rows="3" placeholder='{"Authorization": "Bearer token"}' /></div>
+                <div className="col-span-1 sm:col-span-2 flex gap-4">
                   <label className="flex items-center gap-2"><input type="checkbox" checked={formData.critica} onChange={(e) => setFormData({...formData, critica: e.target.checked})} className="w-4 h-4" /><span className="text-sm">API Critica</span></label>
                   <label className="flex items-center gap-2"><input type="checkbox" checked={formData.ativa} onChange={(e) => setFormData({...formData, ativa: e.target.checked})} className="w-4 h-4" /><span className="text-sm">Ativa (monitorar)</span></label>
                 </div>

@@ -42,6 +42,7 @@ export default function Settings() {
 
   // === 2FA ===
   const [twoFaEnabled, setTwoFaEnabled] = useState(false)
+  const [twoFaTelegram, setTwoFaTelegram] = useState(false)
   const [twoFaLoading, setTwoFaLoading] = useState(false)
   const [twoFaMethod, setTwoFaMethod] = useState('app') // 'app' | 'telegram'
   const [twoFaQr, setTwoFaQr] = useState('')
@@ -97,6 +98,8 @@ export default function Settings() {
   const [p2pEnabled, setP2pEnabled] = useState(false)
   const [p2pKey, setP2pKey] = useState('')
 
+  const [twoFaVerifyCode, setTwoFaVerifyCode] = useState('')
+
   const showFeedback = (text, type = 'success') => {
     setMessage({ text, type })
     setTimeout(() => setMessage(null), 4000)
@@ -114,11 +117,15 @@ export default function Settings() {
   const loadDevices = async () => {
     try {
       setSessionsLoading(true)
-      const bid = localStorage.getItem('browser_id')
-      const res = await api.get('/auth/devices', {
+      let bid = localStorage.getItem('browser_id')
+      
+      // Se não tiver bid, tenta gerar/recuperar usando a lógica do AuthContext (acessível via localStorage após primeiro acesso)
+      if (!bid) bid = 'web-session-' + Math.random().toString(36).substring(7);
+
+      const res = await api.get('/api/auth/devices', {
         headers: { 'x-device-id': bid }
       })
-      setSessions(res.data?.devices || (Array.isArray(res.data) ? res.data : []))
+      setSessions(Array.isArray(res.data) ? res.data : (res.data?.devices || []))
     } catch (err) {
       console.error('Erro ao carregar dispositivos:', err)
     } finally {
@@ -126,9 +133,21 @@ export default function Settings() {
     }
   }
 
+  const handleDeleteDevice = async (id) => {
+    if (!window.confirm('Deseja encerrar esta sessão?')) return
+    try {
+      await api.delete(`/api/auth/devices/${id}`)
+      showFeedback('Sessão encerrada com sucesso.', 'success')
+      loadDevices()
+    } catch (err) {
+      console.error('Erro ao remover dispositivo:', err)
+      showFeedback('Erro ao encerrar sessão.', 'error')
+    }
+  }
+
   const loadSettings = async () => {
     try {
-      const response = await api.get('/settings')
+      const response = await api.get('/api/settings')
       if (response.data) {
         setWhatsapp(response.data.whatsapp || '')
         setWhatsappInput(response.data.whatsapp || '')
@@ -166,8 +185,9 @@ export default function Settings() {
 
   const loadTwoFaStatus = async () => {
     try {
-      const { data } = await api.get('/auth/2fa/status')
+      const { data } = await api.get('/api/auth/2fa/status')
       setTwoFaEnabled(data.enabled)
+      setTwoFaTelegram(data.telegram_enabled || data.telegram || false)
     } catch (err) { console.error(err) }
   }
 
@@ -178,7 +198,7 @@ export default function Settings() {
     }
     setWaStatus('loading')
     try {
-      const { data } = await api.get('/whatsapp/status')
+      const { data } = await api.get('/api/whatsapp/status')
       setWaStatus(data.status)
       if (data.status === 'connected') {
         loadWaGroups()
@@ -193,7 +213,7 @@ export default function Settings() {
   const loadGoogleStatus = async () => {
     setGoogleLoading(true)
     try {
-      const { data } = await api.get('/google/status')
+      const { data } = await api.get('/api/google/status')
       setGoogleConnected(data.connected)
       setGoogleEmail(data.email || '')
     } catch (err) {
@@ -219,12 +239,12 @@ export default function Settings() {
         payloadKey = 'telegram_id'
       }
       if (key === 'profile') {
-        await api.post('/settings', { name: profileName, email: profileEmail, phone: profilePhone, telegram_username: profileTg })
+        await api.post('/api/settings', { name: profileName, email: profileEmail, phone: profilePhone, telegram_username: profileTg })
         showFeedback('Perfil atualizado!')
         return
       }
       if (key === 'trial') {
-        await api.post('/settings', { panel_url: panelUrl, trial_hours: trialHours, welcome_template: welcomeTemplate })
+        await api.post('/api/settings', { panel_url: panelUrl, trial_hours: trialHours, welcome_template: welcomeTemplate })
         showFeedback('Configurações de Trial salvas!')
         return
       }
@@ -235,34 +255,50 @@ export default function Settings() {
           masterPermission: key === 'master' ? !masterPermission : masterPermission,
           panelLanguage: key === 'language' ? value : panelLanguage
         }
-        await api.post('/settings', payload)
+        await api.post('/api/settings', payload)
         showFeedback('Preferencia salva!')
         return
       }
       if (key === 'dns') {
-        await api.post('/settings', { dns_host: dnsHost, dns_port: dnsPort, dns_protocol: dnsProtocol })
+        await api.post('/api/settings', { dns_host: dnsHost, dns_port: dnsPort, dns_protocol: dnsProtocol })
         showFeedback('Configurações DNS salvas!')
         return
       }
       if (key === 'epg') {
-        await api.post('/settings', { epg_url: epgUrl, epg_interval: epgInterval })
+        await api.post('/api/settings', { epg_url: epgUrl, epg_interval: epgInterval })
         showFeedback('Configurações EPG salvas!')
         return
       }
       if (key === 'xtream') {
-        await api.post('/settings', { xtream_url: xtreamUrl, xtream_user: xtreamUser, xtream_pass: xtreamPass })
+        await api.post('/api/settings', { xtream_url: xtreamUrl, xtream_user: xtreamUser, xtream_pass: xtreamPass })
         showFeedback('Configurações Xtream salvas!')
         return
       }
       if (key === 'p2p') {
         const next = !p2pEnabled
         setP2pEnabled(next)
-        await api.post('/settings', { p2p_enabled: next, p2p_key: p2pKey })
+        await api.post('/api/settings', { p2p_enabled: next, p2p_key: p2pKey })
         showFeedback(`P2P Engine ${next ? 'ativada' : 'desativada'}!`)
         return
       }
+      if (key === '2fa-disable' || key === '2fa-telegram-disable') {
+        await api.put('/api/auth/toggle-tfa', { enabled: false })
+        setTwoFaEnabled(false)
+        setTwoFaTelegram(false)
+        showFeedback('Proteção 2FA desativada com sucesso!')
+        return
+      }
+      if (key === '2fa-verify') {
+        if (!twoFaVerifyCode) return showFeedback('Digite o código recebido!', 'error')
+        await api.post('/api/auth/verify-2fa', { email: profileEmail, code: twoFaVerifyCode, is_activation: true })
+        setTwoFaEnabled(false) // APP 2FA stays false
+        setTwoFaTelegram(true) // Telegram 2FA is now true
+        setTwoFaVerifyCode('')
+        showFeedback('2FA via Telegram ativado com sucesso!', 'success')
+        return
+      }
 
-      await api.post('/settings', { [payloadKey]: value })
+      await api.post('/api/settings', { [payloadKey]: value })
       if (key === 'whatsapp' || key === 'wpp') setWhatsapp(value)
       if (key === 'support' || key === 'sup') setSupportWhatsapp(value)
       
@@ -283,7 +319,7 @@ export default function Settings() {
     formData.append('logo', file)
 
     try {
-      const { data } = await api.post('/settings/logo', formData)
+      const { data } = await api.post('/api/settings/logo', formData)
       setLogoUrl(data.logo_url)
       setLogoPreview(null)
       showFeedback('Logo atualizada!')
@@ -298,7 +334,7 @@ export default function Settings() {
     if (!newPwd) return
     setSaving(prev => ({ ...prev, password: true }))
     try {
-      await api.post('/settings/password', { currentPassword: currentPwd, newPassword: newPwd })
+      await api.post('/api/settings/password', { currentPassword: currentPwd, newPassword: newPwd })
       setCurrentPwd('')
       setNewPwd('')
       showFeedback('Senha alterada!')
@@ -312,7 +348,7 @@ export default function Settings() {
   const loadWaGroups = async () => {
     setWaGroupsLoading(true)
     try {
-      const { data } = await api.get('/whatsapp/groups')
+      const { data } = await api.get('/api/whatsapp/groups')
       setWaGroups(data.groups || [])
     } catch (err) {
       console.error(err)
@@ -328,11 +364,11 @@ export default function Settings() {
     }
     setWaLoadingAction(true)
     try {
-      const { data } = await api.get('/whatsapp/connect')
+      const { data } = await api.get('/api/whatsapp/connect')
       setWaQrCode(data.qrcode)
       // Iniciar polling
       const poll = setInterval(async () => {
-        const { data: statusData } = await api.get('/whatsapp/status')
+        const { data: statusData } = await api.get('/api/whatsapp/status')
         if (statusData.status === 'connected') {
           setWaStatus('connected')
           setWaQrCode('')
@@ -352,7 +388,7 @@ export default function Settings() {
     if (!window.confirm('Deseja desconectar o WhatsApp?')) return
     setWaLoadingAction(true)
     try {
-      await api.post('/whatsapp/disconnect')
+      await api.post('/api/whatsapp/disconnect')
       setWaStatus('disconnected')
       setWaQrCode('')
       setWaGroups([])
@@ -368,7 +404,7 @@ export default function Settings() {
     const next = !waAutoPost
     setWaAutoPost(next)
     try {
-      await api.post('/whatsapp/autopost', { enabled: next, group_id: waSelectedGroup })
+      await api.post('/api/whatsapp/autopost', { enabled: next, group_id: waSelectedGroup })
     } catch (err) {
       showFeedback('Erro ao salvar autopost.', 'error')
     }
@@ -378,7 +414,7 @@ export default function Settings() {
     const next = !waChannelAutoPost
     setWaChannelAutoPost(next)
     try {
-      await api.post('/whatsapp/channel-autopost', { enabled: next, channel_id: waChannelId })
+      await api.post('/api/whatsapp/channel-autopost', { enabled: next, channel_id: waChannelId })
     } catch (err) {
       showFeedback('Erro ao salvar canal post.', 'error')
     }
@@ -402,11 +438,11 @@ export default function Settings() {
   const handleGoogleConnect = async () => {
     setGoogleLoading(true)
     try {
-      const { data } = await api.get('/google/auth-url')
+      const { data } = await api.get('/api/google/auth-url')
       window.open(data.url, '_blank', 'width=600,height=700')
       // Poll por status
       const poll = setInterval(async () => {
-        const { data: st } = await api.get('/google/status')
+        const { data: st } = await api.get('/api/google/status')
         if (st.connected) {
           setGoogleConnected(true)
           setGoogleEmail(st.email)
@@ -425,7 +461,7 @@ export default function Settings() {
     if (!window.confirm('Deseja desconectar sua conta Google?')) return
     setGoogleLoading(true)
     try {
-      await api.post('/google/disconnect')
+      await api.post('/api/google/disconnect')
       setGoogleConnected(false)
       setGoogleEmail('')
       showFeedback('Google Desconectado.', 'warning')
@@ -890,11 +926,17 @@ export default function Settings() {
                        <p className="text-xs font-bold text-white">{session.device}</p>
                        {session.active && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                     </div>
-                    <p className="text-[10px] text-zinc-500 font-medium">{session.ip} • {session.location} • {session.time}</p>
+                                         <p className="text-[10px] text-zinc-500 font-medium">
+                        {session.ip || 'IP Oculto'} {session.location ? `• ${session.location}` : ''} • {session.time}
+                     </p>
                  </div>
               </div>
               {!session.active && (
-                <button className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-red-500 rounded-lg transition">
+                                <button 
+                  onClick={() => handleDeleteDevice(session.id)}
+                  className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-red-500 rounded-lg transition active:scale-90"
+                  title="Encerrar Sessão"
+                >
                    <Trash2 className="h-4 w-4" />
                 </button>
               )}
@@ -912,12 +954,12 @@ export default function Settings() {
               <h2 className="text-lg font-bold text-white">DNS Custom (Rule 6)</h2>
             </div>
             <div className="space-y-4">
-               <div className="grid grid-cols-3 gap-2">
+               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <select value={dnsProtocol} onChange={e => setDnsProtocol(e.target.value)} className="bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none">
                     <option value="http">HTTP</option>
                     <option value="https">HTTPS</option>
                   </select>
-                  <input type="text" value={dnsHost} onChange={e => setDnsHost(e.target.value)} placeholder="Host" className="col-span-2 bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
+                  <input type="text" value={dnsHost} onChange={e => setDnsHost(e.target.value)} placeholder="Host" className="sm:col-span-2 bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
                </div>
                <input type="text" value={dnsPort} onChange={e => setDnsPort(e.target.value)} placeholder="Porta" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white text-xs outline-none"/>
                <button onClick={() => handleSave('dns')} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition">Configurar DNS</button>
@@ -1001,37 +1043,76 @@ export default function Settings() {
             <h2 className="text-xl font-bold text-white">Segurança 2FA</h2>
           </div>
           <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
-            twoFaEnabled ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
+            twoFaEnabled || twoFaTelegram ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
           }`}>
-            {twoFaEnabled ? 'Protegido' : 'Vulnerável'}
+            {twoFaEnabled ? 'Protegido (App)' : twoFaTelegram ? 'Protegido (Telegram)' : 'Vulnerável'}
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           <div className="space-y-4">
-            <p className="text-xs text-zinc-500 leading-relaxed font-medium">Adicione uma camada extra de segurança à sua conta usando Autenticação em Duas Etapas.</p>
-            {!twoFaEnabled ? (
-              <button 
-                onClick={() => setTwoFaStep('type-select')}
-                className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black text-xs uppercase tracking-widest rounded-2xl transition shadow-lg shadow-orange-500/20 active:scale-95"
-              >
-                ATIVAR PROTEÇÃO AGORA
-              </button>
+            <p className="text-sm text-zinc-400 leading-relaxed font-medium">
+              {twoFaEnabled || twoFaTelegram 
+                ? 'Sua conta já possui uma camada extra de segurança vinculada ao Bot do Telegram ou App de Autenticação.' 
+                : 'Aumente a segurança da sua conta vinculando seu Telegram. Sempre que você entrar de um novo dispositivo, pediremos um código de confirmação.'}
+            </p>
+            
+            {(!twoFaEnabled && !twoFaTelegram) ? (
+              <div className="p-4 bg-zinc-950 border border-orange-500/20 rounded-2xl space-y-3">
+                <p className="text-[11px] font-bold text-orange-500 uppercase tracking-widest">Como configurar:</p>
+                <ol className="space-y-2 text-xs text-zinc-500">
+                  <li className="flex gap-2">
+                    <span className="h-4 w-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[10px] text-white">1</span>
+                    Acesse o Bot: <a href="https://t.me/MxxcontrolBot" target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">@MxxcontrolBot</a>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="h-4 w-4 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[10px] text-white">2</span>
+                    Envie o comando abaixo no chat:
+                  </li>
+                </ol>
+                <div className="bg-zinc-900 p-3 rounded-xl border border-zinc-800 font-mono text-[11px] text-emerald-400 break-all select-all cursor-copy">
+                  /2fa start {profileEmail || 'seu-email'}
+                </div>
+                
+                <div className="pt-2 flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Código recebido no Telegram"
+                    value={twoFaVerifyCode}
+                    onChange={e => setTwoFaVerifyCode(e.target.value)}
+                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-xs outline-none focus:border-orange-500/50 transition"
+                  />
+                  <button 
+                    onClick={() => handleSave('2fa-verify')}
+                    className="px-6 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black text-[10px] uppercase tracking-widest rounded-xl transition active:scale-95"
+                  >
+                    VERIFICAR
+                  </button>
+                </div>
+              </div>
             ) : (
               <button 
-                onClick={() => handleSave('2fa-disable')}
+                onClick={() => {
+                   if (twoFaEnabled) handleSave('2fa-disable');
+                   else handleSave('2fa-telegram-disable');
+                }}
                 className="w-full py-4 bg-zinc-800 hover:bg-red-500/10 hover:text-red-500 text-white text-xs font-black rounded-2xl transition"
               >
-                DESATIVAR 2FA
+                DESATIVAR PROTEÇÃO ATUAL
               </button>
             )}
           </div>
           
-          <div className="p-6 bg-zinc-950/50 border border-zinc-800/50 rounded-[2rem] border-dashed flex flex-col items-center justify-center text-center">
-             <Key className={`h-10 w-10 mb-3 ${twoFaEnabled ? 'text-emerald-500' : 'text-zinc-700'}`} />
-             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-tight">
-               {twoFaEnabled ? 'Acesso Biométrico / App Ativo' : 'Nenhuma chave configurada'}
+          <div className={`p-8 rounded-[2.5rem] border-2 border-dashed transition-all flex flex-col items-center justify-center text-center ${
+            twoFaEnabled || twoFaTelegram ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-zinc-950/50 border-zinc-800/50'
+          }`}>
+             {twoFaTelegram && !twoFaEnabled ? <Bot className="h-12 w-12 mb-4 text-sky-500" /> : <Key className={`h-12 w-12 mb-4 ${twoFaEnabled ? 'text-emerald-500' : 'text-zinc-800'}`} />}
+             <p className={`text-[12px] font-black uppercase tracking-widest leading-tight ${twoFaEnabled || twoFaTelegram ? 'text-emerald-500' : 'text-zinc-600'}`}>
+               {twoFaEnabled ? 'Acesso Biométrico Ativo' : twoFaTelegram ? 'Proteção Telegram Ativa' : 'Aguardando Configuração'}
              </p>
+             {(twoFaEnabled || twoFaTelegram) && (
+                <p className="text-[10px] text-zinc-500 mt-2 font-medium">Dispositivo atual autorizado</p>
+             )}
           </div>
         </div>
       </div>

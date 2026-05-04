@@ -426,7 +426,7 @@ const Branding = () => {
               {templates.length > 0 && (
                 <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 shadow-xl">
                   <h2 className="font-bold text-white flex items-center gap-2 mb-4">📋 Templates Salvos</h2>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {templates.map(t => (
                       <button
                         key={t.id}
@@ -464,7 +464,7 @@ const Branding = () => {
                   {/* Logos */}
                   <div>
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">🏷️ Logos do Launcher</p>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {[
                         { label: 'MAXX Player Logo', path: '/branding/ic_maxx_player.png', bg: 'bg-black' },
                         { label: 'Launcher Icon',    path: '/branding/ic_launcher.png',    bg: 'bg-white' },
@@ -513,7 +513,7 @@ const Branding = () => {
                   {/* Banners */}
                   <div>
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">🖼️ Banners do App</p>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
                         { label: 'Banner App TV',     path: '/branding/banner_apptv.png' },
                         { label: 'Banner Mplay',      path: '/branding/banner_mplay.png' },
@@ -732,7 +732,7 @@ const Branding = () => {
             </div>
 
             {/* Legenda de cores */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 { label: 'Primária',  val: formData.primary_color },
                 { label: 'Fundo',     val: formData.background_color },
