@@ -525,14 +525,17 @@ const Resale = () => {
                              <div className="text-sm font-bold text-zinc-500 line-through">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
                              <div className="text-2xl font-bold text-white">R$ {parseFloat(pkg.promo_price).toFixed(2).replace('.',',')}</div>
                              <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {(parseFloat(pkg.promo_price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
+                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.promo_price })} className="w-full py-2.5 rounded-lg bg-red-600/80 text-white font-black border border-red-500/50 hover:bg-red-500 transition-all transform active:scale-95 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2">
+                               <ShoppingCart className="w-4 h-4" /> Comprar Agora
+                             </button>
                            </>
                         ) : (
                            <>
                              <div className="text-2xl font-bold text-white mt-4">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
                              <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {(parseFloat(pkg.price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
-                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.promo_price || pkg.price })} className="w-full py-2.5 rounded-lg bg-dark-700 text-zinc-300 font-black border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
-                           <ShoppingCart className="w-4 h-4" /> Comprar Agora
-                        </button>
+                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.price })} className="w-full py-2.5 rounded-lg bg-dark-700 text-zinc-300 font-black border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
+                               <ShoppingCart className="w-4 h-4" /> Comprar Agora
+                             </button>
                            </>
                         )}
 
