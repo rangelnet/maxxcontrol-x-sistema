@@ -66,6 +66,7 @@ const FinancePlans = () => {
     price: '',
     promo_price: ''
   });
+  const [editCreditId, setEditCreditId] = useState(null);
 
   const [panels, setPanels] = useState([]);
   const [dynamicPlans, setDynamicPlans] = useState([]);
@@ -173,15 +174,32 @@ const FinancePlans = () => {
   const handleSaveCreditPackage = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/finance/credit-packages', creditFormData);
-      alert("Pacote de créditos criado com sucesso!");
+      if (editCreditId) {
+        await axios.put(`/api/finance/credit-packages/${editCreditId}`, creditFormData);
+        alert("Pacote editado com sucesso!");
+      } else {
+        await axios.post('/api/finance/credit-packages', creditFormData);
+        alert("Pacote criado com sucesso!");
+      }
       setShowCreditModal(false);
       setCreditFormData({ name: '', credit_amount: '', price: '', promo_price: '' });
+      setEditCreditId(null);
       fetchData();
     } catch (error) {
       alert("Erro ao salvar pacote. Verifique o console.");
       console.error(error);
     }
+  };
+
+  const openEditCreditModal = (pkg) => {
+    setEditCreditId(pkg.id);
+    setCreditFormData({
+      name: pkg.name,
+      credit_amount: pkg.credit_amount,
+      price: pkg.price,
+      promo_price: pkg.promo_price || ''
+    });
+    setShowCreditModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -399,7 +417,7 @@ const FinancePlans = () => {
             </button>
           )}
           {activeTab === 'loja' && (
-            <button onClick={() => setShowCreditModal(true)} className={btnPrimaryClass}>
+            <button onClick={() => { setEditCreditId(null); setCreditFormData({ name: '', credit_amount: '', price: '', promo_price: '' }); setShowCreditModal(true); }} className={btnPrimaryClass}>
               <Plus size={18} /> Novo Pacote
             </button>
           )}
@@ -670,8 +688,11 @@ const FinancePlans = () => {
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px', paddingTop: '15px', borderTop: '1px solid #27272a' }}>
-                      <button onClick={() => handleDeleteCreditPackage(pkg.id)} style={{ width: '100%', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
-                        <Trash2 size={16} /> Remover Pacote
+                      <button onClick={() => openEditCreditModal(pkg)} style={{ flex: 1, background: '#27272a', border: '1px solid #3f3f46', color: '#fff', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                        <Edit3 size={16} /> Editar
+                      </button>
+                      <button onClick={() => handleDeleteCreditPackage(pkg.id)} style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                        <Trash2 size={16} /> Remover
                       </button>
                     </div>
                   </div>
@@ -791,7 +812,7 @@ const FinancePlans = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button type="button" onClick={() => setShowCreditModal(false)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid #27272a', background: 'transparent', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>
+                <button type="button" onClick={() => { setShowCreditModal(false); setEditCreditId(null); }} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid #27272a', background: 'transparent', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>
                   Cancelar
                 </button>
                 <button type="submit" style={{ flex: 2, padding: '14px', borderRadius: '12px', border: 'none', background: '#FC5F16', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>

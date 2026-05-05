@@ -310,6 +310,31 @@ router.delete('/credit-packages/:id', async (req, res) => {
     }
 });
 
+/**
+ * PUT /api/finance/credit-packages/:id
+ * Edita um pacote de créditos existente
+ */
+router.put('/credit-packages/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, credit_amount, price, promo_price, is_active } = req.body;
+
+        if (!name || !credit_amount || !price) {
+            return res.status(400).json({ error: 'Preencha os campos obrigatórios.' });
+        }
+
+        const result = await pool.query(
+            `UPDATE credit_packages SET name = $1, credit_amount = $2, price = $3, promo_price = $4, is_active = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING *`,
+            [name, credit_amount, price, promo_price || null, is_active !== undefined ? is_active : true, id]
+        );
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Erro ao editar pacote de crédito:', error);
+        res.status(500).json({ error: 'Erro interno no servidor' });
+    }
+});
+
 // ============================================
 // ENDPOINTS DE ATIVAÇÃO DE APPS (MAXX PLAYER, ETC)
 // ============================================
