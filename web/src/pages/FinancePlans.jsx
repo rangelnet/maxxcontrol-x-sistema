@@ -395,22 +395,22 @@ const FinancePlans = () => {
   });
 
   // Botão Primário Laranja Oficial
-  const btnPrimaryClass = "inline-flex items-center gap-2 px-6 py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-sm font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
+  const btnPrimaryClass = "inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', color: '#f4f4f5', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ padding: 'clamp(12px, 3vw, 30px)', maxWidth: '1200px', margin: '0 auto', color: '#f4f4f5', fontFamily: 'Inter, sans-serif' }}>
       
       {/* HEADER E DASHBOARD */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <div>
-          <h1 style={{ fontSize: '28px', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <DollarSign size={32} color="#FC5F16" /> Planos & Receitas
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px' }}>
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <DollarSign size={28} color="#FC5F16" style={{ flexShrink: 0 }} /> Planos & Receitas
           </h1>
-          <p style={{ color: '#71717a', margin: '5px 0 0', fontSize: '15px' }}>
+          <p style={{ color: '#71717a', margin: '5px 0 0', fontSize: 'clamp(12px, 2vw, 15px)' }}>
             Gerencie os planos comerciais da TV MAXX e acompanhe o faturamento
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
           {activeTab === 'planos' && (
             <button onClick={() => setShowModal(true)} className={btnPrimaryClass}>
               <Plus size={18} /> Novo Plano
@@ -425,18 +425,18 @@ const FinancePlans = () => {
       </div>
 
       {/* ABAS */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', borderBottom: '1px solid #27272a', paddingBottom: '15px' }}>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', borderBottom: '1px solid #27272a', paddingBottom: '12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {[
-          { id: 'planos', label: 'Planos Comerciais' },
-          { id: 'crm', label: 'CRM de Vendas' },
-          { id: 'loja', label: 'Loja de Créditos' },
-          { id: 'gateways', label: 'Gateways de Pagamentos' },
-          { id: 'apps', label: 'Ativação de Apps' }
+          { id: 'planos', label: 'Planos' },
+          { id: 'crm', label: 'CRM' },
+          { id: 'loja', label: 'Loja Créditos' },
+          { id: 'gateways', label: 'Gateways' },
+          { id: 'apps', label: 'Apps' }
         ].map(tab => (
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2.5 rounded-xl font-black cursor-pointer border-none transition-all transform active:scale-95 ${activeTab === tab.id ? 'bg-brand-500/10 text-brand-500' : 'bg-transparent text-zinc-500 hover:text-zinc-300'}`}
+            className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black cursor-pointer border-none transition-all transform active:scale-95 whitespace-nowrap text-xs sm:text-sm ${activeTab === tab.id ? 'bg-brand-500/10 text-brand-500' : 'bg-transparent text-zinc-500 hover:text-zinc-300'}`}
           >
             {tab.label}
           </button>
@@ -444,7 +444,7 @@ const FinancePlans = () => {
       </div>
 
       {/* DASHBOARD CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '15px', marginBottom: '30px' }}>
         <div style={{ background: 'rgba(252,95,22,0.1)', border: '1px solid rgba(252,95,22,0.3)', borderRadius: '16px', padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
           <div style={{ width: '60px', height: '60px', borderRadius: '14px', background: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(252,95,22,0.4)' }}>
             <Activity size={30} color="#fff" />
@@ -486,7 +486,7 @@ const FinancePlans = () => {
           <p style={{ margin: 0, color: '#a1a1aa' }}>Crie o seu primeiro plano comercial para começar a vender.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '15px' }}>
           {plans.map((plan) => (
             <div key={plan.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
               {!plan.is_active && (
@@ -528,26 +528,26 @@ const FinancePlans = () => {
 
       {activeTab === 'crm' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <User size={20} color="#FC5F16" /> Histórico de Clientes (CRM)
             </h2>
             
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ position: 'relative', flex: '1 1 200px', minWidth: '150px' }}>
                 <Search size={16} color="#a1a1aa" style={{ position: 'absolute', left: '12px', top: '12px' }} />
-                <input type="text" placeholder="Buscar cliente..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ padding: '10px 10px 10px 35px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none' }} />
+                <input type="text" placeholder="Buscar cliente..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ padding: '10px 10px 10px 35px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
               </div>
               
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none' }}>
-                <option value="">Status (Todos)</option>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', flex: '1 1 120px', minWidth: '120px' }}>
+                <option value="">Status</option>
                 <option value="pago">Pago</option>
                 <option value="pendente">Pendente</option>
-                <option value="cancelado">Cancelado/Reembolsado</option>
+                <option value="cancelado">Cancelado</option>
               </select>
 
-              <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none' }}>
-                <option value="">Método (Todos)</option>
+              <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', flex: '1 1 120px', minWidth: '120px' }}>
+                <option value="">Método</option>
                 <option value="PIX">PIX</option>
                 <option value="Cartão">Cartão</option>
                 <option value="Dinheiro">Dinheiro</option>
@@ -647,7 +647,7 @@ const FinancePlans = () => {
               <p style={{ margin: 0, color: '#a1a1aa' }}>Crie o seu primeiro pacote para a loja de revendedores.</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '15px' }}>
               {creditPackages.map((pkg) => {
                  const hasPromo = pkg.promo_price && pkg.promo_price > 0;
                  const activePrice = hasPromo ? pkg.promo_price : pkg.price;
@@ -705,8 +705,8 @@ const FinancePlans = () => {
 
       {/* MODAL NOVO PLANO */}
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '24px', width: '100%', maxWidth: '500px', padding: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
+          <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ margin: '0 0 25px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Plus size={24} color="#FC5F16" /> Criar Novo Plano
             </h2>
@@ -781,8 +781,8 @@ const FinancePlans = () => {
 
       {/* MODAL NOVO PACOTE DE CRÉDITOS */}
       {showCreditModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#111111', border: '1px solid #27272a', borderRadius: '24px', width: '100%', maxWidth: '500px', padding: '30px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '12px' }}>
+          <div style={{ background: '#111111', border: '1px solid #27272a', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ margin: '0 0 20px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CreditCard color="#FC5F16" size={28} /> Novo Pacote
             </h2>
@@ -970,7 +970,7 @@ const FinancePlans = () => {
                 </div>
 
                 {/* Botões de Ação */}
-                <div style={{ display: 'flex', gap: '15px', marginTop: '30px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
                   <button 
                     onClick={handleSaveGateways} 
                     disabled={savingGateways} 
@@ -1050,7 +1050,7 @@ const FinancePlans = () => {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '25px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '15px', marginBottom: '25px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: '700', color: '#f4f4f5', marginBottom: '8px', display: 'block' }}>Client Secret *</label>
                     <input 
@@ -1090,22 +1090,22 @@ const FinancePlans = () => {
 
       {activeTab === 'apps' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '12px', color: '#fff' }}>
-              <Smartphone size={28} color="#FC5F16" /> Catálogo de Aplicativos
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px' }}>
+            <h2 style={{ fontSize: 'clamp(18px, 3.5vw, 24px)', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
+              <Smartphone size={24} color="#FC5F16" style={{ flexShrink: 0 }} /> Catálogo de Aplicativos
             </h2>
             <button 
               onClick={() => {
                 setAppFormData({ app_name: '', logo_url: '', monthly_price: '', yearly_price: '', description: '', is_active: true });
                 setShowAppModal(true);
               }}
-              style={{ background: '#FC5F16', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(252,95,22,0.3)' }}
+              style={{ background: '#FC5F16', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(252,95,22,0.3)', fontSize: '13px' }}
             >
-              <Plus size={20} /> Cadastrar Novo App
+              <Plus size={18} /> Novo App
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '20px' }}>
             {appPackages.map((app) => (
               <div key={app.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '24px', padding: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '25px' }}>
@@ -1147,8 +1147,8 @@ const FinancePlans = () => {
 
       {/* MODAL CONFIGURAÇÕES DA FATURA */}
       {showInvoiceModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: '#18181b', width: '90%', maxWidth: '700px', borderRadius: '24px', border: '1px solid #27272a', padding: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)', padding: '12px' }}>
+          <div style={{ background: '#18181b', width: '100%', maxWidth: '700px', borderRadius: '20px', border: '1px solid #27272a', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ margin: '0 0 20px', fontSize: '24px', fontWeight: '900', color: '#fff' }}>Configurar Fatura e Checkout</h2>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
@@ -1193,7 +1193,7 @@ const FinancePlans = () => {
                 </div>
 
                 {fiscalActive === 'yes' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '12px' }}>
                     <input type="text" placeholder="Nome Completo Fictício" value={fiscalData.costumer_name} onChange={e => setFiscalData({...fiscalData, costumer_name: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
                     <input type="text" placeholder="CPF Válido" value={fiscalData.document} onChange={e => setFiscalData({...fiscalData, document: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
                     <input type="text" placeholder="CEP" value={fiscalData.zip_code} onChange={e => setFiscalData({...fiscalData, zip_code: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
@@ -1221,8 +1221,8 @@ const FinancePlans = () => {
 
       {/* MODAL CADASTRO DE APP */}
       {showAppModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
-           <div style={{ background: '#18181b', width: '90%', maxWidth: '500px', borderRadius: '32px', border: '1px solid #27272a', padding: '40px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'zoomIn 0.3s' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', padding: '12px' }}>
+           <div style={{ background: '#18181b', width: '100%', maxWidth: '500px', borderRadius: '24px', border: '1px solid #27272a', padding: 'clamp(20px, 4vw, 40px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'zoomIn 0.3s', maxHeight: '90vh', overflowY: 'auto' }}>
               <h2 style={{ margin: '0 0 30px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ padding: '8px', background: 'rgba(252,95,22,0.1)', borderRadius: '12px' }}>
                    <Smartphone size={24} color="#FC5F16" />
@@ -1254,7 +1254,7 @@ const FinancePlans = () => {
                     </div>
                  </div>
 
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '15px' }}>
                     <div>
                        <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Mensal (R$)</label>
                        <input 
