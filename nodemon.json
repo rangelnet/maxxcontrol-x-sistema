@@ -11,7 +11,8 @@
   ],
   "watch": [
     "server.js",
-    "modules"
+    "modules",
+    "services"
   ],
   "ext": "js,json",
   "delay": "3000"

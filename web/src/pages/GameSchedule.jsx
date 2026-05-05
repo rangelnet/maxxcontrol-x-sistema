@@ -117,7 +117,7 @@ export default function GameSchedule() {
             </div>
             Placares em Tempo Real
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">Dados atualizados automaticamente via SportsData.io</p>
+          <p className="text-zinc-400 text-sm mt-1">Dados atualizados via API-Football</p>
         </div>
         
         <div className="flex items-center gap-3 text-zinc-500 text-[10px] font-mono bg-dark-900/50 px-3 py-1.5 rounded-lg border border-white/5">
@@ -209,6 +209,11 @@ export default function GameSchedule() {
               <div key={idx} className="space-y-4">
                 <div className="flex items-center gap-3 px-2">
                   <div className="h-8 w-1 bg-brand rounded-full shadow-glow"></div>
+                  {camp.emoji && camp.emoji.startsWith('http') ? (
+                    <img src={camp.emoji} alt={camp.campeonato} className="h-4 w-6 rounded-sm object-cover" />
+                  ) : (
+                    <span className="text-xl">{camp.emoji}</span>
+                  )}
                   <h3 className="text-lg font-bold text-white tracking-tight">{camp.campeonato}</h3>
                   <span className="text-[10px] bg-white/5 border border-white/10 text-zinc-400 px-2 py-0.5 rounded uppercase font-mono">
                     {camp.jogos.length} PARTIDAS
@@ -227,45 +232,48 @@ export default function GameSchedule() {
                       )}
 
                       <div className="p-5">
-                        {/* Horário */}
-                        <div className="flex items-center justify-between mb-5 border-b border-white/5 pb-3">
+                        {/* Horário e Liga */}
+                        <div className="flex items-center justify-between mb-2 border-b border-white/5 pb-2">
                           <span className="text-[11px] font-bold text-brand flex items-center gap-1.5">
                             <Clock className="h-3 w-3" /> {jogo.horario}
                           </span>
-                          <span className="text-[11px] font-medium text-zinc-500">
-                             {jogo.data_fmt}
+                          <span className="text-[10px] font-medium text-zinc-500 truncate max-w-[120px]">
+                             {jogo.nome_liga}
                           </span>
                         </div>
 
-                        {/* Placar Principal */}
+                        {/* Grade de Jogos (Sem Placar) */}
                         <div className="flex items-center justify-between gap-4 py-2">
                           {/* Time Casa */}
                           <div className="flex flex-col items-center flex-1 text-center group-hover:scale-105 transition-transform">
-                            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-zinc-800 to-black border border-white/5 flex items-center justify-center mb-3 shadow-xl">
-                              <span className="text-2xl">⚽</span>
+                            <div className="h-16 w-16 rounded-2xl bg-zinc-800/50 border border-white/5 flex items-center justify-center mb-3 shadow-xl p-2">
+                              {jogo.logo_casa ? (
+                                <img src={jogo.logo_casa} alt={jogo.time_casa} className="w-full h-full object-contain" />
+                              ) : (
+                                <span className="text-2xl">⚽</span>
+                              )}
                             </div>
                             <span className="text-sm font-bold text-zinc-200 line-clamp-2 min-h-[40px] leading-snug">{jogo.time_casa}</span>
                           </div>
 
-                          {/* Versvs + Placar */}
+                          {/* VS Center */}
                           <div className="flex flex-col items-center gap-1">
-                            <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-2xl border border-white/5">
-                              <span className={`text-2xl font-black ${jogo.status === 'INPROGRESS' ? 'text-white' : 'text-zinc-600'}`}>{jogo.placar_casa}</span>
-                              <span className="text-zinc-700 font-bold text-sm">X</span>
-                              <span className={`text-2xl font-black ${jogo.status === 'INPROGRESS' ? 'text-white' : 'text-zinc-600'}`}>{jogo.placar_fora}</span>
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900 border border-white/5">
+                              <span className="text-zinc-500 font-black text-xs">VS</span>
                             </div>
                             {jogo.status === 'INPROGRESS' && (
-                              <span className="text-[10px] font-mono text-green-500 font-bold">{jogo.clock}' {jogo.periodo}</span>
-                            )}
-                            {jogo.status === 'FINAL' && (
-                              <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-tighter">FINALIZADO</span>
+                              <span className="text-[10px] font-mono text-brand font-bold animate-pulse">EM ANDAMENTO</span>
                             )}
                           </div>
 
                           {/* Time Fora */}
                           <div className="flex flex-col items-center flex-1 text-center group-hover:scale-105 transition-transform">
-                            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-zinc-800 to-black border border-white/5 flex items-center justify-center mb-3 shadow-xl">
-                              <span className="text-2xl">⚽</span>
+                            <div className="h-16 w-16 rounded-2xl bg-zinc-800/50 border border-white/5 flex items-center justify-center mb-3 shadow-xl p-2">
+                              {jogo.logo_fora ? (
+                                <img src={jogo.logo_fora} alt={jogo.time_fora} className="w-full h-full object-contain" />
+                              ) : (
+                                <span className="text-2xl">⚽</span>
+                              )}
                             </div>
                             <span className="text-sm font-bold text-zinc-200 line-clamp-2 min-h-[40px] leading-snug">{jogo.time_fora}</span>
                           </div>

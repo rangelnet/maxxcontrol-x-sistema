@@ -10,7 +10,7 @@ exports.getMatches = async (req, res) => {
     let data = [];
     
     if (type === 'mma') {
-      data = await sportsService.getMmaMatches();
+      data = await sportsService.getMmaMatches(date);
     } else if (type === 'basketball') {
       data = await sportsService.getBasketballMatches(date);
     } else {
