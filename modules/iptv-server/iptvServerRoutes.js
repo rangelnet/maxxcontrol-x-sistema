@@ -12,29 +12,14 @@ router.get('/curation', iptvProviderController.getCuration);
 router.post('/curation', iptvProviderController.addToCuration);
 router.delete('/curation/:id', iptvProviderController.deleteCurationItem);
 
-// Rota legada/compatibilidade
-router.get('/config', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('settings').select('*').eq('key', 'iptv_server').single();
-    res.json(data?.value || {});
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+const iptvServerController = require('./iptvServerController');
 
-router.post('/config', async (req, res) => {
-  try {
-    const { error } = await supabase.from('settings').upsert({ key: 'iptv_server', value: req.body });
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Rotas de Configuração Global (PostgreSQL Local)
+router.get('/config', iptvServerController.getConfig);
+router.post('/config', iptvServerController.saveConfig);
+router.post('/test', iptvServerController.testConnection);
 
-router.post('/test', async (req, res) => {
-    // Simulação de teste de conexão Xtream
-    res.json({ success: true, message: 'Conexão estabelecida com sucesso!' });
-});
+// Rota para o App Android buscar configuração por MAC
+router.get('/config/:mac', iptvServerController.getConfigByMac);
 
 module.exports = router;

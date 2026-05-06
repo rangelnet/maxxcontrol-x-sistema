@@ -598,9 +598,11 @@ async function runPendingMigrations() {
   // Migração: Sistema de Trial e URL Oficial
   console.log('⏳ Executando migration: Trial System & Global URLs...');
   try {
-    // 1. Adicionar data de expiração aos usuários
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP`);
-    console.log('  ✅ Coluna expires_at verificada/criada');
+    // 2. Adicionar URL de teste global na configuração de servidor
+    await pool.query(`ALTER TABLE iptv_server_config ADD COLUMN IF NOT EXISTS test_api_url TEXT`);
+    await pool.query(`ALTER TABLE iptv_server_config ADD COLUMN IF NOT EXISTS test_api_urls JSONB DEFAULT '[]'`);
+    
+    console.log('  ✅ Colunas expires_at e test_api_url/urls verificadas/criadas');
   } catch (err) {
     if (!IGNORE_CODES.includes(err.code)) {
       console.error('❌ Erro na migration Trial System:', err.message);

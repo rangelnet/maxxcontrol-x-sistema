@@ -66,20 +66,21 @@ exports.getDeviceConfig = async (req, res) => {
   }
 };
 
-// POST /api/iptv-server/config - Salvar configuração global
 exports.saveConfig = async (req, res) => {
-  const { xtream_url, xtream_username, xtream_password } = req.body;
-
+  const { xtream_url, xtream_username, xtream_password, test_api_url, test_api_urls } = req.body;
+  
   try {
     await pool.query(
-      `INSERT INTO iptv_server_config (id, xtream_url, xtream_username, xtream_password, updated_at)
-       VALUES (1, $1, $2, $3, NOW())
+      `INSERT INTO iptv_server_config (id, xtream_url, xtream_username, xtream_password, test_api_url, test_api_urls, updated_at)
+       VALUES (1, $1, $2, $3, $4, $5, NOW())
        ON CONFLICT (id) DO UPDATE SET
        xtream_url = $1,
        xtream_username = $2,
        xtream_password = $3,
+       test_api_url = $4,
+       test_api_urls = $5,
        updated_at = NOW()`,
-      [xtream_url, xtream_username, xtream_password]
+      [xtream_url, xtream_username, xtream_password, test_api_url, JSON.stringify(test_api_urls || [])]
     );
     
     res.json({ success: true, message: 'Configuração global salva com sucesso' });
