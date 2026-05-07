@@ -336,9 +336,10 @@ exports.setTestApiUrl = async (req, res) => {
   }
 };
 
-// Buscar URL da API de teste grátis por MAC (público - sem autenticação)
+// Buscar URL da API de teste grátis por MAC (público - agora com suporte a Código de Revenda)
 exports.getTestApiUrl = async (req, res) => {
   const { mac_address } = req.params;
+  const { resale_code } = req.query; // Recebe o código opcionalmente
 
   // Validar formato do MAC address
   const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
@@ -347,39 +348,78 @@ exports.getTestApiUrl = async (req, res) => {
   }
 
   try {
-    console.log(`🔍 Buscando test_api_url para MAC: ${mac_address}`);
+    console.log(`🔍 Buscando test_api_url para MAC: ${mac_address} | Código Revenda: ${resale_code || 'Nenhum'}`);
     
-    const result = await pool.query(
-      'SELECT test_api_url, test_api_urls FROM devices WHERE mac_address = $1',
-      [mac_address]
-    );
-    
-    if (result.rows.length === 0) {
-      console.log('❌ Dispositivo não encontrado');
-      return res.status(404).json({ error: 'Dispositivo não encontrado' });
-    }
-    
-    const row = result.rows[0];
-    const testApiUrl = row.test_api_url;
-
-    // Parsear test_api_urls se existir
+    // 1. Prioridade: Se houver código de revenda, busca a URL do revendedor
     let testApiUrls = null;
-    try {
-      if (row.test_api_urls) {
-        testApiUrls = typeof row.test_api_urls === 'string'
-          ? JSON.parse(row.test_api_urls)
-          : row.test_api_urls;
-      }
-    } catch { testApiUrls = null; }
+    let testApiUrl = null;
+    let hasCustomUrl = false;
 
-    // Fallback: se só tem test_api_url, montar array com ela
-    if (!testApiUrls && testApiUrl) {
-      testApiUrls = [testApiUrl];
+    if (resale_code) {
+      const resellerResult = await pool.query(
+        'SELECT dns_url, test_api_urls FROM resellers WHERE provider_code = $1 AND ativo = true',
+        [resale_code]
+      );
+
+      if (resellerResult.rows.length > 0) {
+        const resRow = resellerResult.rows[0];
+        const dns = resRow.dns_url;
+        let resUrls = null;
+        
+        try {
+          if (resRow.test_api_urls) {
+            resUrls = typeof resRow.test_api_urls === 'string' ? JSON.parse(resRow.test_api_urls) : resRow.test_api_urls;
+          }
+        } catch { resUrls = null; }
+
+        if ((resUrls && resUrls.length > 0) || dns) {
+          console.log(`✅ Revendedor encontrado! Links:`, resUrls || [dns]);
+          testApiUrl = dns;
+          testApiUrls = resUrls || [dns];
+          hasCustomUrl = true;
+        }
+      }
     }
 
-    const hasCustomUrl = (testApiUrls && testApiUrls.length > 0) || (testApiUrl !== null && testApiUrl !== '');
+    // 2. Se não encontrou pelo código, busca o link customizado do dispositivo
+    if (!hasCustomUrl) {
+      const deviceResult = await pool.query(
+        'SELECT test_api_url, test_api_urls FROM devices WHERE mac_address = $1',
+        [mac_address]
+      );
+      
+      if (deviceResult.rows.length > 0) {
+        const row = deviceResult.rows[0];
+        testApiUrl = row.test_api_url;
+        try {
+          if (row.test_api_urls) {
+            testApiUrls = typeof row.test_api_urls === 'string' ? JSON.parse(row.test_api_urls) : row.test_api_urls;
+          }
+        } catch { testApiUrls = null; }
+        
+        if ((testApiUrls && testApiUrls.length > 0) || (testApiUrl !== null && testApiUrl !== '')) {
+          hasCustomUrl = true;
+          if (!testApiUrls && testApiUrl) testApiUrls = [testApiUrl];
+        }
+      }
+    }
 
-    console.log(`✅ test_api_urls encontrado:`, testApiUrls, `(has_custom_url: ${hasCustomUrl})`);
+    // 3. FALLBACK GLOBAL: Se ainda não tem link, pega do Global Config
+    if (!hasCustomUrl) {
+      console.log('🌐 Sem links customizados. Buscando FALLBACK GLOBAL...');
+      const globalConfig = await pool.query('SELECT test_api_url, test_api_urls FROM iptv_server_config LIMIT 1');
+      if (globalConfig.rows.length > 0) {
+        const g = globalConfig.rows[0];
+        testApiUrl = g.test_api_url;
+        try {
+          testApiUrls = typeof g.test_api_urls === 'string' ? JSON.parse(g.test_api_urls) : g.test_api_urls;
+        } catch { testApiUrls = [g.test_api_url]; }
+        
+        if (!testApiUrls && testApiUrl) testApiUrls = [testApiUrl];
+      }
+    }
+
+    console.log(`✅ test_api_urls final:`, testApiUrls, `(has_custom_url: ${hasCustomUrl})`);
 
     res.json({
       test_api_url: testApiUrl,

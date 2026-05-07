@@ -705,7 +705,9 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // Middlewares
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -809,6 +811,7 @@ app.use('/api/finance', require('./modules/finance/finance-plans'));
 // Servir arquivos estáticos (banners gerados e mídias do whatsapp)
 app.use('/banners', express.static('public/banners'));
 app.use('/media', express.static('public/media'));
+app.use('/branding', express.static(path.join(__dirname, 'web', 'public', 'branding')));
 
 // Rota de health check melhorada
 app.get('/health', async (req, res) => {

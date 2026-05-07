@@ -37,7 +37,12 @@ exports.obterBranding = async (req, res) => {
 // Atualizar branding
 exports.atualizarBranding = async (req, res) => {
   const { id } = req.params;
-  const { app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url } = req.body;
+  const { 
+    app_name, logo_url, logo_dark_url, 
+    primary_color, secondary_color, background_color, text_color, accent_color,
+    button_primary_color, button_secondary_color, button_text_color, button_focus_color,
+    splash_screen_url, hero_banner_url, platforms, tema 
+  } = req.body;
 
   try {
     const result = await pool.query(
@@ -50,11 +55,22 @@ exports.atualizarBranding = async (req, res) => {
            background_color = $6,
            text_color = $7,
            accent_color = $8,
-           splash_screen_url = $9,
-           hero_banner_url = $10,
+           button_primary_color = $9,
+           button_secondary_color = $10,
+           button_text_color = $11,
+           button_focus_color = $12,
+           splash_screen_url = $13,
+           hero_banner_url = $14,
+           platforms = $15,
+           tema = $16,
            atualizado_em = NOW()
-       WHERE id = $11`,
-      [app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url, id]
+       WHERE id = $17`,
+      [
+        app_name, logo_url, logo_dark_url, 
+        primary_color, secondary_color, background_color, text_color, accent_color,
+        button_primary_color, button_secondary_color, button_text_color, button_focus_color,
+        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon', id
+      ]
     );
 
     if (result.rowCount === 0) {
@@ -169,15 +185,27 @@ exports.getAppLogo = async (req, res) => {
 };
 // Criar novo branding
 exports.criarBranding = async (req, res) => {
-  const { app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url } = req.body;
+  const { 
+    app_name, logo_url, logo_dark_url, 
+    primary_color, secondary_color, background_color, text_color, accent_color,
+    button_primary_color, button_secondary_color, button_text_color, button_focus_color,
+    splash_screen_url, hero_banner_url, platforms, tema 
+  } = req.body;
 
   try {
     const result = await pool.query(
       `INSERT INTO branding_settings 
-       (app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url, ativo, criado_em)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, NOW())
+       (app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, 
+        button_primary_color, button_secondary_color, button_text_color, button_focus_color,
+        splash_screen_url, hero_banner_url, platforms, tema, ativo, criado_em)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, NOW())
        RETURNING id`,
-      [app_name || 'Novo Tema', logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, splash_screen_url, hero_banner_url]
+      [
+        app_name || 'Novo Tema', logo_url, logo_dark_url, 
+        primary_color, secondary_color, background_color, text_color, accent_color,
+        button_primary_color, button_secondary_color, button_text_color, button_focus_color,
+        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon'
+      ]
     );
 
     res.status(201).json({ 

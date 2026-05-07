@@ -70,13 +70,22 @@ async function setup() {
 
     db.run(`CREATE TABLE IF NOT EXISTS branding_settings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      banner_titulo TEXT DEFAULT 'TV Maxx',
-      banner_subtitulo TEXT DEFAULT 'Seu Entretenimento',
-      banner_cor_fundo TEXT DEFAULT '#000000',
-      banner_cor_texto TEXT DEFAULT '#F63012',
+      app_name TEXT DEFAULT 'TV Maxx',
       logo_url TEXT,
-      splash_url TEXT,
-      tema TEXT DEFAULT 'dark',
+      logo_dark_url TEXT,
+      primary_color TEXT DEFAULT '#FC5F16',
+      secondary_color TEXT DEFAULT '#FF6A00',
+      background_color TEXT DEFAULT '#050505',
+      text_color TEXT DEFAULT '#FFFFFF',
+      accent_color TEXT DEFAULT '#FF8C00',
+      button_primary_color TEXT DEFAULT '#FC5F16',
+      button_secondary_color TEXT DEFAULT '#FF6A00',
+      button_text_color TEXT DEFAULT '#FFFFFF',
+      button_focus_color TEXT DEFAULT '#FFA500',
+      splash_screen_url TEXT,
+      hero_banner_url TEXT,
+      platforms TEXT,
+      tema TEXT DEFAULT 'Neon',
       ativo INTEGER DEFAULT 1,
       criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
       atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP
@@ -170,9 +179,9 @@ async function setup() {
 
           // Inserir branding padrão
           db.run(
-            `INSERT OR IGNORE INTO branding_settings (banner_titulo, banner_subtitulo, banner_cor_fundo, banner_cor_texto, tema, ativo)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            ['TV Maxx', 'Seu Entretenimento', '#000000', '#F63012', 'dark', 1],
+            `INSERT OR IGNORE INTO branding_settings (app_name, primary_color, secondary_color, background_color, text_color, accent_color, button_primary_color, button_secondary_color, button_text_color, button_focus_color, tema, ativo)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ['TV Maxx', '#FC5F16', '#FF6A00', '#050505', '#FFFFFF', '#FF8C00', '#FC5F16', '#FF6A00', '#FFFFFF', '#FFA500', 'Neon', 1],
             function(err) {
               if (err) {
                 console.error('❌ Erro ao criar branding:', err);

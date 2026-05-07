@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
+import { Check } from 'lucide-react'
 import api from '../services/api'
 
 // ─── PALETAS RÁPIDAS ───────────────────────────────────────────────────────────
 const PALETTES = [
-  { name: 'MAXX Orange',  primary: '#FC5F16', secondary: '#FF6A00', bg: '#050505', text: '#FFFFFF', accent: '#FF8C00' },
-  { name: 'Netflix Red',  primary: '#E50914', secondary: '#B20710', bg: '#141414', text: '#FFFFFF', accent: '#FF1E2D' },
-  { name: 'Prime Blue',   primary: '#00A8E1', secondary: '#0094CB', bg: '#0F171E', text: '#FFFFFF', accent: '#1EC1F0' },
-  { name: 'Disney+',      primary: '#113CCF', secondary: '#0B2AA0', bg: '#040B2A', text: '#FFFFFF', accent: '#1A4DE0' },
-  { name: 'Paramount',    primary: '#006EFF', secondary: '#0055CC', bg: '#0A0A14', text: '#FFFFFF', accent: '#3385FF' },
-  { name: 'Neon Green',   primary: '#00FF87', secondary: '#00CC6E', bg: '#070F0A', text: '#FFFFFF', accent: '#00E87A' },
-  { name: 'Roxo Premium', primary: '#9B59B6', secondary: '#8E44AD', bg: '#0D0812', text: '#FFFFFF', accent: '#A975C8' },
-  { name: 'Gold Line',    primary: '#FFD700', secondary: '#FFC107', bg: '#0A0800', text: '#FFFFFF', accent: '#FFE033' },
+  { name: 'MAXX Orange',  tema: 'Neon',     primary: '#FC5F16', secondary: '#FF6A00', bg: '#050505', text: '#FFFFFF', accent: '#FF8C00', btnPrimary: '#FC5F16', btnFocus: '#FFA500' },
+  { name: 'Netflix Red',  tema: 'Custom',   primary: '#E50914', secondary: '#B20710', bg: '#141414', text: '#FFFFFF', accent: '#FF1E2D', btnPrimary: '#E50914', btnFocus: '#B20710' },
+  { name: 'Prime Blue',   tema: 'Azul',     primary: '#00A8E1', secondary: '#0094CB', bg: '#0F171E', text: '#FFFFFF', accent: '#1EC1F0', btnPrimary: '#00A8E1', btnFocus: '#0094CB' },
+  { name: 'Disney+',      tema: 'Custom',   primary: '#113CCF', secondary: '#0B2AA0', bg: '#040B2A', text: '#FFFFFF', accent: '#1A4DE0', btnPrimary: '#113CCF', btnFocus: '#1A4DE0' },
+  { name: 'Paramount',    tema: 'Custom',   primary: '#006EFF', secondary: '#0055CC', bg: '#0A0A14', text: '#FFFFFF', accent: '#3385FF', btnPrimary: '#006EFF', btnFocus: '#3385FF' },
+  { name: 'Neon Green',   tema: 'Custom',   primary: '#00FF87', secondary: '#00CC6E', bg: '#070F0A', text: '#FFFFFF', accent: '#00E87A', btnPrimary: '#00FF87', btnFocus: '#00E87A' },
+  { name: 'Roxo Premium', tema: 'Custom',   primary: '#9B59B6', secondary: '#8E44AD', bg: '#0D0812', text: '#FFFFFF', accent: '#A975C8', btnPrimary: '#9B59B6', btnFocus: '#A975C8' },
+  { name: 'Gold Line',    tema: 'Custom',   primary: '#FFD700', secondary: '#FFC107', bg: '#0A0800', text: '#FFFFFF', accent: '#FFE033', btnPrimary: '#FFD700', btnFocus: '#FFE033' },
 ]
 
 // ─── CAMPO DE COR ──────────────────────────────────────────────────────────────
@@ -74,8 +75,13 @@ const Branding = () => {
     background_color: '#050505',
     text_color:       '#FFFFFF',
     accent_color:     '#FF8C00',
+    button_primary_color: '#FC5F16',
+    button_secondary_color: '#FF6A00',
+    button_text_color: '#FFFFFF',
+    button_focus_color: '#FFA500',
     splash_screen_url:'https://i.postimg.cc/BQwXmzTj/TVMAXX_MOVE.png',
     hero_banner_url:  '/branding/banner_apptv.png',
+    tema:             'Neon',
   })
 
   useEffect(() => {
@@ -113,8 +119,14 @@ const Branding = () => {
       background_color:  b.background_color || '#050505',
       text_color:        b.text_color       || '#FFFFFF',
       accent_color:      b.accent_color     || '#FF8C00',
+      button_primary_color: b.button_primary_color || b.primary_color || '#FC5F16',
+      button_secondary_color: b.button_secondary_color || b.secondary_color || '#FF6A00',
+      button_text_color: b.button_text_color || b.text_color || '#FFFFFF',
+      button_focus_color: b.button_focus_color || b.accent_color || '#FFA500',
       splash_screen_url: b.splash_screen_url|| '',
       hero_banner_url:   b.hero_banner_url  || '',
+      platforms:         b.platforms        || [],
+      tema:              b.tema             || 'Neon'
     })
   }
 
@@ -125,7 +137,34 @@ const Branding = () => {
     } catch { /* ignora */ }
   }
 
-  const set = (field) => (val) => setFormData(prev => ({ ...prev, [field]: val }))
+  const set = (key) => (val) => setFormData(prev => ({ ...prev, [key]: val }))
+
+  const togglePlatform = (id) => {
+    setFormData(prev => {
+      const platforms = prev.platforms || []
+      if (platforms.includes(id)) {
+        return { ...prev, platforms: platforms.filter(p => p !== id) }
+      } else {
+        return { ...prev, platforms: [...platforms, id] }
+      }
+    })
+  }
+
+  const PLATFORMS_LIST = [
+    { id: 'nfx', label: 'Netflix', banner: '/branding/banner_ntx.png' },
+    { id: 'prm', label: 'Prime Video', banner: '/branding/banner_pv.png' },
+    { id: 'dis', label: 'Disney+', banner: '/branding/banner_disney.png' },
+    { id: 'hbo', label: 'HBO Max', banner: '/branding/banner_hm.png' },
+    { id: 'glo', label: 'Globoplay', banner: '/branding/banner_glo.png' },
+    { id: 'sta', label: 'Star+', banner: '/branding/banner_star.png' },
+    { id: 'par', label: 'Paramount+', banner: '/branding/banner_pt.png' },
+    { id: 'ani', label: 'Crunchyroll', banner: '/branding/banner_cru.png' },
+    { id: 'hul', label: 'Hulu', banner: '/branding/banner_hulu.png' },
+    { id: 'app', label: 'Apple TV+', banner: '/branding/banner_apptv.png' },
+    { id: 'gaming', label: 'Maxx Gaming', banner: '/branding/banner_mgaming.png' },
+    { id: 'maxx', label: 'Maxx Play', banner: '/branding/banner_mplay.png' },
+    { id: 'hot', label: 'Maxx Red (Adulto)', banner: '/branding/banner_mred.png' },
+  ]
 
   const applyPalette = (p) => setFormData(prev => ({
     ...prev,
@@ -134,6 +173,9 @@ const Branding = () => {
     background_color: p.bg,
     text_color:       p.text,
     accent_color:     p.accent,
+    button_primary_color: p.btnPrimary || p.primary,
+    button_focus_color: p.btnFocus || p.accent,
+    tema:             p.tema || 'Custom'
   }))
 
   const handleSave = async (e) => {
@@ -169,6 +211,7 @@ const Branding = () => {
       accent_color:     '#FF8C00',
       splash_screen_url:'',
       hero_banner_url:  '',
+      platforms:        []
     })
   }
 
@@ -205,6 +248,7 @@ const Branding = () => {
     { id: 'identidade', label: 'Identidade',  icon: '🏷️' },
     { id: 'cores',      label: 'Cores',        icon: '🎨' },
     { id: 'midias',     label: 'Imagens',      icon: '🖼️' },
+    { id: 'plataformas', label: 'Plataformas', icon: '🚀' },
   ]
 
   if (loading) return (
@@ -413,12 +457,43 @@ const Branding = () => {
               {/* Campos de cor */}
               <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 shadow-xl">
                 <h2 className="font-bold text-white flex items-center gap-2 mb-4">🎨 Cores Personalizadas</h2>
+                
+                {/* Seletor de Tema Base */}
+                <div className="mb-6 p-4 bg-dark-900 border border-dark-600 rounded-xl">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-3">Tema Base (Sincronizado com Android)</label>
+                  <div className="flex gap-2">
+                    {['Neon', 'Clássico', 'Azul', 'Custom'].map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => set('tema')(t)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-all ${
+                          formData.tema === t 
+                            ? 'bg-brand-500 border-brand-500 text-white' 
+                            : 'bg-dark-800 border-dark-700 text-zinc-500 hover:text-white'
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <ColorField label="Cor Primária"    value={formData.primary_color}    onChange={set('primary_color')} />
                   <ColorField label="Cor Secundária"  value={formData.secondary_color}  onChange={set('secondary_color')} />
                   <ColorField label="Cor de Fundo"    value={formData.background_color} onChange={set('background_color')} />
                   <ColorField label="Cor do Texto"    value={formData.text_color}       onChange={set('text_color')} />
                   <ColorField label="Cor de Destaque" value={formData.accent_color}     onChange={set('accent_color')} />
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-dark-700">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4">🕹️ Interação e Botões</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <ColorField label="Botão Principal"  value={formData.button_primary_color}   onChange={set('button_primary_color')} />
+                    <ColorField label="Cor de Foco (Glow)" value={formData.button_focus_color}     onChange={set('button_focus_color')} />
+                    <ColorField label="Texto do Botão"   value={formData.button_text_color}      onChange={set('button_text_color')} />
+                  </div>
                 </div>
               </div>
 
@@ -617,6 +692,61 @@ const Branding = () => {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 🚀 PLATFORMAS */}
+          {activeSection === 'plataformas' && (
+            <div className="space-y-6 animate-fadeIn">
+              <div className="bg-dark-900/50 border border-dark-600 rounded-2xl p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-12 w-12 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-2xl">
+                    🚀
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tighter">Explorar por Plataforma</h3>
+                    <p className="text-zinc-500 text-xs font-medium">Selecione quais plataformas aparecerão no Launcher do Player Web</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {PLATFORMS_LIST.map(plat => {
+                    const isActive = (formData.platforms || []).includes(plat.id)
+                    return (
+                      <button
+                        key={plat.id}
+                        type="button"
+                        onClick={() => togglePlatform(plat.id)}
+                        className={`group relative aspect-video rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                          isActive 
+                            ? 'border-brand-500 ring-4 ring-brand-500/20 scale-[1.02]' 
+                            : 'border-dark-700 grayscale hover:grayscale-0 opacity-40 hover:opacity-100'
+                        }`}
+                      >
+                        <img 
+                          src={plat.banner} 
+                          alt={plat.label}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        
+                        {/* Overlay */}
+                        <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${isActive ? 'bg-brand-500/10' : 'bg-black/60 group-hover:bg-black/20'}`}>
+                          {isActive && (
+                            <div className="bg-brand-500 text-white p-1 rounded-full shadow-lg">
+                              <Check size={16} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Label */}
+                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest">{plat.label}</span>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </div>

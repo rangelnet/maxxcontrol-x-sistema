@@ -39,9 +39,9 @@ const Resale = () => {
 
   const [editandoRevendedor, setEditandoRevendedor] = useState(null);
   const [formData, setFormData] = useState({ 
-    nome: '', email: '', telefone: '', empresa: '', 
+    nome: '', email: '', senha: '', telefone: '', empresa: '', 
     limite_dispositivos: 10, creditos: 0, ativo: true,
-    provider_code: '', dns_url: '',
+    provider_code: '', dns_url: '', test_api_urls: [''],
     perm_dashboard: true, perm_dispositivos: true, perm_revenda: false, perm_jogos: false, perm_banners: false,
     perm_iptv: true, perm_plugin: true, perm_arvore: false, 
     perm_api: false, perm_branding: false, perm_galeria: false, perm_whitelabel: false, perm_versoes: false, perm_config: false, perm_tickets: true
@@ -139,10 +139,12 @@ const Resale = () => {
   const handleEdit = (revendedor) => {
     setEditandoRevendedor(revendedor);
     setFormData({ 
-      nome: revendedor.nome, email: revendedor.email, telefone: revendedor.telefone || '', 
+      nome: revendedor.nome, email: revendedor.email, senha: revendedor.senha || '', telefone: revendedor.telefone || '', 
       empresa: revendedor.empresa || '', limite_dispositivos: revendedor.limite_dispositivos,
       creditos: revendedor.creditos || 0, ativo: revendedor.ativo,
-      provider_code: revendedor.provider_code || generateProviderCode(), dns_url: revendedor.dns_url || '',
+      provider_code: revendedor.provider_code || generateProviderCode(), 
+      dns_url: revendedor.dns_url || '',
+      test_api_urls: Array.isArray(revendedor.test_api_urls) ? revendedor.test_api_urls : (revendedor.dns_url ? [revendedor.dns_url] : ['']),
       perm_dashboard: revendedor.perm_dashboard ?? true, perm_dispositivos: revendedor.perm_dispositivos ?? true, 
       perm_revenda: revendedor.perm_revenda ?? false, perm_jogos: revendedor.perm_jogos ?? false, perm_banners: revendedor.perm_banners ?? false,
       perm_iptv: revendedor.perm_iptv ?? true, perm_plugin: revendedor.perm_plugin ?? true, perm_arvore: revendedor.perm_arvore ?? false,
@@ -165,7 +167,7 @@ const Resale = () => {
 
   const resetForm = () => { 
     setFormData({ 
-       nome: '', email: '', telefone: '', empresa: '', limite_dispositivos: 10, creditos: 0, ativo: true, provider_code: '', dns_url: '',
+       nome: '', email: '', senha: '', telefone: '', empresa: '', limite_dispositivos: 10, creditos: 0, ativo: true, provider_code: '', dns_url: '', test_api_urls: [''],
        perm_dashboard: true, perm_dispositivos: true, perm_revenda: false, perm_jogos: false, perm_banners: false,
        perm_iptv: true, perm_plugin: true, perm_arvore: false, 
        perm_api: false, perm_branding: false, perm_galeria: false, perm_whitelabel: false, perm_versoes: false, perm_config: false, perm_tickets: true
@@ -622,18 +624,77 @@ const Resale = () => {
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome Completo *</label><input type="text" required value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome da Empresa</label><input type="text" value={formData.empresa} onChange={(e) => setFormData({ ...formData, empresa: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Email (Painel Web) *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
+                <div>
+                    <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Senha de Acesso *</label>
+                    <div className="relative">
+                        <input 
+                            type="text" 
+                            required 
+                            value={formData.senha} 
+                            onChange={(e) => setFormData({ ...formData, senha: e.target.value })} 
+                            className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:border-orange-500 font-mono" 
+                            placeholder="********"
+                        />
+                        <Key className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3.5" />
+                    </div>
+                </div>
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Telefone/WhatsApp</label><input type="text" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
               </div>
 
 
               <div className="bg-dark-800/80 rounded-xl p-5 border border-brand-500/30 mb-5 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
-                  <h4 className="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><Link2 className="w-4 h-4" /> Integração DNS Local</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Provider Code</label><div className="relative"><input type="text" maxLength={8} required value={formData.provider_code} onChange={(e) => setFormData({ ...formData, provider_code: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-brand-400 font-mono font-bold text-lg rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-brand-500" /><KeyRound className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3.5" /></div></div>
-                      <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">URL DNS do Revendedor</label><input type="url" value={formData.dns_url} onChange={(e) => setFormData({ ...formData, dns_url: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-brand-500" /></div>
+                  <h4 className="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><Link2 className="w-4 h-4" /> Integração DNS Local (Redundância)</h4>
+                  <div className="grid grid-cols-1 gap-4">
+                      <div>
+                          <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Provider Code (Identificação do App)</label>
+                          <div className="relative">
+                              <input type="text" maxLength={8} required value={formData.provider_code} onChange={(e) => setFormData({ ...formData, provider_code: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-brand-400 font-mono font-bold text-lg rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-brand-500" />
+                              <KeyRound className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3.5" />
+                          </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                          <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest">URLs de Teste (DNS do Revendedor)</label>
+                          {formData.test_api_urls.map((url, index) => (
+                              <div key={index} className="flex gap-2 group/url">
+                                  <div className="relative flex-1">
+                                      <input 
+                                          type="url" 
+                                          placeholder="http://dns-revenda:8080"
+                                          value={url} 
+                                          onChange={(e) => {
+                                              const newUrls = [...formData.test_api_urls];
+                                              newUrls[index] = e.target.value;
+                                              setFormData({ ...formData, test_api_urls: newUrls, dns_url: newUrls[0] });
+                                          }} 
+                                          className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:border-brand-500 text-sm" 
+                                      />
+                                      <Globe className="w-4 h-4 text-zinc-600 absolute left-3.5 top-3.5" />
+                                  </div>
+                                  {formData.test_api_urls.length > 1 && (
+                                      <button 
+                                          type="button" 
+                                          onClick={() => {
+                                              const newUrls = formData.test_api_urls.filter((_, i) => i !== index);
+                                              setFormData({ ...formData, test_api_urls: newUrls, dns_url: newUrls[0] || '' });
+                                          }}
+                                          className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 rounded-lg border border-red-500/20 transition-all"
+                                      >
+                                          <Trash2 className="w-4 h-4" />
+                                      </button>
+                                  )}
+                              </div>
+                          ))}
+                          <button 
+                              type="button" 
+                              onClick={() => setFormData({ ...formData, test_api_urls: [...formData.test_api_urls, ''] })}
+                              className="w-full py-2 border border-dashed border-dark-600 rounded-lg text-zinc-500 hover:text-brand-400 hover:border-brand-500/50 hover:bg-brand-500/5 text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                          >
+                              <Plus className="w-4 h-4" /> Adicionar Outro Servidor de Teste
+                          </button>
+                      </div>
                   </div>
-
               </div>
 
               <div className="bg-dark-800/50 rounded-xl p-4 border border-dark-600 mb-5 max-h-[180px] overflow-y-auto custom-scrollbar">
