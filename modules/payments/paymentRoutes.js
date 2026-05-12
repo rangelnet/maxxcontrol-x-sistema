@@ -9,6 +9,10 @@ router.post('/pix', authMiddleware, paymentController.createPixPayment);
 // Pagamento com Cartão
 router.post('/card', authMiddleware, paymentController.createCardPayment);
 
+// --- Rotas Públicas para o Web Player (Cliente Final) ---
+router.post('/public/pix', paymentController.createPublicPixPayment);
+router.post('/public/card', paymentController.createPublicCardPayment);
+
 // Validar Access Token do Mercado Pago (chama API real do MP)
 router.post('/validate-token', paymentController.validateToken);
 
@@ -16,7 +20,7 @@ router.post('/validate-token', paymentController.validateToken);
 router.post('/validate-paypal', paymentController.validatePaypal);
 
 // Checar o status da compra a cada X segundos
-router.get('/status/:payment_id', authMiddleware, paymentController.checkPaymentStatus);
+router.get('/status/:payment_id', paymentController.checkPaymentStatus); // Removido auth para o cliente final poder checar
 
 // Obter histórico de transações
 router.get('/history', authMiddleware, paymentController.getPaymentHistory);

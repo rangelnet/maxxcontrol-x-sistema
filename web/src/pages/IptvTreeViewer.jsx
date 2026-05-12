@@ -23,7 +23,7 @@ const IptvTreeViewer = () => {
 
   useEffect(() => { fetchProviders(); }, [fetchProviders]);
 
-  const currentProvider = useMemo(() => 
+  const currentProvider = useMemo(() =>
     providers.find(p => p.slot_index === activeSlot) || { name: `Slot ${activeSlot}`, url: '', username: '', password: '' },
     [providers, activeSlot]
   );
@@ -72,9 +72,9 @@ const IptvTreeViewer = () => {
     e.preventDefault();
     try {
       if (!editProvider.id) {
-         await api.post('/iptv-server/providers', editProvider);
+        await api.post('/iptv-server/providers', editProvider);
       } else {
-         await api.put(`/iptv-server/providers/${editProvider.id}`, editProvider);
+        await api.put(`/iptv-server/providers/${editProvider.id}`, editProvider);
       }
       setShowConfig(false);
       fetchProviders();
@@ -84,7 +84,7 @@ const IptvTreeViewer = () => {
   return (
     <div className="p-6 bg-[#050505] min-h-screen text-white">
       <div className="flex gap-4 mb-8 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-orange-500/20">
-        {[1,2,3,4,5,6].map(i => {
+        {[1, 2, 3, 4, 5, 6].map(i => {
           const p = providers.find(x => x.slot_index === i);
           const active = activeSlot === i;
           return (
@@ -110,7 +110,7 @@ const IptvTreeViewer = () => {
           <RefreshCw size={18} className={loading ? 'animate-spin' : ''} /> ATUALIZAR LISTA
         </button>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20">
         <div className="lg:col-span-12">
           <div className="bg-[#111] rounded-[2rem] p-6 border border-white/5 shadow-2xl relative overflow-hidden group">
@@ -122,17 +122,17 @@ const IptvTreeViewer = () => {
             ) : (
               <div className="space-y-2 relative z-10">
                 {treeData.length === 0 && !loading && (
-                   <div className="py-20 text-center">
-                      <Tv size={48} className="text-orange-500/20 mx-auto mb-4" />
-                      <h3 className="text-white font-bold text-lg">Nenhum canal encontrado</h3>
-                      <p className="text-zinc-500">Configure os dados do servidor clicando na engrenagem no topo.</p>
-                   </div>
+                  <div className="py-20 text-center">
+                    <Tv size={48} className="text-orange-500/20 mx-auto mb-4" />
+                    <h3 className="text-white font-bold text-lg">Nenhum canal encontrado</h3>
+                    <p className="text-zinc-500">Configure os dados do servidor clicando na engrenagem no topo.</p>
+                  </div>
                 )}
                 {loading ? (
-                   <div className="py-40 text-center flex flex-col items-center gap-4">
-                      <Loader className="animate-spin text-orange-500" size={32} />
-                      <p className="text-sm font-black text-orange-500 uppercase tracking-widest">Acessando Servidor {activeSlot}...</p>
-                   </div>
+                  <div className="py-40 text-center flex flex-col items-center gap-4">
+                    <Loader className="animate-spin text-orange-500" size={32} />
+                    <p className="text-sm font-black text-orange-500 uppercase tracking-widest">Acessando Servidor {activeSlot}...</p>
+                  </div>
                 ) : (
                   treeData.map(node => (
                     <div key={node.id} className="border-b border-white/5 last:border-0 pb-1">
@@ -166,16 +166,16 @@ const IptvTreeViewer = () => {
           <form onSubmit={handleSaveConfig} className="bg-[#111] p-10 rounded-[2.5rem] border-2 border-orange-500/30 w-full max-w-lg space-y-6 shadow-[0_0_100px_rgba(252, 95, 22,0.1)] relative">
             <h2 className="text-white font-black text-3xl uppercase tracking-tighter">Configurar Slot {activeSlot}</h2>
             <div className="space-y-4">
-               <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.name || ''} onChange={e=>setEditProvider({...editProvider, name: e.target.value})} placeholder="Ex: Servidor VIP" />
-               <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-mono text-sm" value={editProvider.url || ''} onChange={e=>setEditProvider({...editProvider, url: e.target.value})} placeholder="http://dominio.com:8080" />
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.username || ''} onChange={e=>setEditProvider({...editProvider, username: e.target.value})} placeholder="Username" />
-                  <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.password || ''} onChange={e=>setEditProvider({...editProvider, password: e.target.value})} placeholder="Password" type="password" />
-               </div>
+              <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.name || ''} onChange={e => setEditProvider({ ...editProvider, name: e.target.value })} placeholder="Ex: Servidor VIP" />
+              <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-mono text-sm" value={editProvider.url || ''} onChange={e => setEditProvider({ ...editProvider, url: e.target.value })} placeholder="http://dominio.com:8080" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.username || ''} onChange={e => setEditProvider({ ...editProvider, username: e.target.value })} placeholder="Username" />
+                <input className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-orange-500 transition-colors font-bold" value={editProvider.password || ''} onChange={e => setEditProvider({ ...editProvider, password: e.target.value })} placeholder="Password" type="password" />
+              </div>
             </div>
             <div className="flex gap-4 pt-6">
               <button type="submit" className="flex-1 bg-orange-500 text-black font-black p-5 rounded-2xl hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest text-sm">SALVAR CONFIGURAÇÃO</button>
-              <button type="button" onClick={()=>setShowConfig(false)} className="px-8 bg-zinc-800 text-white font-bold p-5 rounded-2xl hover:bg-zinc-700 transition-all uppercase tracking-widest text-xs">CANCELAR</button>
+              <button type="button" onClick={() => setShowConfig(false)} className="px-8 bg-zinc-800 text-white font-bold p-5 rounded-2xl hover:bg-zinc-700 transition-all uppercase tracking-widest text-xs">CANCELAR</button>
             </div>
           </form>
         </div>

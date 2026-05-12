@@ -16,6 +16,15 @@ function getAuthToken() {
 
 function extractSigmaCustomers() {
   const extracted = [];
+  
+  // 1. Verificar se estamos em uma página de EDIÇÃO individual
+  if (window.location.href.includes('/customers/edit/')) {
+    const data = parseEditPage();
+    if (data) extracted.push(data);
+    return extracted;
+  }
+
+  // 2. Se for a LISTA de clientes
   const rows = document.querySelectorAll('table tbody tr');
   const cards = document.querySelectorAll('.col-lg-4 .card');
   const items = cards.length > 0 ? cards : rows;
@@ -29,6 +38,38 @@ function extractSigmaCustomers() {
   return extracted;
 }
 
+// Nova função para ler a página de edição individual
+function parseEditPage() {
+  try {
+    // No Sigma/Megga, os campos costumam ter classes do ElementUI ou IDs específicos
+    const usernameInput = document.querySelector('input[placeholder*="Usuário"], .el-input__inner[type="text"]');
+    const passwordInput = document.querySelector('input[type="password"], input[placeholder*="Senha"]');
+    const expireInput = document.querySelector('input[placeholder*="Vencimento"], .el-date-editor input');
+    
+    // Tenta pegar o ID da URL
+    const idMatch = window.location.href.match(/\/edit\/([a-zA-Z0-9]+)/);
+    const remote_id = idMatch ? idMatch[1] : '';
+
+    if (usernameInput && usernameInput.value) {
+      return {
+        username: usernameInput.value.trim(),
+        password: passwordInput ? passwordInput.value.trim() : '',
+        expire_date: expireInput ? expireInput.value.trim() : '',
+        remote_id: remote_id,
+        panel_url: window.location.href,
+        package_name: 'Atualizado via Edição',
+        server_name: 'Sigma',
+        max_connections: 1,
+        status: 'active',
+        device_mac: `SGM-${usernameInput.value.trim().substring(0,8)}`
+      };
+    }
+  } catch (err) {
+    console.error('Erro ao ler página de edição:', err);
+  }
+  return null;
+}
+
 function parseContainer(container) {
   let username = '';
   let remote_id = '';
@@ -38,8 +79,14 @@ function parseContainer(container) {
   let server_name = '';
   let max_connections = 1;
   let m3u_url = '';
-  let password = '******';
+  let password = '';
   let status = 'active';
+
+  // Tentar capturar senha de atributos de dados (comum no Sigma)
+  const pwEl = container.querySelector('[data-password], [data-pass], .password-field');
+  if (pwEl) {
+    password = pwEl.getAttribute('data-password') || pwEl.getAttribute('data-pass') || pwEl.innerText.trim();
+  }
 
   const fullText = container.innerText;
   const editLink = container.querySelector('a[href*="/customers/edit/"]');
@@ -71,7 +118,7 @@ function parseContainer(container) {
   if (m3uMatch) {
      m3u_url = m3uMatch[1].replace(/&amp;/g, '&');
      const pwMatch = m3u_url.match(/[?&]password=([^&]+)/i);
-     if (pwMatch) password = pwMatch[1];
+     if (pwMatch && !password) password = pwMatch[1];
   }
 
   if (username) {

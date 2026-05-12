@@ -41,7 +41,7 @@ exports.atualizarBranding = async (req, res) => {
     app_name, logo_url, logo_dark_url, 
     primary_color, secondary_color, background_color, text_color, accent_color,
     button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-    splash_screen_url, hero_banner_url, platforms, tema 
+    splash_screen_url, hero_banner_url, platforms, tema, whatsapp 
   } = req.body;
 
   try {
@@ -63,13 +63,15 @@ exports.atualizarBranding = async (req, res) => {
            hero_banner_url = $14,
            platforms = $15,
            tema = $16,
+           whatsapp = $17,
            atualizado_em = NOW()
-       WHERE id = $17`,
+       WHERE id = $18`,
       [
         app_name, logo_url, logo_dark_url, 
         primary_color, secondary_color, background_color, text_color, accent_color,
         button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon', id
+        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon', 
+        whatsapp || '', id
       ]
     );
 
@@ -189,7 +191,7 @@ exports.criarBranding = async (req, res) => {
     app_name, logo_url, logo_dark_url, 
     primary_color, secondary_color, background_color, text_color, accent_color,
     button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-    splash_screen_url, hero_banner_url, platforms, tema 
+    splash_screen_url, hero_banner_url, platforms, tema, whatsapp 
   } = req.body;
 
   try {
@@ -197,14 +199,15 @@ exports.criarBranding = async (req, res) => {
       `INSERT INTO branding_settings 
        (app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, 
         button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-        splash_screen_url, hero_banner_url, platforms, tema, ativo, criado_em)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, NOW())
+        splash_screen_url, hero_banner_url, platforms, tema, whatsapp, ativo, criado_em)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, false, NOW())
        RETURNING id`,
       [
         app_name || 'Novo Tema', logo_url, logo_dark_url, 
         primary_color, secondary_color, background_color, text_color, accent_color,
         button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon'
+        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon',
+        whatsapp || ''
       ]
     );
 
@@ -272,5 +275,26 @@ exports.excluirBranding = async (req, res) => {
   } catch (error) {
     console.error('Erro ao excluir branding:', error);
     res.status(500).json({ error: 'Erro ao excluir tema' });
+  }
+};
+
+// Upload de arquivo
+exports.uploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+
+    // Retornar a URL relativa que será salva no banco
+    // O prefixo /public será servido pelo express.static
+    const fileUrl = `/public/uploads/branding/${req.file.filename}`;
+    
+    res.json({ 
+      message: 'Upload concluído com sucesso!',
+      url: fileUrl 
+    });
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    res.status(500).json({ error: 'Erro ao processar upload' });
   }
 };

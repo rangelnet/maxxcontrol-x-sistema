@@ -70,6 +70,7 @@ const FinancePlans = () => {
 
   const [panels, setPanels] = useState([]);
   const [dynamicPlans, setDynamicPlans] = useState([]);
+  const [editPlanId, setEditPlanId] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -153,21 +154,55 @@ const FinancePlans = () => {
     e.preventDefault();
     try {
       const payload = {
-        ...formData,
-        price: parseFloat(formData.price.replace(',', '.')),
+        name: formData.name,
+        price: typeof formData.price === 'string' ? parseFloat(formData.price.replace(',', '.')) : formData.price,
         duration_days: parseInt(formData.duration_days),
         max_connections: parseInt(formData.max_connections),
         qpanel_id: formData.qpanel_id ? parseInt(formData.qpanel_id) : null,
-        sigma_package: formData.sigma_package || null
+        sigma_package: Array.isArray(formData.sigma_packages) ? formData.sigma_packages.join(', ') : formData.sigma_package,
+        is_active: formData.is_active
       };
       
-      await axios.post('/api/finance/plans', payload);
+      if (editPlanId) {
+        await axios.put(`/api/finance/plans/${editPlanId}`, payload);
+        alert('Plano atualizado com sucesso!');
+      } else {
+        await axios.post('/api/finance/plans', payload);
+        alert('Plano criado com sucesso!');
+      }
+      
       setShowModal(false);
-      setFormData({ name: '', price: '', duration_days: '30', max_connections: '1', qpanel_id: '', sigma_package: '', is_active: true });
+      setEditPlanId(null);
+      setFormData({ name: '', price: '', duration_days: '30', max_connections: '1', qpanel_id: '', sigma_package: '', sigma_packages: [], is_active: true });
       fetchData();
     } catch (error) {
       console.error('Erro ao salvar plano:', error);
       alert('Erro ao salvar plano comercial.');
+    }
+  };
+
+  const openEditModal = (plan) => {
+    setEditPlanId(plan.id);
+    const selectedPackages = plan.sigma_package ? plan.sigma_package.split(', ').filter(p => p) : [];
+    setFormData({
+      name: plan.name,
+      price: plan.price.toString(),
+      duration_days: plan.duration_days.toString(),
+      max_connections: plan.max_connections.toString(),
+      qpanel_id: plan.qpanel_id || '',
+      sigma_package: plan.sigma_package || '',
+      sigma_packages: selectedPackages,
+      is_active: plan.is_active
+    });
+    setShowModal(true);
+  };
+
+  const toggleSigmaPackage = (pkg) => {
+    const current = formData.sigma_packages || [];
+    if (current.includes(pkg)) {
+      setFormData({ ...formData, sigma_packages: current.filter(p => p !== pkg) });
+    } else {
+      setFormData({ ...formData, sigma_packages: [...current, pkg] });
     }
   };
 
@@ -396,6 +431,7 @@ const FinancePlans = () => {
 
   // Botão Primário Laranja Oficial
   const btnPrimaryClass = "inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
+  const btnPrimary = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', background: '#FC5F16', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)', transition: 'all 0.2s' };
 
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 30px)', maxWidth: '1200px', margin: '0 auto', color: '#f4f4f5', fontFamily: 'Inter, sans-serif' }}>
@@ -412,7 +448,7 @@ const FinancePlans = () => {
         </div>
         <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
           {activeTab === 'planos' && (
-            <button onClick={() => setShowModal(true)} className={btnPrimaryClass}>
+            <button onClick={() => { setEditPlanId(null); setFormData({ name: '', price: '', duration_days: '30', max_connections: '1', qpanel_id: '', sigma_package: '', sigma_packages: [], is_active: true }); setShowModal(true); }} className={btnPrimaryClass}>
               <Plus size={18} /> Novo Plano
             </button>
           )}
@@ -512,7 +548,7 @@ const FinancePlans = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', borderTop: '1px solid #27272a' }}>
-                <button className="flex-1 bg-dark-700 hover:bg-dark-600 active:scale-95 text-white py-2.5 rounded-lg font-bold border border-white/5 transition-all flex items-center justify-center gap-2">
+                <button onClick={() => openEditModal(plan)} className="flex-1 bg-dark-700 hover:bg-dark-600 active:scale-95 text-white py-2.5 rounded-lg font-bold border border-white/5 transition-all flex items-center justify-center gap-2">
                   <Edit3 size={16} /> Editar
                 </button>
                 <button onClick={() => handleDelete(plan.id)} className="px-3 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all active:scale-95 flex items-center justify-center border border-red-500/20">
@@ -708,7 +744,8 @@ const FinancePlans = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
           <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ margin: '0 0 25px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Plus size={24} color="#FC5F16" /> Criar Novo Plano
+              {editPlanId ? <Edit3 size={24} color="#FC5F16" /> : <Plus size={24} color="#FC5F16" />} 
+              {editPlanId ? 'Editar Plano' : 'Criar Novo Plano'}
             </h2>
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -751,9 +788,22 @@ const FinancePlans = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Pacote no Painel Sigma (Vinculação Opcional mas recomendada)</label>
-                <select value={formData.sigma_package} onChange={e => setFormData({...formData, sigma_package: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }}>
-                  <option value="">Não vincular a pacote específico</option>
+                <label style={{ display: 'block', marginBottom: '12px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>
+                  Pacotes no Painel Sigma (Selecione um ou mais)
+                </label>
+                <div style={{ 
+                  background: '#09090b', 
+                  border: '1px solid #27272a', 
+                  borderRadius: '16px', 
+                  padding: '12px', 
+                  maxHeight: '200px', 
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#FC5F16 #09090b'
+                }}>
                   {[...new Set([...dynamicPlans, ...[
                       "01 MÊS IPTV - COMPLETO C/ ADULTO",
                       "01 MÊS IPTV - COMPLETO S/ ADULTO",
@@ -764,15 +814,51 @@ const FinancePlans = () => {
                       "1 ANO IPTV - COMPLETO C/ ADULTO",
                       "1 ANO IPTV - COMPLETO S/ ADULTO",
                       "1 Ano - Somente Canais"
-                  ]])].map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
+                  ]])].map(p => {
+                    const isSelected = (formData.sigma_packages || []).includes(p);
+                    return (
+                      <div 
+                        key={p} 
+                        onClick={() => toggleSigmaPackage(p)}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '12px', 
+                          padding: '12px', 
+                          borderRadius: '10px', 
+                          background: isSelected ? 'rgba(252,95,22,0.1)' : 'transparent',
+                          border: isSelected ? '1px solid rgba(252,95,22,0.3)' : '1px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ 
+                          width: '18px', 
+                          height: '18px', 
+                          borderRadius: '4px', 
+                          border: isSelected ? 'none' : '2px solid #3f3f46',
+                          background: isSelected ? '#FC5F16' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          {isSelected && <CheckCircle size={14} color="#fff" />}
+                        </div>
+                        <span style={{ fontSize: '12px', color: isSelected ? '#fff' : '#a1a1aa', fontWeight: isSelected ? '800' : '500' }}>{p}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p style={{ fontSize: '11px', color: '#71717a', marginTop: '8px' }}>
+                  {formData.sigma_packages?.length || 0} pacotes selecionados
+                </p>
               </div>
 
               <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3.5 bg-transparent border border-white/10 hover:border-white/20 active:scale-95 text-white font-black rounded-xl transition-all">Cancelar</button>
-                <button type="submit" className="flex-2 py-3.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-black rounded-xl shadow-[0_4px_15px_rgba(252,95,22,0.3)] transition-all">Salvar Plano</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditPlanId(null); }} className="flex-1 py-3.5 bg-transparent border border-white/10 hover:border-white/20 active:scale-95 text-white font-black rounded-xl transition-all">Cancelar</button>
+                <button type="submit" className="flex-2 py-3.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-black rounded-xl shadow-[0_4px_15px_rgba(252,95,22,0.3)] transition-all">
+                  {editPlanId ? 'Salvar Alterações' : 'Salvar Plano'}
+                </button>
               </div>
             </form>
           </div>

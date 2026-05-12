@@ -34,12 +34,12 @@ exports.registerDevicePublic = async (req, res) => {
 
     // Gerar token JWT para o dispositivo
     const token = jwt.sign(
-      { 
-        device_id: device.id, 
+      {
+        device_id: device.id,
         mac_address: device.mac_address,
         type: 'device' // Identificar que é um token de dispositivo
-      }, 
-      process.env.JWT_SECRET, 
+      },
+      process.env.JWT_SECRET,
       {
         expiresIn: '365d' // Token válido por 1 ano
       }
@@ -47,10 +47,10 @@ exports.registerDevicePublic = async (req, res) => {
 
     console.log('🔑 Token JWT gerado para o dispositivo');
 
-    res.status(existing.rows.length > 0 ? 200 : 201).json({ 
-      device: device, 
+    res.status(existing.rows.length > 0 ? 200 : 201).json({
+      device: device,
       token: token, // ✅ NOVO: Retornar token JWT
-      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado' 
+      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado'
     });
   } catch (error) {
     console.error('❌ Erro ao registrar dispositivo público:', error);
@@ -76,9 +76,9 @@ exports.updateConnectionStatus = async (req, res) => {
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
 
-    res.json({ 
-      device: result.rows[0], 
-      message: `Status atualizado para ${connection_status}` 
+    res.json({
+      device: result.rows[0],
+      message: `Status atualizado para ${connection_status}`
     });
   } catch (error) {
     console.error('Erro ao atualizar status de conexão:', error);
@@ -113,22 +113,22 @@ exports.registerDevice = async (req, res) => {
 
     // Gerar token JWT para o dispositivo
     const token = jwt.sign(
-      { 
-        device_id: device.id, 
+      {
+        device_id: device.id,
         mac_address: device.mac_address,
         user_id: userId,
         type: 'device'
-      }, 
-      process.env.JWT_SECRET, 
+      },
+      process.env.JWT_SECRET,
       {
         expiresIn: '365d'
       }
     );
 
-    res.status(existing.rows.length > 0 ? 200 : 201).json({ 
-      device: device, 
+    res.status(existing.rows.length > 0 ? 200 : 201).json({
+      device: device,
       token: token, // ✅ NOVO: Retornar token JWT
-      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado' 
+      message: existing.rows.length > 0 ? 'Dispositivo atualizado' : 'Dispositivo registrado'
     });
   } catch (error) {
     console.error('Erro ao registrar dispositivo:', error);
@@ -229,7 +229,7 @@ exports.listAllDevices = async (req, res) => {
       ORDER BY d.ultimo_acesso DESC
     `);
     console.log(`✅ Encontrados ${result.rows.length} dispositivos`);
-    
+
     // Parsear test_api_urls de JSON string para array
     const devices = result.rows.map(d => {
       let test_api_urls = null;
@@ -349,7 +349,7 @@ exports.getTestApiUrl = async (req, res) => {
 
   try {
     console.log(`🔍 Buscando test_api_url para MAC: ${mac_address} | Código Revenda: ${resale_code || 'Nenhum'}`);
-    
+
     // 1. Prioridade: Se houver código de revenda, busca a URL do revendedor
     let testApiUrls = null;
     let testApiUrl = null;
@@ -365,7 +365,7 @@ exports.getTestApiUrl = async (req, res) => {
         const resRow = resellerResult.rows[0];
         const dns = resRow.dns_url;
         let resUrls = null;
-        
+
         try {
           if (resRow.test_api_urls) {
             resUrls = typeof resRow.test_api_urls === 'string' ? JSON.parse(resRow.test_api_urls) : resRow.test_api_urls;
@@ -387,7 +387,7 @@ exports.getTestApiUrl = async (req, res) => {
         'SELECT test_api_url, test_api_urls FROM devices WHERE mac_address = $1',
         [mac_address]
       );
-      
+
       if (deviceResult.rows.length > 0) {
         const row = deviceResult.rows[0];
         testApiUrl = row.test_api_url;
@@ -396,7 +396,7 @@ exports.getTestApiUrl = async (req, res) => {
             testApiUrls = typeof row.test_api_urls === 'string' ? JSON.parse(row.test_api_urls) : row.test_api_urls;
           }
         } catch { testApiUrls = null; }
-        
+
         if ((testApiUrls && testApiUrls.length > 0) || (testApiUrl !== null && testApiUrl !== '')) {
           hasCustomUrl = true;
           if (!testApiUrls && testApiUrl) testApiUrls = [testApiUrl];
@@ -414,7 +414,7 @@ exports.getTestApiUrl = async (req, res) => {
         try {
           testApiUrls = typeof g.test_api_urls === 'string' ? JSON.parse(g.test_api_urls) : g.test_api_urls;
         } catch { testApiUrls = [g.test_api_url]; }
-        
+
         if (!testApiUrls && testApiUrl) testApiUrls = [testApiUrl];
       }
     }
@@ -440,7 +440,7 @@ exports.checkDeviceStatusByMac = async (req, res) => {
 
   try {
     console.log(`🔍 Verificando status por MAC: ${mac_address}`);
-    
+
     const result = await pool.query(
       `SELECT id, mac_address, status, connection_status, modelo, 
               android_version, app_version, ip, ultimo_acesso
@@ -448,12 +448,12 @@ exports.checkDeviceStatusByMac = async (req, res) => {
        WHERE mac_address = $1`,
       [mac_address]
     );
-    
+
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-    
+
     console.log('✅ Status do dispositivo:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (error) {
@@ -468,7 +468,7 @@ exports.blockDeviceByMac = async (req, res) => {
 
   try {
     console.log(`🔒 Bloqueando dispositivo por MAC: ${mac_address}`);
-    
+
     const result = await pool.query(
       `UPDATE devices 
        SET status = 'bloqueado' 
@@ -476,16 +476,16 @@ exports.blockDeviceByMac = async (req, res) => {
        RETURNING *`,
       [mac_address]
     );
-    
+
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-    
+
     console.log('✅ Dispositivo bloqueado:', result.rows[0]);
-    res.json({ 
+    res.json({
       device: result.rows[0],
-      message: 'Dispositivo bloqueado com sucesso' 
+      message: 'Dispositivo bloqueado com sucesso'
     });
   } catch (error) {
     console.error('❌ Erro ao bloquear dispositivo por MAC:', error);
@@ -499,7 +499,7 @@ exports.unblockDeviceByMac = async (req, res) => {
 
   try {
     console.log(`🔓 Desbloqueando dispositivo por MAC: ${mac_address}`);
-    
+
     const result = await pool.query(
       `UPDATE devices 
        SET status = 'ativo' 
@@ -507,16 +507,16 @@ exports.unblockDeviceByMac = async (req, res) => {
        RETURNING *`,
       [mac_address]
     );
-    
+
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-    
+
     console.log('✅ Dispositivo desbloqueado:', result.rows[0]);
-    res.json({ 
+    res.json({
       device: result.rows[0],
-      message: 'Dispositivo desbloqueado com sucesso' 
+      message: 'Dispositivo desbloqueado com sucesso'
     });
   } catch (error) {
     console.error('❌ Erro ao desbloquear dispositivo por MAC:', error);
@@ -530,7 +530,7 @@ exports.deleteDevice = async (req, res) => {
 
   try {
     console.log(`🗑️ Excluindo dispositivo ID: ${device_id}`);
-    
+
     // Deletar apps relacionados (se a tabela existir)
     try {
       await pool.query('DELETE FROM device_apps WHERE device_id = $1', [device_id]);
@@ -538,7 +538,7 @@ exports.deleteDevice = async (req, res) => {
     } catch (error) {
       console.log('⚠️ Tabela device_apps não existe ou erro ao deletar apps:', error.message);
     }
-    
+
     // Deletar comandos relacionados (se a tabela existir)
     try {
       await pool.query('DELETE FROM device_commands WHERE device_id = $1', [device_id]);
@@ -546,7 +546,7 @@ exports.deleteDevice = async (req, res) => {
     } catch (error) {
       console.log('⚠️ Tabela device_commands não existe ou erro ao deletar comandos:', error.message);
     }
-    
+
     // Deletar configuração IPTV relacionada (se a tabela existir)
     try {
       await pool.query('DELETE FROM device_iptv_config WHERE device_id = $1', [device_id]);
@@ -554,26 +554,26 @@ exports.deleteDevice = async (req, res) => {
     } catch (error) {
       console.log('⚠️ Tabela device_iptv_config não existe ou erro ao deletar IPTV:', error.message);
     }
-    
+
     // Deletar dispositivo
     const result = await pool.query('DELETE FROM devices WHERE id = $1 RETURNING *', [device_id]);
-    
+
     if (result.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
-    
+
     console.log('✅ Dispositivo excluído com sucesso:', result.rows[0]);
-    res.json({ 
-      message: 'Dispositivo excluído com sucesso', 
-      device: result.rows[0] 
+    res.json({
+      message: 'Dispositivo excluído com sucesso',
+      device: result.rows[0]
     });
   } catch (error) {
     console.error('❌ Erro ao excluir dispositivo:', error);
     console.error('❌ Stack trace:', error.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao excluir dispositivo',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -633,5 +633,49 @@ exports.saveTestCredentials = async (req, res) => {
   } catch (error) {
     console.error('❌ Erro ao salvar credenciais de teste:', error);
     res.status(500).json({ error: 'Erro ao salvar credenciais' });
+  }
+};
+
+// Atualizar configuração de teste de um dispositivo (Admin)
+exports.updateTestConfig = async (req, res) => {
+  const { id } = req.params;
+  const { test_api_urls, test_duration, test_blocked } = req.body;
+
+  try {
+    console.log(`🔧 Atualizando configuração de teste para dispositivo ID: ${id}`);
+    
+    // Converter array para JSON string se necessário
+    const urlsJson = Array.isArray(test_api_urls) ? JSON.stringify(test_api_urls) : test_api_urls;
+
+    const result = await pool.query(
+      `UPDATE devices 
+       SET test_api_urls = $1, test_duration = $2, test_blocked = $3, ultimo_acesso = CURRENT_TIMESTAMP
+       WHERE id = $4 
+       RETURNING *`,
+      [urlsJson, test_duration || 2, test_blocked || '0', id]
+    );
+
+    if (result.rows.length === 0) {
+      console.log('❌ Dispositivo não encontrado para atualização de config');
+      return res.status(404).json({ error: 'Dispositivo não encontrado' });
+    }
+
+    const device = result.rows[0];
+    console.log('✅ Configuração de teste atualizada com sucesso');
+
+    // Broadcast WebSocket para atualizar painel
+    broadcast({
+      type: 'device:test-config-updated',
+      data: device
+    });
+
+    res.json({
+      success: true,
+      device: device,
+      message: 'Configuração de teste atualizada com sucesso'
+    });
+  } catch (error) {
+    console.error('❌ Erro ao atualizar configuração de teste:', error);
+    res.status(500).json({ error: 'Erro ao atualizar configuração' });
   }
 };

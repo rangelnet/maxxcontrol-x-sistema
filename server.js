@@ -172,6 +172,16 @@ async function runPendingMigrations() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`
+    },
+    {
+      name: 'plan_mappings',
+      sql: `CREATE TABLE IF NOT EXISTS plan_mappings (
+        id SERIAL PRIMARY KEY,
+        plan_id INTEGER NOT NULL UNIQUE,
+        config JSONB NOT NULL DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
     }
   ];
 
@@ -241,6 +251,9 @@ async function runPendingMigrations() {
     
     // Garantir que panel_url existe caso a tabela já exista
     await pool.query(`ALTER TABLE plugin_relay_commands ADD COLUMN IF NOT EXISTS panel_url TEXT`);
+
+    // Adicionar suporte a WhatsApp no Branding
+    await pool.query(`ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(50)`);
 
     console.log('✅ Migrações de colunas e tabela de relay concluídas');
   } catch (err) {
@@ -360,6 +373,17 @@ async function runPendingMigrations() {
   } catch (err) {
     if (!IGNORE_CODES.includes(err.code)) {
       console.warn('⚠️ Aviso na migração test_api_urls:', err.message);
+    }
+  }
+
+  // Migração: colunas adicionais para controle de teste
+  try {
+    await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_duration INTEGER DEFAULT 2`);
+    await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_blocked VARCHAR(10) DEFAULT '0'`);
+    console.log('✅ Colunas test_duration e test_blocked verificadas/criadas');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.warn('⚠️ Aviso na migração de colunas de teste:', err.message);
     }
   }
 
@@ -618,6 +642,35 @@ async function runPendingMigrations() {
       device_key VARCHAR(50) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+    console.log('  ✅ Tabela device_keys OK');
+
+    // 1.1 Tabela de Comandos para Dispositivos (MAXX PLAYER etc)
+    await pool.query(`CREATE TABLE IF NOT EXISTS device_commands (
+      id SERIAL PRIMARY KEY,
+      device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+      command_type VARCHAR(50) NOT NULL,
+      command_data JSONB DEFAULT '{}',
+      status VARCHAR(20) DEFAULT 'pending',
+      result JSONB,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      completed_at TIMESTAMP
+    )`);
+    console.log('  ✅ Tabela device_commands OK');
+
+    // 1.2 Tabela de Apps Instalados
+    await pool.query(`CREATE TABLE IF NOT EXISTS device_apps (
+      id SERIAL PRIMARY KEY,
+      device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+      package_name VARCHAR(255) NOT NULL,
+      app_name VARCHAR(255) NOT NULL,
+      version_code INTEGER,
+      version_name VARCHAR(100),
+      is_system BOOLEAN DEFAULT false,
+      installed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(device_id, package_name)
+    )`);
+    console.log('  ✅ Tabela device_apps OK');
 
     // 2. Tabela de Playlists por Dispositivo
     await pool.query(`CREATE TABLE IF NOT EXISTS device_playlists (
@@ -660,6 +713,9 @@ async function runPendingMigrations() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
     
+    // Garantir UNIQUE em app_name antes do INSERT para evitar erro de ON CONFLICT
+    await pool.query(`ALTER TABLE app_activation_packages ADD CONSTRAINT app_activation_packages_app_name_key UNIQUE (app_name)`).catch(() => {});
+
     // Inserir pacotes padrão
     await pool.query(`
       INSERT INTO app_activation_packages (app_name, logo_url, monthly_price, yearly_price, description)
@@ -745,7 +801,9 @@ for (const p of possibleDistPaths) {
 }
 
 app.use(express.static(distPath, { etag: false, lastModified: false }));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 console.log('📂 Servindo frontend de:', distPath);
+console.log('📂 Servindo uploads de:', path.join(__dirname, 'public'));
 
 // DIAGNÓSTICO: logar qual index.html está no disco
 try {
@@ -765,6 +823,7 @@ try {
 
 app.use('/api/auth', require('./modules/auth/authRoutes'));
 app.use('/api/device', require('./modules/mac/macRoutes'));
+app.use('/api/devices', require('./modules/mac/macRoutes')); // Alias para compatibilidade
 app.use('/api/mac', require('./modules/mac/macRoutes')); // Alias para compatibilidade com app Android
 app.use('/api/apps', require('./modules/apps/appsRoutes'));
 app.use('/api/log', require('./modules/logs/logsRoutes'));
@@ -785,6 +844,7 @@ app.use('/api/settings', require('./modules/settings/settingsRoutes'));
 app.use('/api/payments',   require('./modules/payments/paymentRoutes'));
 app.use('/api/whatsapp',   require('./modules/whatsapp/whatsappRoutes'));
 app.use('/api/integrations/google', require('./modules/integrations/google/googleRoutes'));
+app.use('/api/plan-mapping', require('./modules/plan-mapping/planMappingRoutes'));
 
 // ⚽ Placar e Dados Esportivos (SportsData.io)
 app.use('/api/sports', require('./modules/sports/sportsRoutes'));

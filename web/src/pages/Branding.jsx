@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react'
 import { Check } from 'lucide-react'
 import api from '../services/api'
 
+const BACKEND_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '')
+
+const getFullUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `${BACKEND_URL}${path}`
+}
+
 // ─── PALETAS RÁPIDAS ───────────────────────────────────────────────────────────
 const PALETTES = [
   { name: 'MAXX Orange',  tema: 'Neon',     primary: '#FC5F16', secondary: '#FF6A00', bg: '#050505', text: '#FFFFFF', accent: '#FF8C00', btnPrimary: '#FC5F16', btnFocus: '#FFA500' },
@@ -82,6 +90,7 @@ const Branding = () => {
     splash_screen_url:'https://i.postimg.cc/BQwXmzTj/TVMAXX_MOVE.png',
     hero_banner_url:  '/branding/banner_apptv.png',
     tema:             'Neon',
+    whatsapp:         '',
   })
 
   useEffect(() => {
@@ -244,6 +253,28 @@ const Branding = () => {
     }
   }
 
+  const handleUpload = async (e, field) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+
+    setSaving(true)
+    try {
+      const response = await api.post('/api/branding/upload', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      
+      set(field)(response.data.url)
+    } catch (err) {
+      console.error('Erro no upload:', err)
+      alert('Erro ao fazer upload da imagem.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const SECTIONS = [
     { id: 'identidade', label: 'Identidade',  icon: '🏷️' },
     { id: 'cores',      label: 'Cores',        icon: '🎨' },
@@ -387,6 +418,21 @@ const Branding = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <InputField 
+                    label="Nome do App / Projeto" 
+                    value={formData.app_name}
+                    onChange={v => setFormData({ ...formData, app_name: v })}
+                    placeholder="Ex: MAXX PLAYERS"
+                  />
+                  <InputField 
+                    label="WhatsApp de Suporte / Vendas" 
+                    value={formData.whatsapp}
+                    onChange={v => setFormData({ ...formData, whatsapp: v })}
+                    placeholder="Ex: 5511999999999"
+                    hint="Número com DDI e DDD para o botão 'Assinar' no Web Player"
+                  />
+                </div>
+                <div className="space-y-2">
                   <InputField
                     label="URL da Logo Principal"
                     value={formData.logo_url}
@@ -397,7 +443,7 @@ const Branding = () => {
                   />
                   {formData.logo_url && (
                     <div className="bg-white rounded-xl p-3 flex justify-center">
-                      <img src={formData.logo_url} alt="Logo" className="h-14 object-contain" onError={e => e.target.style.display='none'} />
+                      <img src={getFullUrl(formData.logo_url)} alt="Logo" className="h-14 object-contain" onError={e => e.target.style.display='none'} />
                     </div>
                   )}
                 </div>
@@ -412,7 +458,7 @@ const Branding = () => {
                   />
                   {formData.logo_dark_url && (
                     <div className="bg-zinc-900 rounded-xl p-3 flex justify-center border border-dark-600">
-                      <img src={formData.logo_dark_url} alt="Logo Dark" className="h-14 object-contain" onError={e => e.target.style.display='none'} />
+                      <img src={getFullUrl(formData.logo_dark_url)} alt="Logo Dark" className="h-14 object-contain" onError={e => e.target.style.display='none'} />
                     </div>
                   )}
                 </div>
@@ -526,178 +572,200 @@ const Branding = () => {
             </div>
           )}
 
-          {/* ── SEÇÃO: IMAGENS ───────────────────────────────── */}
+          {/* ── SEÇÃO: IMAGENS & ASSETS ───────────────────────── */}
           {activeSection === 'midias' && (
-            <div className="space-y-5">
+            <div className="space-y-8">
 
-              {/* Assets do Projeto Android */}
-              <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 shadow-xl">
-                <h2 className="font-bold text-white flex items-center gap-2 mb-1">📦 Assets do Projeto TV MAXX Android</h2>
-                <p className="text-[11px] text-zinc-500 mb-4">Clique para usar diretamente no branding.</p>
+              {/* 📦 ASSETS DO PROJETO TV MAXX ANDROID */}
+              <div className="bg-dark-800 border border-dark-700 rounded-3xl p-8 shadow-2xl space-y-10">
+                <div className="border-b border-dark-700 pb-6">
+                  <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                    <span className="text-brand-500">📦</span> MAXX PLAYERS
+                  </h2>
+                  <p className="text-zinc-500 text-sm mt-1">Clique para usar diretamente no seu branding oficial.</p>
+                </div>
 
-                <div className="space-y-4">
-                  {/* Logos */}
-                  <div>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">🏷️ Logos do Launcher</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {[
-                        { label: 'MAXX Player Logo', path: '/branding/ic_maxx_player.png', bg: 'bg-black' },
-                        { label: 'Launcher Icon',    path: '/branding/ic_launcher.png',    bg: 'bg-white' },
-                        { label: 'Logo Move',        path: '/branding/logo_move.png',      bg: 'bg-black' },
-                        { label: 'Logo Nova',        path: '/branding/logo_new.jpg',       bg: 'bg-black' },
-                        { label: 'Logo High',        path: '/branding/maxx_logo_high.jpg', bg: 'bg-black' },
-                        { label: 'MAXX Gaming',      path: '/branding/maxxgaming.png',     bg: 'bg-black' },
-                        { label: 'MAXX Hot',         path: '/branding/maxxhot.png',        bg: 'bg-black' },
-                        { label: 'MAXX Play',        path: '/branding/maxxplay.png',       bg: 'bg-black' },
-                        { label: 'Ícone All',        path: '/branding/ic_all.webp',        bg: 'bg-dark-900' },
-                      ].map(asset => (
-                        <div
-                          key={asset.path}
-                          className="group cursor-pointer rounded-xl overflow-hidden border-2 border-dark-600 hover:border-brand-500 transition-all"
-                        >
-                          <div className={`h-20 ${asset.bg} flex items-center justify-center p-2`}>
-                            <img src={asset.path} alt={asset.label}
-                              className="max-h-16 object-contain"
-                              onError={e => { e.target.src=''; e.target.style.display='none' }}
-                            />
-                          </div>
-                          <div className="bg-dark-900 border-t border-dark-700 p-2 flex flex-col gap-1">
-                            <span className="text-[9px] text-zinc-400 truncate block">{asset.label}</span>
-                            <div className="flex gap-1">
-                              <button
-                                type="button"
-                                onClick={() => set('logo_url')(asset.path)}
-                                className="flex-1 text-[8px] font-bold bg-brand-500/20 hover:bg-brand-500 text-brand-400 hover:text-white px-1 py-0.5 rounded transition"
-                              >
-                                Logo Principal
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => set('logo_dark_url')(asset.path)}
-                                className="flex-1 text-[8px] font-bold bg-dark-700 hover:bg-dark-600 text-zinc-400 hover:text-white px-1 py-0.5 rounded transition"
-                              >
-                                Logo Escura
-                              </button>
-                            </div>
+                {/* 🏷️ LOGOTIPOS DO CLIENTE */}
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <span className="text-brand-400">🏷️</span> Sua Identidade Visual
+                      </h3>
+                      <p className="text-xs text-zinc-500">Faça o upload dos logotipos que aparecerão no App e Web Player.</p>
+                    </div>
+                    <div className="bg-brand-500/10 border border-brand-500/20 px-4 py-2 rounded-xl">
+                      <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest">Recomendado: 512x512px (PNG)</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Upload Logo Principal */}
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                        onChange={(e) => handleUpload(e, 'logo_url')}
+                      />
+                      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🖼️</div>
+                      <p className="text-sm font-bold text-white">Logo Principal (Clara)</p>
+                      <p className="text-[10px] text-zinc-500 mt-1">Arraste ou clique para enviar</p>
+                      {formData.logo_url && (
+                        <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/10 w-full flex justify-center">
+                          <img src={getFullUrl(formData.logo_url)} className="max-h-20 object-contain" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upload Logo Escura */}
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                        onChange={(e) => handleUpload(e, 'logo_dark_url')}
+                      />
+                      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🌑</div>
+                      <p className="text-sm font-bold text-white">Logo para Fundos Claros</p>
+                      <p className="text-[10px] text-zinc-500 mt-1">Arraste ou clique para enviar</p>
+                      {formData.logo_dark_url && (
+                        <div className="mt-4 p-4 bg-zinc-900 rounded-2xl border border-dark-600 w-full flex justify-center">
+                          <img src={getFullUrl(formData.logo_dark_url)} className="max-h-20 object-contain" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 🖼️ BANNERS PERSONALIZADOS */}
+                <div className="space-y-6 pt-10 border-t border-dark-700">
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <span className="text-brand-400">🖼️</span> Banners e Divulgação
+                      </h3>
+                      <p className="text-xs text-zinc-500">Envie banners para destaque na tela inicial e telas de carregamento.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="bg-dark-900 border border-dark-600 px-3 py-1.5 rounded-lg">
+                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Hero: 1920x720px</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Upload Hero Banner */}
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden min-h-[200px]">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                        onChange={(e) => handleUpload(e, 'hero_banner_url')}
+                      />
+                      {formData.hero_banner_url ? (
+                        <div className="absolute inset-0">
+                          <img src={formData.hero_banner_url} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/40">
+                             <p className="text-sm font-bold text-white">Alterar Hero Banner</p>
+                             <p className="text-[10px] text-zinc-300">Resolução atual: 1920x720px</p>
                           </div>
                         </div>
-                      ))}
+                      ) : (
+                        <>
+                          <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🎬</div>
+                          <p className="text-sm font-bold text-white">Banner Principal (Hero)</p>
+                          <p className="text-[10px] text-zinc-500 mt-1">Este banner aparece no topo da Home</p>
+                        </>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Banners */}
-                  <div>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">🖼️ Banners do App</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[
-                        { label: 'Banner App TV',     path: '/branding/banner_apptv.png' },
-                        { label: 'Banner Mplay',      path: '/branding/banner_mplay.png' },
-                        { label: 'Banner MAXX Gaming',path: '/branding/banner_mgaming.png' },
-                        { label: 'Banner MAXX Red',   path: '/branding/banner_mred.png' },
-                        { label: 'Banner Globo',      path: '/branding/banner_glo.png' },
-                        { label: 'Banner Crunchyroll',path: '/branding/banner_cru.png' },
-                        { label: 'Banner Disney+',    path: '/branding/banner_disney.png' },
-                        { label: 'Banner Star+',      path: '/branding/banner_star.png' },
-                        { label: 'Banner HBO Max',    path: '/branding/banner_hm.png' },
-                        { label: 'Banner Paramount',  path: '/branding/banner_pt.png' },
-                        { label: 'Banner Prime',      path: '/branding/banner_pv.png' },
-                        { label: 'Banner Hulu',       path: '/branding/banner_hulu.png' },
-                        { label: 'Banner Netflix',    path: '/branding/banner_ntx.png' },
-                        { label: 'Banner Novo',       path: '/branding/banner_new.jpg' },
-                        { label: 'Banner MAXX High',  path: '/branding/maxx_banner_high.jpg' },
-                      ].map(asset => (
-                        <div
-                          key={asset.path}
-                          className="group cursor-pointer rounded-xl overflow-hidden border-2 border-dark-600 hover:border-brand-500 transition-all"
-                        >
-                          <div className="h-24 bg-black flex items-center justify-center p-2">
-                            <img src={asset.path} alt={asset.label}
-                              className="max-h-20 object-contain w-full"
-                              onError={e => { e.target.style.opacity='0.2' }}
-                            />
-                          </div>
-                          <div className="bg-dark-900 border-t border-dark-700 p-2 flex items-center justify-between">
-                            <span className="text-[9px] text-zinc-400 truncate">{asset.label}</span>
-                            <button
-                              type="button"
-                              onClick={() => set('hero_banner_url')(asset.path)}
-                              className="text-[8px] font-bold bg-brand-500/20 hover:bg-brand-500 text-brand-400 hover:text-white px-2 py-0.5 rounded transition ml-2 shrink-0"
-                            >
-                              Usar como Hero
-                            </button>
+                    {/* Upload Splash Screen */}
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden min-h-[200px]">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                        onChange={(e) => handleUpload(e, 'splash_screen_url')}
+                      />
+                      {formData.splash_screen_url ? (
+                        <div className="absolute inset-0">
+                          <img src={formData.splash_screen_url} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/40">
+                             <p className="text-sm font-bold text-white">Alterar Splash Screen</p>
+                             <p className="text-[10px] text-zinc-300">Resolução recomendada: 1920x1080px</p>
                           </div>
                         </div>
-                      ))}
+                      ) : (
+                        <>
+                          <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">📺</div>
+                          <p className="text-sm font-bold text-white">Splash Screen (Carregamento)</p>
+                          <p className="text-[10px] text-zinc-500 mt-1">Aparece ao abrir o App</p>
+                        </>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Splash externa */}
-                  <div className="bg-dark-900 border border-dark-600 rounded-xl p-3 flex items-center gap-3">
-                    <div className="text-2xl">🌐</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white">Splash Screen Externa (PostImg)</p>
-                      <p className="text-[10px] text-zinc-500 truncate">https://i.postimg.cc/BQwXmzTj/TVMAXX_MOVE.png</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => set('splash_screen_url')('https://i.postimg.cc/BQwXmzTj/TVMAXX_MOVE.png')}
-                      className="text-[9px] font-bold bg-brand-500 hover:bg-brand-400 text-white px-3 py-1.5 rounded-lg transition shrink-0"
-                    >
-                      ✓ Usar
-                    </button>
+                {/* 🌐 SPLASH SCREEN EXTERNA (LEGACY) */}
+                <div className="bg-dark-900/50 border border-dark-600 border-dashed rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6">
+                  <div className="h-12 w-12 rounded-xl bg-zinc-800 flex items-center justify-center text-xl">🌐</div>
+                  <div className="flex-1 text-center sm:text-left">
+                    <h3 className="text-sm font-bold text-white">Usar URL Externa (PostImg/Imgur)</h3>
+                    <p className="text-[10px] text-zinc-500">Caso prefira não fazer upload e usar um link direto.</p>
                   </div>
+                  <button type="button" onClick={() => set('splash_screen_url')('https://i.postimg.cc/BQwXmzTj/TVMAXX_MOVE.png')} className="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-2 rounded-xl text-xs font-bold transition">✓ Usar Padrão</button>
                 </div>
               </div>
 
-              {/* Campos manuais */}
-              <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 shadow-xl">
-                <h2 className="font-bold text-white flex items-center gap-2 mb-4">✏️ Editar Manualmente</h2>
-                <div className="space-y-4">
-                  <div className="space-y-3">
+              {/* ✏️ EDITAR MANUALMENTE */}
+              <div className="bg-dark-800 border border-dark-700 rounded-3xl p-8 shadow-2xl space-y-8">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-zinc-700 flex items-center justify-center text-xl">✏️</div>
+                  <h2 className="text-xl font-bold text-white">Editar Manualmente</h2>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="space-y-4">
                     <InputField
                       label="Splash Screen (Tela de Carregamento)"
                       value={formData.splash_screen_url}
                       onChange={set('splash_screen_url')}
                       placeholder="https://... ou /branding/..."
-                      type="text"
                       hint="Resolução recomendada: 1920×1080px ou 2560×1440px"
                     />
                     {formData.splash_screen_url && (
-                      <div className="relative rounded-xl overflow-hidden border border-dark-600 h-36">
-                        <img src={formData.splash_screen_url} alt="Splash Preview"
-                          className="w-full h-full object-cover" onError={e => e.target.style.display='none'} />
-                        <div className="absolute bottom-2 left-2">
-                          <span className="text-xs text-zinc-300 bg-dark-900/80 px-2 py-0.5 rounded-full font-bold">Splash Preview</span>
-                        </div>
+                      <div className="relative rounded-2xl overflow-hidden border border-dark-600 h-48 bg-black">
+                        <img src={formData.splash_screen_url} className="w-full h-full object-contain" />
+                        <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded-full text-[10px] font-bold text-white">Preview Splash</div>
                       </div>
                     )}
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <InputField
                       label="Hero Banner (Banner Principal)"
                       value={formData.hero_banner_url}
                       onChange={set('hero_banner_url')}
                       placeholder="https://... ou /branding/..."
-                      type="text"
                       hint="Banner exibido na tela inicial. Resolução: 1920×720px"
                     />
                     {formData.hero_banner_url && (
-                      <div className="relative rounded-xl overflow-hidden border border-dark-600 h-36">
-                        <img src={formData.hero_banner_url} alt="Hero Preview"
-                          className="w-full h-full object-cover" onError={e => e.target.style.display='none'} />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-end p-3">
-                          <span className="text-xs text-zinc-300 font-bold">Hero Banner</span>
+                      <div className="relative rounded-2xl overflow-hidden border border-dark-600 h-48 bg-black">
+                        <img src={formData.hero_banner_url} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
+                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">Hero Banner Preview</span>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+
             </div>
           )}
 
-          {/* 🚀 PLATFORMAS */}
+          {/* 🚀 PLATAFORMAS */}
           {activeSection === 'plataformas' && (
             <div className="space-y-6 animate-fadeIn">
               <div className="bg-dark-900/50 border border-dark-600 rounded-2xl p-6">
@@ -730,8 +798,6 @@ const Branding = () => {
                           alt={plat.label}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
-                        
-                        {/* Overlay */}
                         <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${isActive ? 'bg-brand-500/10' : 'bg-black/60 group-hover:bg-black/20'}`}>
                           {isActive && (
                             <div className="bg-brand-500 text-white p-1 rounded-full shadow-lg">
@@ -739,8 +805,6 @@ const Branding = () => {
                             </div>
                           )}
                         </div>
-
-                        {/* Label */}
                         <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
                           <span className="text-[10px] font-black text-white uppercase tracking-widest">{plat.label}</span>
                         </div>
@@ -753,19 +817,13 @@ const Branding = () => {
           )}
         </div>
 
-        {/* ── COLUNA DIREITA: PREVIEW AO VIVO ─────────────────── */}
         <div className="space-y-4">
-
-          {/* Mockup TV */}
           <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4 shadow-xl">
             <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
               <span>📺</span> Preview — Android TV
             </h3>
-
-            {/* Frame TV */}
             <div className="relative">
               <div className="rounded-xl overflow-hidden border-4 border-zinc-700 shadow-2xl" style={{ aspectRatio: '16/9' }}>
-                {/* Conteúdo da TV */}
                 <div
                   className="w-full h-full relative flex flex-col"
                   style={{ backgroundColor: formData.background_color }}

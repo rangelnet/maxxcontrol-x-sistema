@@ -9,7 +9,8 @@ async function migrate() {
     'ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS button_secondary_color TEXT',
     'ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS button_text_color TEXT',
     'ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS button_focus_color TEXT',
-    'ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS platforms TEXT'
+    'ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS platforms TEXT',
+    'ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(50)'
   ];
 
   for (const query of queries) {

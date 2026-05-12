@@ -43,6 +43,8 @@ const ServersManagement = () => {
   const [loadingPanels, setLoadingPanels] = useState(false)
   const [panelName, setPanelName]     = useState('')
   const [panelUrl, setPanelUrl]       = useState('')
+  const [panelUsername, setPanelUsername] = useState('')
+  const [panelPassword, setPanelPassword] = useState('')
   const [savingPanel, setSavingPanel] = useState(false)
 
   useEffect(() => { loadServers(); loadQpanels() }, [])
@@ -78,13 +80,15 @@ const ServersManagement = () => {
       const payload = { 
         panel_name: panelName.trim(), 
         panel_url: finalUrl,
+        panel_username: panelUsername.trim() || null,
+        panel_password: panelPassword.trim() || null,
         reseller_email: resellerEmail.trim() || null,
         reseller_dns_code: resellerDnsCode.trim() || null
       }
       const res = await api.post('/api/iptv-plugin/add-qpanel', payload)
       console.log('✅ Resposta:', res.data)
       showToast(`Painel "${panelName}" adicionado com sucesso!`)
-      setPanelName(''); setPanelUrl(''); setResellerEmail(''); setResellerDnsCode('')
+      setPanelName(''); setPanelUrl(''); setPanelUsername(''); setPanelPassword(''); setResellerEmail(''); setResellerDnsCode('')
       loadQpanels()
     } catch (err) {
       console.error('❌ Erro ao salvar painel:', err.response?.data || err.message)
@@ -218,7 +222,7 @@ const ServersManagement = () => {
   const formatDate = (date) => date ? new Date(date).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—'
 
   const ativo = servers.filter(s=>s.status==='ativo').length
-  const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FC5F16,#FF6B00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(252, 95, 22,0.3)' }
+  const btnPrimary = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 20px', background:'linear-gradient(135deg,#FFA500,#FF8C00)', border:'none', borderRadius:10, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(255,165,0,0.3)' }
   const btnGhost   = { display:'inline-flex', alignItems:'center', gap:7, padding:'10px 16px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, color:'#a1a1aa', fontSize:13, fontWeight:600, cursor:'pointer' }
 
   return (
@@ -234,7 +238,7 @@ const ServersManagement = () => {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24, flexWrap:'wrap', gap:12 }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-            <Globe size={26} color='#FC5F16'/> Servidores IPTV
+            <Globe size={26} color='#FFA500'/> Servidores IPTV
           </h1>
           <p style={{ fontSize:12, color:'#52525b' }}>
             {servers.length} servidor(es) · <span style={{ color:'#34d399' }}>{ativo} ativo(s)</span>
@@ -242,18 +246,18 @@ const ServersManagement = () => {
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <button onClick={() => loadServers()} style={btnGhost}><RefreshCw size={14}/> Atualizar</button>
-          <button onClick={handleSyncFromSigma} disabled={syncing} style={{ ...btnGhost, color:'#FC5F16', borderColor:'rgba(252, 95, 22,0.3)' }}>
-            <Zap size={14} fill={syncing?'#FC5F16':'none'}/> {syncing?'Sincronizando...':'Sincronizar com Sigma'}
+          <button onClick={handleSyncFromSigma} disabled={syncing} style={{ ...btnGhost, color:'#FFA500', borderColor:'rgba(255, 165, 0, 0.3)' }}>
+            <Zap size={14} fill={syncing?'#FFA500':'none'}/> {syncing?'Sincronizando...':'Sincronizar com Sigma'}
           </button>
           <button onClick={openCreate} style={btnPrimary}><Plus size={15}/> Adicionar Servidor</button>
         </div>
       </div>
 
       {/* Tabela */}
-      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
+      <div style={{ background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)', border:'1px solid rgba(255,165,0,0.1)', borderRadius:16, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.35)' }}>
         {loading ? (
           <div style={{ textAlign:'center', padding:48, color:'#52525b' }}>
-            <RefreshCw size={26} color='#FC5F16' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
+            <RefreshCw size={26} color='#FFA500' style={{ animation:'spin 1s linear infinite', display:'block', margin:'0 auto 12px' }}/>
             Carregando servidores...
           </div>
         ) : servers.length===0 ? (
@@ -360,6 +364,14 @@ const ServersManagement = () => {
               <input style={inputStyle} value={panelUrl} onChange={e=>setPanelUrl(e.target.value)} placeholder='https://painel.exemplo.com'/>
             </div>
             <div style={{ flex:'1 1 180px', minWidth:160 }}>
+              <label style={labelStyle}>Usuário Admin</label>
+              <input style={inputStyle} value={panelUsername} onChange={e=>setPanelUsername(e.target.value)} placeholder='admin'/>
+            </div>
+            <div style={{ flex:'1 1 180px', minWidth:160 }}>
+              <label style={labelStyle}>Senha Admin</label>
+              <input style={inputStyle} type='text' value={panelPassword} onChange={e=>setPanelPassword(e.target.value)} placeholder='senha123'/>
+            </div>
+            <div style={{ flex:'1 1 180px', minWidth:160 }}>
               <label style={labelStyle}>Email Revenda (Opcional)</label>
               <input style={inputStyle} value={resellerEmail} onChange={e=>setResellerEmail(e.target.value)} placeholder='email@revenda.com'/>
             </div>
@@ -403,10 +415,12 @@ const ServersManagement = () => {
                       <p style={{ fontSize:11, fontFamily:'monospace', color:'#52525b', margin:0, display:'flex', alignItems:'center', gap:4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                         <Link2 size={11}/> {p.panel_url}
                       </p>
-                      {(p.reseller_email || p.reseller_dns_code) && (
+                      {(p.reseller_email || p.reseller_dns_code || p.panel_username || p.panel_password) && (
                         <div style={{ display:'flex', gap:8, marginTop:4, flexWrap:'wrap' }}>
+                          {p.panel_username && <span style={{ fontSize:10, color:'#60a5fa', background:'rgba(96,165,250,0.1)', padding:'2px 6px', borderRadius:4, border:'1px solid rgba(96,165,250,0.2)' }}>👤 {p.panel_username}</span>}
+                          {p.panel_password && <span style={{ fontSize:10, color:'#f43f5e', background:'rgba(244,63,94,0.1)', padding:'2px 6px', borderRadius:4, border:'1px solid rgba(244,63,94,0.2)' }}>🔑 {p.panel_password}</span>}
                           {p.reseller_email && <span style={{ fontSize:10, color:'#a855f7', background:'rgba(168,85,247,0.1)', padding:'2px 6px', borderRadius:4, border:'1px solid rgba(168,85,247,0.2)' }}>📧 {p.reseller_email}</span>}
-                          {p.reseller_dns_code && <span style={{ fontSize:10, color:'#f59e0b', background:'rgba(245,158,11,0.1)', padding:'2px 6px', borderRadius:4, border:'1px solid rgba(245,158,11,0.2)' }}>🔑 {p.reseller_dns_code}</span>}
+                          {p.reseller_dns_code && <span style={{ fontSize:10, color:'#f59e0b', background:'rgba(245,158,11,0.1)', padding:'2px 6px', borderRadius:4, border:'1px solid rgba(245,158,11,0.2)' }}>🏷️ {p.reseller_dns_code}</span>}
                         </div>
                       )}
                       {p.servers && p.servers.length > 0 && (

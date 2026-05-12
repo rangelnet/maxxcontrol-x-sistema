@@ -12,6 +12,7 @@ import WhiteLabel from './pages/WhiteLabel'
 import Versions from './pages/Versions'
 import IptvPanel from './pages/IptvPanel'
 import IptvTreeViewer from './pages/IptvTreeViewer'
+import IptvServer from './pages/IptvServer'
 import IptvServersManager from './pages/IptvServersManager'
 import Resale from './pages/Resale'
 import Settings from './pages/Settings'
@@ -47,7 +48,7 @@ function App() {
             <Route path="logs" element={<Navigate to="/devices" replace />} />
             <Route path="bugs" element={<Navigate to="/devices" replace />} />
             <Route path="versions" element={<Versions />} />
-            <Route path="iptv-server" element={<IptvPanel />} />
+            <Route path="iptv-server" element={<IptvServer />} />
             <Route path="iptv-servers" element={<Navigate to="/iptv-server" replace />} />
             <Route path="iptv-plugin" element={<IptvServersManager />} />
             <Route path="iptv-tree" element={<IptvTreeViewer />} />

@@ -1367,7 +1367,7 @@ router.post('/relay-command', async (req, res) => {
     const validTypes = [
       'search_user', 'delete_user', 'get_servers', 'sync_account', 
       'renew_user', 'renew_trust', 'change_connections', 'migrate_server',
-      'enable_user', 'disable_user', 'create_user', 'create_test'
+      'enable_user', 'disable_user', 'create_user', 'create_test', 'edit_user'
     ];
 
     if (!validTypes.includes(command_type)) {
@@ -1846,7 +1846,10 @@ router.get('/qpanel-grouped-accounts', async (req, res) => {
         json_agg(
           json_build_object(
             'id', a.id,
+            'username', a.username,
+            'password', a.password,
             'panel_id', a.panel_id,
+            'panel_url', p.panel_url,
             'server_id', a.server_id,
             'panel_name', p.panel_name,
             'expire_date', a.expire_date,
@@ -1854,12 +1857,13 @@ router.get('/qpanel-grouped-accounts', async (req, res) => {
             'm3u_url', a.m3u_url,
             'device_mac', a.device_mac,
             'status', a.status,
-            'created_at', a.created_at
+            'created_at', a.created_at,
+            'remote_id', a.id
           )
         ) as accounts
       FROM qpanel_accounts a
       LEFT JOIN qpanel_panels p ON a.panel_id = p.id
-      LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name -- O qPanel as vezes salva server_name como ID ou nome
+      LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name
       GROUP BY a.username, a.password
       ORDER BY MIN(a.created_at) DESC
     `);

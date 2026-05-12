@@ -244,8 +244,9 @@ exports.checkPaymentStatus = async (req, res) => {
 
     const currentStatus = response.data.status;
 
-    // Se o pagamento for aprovado, atualizar nossa base de dados e adicionar créditos ao revendedor
+    // Se o pagamento for aprovado, atualizar nossa base de dados
     if (currentStatus === 'approved') {
+       // 1. Tenta atualizar transações de revendedores (créditos)
        const resultTx = await pool.query(
           "UPDATE mp_transactions SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE payment_id = $1 AND status != 'approved' RETURNING *",
           [payment_id]
@@ -253,16 +254,27 @@ exports.checkPaymentStatus = async (req, res) => {
        
        if (resultTx.rows.length > 0) {
            const tx = resultTx.rows[0];
-           // Atualiza os créditos do usuário que comprou
            await pool.query("UPDATE users SET creditos = CASE WHEN tipo = 'admin' THEN creditos ELSE creditos + $1 END WHERE id = $2", [tx.credits, tx.reseller_id]);
-           console.log(`✅ Pagamento ${payment_id} aprovado. ${tx.credits} créditos adicionados ao usuário ${tx.reseller_id}.`);
+           console.log(`✅ Pagamento ${payment_id} aprovado (Revendedor).`);
+       }
+
+       // 2. Tenta atualizar transações de clientes finais (CRM)
+       // Usamos o campo mac_address para guardar o payment_id do MP nessas rotas públicas
+       const resultCrm = await pool.query(
+         "UPDATE crm_clients SET status = 'aprovado' WHERE mac_address = $1 AND status != 'aprovado' RETURNING *",
+         [payment_id]
+       );
+
+       if (resultCrm.rows.length > 0) {
+         console.log(`✅ Pagamento ${payment_id} aprovado (Cliente Final CRM).`);
+         // Aqui você pode adicionar lógica para liberar o MAC automaticamente no painel se desejar
        }
     }
 
     res.json({ status: currentStatus });
 
   } catch (error) {
-     console.error('Erro ao checar status do PIX:', error.response ? error.response.data : error.message);
+     console.error('Erro ao checar status do pagamento:', error.response ? error.response.data : error.message);
      res.status(500).json({ error: 'Falha ao verificar pagamento.' });
   }
 };
@@ -286,5 +298,117 @@ exports.getPaymentHistory = async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar histórico financeiro:', error);
     res.status(500).json({ error: 'Erro ao buscar histórico' });
+  }
+};
+
+// --- ROTAS PÚBLICAS PARA O WEB PLAYER (CLIENTE FINAL) ---
+exports.createPublicPixPayment = async (req, res) => {
+  const { plan_id, plan_name, amount, client_name, client_email, client_phone } = req.body;
+
+  try {
+    const config = await getMpConfig();
+    if (!config || !config.mpAccessToken) {
+      return res.status(400).json({ error: 'Mercado Pago não configurado no painel.' });
+    }
+
+    const idempotencyKey = crypto.randomUUID();
+    const external_reference = `PLAN_${plan_id}_${Date.now()}`;
+
+    const paymentPayload = {
+      transaction_amount: Number(amount),
+      description: `Assinatura: ${plan_name}`,
+      payment_method_id: 'pix',
+      external_reference: external_reference,
+      payer: {
+        email: client_email || "cliente@tvmaxx.com",
+        first_name: client_name || "Cliente"
+      }
+    };
+
+    const response = await axios.post('https://api.mercadopago.com/v1/payments', paymentPayload, {
+      headers: {
+        'Authorization': `Bearer ${config.mpAccessToken}`,
+        'X-Idempotency-Key': idempotencyKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const paymentData = response.data;
+    const qr_code_base64 = paymentData.point_of_interaction?.transaction_data?.qr_code_base64;
+    const qr_code = paymentData.point_of_interaction?.transaction_data?.qr_code;
+
+    // Registrar no CRM para histórico e liberação
+    await pool.query(
+      `INSERT INTO crm_clients (client_name, whatsapp, plan_name, amount, payment_method, status, mac_address)
+       VALUES ($1, $2, $3, $4, 'PIX', 'pendente', $5)`,
+      [client_name, client_phone, plan_name, amount, paymentData.id] // Guardamos o paymentData.id no mac_address ou outro campo para check
+    );
+
+    res.json({
+      payment_id: paymentData.id,
+      status: paymentData.status,
+      qr_code: qr_code,
+      qr_code_base64: qr_code_base64
+    });
+
+  } catch (error) {
+    console.error('Erro ao gerar PIX Publico:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Falha ao processar pagamento.' });
+  }
+};
+
+exports.createPublicCardPayment = async (req, res) => {
+  const { plan_id, plan_name, amount, client_name, client_email, client_phone, token, payment_method_id, installments, issuer_id } = req.body;
+
+  try {
+    const config = await getMpConfig();
+    if (!config || !config.mpAccessToken) {
+      return res.status(400).json({ error: 'Mercado Pago não configurado.' });
+    }
+
+    const idempotencyKey = crypto.randomUUID();
+    const external_reference = `CARD_PLAN_${plan_id}_${Date.now()}`;
+
+    const paymentPayload = {
+      transaction_amount: Number(amount),
+      token: token,
+      description: `Assinatura: ${plan_name}`,
+      installments: Number(installments) || 1,
+      payment_method_id: payment_method_id,
+      issuer_id: issuer_id,
+      external_reference: external_reference,
+      payer: {
+        email: client_email || "cliente@tvmaxx.com",
+        first_name: client_name || "Cliente"
+      }
+    };
+
+    const response = await axios.post('https://api.mercadopago.com/v1/payments', paymentPayload, {
+      headers: {
+        'Authorization': `Bearer ${config.mpAccessToken}`,
+        'X-Idempotency-Key': idempotencyKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const paymentData = response.data;
+
+    // Registrar no CRM
+    await pool.query(
+      `INSERT INTO crm_clients (client_name, whatsapp, plan_name, amount, payment_method, status, mac_address)
+       VALUES ($1, $2, $3, $4, 'Cartão de Crédito', $5, $6)`,
+      [client_name, client_phone, plan_name, amount, paymentData.status === 'approved' ? 'aprovado' : 'pendente', paymentData.id]
+    );
+
+    res.json({
+      payment_id: paymentData.id,
+      status: paymentData.status,
+      status_detail: paymentData.status_detail
+    });
+
+  } catch (error) {
+    console.error('Erro ao processar Cartão Publico:', error.response ? error.response.data : error.message);
+    const mpError = error.response?.data?.message || 'Erro ao processar cartão de crédito.';
+    res.status(500).json({ error: mpError });
   }
 };

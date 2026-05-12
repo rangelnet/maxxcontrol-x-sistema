@@ -19,7 +19,8 @@ pool.query(`
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     
-    ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS sigma_package VARCHAR(255);
+    ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS sigma_package TEXT;
+    ALTER TABLE finance_plans ALTER COLUMN sigma_package TYPE TEXT;
 
     CREATE TABLE IF NOT EXISTS revenue_logs (
         id SERIAL PRIMARY KEY,
@@ -121,6 +122,37 @@ router.post('/plans', async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Erro ao criar plano financeiro:', error);
+        res.status(500).json({ error: 'Erro interno no servidor' });
+    }
+});
+
+/**
+ * PUT /api/finance/plans/:id
+ * Atualiza um plano comercial existente
+ */
+router.put('/plans/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active } = req.body;
+
+        if (!name || !price || !duration_days || !max_connections) {
+            return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
+        }
+
+        const result = await pool.query(
+            `UPDATE finance_plans 
+             SET name = $1, price = $2, duration_days = $3, max_connections = $4, qpanel_id = $5, sigma_package = $6, is_active = $7, updated_at = CURRENT_TIMESTAMP 
+             WHERE id = $8 RETURNING *`,
+            [name, price, duration_days, max_connections, qpanel_id || null, sigma_package || null, is_active !== undefined ? is_active : true, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Plano não encontrado.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Erro ao atualizar plano financeiro:', error);
         res.status(500).json({ error: 'Erro interno no servidor' });
     }
 });
