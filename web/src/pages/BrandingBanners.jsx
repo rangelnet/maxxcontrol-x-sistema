@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Branding from './Branding'
-import BannerGenerator from './BannerGenerator'
+import ProfileScreenManager from './ProfileScreenManager'
+import TvManager from './TvManager'
 
 const TABS = [
   {
@@ -11,11 +12,18 @@ const TABS = [
     desc: 'Cores, logos e identidade visual',
   },
   {
-    id: 'banners',
-    label: 'Gerador de Banners',
-    icon: '🖼️',
+    id: 'profile-screen',
+    label: 'Tela de Perfis',
+    icon: '🖥️',
     badge: 'NOVO',
-    desc: 'Futebol, Filmes, Basquete, UFC',
+    desc: 'Fundos, slideshow e transição',
+  },
+  {
+    id: 'tv-manager',
+    label: 'Gerenciar TV',
+    icon: '📺',
+    badge: 'NOVO',
+    desc: 'Categorias, canais e organização',
   },
 ]
 
@@ -37,7 +45,7 @@ const BrandingBanners = () => {
       </div>
 
       {/* Abas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -87,7 +95,8 @@ const BrandingBanners = () => {
       {/* Conteúdo com transição */}
       <div key={activeTab} className="animate-fadeIn">
         {activeTab === 'branding' && <Branding />}
-        {activeTab === 'banners'  && <BannerGenerator />}
+        {activeTab === 'profile-screen' && <ProfileScreenManager />}
+        {activeTab === 'tv-manager' && <TvManager />}
       </div>
     </div>
   )

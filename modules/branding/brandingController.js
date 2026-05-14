@@ -13,7 +13,21 @@ exports.obterBrandingAtivo = async (req, res) => {
       return res.status(404).json({ error: 'Branding não encontrado' });
     }
 
-    res.json(result.rows[0]);
+    const branding = result.rows[0];
+
+    // Buscar URL do App dinamicamente das configurações globais
+    try {
+      const globalRes = await pool.query("SELECT value FROM global_settings WHERE key = 'player_app_url'");
+      if (globalRes.rows.length > 0) {
+        let appUrl = globalRes.rows[0].value;
+        // O valor é armazenado como JSONB. Se for uma string simples, removemos as aspas se necessário
+        branding.app_url = typeof appUrl === 'string' ? appUrl.replace(/^"(.*)"$/, '$1') : appUrl;
+      }
+    } catch (e) {
+      console.warn('⚠️ Erro ao buscar player_app_url global:', e.message);
+    }
+
+    res.json(branding);
   } catch (error) {
     console.error('Erro ao obter branding:', error);
     res.status(500).json({ error: 'Erro ao obter branding' });
@@ -41,7 +55,7 @@ exports.atualizarBranding = async (req, res) => {
     app_name, logo_url, logo_dark_url, 
     primary_color, secondary_color, background_color, text_color, accent_color,
     button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-    splash_screen_url, hero_banner_url, platforms, tema, whatsapp 
+    splash_screen_url, hero_banner_url, platforms, platform_banners, top_menu, tema, whatsapp 
   } = req.body;
 
   try {
@@ -62,15 +76,19 @@ exports.atualizarBranding = async (req, res) => {
            splash_screen_url = $13,
            hero_banner_url = $14,
            platforms = $15,
-           tema = $16,
-           whatsapp = $17,
+           platform_banners = $16,
+           top_menu = $17,
+           tema = $18,
+           whatsapp = $19,
            atualizado_em = NOW()
-       WHERE id = $18`,
+       WHERE id = $20`,
       [
         app_name, logo_url, logo_dark_url, 
         primary_color, secondary_color, background_color, text_color, accent_color,
         button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon', 
+        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), 
+        JSON.stringify(platform_banners || {}),
+        JSON.stringify(top_menu || []), tema || 'Neon', 
         whatsapp || '', id
       ]
     );
@@ -191,22 +209,24 @@ exports.criarBranding = async (req, res) => {
     app_name, logo_url, logo_dark_url, 
     primary_color, secondary_color, background_color, text_color, accent_color,
     button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-    splash_screen_url, hero_banner_url, platforms, tema, whatsapp 
+    splash_screen_url, hero_banner_url, platforms, platform_banners, top_menu, tema, whatsapp 
   } = req.body;
 
   try {
     const result = await pool.query(
       `INSERT INTO branding_settings 
-       (app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, 
-        button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-        splash_screen_url, hero_banner_url, platforms, tema, whatsapp, ativo, criado_em)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, false, NOW())
-       RETURNING id`,
+        (app_name, logo_url, logo_dark_url, primary_color, secondary_color, background_color, text_color, accent_color, 
+         button_primary_color, button_secondary_color, button_text_color, button_focus_color,
+         splash_screen_url, hero_banner_url, platforms, platform_banners, top_menu, tema, whatsapp, ativo, criado_em)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, false, NOW())
+        RETURNING id`,
       [
         app_name || 'Novo Tema', logo_url, logo_dark_url, 
         primary_color, secondary_color, background_color, text_color, accent_color,
         button_primary_color, button_secondary_color, button_text_color, button_focus_color,
-        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), tema || 'Neon',
+        splash_screen_url, hero_banner_url, JSON.stringify(platforms || []), 
+        JSON.stringify(platform_banners || {}),
+        JSON.stringify(top_menu || []), tema || 'Neon',
         whatsapp || ''
       ]
     );

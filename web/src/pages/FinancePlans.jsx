@@ -12,13 +12,16 @@ const FinancePlans = () => {
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [activeTab, setActiveTab] = useState('planos'); // 'planos' | 'crm' | 'loja' | 'apps' | 'gateways'
+  const [appUrl, setAppUrl] = useState('');
+  const [savingAppUrl, setSavingAppUrl] = useState(false);
   const [appPackages, setAppPackages] = useState([]);
+  const [appActivations, setAppActivations] = useState([]);
   const [showAppModal, setShowAppModal] = useState(false);
+  const [editAppId, setEditAppId] = useState(null);
   const [appFormData, setAppFormData] = useState({
-    app_name: '',
-    logo_url: '',
-    monthly_price: '',
-    yearly_price: '',
+    name: '',
+    price: '',
+    duration_days: 365,
     description: '',
     is_active: true
   });
@@ -76,26 +79,29 @@ const FinancePlans = () => {
     fetchData();
     fetchPanels();
     fetchPackages();
-  }, []);
+  }, [activeTab]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [plansRes, statsRes, crmRes, creditRes, settingsRes, appsRes] = await Promise.all([
+      const [plansRes, statsRes, crmRes, creditRes, settingsRes, appsRes, activationsRes] = await Promise.all([
         axios.get('/api/finance/plans'),
         axios.get('/api/finance/revenue/stats'),
         axios.get('/api/finance/crm'),
         axios.get('/api/finance/credit-packages'),
         axios.get('/api/settings'),
-        axios.get('/api/finance/app-packages')
+        axios.get('/api/finance/app-packages'),
+        axios.get('/api/finance/app-activations')
       ]);
       setPlans(plansRes.data);
       setStats(statsRes.data);
       setCrmLogs(crmRes.data);
       setCreditPackages(creditRes.data);
       setAppPackages(appsRes.data);
+      setAppActivations(activationsRes.data);
       
       const s = settingsRes.data;
+      setAppUrl(s.player_app_url || 'https://maxxplayer.app');
       setMpAccessToken(s.mp_access_token || '');
       setMpPublicKey(s.mp_public_key || '');
       if (s.mp_receive_pix !== undefined) setMpReceivePix(s.mp_receive_pix);
@@ -259,28 +265,6 @@ const FinancePlans = () => {
     }
   };
 
-  const handleSaveApp = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.post('/api/finance/app-packages', appFormData);
-      fetchData();
-      setShowAppModal(false);
-      setAppFormData({ app_name: '', logo_url: '', monthly_price: '', yearly_price: '', description: '', is_active: true });
-    } catch (e) {
-      alert("Erro ao salvar pacote de app.");
-    }
-  };
-
-  const handleDeleteApp = async (id) => {
-    if (window.confirm("Deseja realmente deletar este pacote de ativação?")) {
-      try {
-        await axios.delete(`/api/finance/app-packages/${id}`);
-        fetchData();
-      } catch (e) {
-        alert("Erro ao deletar pacote de app.");
-      }
-    }
-  };
 
   const handleSaveGateways = async () => {
     setSavingGateways(true);
@@ -314,6 +298,48 @@ const FinancePlans = () => {
       console.error(error);
     } finally {
       setSavingGateways(false);
+    }
+  };
+
+  const handleSaveApp = async (e) => {
+    e.preventDefault();
+    try {
+      if (editAppId) {
+        await axios.put(`/api/finance/app-packages/${editAppId}`, appFormData);
+        alert("Pacote atualizado com sucesso!");
+      } else {
+        await axios.post('/api/finance/app-packages', appFormData);
+        alert("Novo pacote criado com sucesso!");
+      }
+      setShowAppModal(false);
+      setEditAppId(null);
+      fetchData();
+    } catch (error) {
+      alert("Erro ao salvar pacote de aplicativo.");
+    }
+  };
+
+  const handleDeleteApp = async (id) => {
+    if (window.confirm("Deseja realmente excluir este plano de ativação?")) {
+      try {
+        await axios.delete(`/api/finance/app-packages/${id}`);
+        fetchData();
+      } catch (error) {
+        alert("Erro ao deletar pacote.");
+      }
+    }
+  };
+
+  const handleSaveAppUrl = async (e) => {
+    e.preventDefault();
+    setSavingAppUrl(true);
+    try {
+      await axios.post('/api/settings/bulk', { player_app_url: appUrl });
+      alert("URL do Aplicativo atualizada com sucesso! O Web Player e QR Code já foram atualizados.");
+    } catch (error) {
+      alert("Erro ao salvar a URL do App.");
+    } finally {
+      setSavingAppUrl(false);
     }
   };
 
@@ -1175,53 +1201,145 @@ const FinancePlans = () => {
       )}
 
       {activeTab === 'apps' && (
-        <>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px' }}>
-            <h2 style={{ fontSize: 'clamp(18px, 3.5vw, 24px)', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: '#fff' }}>
-              <Smartphone size={24} color="#FC5F16" style={{ flexShrink: 0 }} /> Catálogo de Aplicativos
+        <div style={{ animation: 'fadeIn 0.3s ease' }}>
+          {/* Seção 1: Configuração da URL */}
+          <div style={{ marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Smartphone size={24} color="#FC5F16" /> Configuração do Aplicativo
             </h2>
-            <button 
-              onClick={() => {
-                setAppFormData({ app_name: '', logo_url: '', monthly_price: '', yearly_price: '', description: '', is_active: true });
-                setShowAppModal(true);
-              }}
-              style={{ background: '#FC5F16', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(252,95,22,0.3)', fontSize: '13px' }}
-            >
-              <Plus size={18} /> Novo App
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '20px' }}>
-            {appPackages.map((app) => (
-              <div key={app.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '24px', padding: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '25px' }}>
-                   <div style={{ width: '70px', height: '70px', borderRadius: '18px', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #3f3f46' }}>
-                      {app.logo_url ? <img src={app.logo_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Smartphone size={35} color="#3f3f46" />}
-                   </div>
-                   <div>
-                      <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: '#fff' }}>{app.app_name}</h3>
-                      <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#a1a1aa', fontWeight: '600' }}>Licença Vitalícia/MAC</p>
-                   </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
-                   <div style={{ background: 'rgba(252,95,22,0.05)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(252,95,22,0.1)' }}>
-                      <span style={{ fontSize: '11px', color: '#FC5F16', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mensal</span>
-                      <div style={{ fontSize: '20px', fontWeight: '900', color: '#fff', marginTop: '4px' }}>{formatCurrency(app.monthly_price)}</div>
-                   </div>
-                   <div style={{ background: 'rgba(252,95,22,0.15)', padding: '15px', borderRadius: '16px', border: '1px solid rgba(252,95,22,0.2)' }}>
-                      <span style={{ fontSize: '11px', color: '#FC5F16', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Anual</span>
-                      <div style={{ fontSize: '20px', fontWeight: '900', color: '#fff', marginTop: '4px' }}>{formatCurrency(app.yearly_price)}</div>
-                   </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                   <button onClick={() => handleDeleteApp(app.id)} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)', cursor: 'pointer', fontWeight: '800', fontSize: '14px', transition: 'all 0.2s' }}>Excluir Plano</button>
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+              <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '30px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#f4f4f5', marginBottom: '10px', display: 'block', textTransform: 'uppercase' }}>URL de Login do App</label>
+                <input 
+                  type="url" 
+                  value={appUrl} 
+                  onChange={e => setAppUrl(e.target.value)} 
+                  placeholder="https://maxxplayer.app" 
+                  style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', outline: 'none', marginBottom: '20px', fontSize: '15px' }} 
+                />
+                <button 
+                  onClick={handleSaveAppUrl} 
+                  disabled={savingAppUrl} 
+                  style={{ ...btnPrimary, width: '100%', padding: '16px' }}
+                >
+                  {savingAppUrl ? 'Salvando...' : 'Salvar URL do App'}
+                </button>
               </div>
-            ))}
+
+              <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ fontSize: '13px', color: '#a1a1aa', marginBottom: '15px', fontWeight: '600' }}>Preview do QR Code</p>
+                {appUrl ? (
+                  <div style={{ padding: '8px', background: '#fff', borderRadius: '12px' }}>
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(appUrl)}&size=120x120&bgcolor=FFFFFF&color=000000`} alt="QR Code" style={{ width: '120px', height: '120px' }} />
+                  </div>
+                ) : <div style={{ height: '136px', display: 'flex', alignItems: 'center', color: '#71717a' }}>Insira uma URL</div>}
+              </div>
+            </div>
           </div>
-        </>
+
+          {/* Seção 2: Planos de Ativação (Dispositivo/MAC) */}
+          <div style={{ marginBottom: '40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tag size={24} color="#FC5F16" /> Planos de Ativação por MAC
+              </h2>
+              <button 
+                onClick={() => {
+                  setEditAppId(null);
+                  setAppFormData({ name: '', price: '', duration_days: 365, description: '', is_active: true });
+                  setShowAppModal(true);
+                }}
+                style={{ ...btnPrimary, padding: '10px 18px', fontSize: '13px' }}
+              >
+                <Plus size={18} /> Novo Plano
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+              {appPackages.map(pkg => (
+                <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '20px', padding: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
+                    <div style={{ padding: '4px 10px', borderRadius: '12px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', fontSize: '12px', fontWeight: '800' }}>
+                      {pkg.duration_days} DIAS
+                    </div>
+                  </div>
+                  
+                  <div style={{ background: '#09090b', padding: '15px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #27272a' }}>
+                    <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: '700', textTransform: 'uppercase' }}>Valor da Ativação</span>
+                    <div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>{formatCurrency(pkg.price)}</div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      onClick={() => {
+                        setEditAppId(pkg.id);
+                        setAppFormData({ ...pkg });
+                        setShowAppModal(true);
+                      }}
+                      style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #27272a', color: '#fff', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+                    >
+                      Editar Plano
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteApp(pkg.id)}
+                      style={{ padding: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', borderRadius: '12px', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Seção 3: Histórico de Ativações por MAC */}
+          <div>
+            <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Activity size={24} color="#FC5F16" /> Histórico de Vendas por MAC
+            </h2>
+            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #27272a', background: 'rgba(255,255,255,0.02)' }}>
+                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Data</th>
+                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>App / Plano</th>
+                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Endereço MAC</th>
+                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Valor</th>
+                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {appActivations.map(act => (
+                      <tr key={act.id} style={{ borderBottom: '1px solid #27272a' }}>
+                        <td style={{ padding: '15px 20px', fontSize: '14px', color: '#f4f4f5' }}>{act.date_formatted}</td>
+                        <td style={{ padding: '15px 20px' }}>
+                          <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{act.package_name || 'Ativação Direta'}</div>
+                          <div style={{ fontSize: '12px', color: '#a1a1aa' }}>{act.type === 'pix' ? 'PIX' : 'Cartão'}</div>
+                        </td>
+                        <td style={{ padding: '15px 20px' }}>
+                          <code style={{ background: '#09090b', padding: '4px 8px', borderRadius: '6px', color: '#FC5F16', fontSize: '13px' }}>{act.mac_address || 'N/A'}</code>
+                        </td>
+                        <td style={{ padding: '15px 20px', fontSize: '14px', fontWeight: '800', color: '#fff' }}>{formatCurrency(act.amount)}</td>
+                        <td style={{ padding: '15px 20px' }}>
+                          <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', background: act.status === 'approved' ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)', color: act.status === 'approved' ? '#22c55e' : '#eab308' }}>
+                            {act.status === 'approved' ? 'Aprovado' : 'Pendente'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {appActivations.length === 0 && (
+                      <tr>
+                        <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#71717a' }}>Nenhuma ativação realizada até o momento.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* MODAL CONFIGURAÇÕES DE GATEWAY (Antigo bloco de gateways) */}
@@ -1313,55 +1431,53 @@ const FinancePlans = () => {
                 <div style={{ padding: '8px', background: 'rgba(252,95,22,0.1)', borderRadius: '12px' }}>
                    <Smartphone size={24} color="#FC5F16" />
                 </div>
-                Configurar Aplicativo
+                {editAppId ? 'Editar Plano' : 'Novo Plano de Ativação'}
               </h2>
 
               <form onSubmit={handleSaveApp} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Nome do Aplicativo</label>
+                    <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Nome do Plano</label>
                     <input 
-                      type="text" placeholder="Ex: MAXX PLAYER PRO" value={appFormData.app_name}
-                      onChange={e => setAppFormData({...appFormData, app_name: e.target.value})}
+                      type="text" placeholder="Ex: Pacote de ativação por 1 ano" value={appFormData.name}
+                      onChange={e => setAppFormData({...appFormData, name: e.target.value})}
                       style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
+                      required
                     />
                  </div>
 
-                 <div>
-                    <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>URL do Logo (Opcional)</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                       <div style={{ width: '54px', height: '54px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                          {appFormData.logo_url ? <img src={appFormData.logo_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Image size={20} color="#3f3f46" />}
-                       </div>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div>
+                       <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Preço Único (R$)</label>
                        <input 
-                         type="text" placeholder="https://..." value={appFormData.logo_url}
-                         onChange={e => setAppFormData({...appFormData, logo_url: e.target.value})}
-                         style={{ flex: 1, padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '14px' }} 
+                         type="number" step="0.01" value={appFormData.price}
+                         onChange={e => setAppFormData({...appFormData, price: e.target.value})}
+                         style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
+                         required
+                       />
+                    </div>
+                    <div>
+                       <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Duração (Dias)</label>
+                       <input 
+                         type="number" value={appFormData.duration_days}
+                         onChange={e => setAppFormData({...appFormData, duration_days: e.target.value})}
+                         style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
+                         required
                        />
                     </div>
                  </div>
 
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '15px' }}>
-                    <div>
-                       <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Mensal (R$)</label>
-                       <input 
-                         type="number" step="0.01" placeholder="30.00" value={appFormData.monthly_price}
-                         onChange={e => setAppFormData({...appFormData, monthly_price: e.target.value})}
-                         style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
-                       />
-                    </div>
-                    <div>
-                       <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Anual (R$)</label>
-                       <input 
-                         type="number" step="0.01" placeholder="150.00" value={appFormData.yearly_price}
-                         onChange={e => setAppFormData({...appFormData, yearly_price: e.target.value})}
-                         style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
-                       />
-                    </div>
+                 <div>
+                    <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Descrição (Opcional)</label>
+                    <textarea 
+                      value={appFormData.description}
+                      onChange={e => setAppFormData({...appFormData, description: e.target.value})}
+                      style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '14px', minHeight: '80px', resize: 'none' }} 
+                    />
                  </div>
 
                  <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
                     <button type="button" onClick={() => setShowAppModal(false)} style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'transparent', border: '1px solid #27272a', color: '#a1a1aa', fontWeight: '800', cursor: 'pointer' }}>Cancelar</button>
-                    <button type="submit" style={{ flex: 1, padding: '16px', borderRadius: '16px', background: '#FC5F16', border: 'none', color: '#fff', fontWeight: '900', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)' }}>Salvar App</button>
+                    <button type="submit" style={{ flex: 1, padding: '16px', borderRadius: '16px', background: '#FC5F16', border: 'none', color: '#fff', fontWeight: '900', cursor: 'pointer' }}>Salvar Plano</button>
                  </div>
               </form>
            </div>

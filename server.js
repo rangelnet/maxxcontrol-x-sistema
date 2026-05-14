@@ -57,6 +57,37 @@ async function runPendingMigrations() {
       sql: `CREATE TABLE IF NOT EXISTS banner_templates (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, type VARCHAR(50) DEFAULT 'movie', bg_url TEXT, overlay_url TEXT, config JSONB DEFAULT '{}', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
     },
     {
+      name: 'tv_categories',
+      sql: `CREATE TABLE IF NOT EXISTS tv_categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        icon TEXT DEFAULT '📺',
+        icon_type VARCHAR(20) DEFAULT 'emoji',
+        keywords JSONB DEFAULT '[]',
+        exclude_keywords JSONB DEFAULT '[]',
+        ordem INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'tv_channels',
+      sql: `CREATE TABLE IF NOT EXISTS tv_channels (
+        id SERIAL PRIMARY KEY,
+        category_id INTEGER REFERENCES tv_categories(id) ON DELETE SET NULL,
+        name VARCHAR(255) NOT NULL,
+        stream_url TEXT,
+        stream_id INTEGER,
+        logo_url TEXT,
+        epg_channel_id TEXT,
+        source_category_name TEXT,
+        ordem INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
       name: 'servers',
       sql: `CREATE TABLE IF NOT EXISTS servers (
         id SERIAL PRIMARY KEY,
@@ -432,6 +463,18 @@ async function runPendingMigrations() {
     }
   }
 
+  // Migração: Branding Settings (Menu e Banners)
+  console.log('🎨 Executando migration: Branding Settings Columns...');
+  try {
+    await pool.query(`ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS top_menu JSONB DEFAULT '[]'::jsonb`);
+    await pool.query(`ALTER TABLE branding_settings ADD COLUMN IF NOT EXISTS platform_banners JSONB DEFAULT '{}'::jsonb`);
+    console.log('  ✅ Colunas top_menu e platform_banners verificadas/criadas em branding_settings');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.warn('⚠️ Aviso migração Branding Settings:', err.message);
+    }
+  }
+
   // Migração: tabela banner_templates (Fábrica de Temas)
   console.log('🎨 Executando migration: Banner Templates...');
   try {
@@ -752,6 +795,43 @@ async function runPendingMigrations() {
       console.error('❌ Erro na migration Strategic Services / Trial:', err.message);
     }
   }
+
+  // Migração: Profile Backgrounds (Controle de Tela de Perfis via Painel)
+  console.log('🖥️ Executando migration: Profile Backgrounds...');
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS profile_backgrounds (
+      id SERIAL PRIMARY KEY,
+      image_url TEXT NOT NULL,
+      title VARCHAR(255) DEFAULT '',
+      ordem INTEGER DEFAULT 0,
+      ativo BOOLEAN DEFAULT TRUE,
+      criado_em TIMESTAMP DEFAULT NOW()
+    )`);
+    console.log('  ✅ Tabela profile_backgrounds verificada/criada');
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS profile_screen_config (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      slide_interval_ms INTEGER DEFAULT 5000,
+      use_tmdb BOOLEAN DEFAULT TRUE,
+      tmdb_position VARCHAR(20) DEFAULT 'mixed',
+      max_backgrounds INTEGER DEFAULT 20,
+      atualizado_em TIMESTAMP DEFAULT NOW(),
+      CONSTRAINT single_profile_config CHECK (id = 1)
+    )`);
+    console.log('  ✅ Tabela profile_screen_config verificada/criada');
+
+    // Seed da configuração padrão
+    await pool.query(`
+      INSERT INTO profile_screen_config (id, slide_interval_ms, use_tmdb, tmdb_position, max_backgrounds)
+      VALUES (1, 5000, TRUE, 'mixed', 20)
+      ON CONFLICT (id) DO NOTHING
+    `);
+    console.log('✅ Migration Profile Backgrounds concluída!');
+  } catch (err) {
+    if (!IGNORE_CODES.includes(err.code)) {
+      console.error('❌ Erro na migration Profile Backgrounds:', err.message);
+    }
+  }
 }
 
 const app = express();
@@ -863,6 +943,9 @@ app.use('/api/iptv-plugin', require('./modules/iptv-servers/iptv-plugin-unified'
 // Rotas do Módulo Financeiro e Planos Comerciais
 app.use('/api/finance', require('./modules/finance/finance-plans'));
 
+// Rotas do Gerenciador de TV
+app.use('/api/tv-manager', require('./modules/tv-manager/tvManagerRoutes'));
+
 // ============================================
 // ============================================
 // OUTROS SERVIÇOS E FALLBACK SPA
@@ -871,6 +954,7 @@ app.use('/api/finance', require('./modules/finance/finance-plans'));
 // Servir arquivos estáticos (banners gerados e mídias do whatsapp)
 app.use('/banners', express.static('public/banners'));
 app.use('/media', express.static('public/media'));
+app.use('/uploads', express.static('public/uploads'));
 app.use('/branding', express.static(path.join(__dirname, 'web', 'public', 'branding')));
 
 // Rota de health check melhorada

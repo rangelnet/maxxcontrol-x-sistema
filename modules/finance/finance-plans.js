@@ -51,15 +51,23 @@ pool.query(`
 
     CREATE TABLE IF NOT EXISTS app_activation_packages (
         id SERIAL PRIMARY KEY,
-        app_name VARCHAR(255) NOT NULL,
-        logo_url VARCHAR(255),
-        monthly_price NUMERIC(10, 2) NOT NULL,
-        yearly_price NUMERIC(10, 2) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
+        duration_days INTEGER DEFAULT 365,
         description TEXT,
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    
+    -- Migração suave caso a tabela já exista com nomes antigos
+    ALTER TABLE app_activation_packages RENAME COLUMN app_name TO name;
+    ALTER TABLE app_activation_packages RENAME COLUMN yearly_price TO price;
+    ALTER TABLE app_activation_packages ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 365;
+    ALTER TABLE app_activation_packages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    ALTER TABLE app_activation_packages DROP COLUMN IF EXISTS monthly_price;
+    ALTER TABLE app_activation_packages DROP COLUMN IF EXISTS logo_url;
+
 `).then(async () => {
     // Seed default credit packages se a tabela estiver vazia
     const { rows } = await pool.query('SELECT COUNT(*) FROM credit_packages');
@@ -222,7 +230,6 @@ router.post('/revenue', async (req, res) => {
 
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        console.error('Erro ao registrar receita:', error);
         res.status(500).json({ error: 'Erro interno no servidor' });
     }
 });
@@ -377,7 +384,7 @@ router.put('/credit-packages/:id', async (req, res) => {
  */
 router.get('/app-packages', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM app_activation_packages ORDER BY app_name ASC');
+        const result = await pool.query('SELECT * FROM app_activation_packages ORDER BY price ASC');
         res.json(result.rows);
     } catch (error) {
         console.error('Erro ao buscar pacotes de apps:', error);
@@ -391,16 +398,16 @@ router.get('/app-packages', async (req, res) => {
  */
 router.post('/app-packages', async (req, res) => {
     try {
-        const { app_name, logo_url, monthly_price, yearly_price, description, is_active } = req.body;
+        const { name, price, duration_days, description, is_active } = req.body;
         
-        if (!app_name || !monthly_price || !yearly_price) {
-            return res.status(400).json({ error: 'Preencha os campos obrigatórios (Nome, Preço Mensal e Anual).' });
+        if (!name || !price) {
+            return res.status(400).json({ error: 'Preencha o nome e o preço do plano.' });
         }
 
         const result = await pool.query(
-            `INSERT INTO app_activation_packages (app_name, logo_url, monthly_price, yearly_price, description, is_active) 
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [app_name, logo_url || null, monthly_price, yearly_price, description || null, is_active !== undefined ? is_active : true]
+            `INSERT INTO app_activation_packages (name, price, duration_days, description, is_active) 
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [name, price, duration_days || 365, description || null, is_active !== undefined ? is_active : true]
         );
 
         res.status(201).json(result.rows[0]);
@@ -420,6 +427,59 @@ router.delete('/app-packages/:id', async (req, res) => {
         res.json({ success: true, message: 'Pacote de app deletado com sucesso' });
     } catch (error) {
         console.error('Erro ao deletar pacote de app:', error);
+        res.status(500).json({ error: 'Erro interno no servidor' });
+    }
+});
+
+/**
+ * PUT /api/finance/app-packages/:id
+ * Edita um pacote de ativação existente
+ */
+router.put('/app-packages/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, price, duration_days, description, is_active } = req.body;
+        
+        if (!name || !price) {
+            return res.status(400).json({ error: 'Preencha os campos obrigatórios.' });
+        }
+
+        const result = await pool.query(
+            `UPDATE app_activation_packages 
+             SET name = $1, price = $2, duration_days = $3, description = $4, is_active = $5, updated_at = CURRENT_TIMESTAMP 
+             WHERE id = $6 RETURNING *`,
+            [name, price, duration_days || 365, description || null, is_active !== undefined ? is_active : true, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Plano não encontrado.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Erro ao editar pacote de app:', error);
+        res.status(500).json({ error: 'Erro interno no servidor' });
+    }
+});
+
+/**
+ * GET /api/finance/app-activations
+ * Lista todas as ativações de apps (vendas por MAC) realizadas via painel ou web
+ */
+router.get('/app-activations', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT t.*, a.name as package_name,
+                   TO_CHAR(t.created_at, 'DD/MM/YYYY HH24:MI') as date_formatted
+            FROM mp_transactions t
+            LEFT JOIN app_activation_packages a ON t.app_id = a.id
+            WHERE t.app_id IS NOT NULL OR t.mac_address IS NOT NULL
+            ORDER BY t.created_at DESC
+            LIMIT 100
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Erro ao buscar histórico de ativações:', error);
         res.status(500).json({ error: 'Erro interno no servidor' });
     }
 });

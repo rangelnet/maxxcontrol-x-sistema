@@ -1,19 +1,14 @@
-const pool = require('./config/database');
+const pool = require('../config/database');
 
 async function check() {
   try {
-    const res = await pool.query("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public'");
-    console.log('Tables:', res.rows.map(r => r.tablename));
-    
-    const servers = await pool.query("SELECT * FROM iptv_servers");
-    console.log('IPTV Servers:', servers.rows);
-    
-    const legacyServers = await pool.query("SELECT * FROM servers").catch(() => ({ rows: [] }));
-    console.log('Legacy Servers:', legacyServers.rows);
+    const r = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'app_activation_packages'");
+    console.log('📊 Colunas da tabela app_activation_packages:');
+    console.table(r.rows);
+    process.exit(0);
   } catch (e) {
     console.error(e);
-  } finally {
-    process.exit();
+    process.exit(1);
   }
 }
 

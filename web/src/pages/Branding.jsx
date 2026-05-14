@@ -22,6 +22,24 @@ const PALETTES = [
   { name: 'Gold Line',    tema: 'Custom',   primary: '#FFD700', secondary: '#FFC107', bg: '#0A0800', text: '#FFFFFF', accent: '#FFE033', btnPrimary: '#FFD700', btnFocus: '#FFE033' },
 ]
 
+// ─── TOP MENU PADRÃO ───────────────────────────────────────────────────────────
+const DEFAULT_TOP_MENU = [
+  { id: 'tv', label: 'TV', route: '/live_tv', ativo: true, icon_url: '', display_mode: 'text' },
+  { id: 'home', label: 'HOME', route: '/home', ativo: true, icon_url: '', display_mode: 'text' },
+  { id: 'sports', label: 'ESPORTES', route: '/sports', ativo: true, icon_url: '', display_mode: 'text' },
+  { id: 'featured', label: 'DESTAQUES', route: '/featured', ativo: true, icon_url: '', display_mode: 'text' },
+  { id: 'animes', label: 'ANIME', route: '/animes', ativo: true, icon_url: '', display_mode: 'text' },
+  { id: 'kids', label: 'KIDS', route: '/kids', ativo: true, icon_url: '', display_mode: 'text' },
+]
+
+const mergeTopMenu = (savedMenu) => {
+  if (!savedMenu || !Array.isArray(savedMenu)) return DEFAULT_TOP_MENU
+  return DEFAULT_TOP_MENU.map(defaultItem => {
+    const savedItem = savedMenu.find(i => i.id === defaultItem.id)
+    return savedItem ? { ...defaultItem, ...savedItem } : defaultItem
+  })
+}
+
 // ─── CAMPO DE COR ──────────────────────────────────────────────────────────────
 const ColorField = ({ label, value, onChange }) => (
   <div>
@@ -91,6 +109,8 @@ const Branding = () => {
     hero_banner_url:  '/branding/banner_apptv.png',
     tema:             'Neon',
     whatsapp:         '',
+    top_menu:         DEFAULT_TOP_MENU,
+    platform_banners: {},
   })
 
   useEffect(() => {
@@ -135,6 +155,8 @@ const Branding = () => {
       splash_screen_url: b.splash_screen_url|| '',
       hero_banner_url:   b.hero_banner_url  || '',
       platforms:         b.platforms        || [],
+      platform_banners:  b.platform_banners || {},
+      top_menu:          mergeTopMenu(b.top_menu),
       tema:              b.tema             || 'Neon'
     })
   }
@@ -157,6 +179,53 @@ const Branding = () => {
         return { ...prev, platforms: [...platforms, id] }
       }
     })
+  }
+
+  const updateTopMenu = (id, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      top_menu: prev.top_menu.map(item => 
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    }))
+  }
+
+  const handleMenuIconUpload = async (e, id) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+    setSaving(true)
+    try {
+      const response = await api.post('/api/branding/upload', uploadData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      updateTopMenu(id, 'icon_url', response.data.url)
+    } catch (err) {
+      alert('Erro ao fazer upload do ícone.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePlatformBannerUpload = async (e, id) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+    setSaving(true)
+    try {
+      const response = await api.post('/api/branding/upload', uploadData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      setFormData(prev => ({
+        ...prev,
+        platform_banners: {
+          ...(prev.platform_banners || {}),
+          [id]: response.data.url
+        }
+      }))
+    } catch (err) {
+      alert('Erro ao fazer upload do banner da plataforma.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const PLATFORMS_LIST = [
@@ -220,7 +289,9 @@ const Branding = () => {
       accent_color:     '#FF8C00',
       splash_screen_url:'',
       hero_banner_url:  '',
-      platforms:        []
+      platforms:        [],
+      platform_banners: {},
+      top_menu:         DEFAULT_TOP_MENU
     })
   }
 
@@ -280,6 +351,7 @@ const Branding = () => {
     { id: 'cores',      label: 'Cores',        icon: '🎨' },
     { id: 'midias',     label: 'Imagens',      icon: '🖼️' },
     { id: 'plataformas', label: 'Plataformas', icon: '🚀' },
+    { id: 'menu-superior', label: 'Top Menu',  icon: '📍' },
   ]
 
   if (loading) return (
@@ -385,7 +457,7 @@ const Branding = () => {
         <div className="flex-1 space-y-5">
 
           {/* Abas de seção */}
-          <div className="flex gap-1 bg-dark-800 border border-dark-700 rounded-xl p-1">
+          <div className="flex flex-wrap gap-1 bg-dark-800 border border-dark-700 rounded-xl p-1">
             {SECTIONS.map(s => (
               <button
                 key={s.id}
@@ -775,42 +847,167 @@ const Branding = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-black text-white uppercase tracking-tighter">Explorar por Plataforma</h3>
-                    <p className="text-zinc-500 text-xs font-medium">Selecione quais plataformas aparecerão no Launcher do Player Web</p>
+                    <p className="text-zinc-500 text-xs font-medium">Selecione quais plataformas aparecerão no Launcher do Player Web. Você pode substituir as imagens padrão fazendo upload abaixo.</p>
+                    <p className="text-brand-400/80 text-[10px] font-bold mt-1">📏 TAMANHO RECOMENDADO DA IMAGEM: 800x450px (Proporção 16:9) formatos suportados: .webp e .png</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {PLATFORMS_LIST.map(plat => {
                     const isActive = (formData.platforms || []).includes(plat.id)
+                    const customBanner = formData.platform_banners?.[plat.id]
+                    
                     return (
-                      <button
-                        key={plat.id}
-                        type="button"
-                        onClick={() => togglePlatform(plat.id)}
-                        className={`group relative aspect-video rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                          isActive 
-                            ? 'border-brand-500 ring-4 ring-brand-500/20 scale-[1.02]' 
-                            : 'border-dark-700 grayscale hover:grayscale-0 opacity-40 hover:opacity-100'
-                        }`}
-                      >
-                        <img 
-                          src={plat.banner} 
-                          alt={plat.label}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                        <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${isActive ? 'bg-brand-500/10' : 'bg-black/60 group-hover:bg-black/20'}`}>
-                          {isActive && (
-                            <div className="bg-brand-500 text-white p-1 rounded-full shadow-lg">
-                              <Check size={16} />
-                            </div>
-                          )}
+                      <div key={plat.id} className="relative group">
+                        <button
+                          type="button"
+                          onClick={() => togglePlatform(plat.id)}
+                          className={`w-full relative aspect-video rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                            isActive 
+                              ? 'border-brand-500 ring-4 ring-brand-500/20 scale-[1.02]' 
+                              : 'border-dark-700 grayscale hover:grayscale-0 opacity-40 hover:opacity-100'
+                          }`}
+                        >
+                          <img 
+                            src={customBanner ? getFullUrl(customBanner) : plat.banner} 
+                            alt={plat.label}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                          <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${isActive ? 'bg-brand-500/10' : 'bg-black/60 group-hover:bg-black/20'}`}>
+                            {isActive && (
+                              <div className="bg-brand-500 text-white p-1 rounded-full shadow-lg">
+                                <Check size={16} />
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end">
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">{plat.label}</span>
+                          </div>
+                        </button>
+                        
+                        {isActive && (
+                          <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg border-2 border-dark-900 z-10">
+                            ✅ ATIVO
+                          </div>
+                        )}
+
+                        {/* Upload Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/80 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center pointer-events-none z-20 gap-2">
+                           <div className="pointer-events-auto relative">
+                              <input
+                                type="file"
+                                accept="image/webp,image/png,image/jpeg"
+                                onChange={(e) => handlePlatformBannerUpload(e, plat.id)}
+                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                title="Alterar imagem (800x450px .webp ou .png)"
+                              />
+                              <button type="button" className="bg-dark-800 hover:bg-brand-500 text-white text-[10px] font-bold px-3 py-1.5 rounded transition shadow-lg border border-dark-600 flex items-center gap-1">
+                                <span>⬆️</span> Trocar Imagem
+                              </button>
+                           </div>
+                           {customBanner && (
+                             <button type="button" onClick={() => setFormData(p => { const nb = {...(p.platform_banners||{})}; delete nb[plat.id]; return {...p, platform_banners: nb}; })} className="pointer-events-auto text-[9px] text-red-500 hover:text-red-400 font-bold uppercase underline">
+                               Remover Customizada
+                             </button>
+                           )}
                         </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                          <span className="text-[10px] font-black text-white uppercase tracking-widest">{plat.label}</span>
-                        </div>
-                      </button>
+                      </div>
                     )
                   })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 📍 MENU SUPERIOR */}
+          {activeSection === 'menu-superior' && (
+            <div className="space-y-6 animate-fadeIn">
+              <div className="bg-dark-900/50 border border-dark-600 rounded-2xl p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-12 w-12 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-2xl">
+                    📍
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tighter">Configuração do Menu Superior</h3>
+                    <p className="text-zinc-500 text-xs font-medium">Controle quais itens aparecerão na navegação superior do Web Player e personalize seus nomes e ícones (.webp recomendados).</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {(formData.top_menu || DEFAULT_TOP_MENU).map((menuItem) => (
+                    <div key={menuItem.id} className={`flex items-center gap-4 p-4 rounded-xl border ${menuItem.ativo ? 'bg-dark-800 border-brand-500/30' : 'bg-dark-900/50 border-dark-700 opacity-70'} transition-all`}>
+                      
+                      {/* Ativar/Desativar */}
+                      <button
+                        type="button"
+                        onClick={() => updateTopMenu(menuItem.id, 'ativo', !menuItem.ativo)}
+                        className={`w-12 h-6 rounded-full relative shrink-0 transition-colors ${menuItem.ativo ? 'bg-brand-500' : 'bg-dark-700'}`}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${menuItem.ativo ? 'left-7' : 'left-1'}`} />
+                      </button>
+
+                      {/* Nome e Input */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 gap-1">
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Nome no Menu</label>
+                          <span className="text-[8.5px] font-mono text-zinc-500 bg-dark-900 px-1.5 py-0.5 rounded border border-dark-700 w-fit">Rota Original: {menuItem.route}</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={menuItem.label}
+                          onChange={(e) => updateTopMenu(menuItem.id, 'label', e.target.value)}
+                          className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-1.5 text-white text-sm focus:border-brand-500 outline-none transition"
+                        />
+                        
+                        {/* Seletor de Modo de Exibição (Apenas se tiver ícone) */}
+                        {menuItem.icon_url && (
+                          <div className="flex bg-dark-900 border border-dark-600 rounded-lg overflow-hidden mt-3 p-0.5">
+                            {['text', 'image', 'both'].map(mode => {
+                              const labels = { text: 'Só Texto', image: 'Só Ícone', both: 'Ambos' }
+                              // Se o usuário não definiu ainda, default é 'image' por conta do comportamento anterior
+                              const isSelected = (menuItem.display_mode || 'image') === mode
+                              return (
+                                <button
+                                  key={mode}
+                                  type="button"
+                                  onClick={() => updateTopMenu(menuItem.id, 'display_mode', mode)}
+                                  className={`flex-1 py-1 text-[9px] font-bold uppercase transition ${isSelected ? 'bg-brand-500 text-white rounded shadow-sm' : 'text-zinc-500 hover:text-white hover:bg-dark-700/50'}`}
+                                >
+                                  {labels[mode]}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Upload de Ícone */}
+                      <div className="shrink-0 flex flex-col items-center gap-2">
+                        <div className="relative group w-12 h-12 bg-dark-900 border border-dark-600 rounded-xl overflow-hidden hover:border-brand-500 flex items-center justify-center">
+                          <input
+                            type="file"
+                            accept="image/webp,image/png,image/svg+xml"
+                            onChange={(e) => handleMenuIconUpload(e, menuItem.id)}
+                            className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                            title="Fazer upload de Ícone (.webp, .png)"
+                          />
+                          {menuItem.icon_url ? (
+                            <img src={getFullUrl(menuItem.icon_url)} alt="Ícone" className="w-8 h-8 object-contain" />
+                          ) : (
+                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">IMG</span>
+                          )}
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            <span className="text-[10px] font-bold text-white">⬆️ Upload</span>
+                          </div>
+                        </div>
+                        {menuItem.icon_url && (
+                           <button type="button" onClick={() => updateTopMenu(menuItem.id, 'icon_url', '')} className="text-[9px] text-red-500 hover:text-red-400 font-bold uppercase transition">Remover</button>
+                        )}
+                      </div>
+
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
