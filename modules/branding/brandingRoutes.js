@@ -14,10 +14,7 @@ router.delete('/:id', authMiddleware, brandingController.excluirBranding);
 // Upload de Branding
 const multer = require('multer');
 const path = require('path');
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'public/uploads/branding'),
-  filename: (req, file, cb) => cb(null, `branding-${Date.now()}${path.extname(file.originalname)}`)
-});
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 router.post('/upload', authMiddleware, upload.single('file'), brandingController.uploadFile);
 
@@ -37,10 +34,7 @@ if (!fs.existsSync(profileBgDir)) {
   fs.mkdirSync(profileBgDir, { recursive: true });
 }
 
-const profileBgStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, profileBgDir),
-  filename: (req, file, cb) => cb(null, `profile-bg-${Date.now()}${path.extname(file.originalname)}`)
-});
+const profileBgStorage = multer.memoryStorage();
 const profileBgUpload = multer({ 
   storage: profileBgStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max

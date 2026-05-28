@@ -856,7 +856,7 @@ const TvManager = () => {
                 >
                   <div className="text-2xl mb-2 flex items-center justify-start h-10 w-10">
                     {cat.icon_type === 'image' ? (
-                      <img src={`${API}/uploads/tv-categories/${cat.icon}`} alt={cat.name} className="w-full h-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }} />
+                      <img src={cat.icon.startsWith('http') ? cat.icon : `${API}/uploads/tv-categories/${cat.icon}`} alt={cat.name} className="w-full h-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }} />
                     ) : (
                       cat.icon
                     )}
@@ -888,7 +888,7 @@ const TvManager = () => {
                   />
                   <div className="text-2xl h-8 w-8 flex items-center justify-center">
                     {categories.find(c => c.id === activeCategory)?.icon_type === 'image' ? (
-                        <img src={`${API}/uploads/tv-categories/${categories.find(c => c.id === activeCategory)?.icon}`} alt="" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                        <img src={categories.find(c => c.id === activeCategory)?.icon?.startsWith('http') ? categories.find(c => c.id === activeCategory)?.icon : `${API}/uploads/tv-categories/${categories.find(c => c.id === activeCategory)?.icon}`} alt="" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
                     ) : (
                         categories.find(c => c.id === activeCategory)?.icon
                     )}

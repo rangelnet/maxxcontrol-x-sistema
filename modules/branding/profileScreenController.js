@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { uploadToSupabase } = require('../../services/supabaseStorage');
 const path = require('path');
 const fs = require('fs');
 
@@ -86,16 +87,13 @@ exports.addBackground = async (req, res) => {
     const count = parseInt(countResult.rows[0].count);
 
     if (count >= MAX_BACKGROUNDS) {
-      // Remover o arquivo que foi uploaded
-      const filePath = path.join('public/uploads/profile-backgrounds', req.file.filename);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       return res.status(400).json({ 
         error: `Limite de ${MAX_BACKGROUNDS} imagens atingido. Remova uma antes de adicionar.` 
       });
     }
 
     const title = req.body.title || '';
-    const imageUrl = `/public/uploads/profile-backgrounds/${req.file.filename}`;
+    const imageUrl = await uploadToSupabase(req.file, 'profile-backgrounds');
 
     // Pegar a próxima ordem
     const orderResult = await pool.query('SELECT COALESCE(MAX(ordem), 0) + 1 as next_order FROM profile_backgrounds');
@@ -130,12 +128,8 @@ exports.removeBackground = async (req, res) => {
       return res.status(404).json({ error: 'Imagem não encontrada' });
     }
 
-    // Deletar arquivo físico
-    const relativePath = bgResult.rows[0].image_url;
-    const filePath = path.join(process.cwd(), relativePath);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    // (Opcional) Poderíamos deletar a imagem do Supabase aqui, mas manteremos no bucket por precaução
+    // ou implementar a exclusão via API do Supabase futuramente.
 
     await pool.query('DELETE FROM profile_backgrounds WHERE id = $1', [id]);
 

@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { uploadToSupabase } = require('../../services/supabaseStorage');
 
 exports.getSettings = async (req, res) => {
   try {
@@ -94,7 +95,7 @@ exports.uploadLogo = async (req, res) => {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
 
-    const logoUrl = `/uploads/settings/${req.file.filename}`;
+    const logoUrl = await uploadToSupabase(req.file, 'settings');
     const jsonValue = JSON.stringify(logoUrl);
 
     await pool.query(

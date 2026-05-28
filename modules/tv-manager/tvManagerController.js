@@ -1,5 +1,6 @@
 const pool = require('../../config/database');
 const smartCategorizer = require('./smartCategorizer');
+const { uploadToSupabase } = require('../../services/supabaseStorage');
 
 /**
  * Retorna as categorias configuradas
@@ -100,8 +101,12 @@ exports.createCategory = async (req, res) => {
     let { name, icon, icon_type } = req.body;
     
     if (req.file) {
-        icon = req.file.filename;
-        icon_type = 'image';
+        try {
+            icon = await uploadToSupabase(req.file, 'tv-categories');
+            icon_type = 'image';
+        } catch (err) {
+            return res.status(500).json({ error: 'Erro ao salvar a imagem na nuvem.' });
+        }
     }
 
     try {
@@ -124,8 +129,12 @@ exports.updateCategory = async (req, res) => {
     let { name, icon, icon_type } = req.body;
     
     if (req.file) {
-        icon = req.file.filename;
-        icon_type = 'image';
+        try {
+            icon = await uploadToSupabase(req.file, 'tv-categories');
+            icon_type = 'image';
+        } catch (err) {
+            return res.status(500).json({ error: 'Erro ao salvar a imagem na nuvem.' });
+        }
     }
 
     try {

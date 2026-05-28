@@ -298,7 +298,7 @@ const ProfileScreenManager = () => {
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-dark-900">
                   <img
-                    src={`${API}${bg.image_url}`}
+                    src={bg.image_url?.startsWith('http') ? bg.image_url : `${API}${bg.image_url}`}
                     alt={bg.title || 'Background'}
                     className="w-full h-full object-cover"
                     onError={e => { e.target.style.display = 'none' }}

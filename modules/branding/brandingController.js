@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { uploadToSupabase } = require('../../services/supabaseStorage');
 const path = require('path');
 const fs = require('fs');
 
@@ -305,9 +306,8 @@ exports.uploadFile = async (req, res) => {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
 
-    // Retornar a URL relativa que será salva no banco
-    // O prefixo /public será servido pelo express.static
-    const fileUrl = `/public/uploads/branding/${req.file.filename}`;
+    // Upload para o Supabase Storage
+    const fileUrl = await uploadToSupabase(req.file, 'branding');
     
     res.json({ 
       message: 'Upload concluído com sucesso!',

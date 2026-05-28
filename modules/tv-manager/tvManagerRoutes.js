@@ -7,17 +7,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configuração do Multer para as imagens das categorias
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = path.join(__dirname, '../../public/uploads/tv-categories');
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
+// Configuração do Multer para as imagens das categorias em memória (Supabase Storage)
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Rotas de Importação
