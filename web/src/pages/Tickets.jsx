@@ -3,9 +3,15 @@ import {
   MessageSquare, Plus, Search, Filter, Clock, CheckCircle, 
   XCircle, AlertCircle, ChevronRight, Send, Paperclip
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Tickets() {
-  const [activeTab, setActiveTab] = useState('abertos')
+  const { user } = useAuth()
+  
+  const canAbertos = user?.tipo === 'admin' || user?.perm_tickets_abertos !== false
+  const canFechados = user?.tipo === 'admin' || user?.perm_tickets_fechados !== false
+  
+  const [activeTab, setActiveTab] = useState(canAbertos ? 'abertos' : (canFechados ? 'fechados' : ''))
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
   
@@ -193,14 +199,18 @@ export default function Tickets() {
           {/* Tabs & Filtros */}
           <div className="p-4 border-b border-dark-700 flex flex-col md:flex-row justify-between gap-4 bg-dark-900">
             <div className="flex bg-dark-800 p-1 rounded-lg border border-dark-700 shrink-0">
-              <button onClick={() => setActiveTab('abertos')} 
-                className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition ${activeTab === 'abertos' ? 'bg-maxx text-white shadow' : 'text-zinc-500 hover:text-white'}`}>
-                Em Andamento
-              </button>
-              <button onClick={() => setActiveTab('fechados')} 
-                className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition ${activeTab === 'fechados' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}>
-                Fechados / Resolvidos
-              </button>
+              {canAbertos && (
+                <button onClick={() => setActiveTab('abertos')} 
+                  className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition ${activeTab === 'abertos' ? 'bg-maxx text-white shadow' : 'text-zinc-500 hover:text-white'}`}>
+                  Em Andamento
+                </button>
+              )}
+              {canFechados && (
+                <button onClick={() => setActiveTab('fechados')} 
+                  className={`flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-bold transition ${activeTab === 'fechados' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-white'}`}>
+                  Fechados / Resolvidos
+                </button>
+              )}
             </div>
             
             <div className="relative flex-1 md:max-w-xs">

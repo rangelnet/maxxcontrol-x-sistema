@@ -1,0 +1,25 @@
+schema: spec-driven
+
+context: |
+  Projeto: Painel Maxxcontrol (Sistema de Gestão IPTV)
+  Tech stack: Node.js, Express, EJS, PostgreSQL/Supabase, WebSocket
+  Frontend: HTML/CSS/JS, EJS templates, Bootstrap
+  Backend: Express.js, REST API, WhatsApp Bot
+  Database: PostgreSQL (Supabase), SQLite (local)
+  APIs: Xtream API, Stripe/PIX (pagamentos), WhatsApp API
+  Deploy: Render.com
+  Domínio: Painel de controle para gerenciar clientes IPTV, créditos, dispositivos
+  Funcionalidades: Gestão de clientes, planos, dispositivos, pagamentos, branding
+  Convenções: Commits convencionais em português
+
+rules:
+  proposal:
+    - Sempre considerar impacto na API REST
+    - Documentar mudanças no banco de dados
+    - Considerar integração com WhatsApp Bot
+  tasks:
+    - Dividir tarefas em blocos de máximo 2 horas
+    - Incluir migração de banco se necessário
+  specs:
+    - Documentar endpoints de API afetados
+    - Incluir cenários de permissão (admin, revendedor, cliente)

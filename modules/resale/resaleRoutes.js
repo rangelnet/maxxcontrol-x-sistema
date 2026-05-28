@@ -4,7 +4,7 @@ const resaleController = require('./resaleController');
 const authMiddleware = require('../../middlewares/auth');
 
 const adminOnly = (req, res, next) => {
-  if (req.user.tipo !== 'admin') {
+  if (req.user && req.user.tipo === 'revendedor') {
     return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
   }
   next();
@@ -22,5 +22,8 @@ router.post('/credits/send', authMiddleware, adminOnly, resaleController.sendCre
 
 // Dashboard
 router.get('/dashboard/stats', authMiddleware, resaleController.getDashboardStats);
+
+// Logs de Auditoria
+router.get('/logs', authMiddleware, resaleController.getLogs);
 
 module.exports = router;

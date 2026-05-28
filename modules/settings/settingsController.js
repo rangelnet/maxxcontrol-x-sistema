@@ -81,10 +81,35 @@ exports.bulkUpdateSettings = async (req, res) => {
       );
     }
     
-    res.json({ message: 'Configurações atualizadas com sucesso' });
+    res.json({ message: 'Configurações updated successfully' });
   } catch (error) {
     console.error('Erro ao atualizar configurações em lote:', error);
     res.status(500).json({ error: 'Erro ao atualizar configurações' });
   }
 };
+
+exports.uploadLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+
+    const logoUrl = `/uploads/settings/${req.file.filename}`;
+    const jsonValue = JSON.stringify(logoUrl);
+
+    await pool.query(
+      `INSERT INTO global_settings (key, value, updated_at) 
+       VALUES ($1, $2, CURRENT_TIMESTAMP)
+       ON CONFLICT (key) 
+       DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+      ['logo_url', jsonValue]
+    );
+
+    res.json({ logo_url: logoUrl, message: 'Logo atualizada com sucesso!' });
+  } catch (error) {
+    console.error('Erro no upload da logo:', error);
+    res.status(500).json({ error: 'Erro ao processar upload da logo' });
+  }
+};
+
 

@@ -125,7 +125,30 @@ exports.login = async (req, res) => {
     };
 
     res.json({
-      user: { id: user.id, nome: user.nome, email: user.email, plano: user.plano, status: user.status, tipo: user.tipo },
+      user: { 
+        id: user.id, 
+        nome: user.nome, 
+        email: user.email, 
+        plano: user.plano, 
+        creditos: user.creditos,
+        status: user.status, 
+        tipo: user.tipo,
+        perm_dashboard: user.perm_dashboard,
+        perm_dispositivos: user.perm_dispositivos,
+        perm_revenda: user.perm_revenda,
+        perm_jogos: user.perm_jogos,
+        perm_banners: user.perm_banners,
+        perm_iptv: user.perm_iptv,
+        perm_plugin: user.perm_plugin,
+        perm_arvore: user.perm_arvore,
+        perm_api: user.perm_api,
+        perm_branding: user.perm_branding,
+        perm_galeria: user.perm_galeria,
+        perm_whitelabel: user.perm_whitelabel,
+        perm_versoes: user.perm_versoes,
+        perm_config: user.perm_config,
+        perm_tickets: user.perm_tickets
+      },
       token,
       config
     });
@@ -172,7 +195,30 @@ exports.verify2FA = async (req, res) => {
     });
 
     res.json({
-      user: { id: user.id, nome: user.nome, email: user.email, plano: user.plano, status: user.status, tipo: user.tipo },
+      user: { 
+        id: user.id, 
+        nome: user.nome, 
+        email: user.email, 
+        plano: user.plano, 
+        creditos: user.creditos,
+        status: user.status, 
+        tipo: user.tipo,
+        perm_dashboard: user.perm_dashboard,
+        perm_dispositivos: user.perm_dispositivos,
+        perm_revenda: user.perm_revenda,
+        perm_jogos: user.perm_jogos,
+        perm_banners: user.perm_banners,
+        perm_iptv: user.perm_iptv,
+        perm_plugin: user.perm_plugin,
+        perm_arvore: user.perm_arvore,
+        perm_api: user.perm_api,
+        perm_branding: user.perm_branding,
+        perm_galeria: user.perm_galeria,
+        perm_whitelabel: user.perm_whitelabel,
+        perm_versoes: user.perm_versoes,
+        perm_config: user.perm_config,
+        perm_tickets: user.perm_tickets
+      },
       token
     });
   } catch (error) {
@@ -185,7 +231,11 @@ exports.verify2FA = async (req, res) => {
 exports.validateToken = async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, nome, email, plano, status, tipo, tfa_enabled, telegram_chat_id FROM users WHERE id = $1',
+      `SELECT id, nome, email, plano, creditos, status, tipo, tfa_enabled, telegram_chat_id,
+              perm_dashboard, perm_dispositivos, perm_revenda, perm_jogos, perm_banners,
+              perm_iptv, perm_plugin, perm_arvore, perm_api, perm_branding, perm_galeria,
+              perm_whitelabel, perm_versoes, perm_config, perm_tickets 
+       FROM users WHERE id = $1`,
       [req.userId]
     );
     if (result.rows.length === 0) {

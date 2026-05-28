@@ -433,7 +433,11 @@ const ThemeCard = ({ theme, selected, onSelect, tick }) => {
 // ─── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const BannerGenerator = () => {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('generator') // 'generator' | 'themes'
+  
+  const canGen = user?.tipo === 'admin' || user?.perm_banners_gen !== false;
+  const canTheme = user?.tipo === 'admin' || user?.perm_banners_themes !== false;
+  
+  const [activeTab, setActiveTab] = useState(canGen ? 'generator' : (canTheme ? 'themes' : '')); // 'generator' | 'themes'
   const [activeCategory, setActiveCategory] = useState('futebol')
   const [selectedTheme, setSelectedTheme] = useState(null)
   const [mode, setMode] = useState(null) // 'manual' | 'auto'
@@ -694,13 +698,15 @@ const BannerGenerator = () => {
         </div>
 
         <div className="flex bg-black/40 p-1.5 rounded-2xl border border-white/10 self-start md:self-center">
-          <button 
-            onClick={() => setActiveTab('generator')}
-            className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'generator' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
-          >
-            <ImageIcon size={16} /> Gerar Banner
-          </button>
-          {isMaster && (
+          {canGen && (
+            <button 
+              onClick={() => setActiveTab('generator')}
+              className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'generator' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
+            >
+              <ImageIcon size={16} /> Gerar Banner
+            </button>
+          )}
+          {canTheme && (
             <button 
               onClick={() => setActiveTab('themes')}
               className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'themes' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}

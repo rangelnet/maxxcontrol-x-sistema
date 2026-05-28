@@ -22,6 +22,8 @@ import Tickets from './pages/Tickets'
 import Store from './pages/Store'
 import WhatsAppAuto from './pages/WhatsAppAuto'
 import FinancePlans from './pages/FinancePlans'
+import SubscribePlans from './pages/SubscribePlans'
+import Wallet from './pages/Wallet'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 import NexusAgent from './pages/NexusAgent'
@@ -35,6 +37,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Landing />} />
           <Route path="/loja/:slug" element={<Store />} />
+          <Route path="/subscribe-plans" element={<SubscribePlans />} />
           <Route element={
             <PrivateRoute>
               <Layout />
@@ -62,6 +65,7 @@ function App() {
             <Route path="banner-generator" element={<BannerGenerator />} />
             <Route path="whatsapp-auto" element={<WhatsAppAuto />} />
             <Route path="finance-plans" element={<FinancePlans />} />
+            <Route path="wallet" element={<Wallet />} />
             <Route path="agents" element={<NexusAgent />} />
           </Route>
         </Routes>

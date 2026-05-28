@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { useWhatsApp } from '../context/WhatsAppContext'
+import { useAuth } from '../context/AuthContext'
 import {
   MessageCircle, QrCode, CheckCircle, X, Loader2, Send,
   Users, Clock, Edit3, Trash2, Plus, Play, Pause,
@@ -221,7 +222,14 @@ export default function WhatsAppAuto() {
 
   const [searchParams] = useSearchParams()
   const initialTab = searchParams.get('tab') === 'livechat' ? 'livechat' : 'bulk'
-  const [activeTab, setActiveTab] = useState(initialTab) // 'bulk' | 'maxxflow' | 'livechat'
+  
+  const { user } = useAuth()
+  const canBulk = user?.tipo === 'admin' || user?.perm_whatsapp_bulk !== false
+  const canFlow = user?.tipo === 'admin' || user?.perm_whatsapp_flow !== false
+  
+  const defaultTab = canBulk ? initialTab : (canFlow ? 'maxxflow' : 'livechat')
+  
+  const [activeTab, setActiveTab] = useState(defaultTab) // 'bulk' | 'maxxflow' | 'livechat'
   const [waSelectedGroups, setWaSelectedGroups] = useState([])
 
   // ── MaxxChat Live Chat ──
@@ -530,6 +538,14 @@ export default function WhatsAppAuto() {
     try {
       const io = require('socket.io-client')
       socket = io(window.location.origin)
+      // Multi-tenant: entrar na sala do usuário para receber apenas seus eventos
+      try {
+        const token = localStorage.getItem('token')
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          if (payload?.id) socket.emit('join_user', payload.id)
+        }
+      } catch (e) {}
       if (chatActiveJid) socket.emit('join_chat', chatActiveJid)
       socket.on('new_message', (msg) => {
         if (msg.jid === chatActiveJid) {
@@ -641,16 +657,20 @@ export default function WhatsAppAuto() {
 
         {/* ── TAB SWITCHER ── */}
         <div className="bg-dark-800 p-1 rounded-xl border border-dark-700 flex self-start md:self-auto overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
-          <button 
-            onClick={() => setActiveTab('bulk')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'bulk' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
-            <Send className="h-3.5 w-3.5" /> Disparo em Massa
-          </button>
-          <button 
-            onClick={() => setActiveTab('maxxflow')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'maxxflow' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
-            <Bot className="h-3.5 w-3.5" /> MaxxFlow (Chatbot)
-          </button>
+          {canBulk && (
+            <button 
+              onClick={() => setActiveTab('bulk')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'bulk' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
+              <Send className="h-3.5 w-3.5" /> Disparo em Massa
+            </button>
+          )}
+          {canFlow && (
+            <button 
+              onClick={() => setActiveTab('maxxflow')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'maxxflow' ? 'bg-maxx text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
+              <Bot className="h-3.5 w-3.5" /> MaxxFlow (Chatbot)
+            </button>
+          )}
           <button 
             onClick={() => setActiveTab('livechat')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all transform active:scale-95 flex items-center gap-2 shrink-0 ${activeTab === 'livechat' ? 'bg-green-600 text-white shadow-lg shadow-green-600/20' : 'text-zinc-500 hover:text-white'}`}>

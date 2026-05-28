@@ -284,7 +284,7 @@ exports.getPaymentHistory = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT t.id, t.payment_id, t.credits, t.amount, t.status, t.type, t.mac_address,
-              a.app_name as package_name,
+              a.name as package_name,
               TO_CHAR(t.created_at, 'DD/MM/YYYY') as date,
               TO_CHAR(t.created_at, 'HH24:MI') as time
        FROM mp_transactions t

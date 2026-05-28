@@ -206,28 +206,58 @@ exports.listDevices = async (req, res) => {
 exports.listAllDevices = async (req, res) => {
   try {
     console.log('📱 Listando TODOS os dispositivos...');
-    const result = await pool.query(`
-      SELECT 
-        d.*,
-        u.email,
-        d.current_iptv_server_url,
-        d.current_iptv_username,
-        d.test_api_urls,
-        ic.xtream_password AS current_iptv_password,
-        d.server,
-        d.username,
-        d.password,
-        d.ping,
-        d.quality,
-        d.stream_status,
-        d.server_mode,
-        d.api_test_url
-      FROM devices d
-      LEFT JOIN users u ON d.user_id = u.id
-      LEFT JOIN device_iptv_config ic ON ic.device_id = d.id
-      WHERE d.modelo != 'Web Browser' OR d.modelo IS NULL
-      ORDER BY d.ultimo_acesso DESC
-    `);
+    
+    let result;
+    if (req.userTipo === 'revendedor') {
+      // Revendedor só vê os dispositivos dele
+      result = await pool.query(`
+        SELECT 
+          d.*,
+          u.email,
+          d.current_iptv_server_url,
+          d.current_iptv_username,
+          d.test_api_urls,
+          ic.xtream_password AS current_iptv_password,
+          d.server,
+          d.username,
+          d.password,
+          d.ping,
+          d.quality,
+          d.stream_status,
+          d.server_mode,
+          d.api_test_url
+        FROM devices d
+        LEFT JOIN users u ON d.user_id = u.id
+        LEFT JOIN device_iptv_config ic ON ic.device_id = d.id
+        WHERE (d.user_id = $1) AND (d.modelo != 'Web Browser' OR d.modelo IS NULL)
+        ORDER BY d.ultimo_acesso DESC
+      `, [req.userId]);
+    } else {
+      // Admin/Master vê tudo
+      result = await pool.query(`
+        SELECT 
+          d.*,
+          u.email,
+          d.current_iptv_server_url,
+          d.current_iptv_username,
+          d.test_api_urls,
+          ic.xtream_password AS current_iptv_password,
+          d.server,
+          d.username,
+          d.password,
+          d.ping,
+          d.quality,
+          d.stream_status,
+          d.server_mode,
+          d.api_test_url
+        FROM devices d
+        LEFT JOIN users u ON d.user_id = u.id
+        LEFT JOIN device_iptv_config ic ON ic.device_id = d.id
+        WHERE d.modelo != 'Web Browser' OR d.modelo IS NULL
+        ORDER BY d.ultimo_acesso DESC
+      `);
+    }
+
     console.log(`✅ Encontrados ${result.rows.length} dispositivos`);
 
     // Parsear test_api_urls de JSON string para array

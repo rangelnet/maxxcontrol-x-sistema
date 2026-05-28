@@ -1,19 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Tv2, FileText } from 'lucide-react'
 import Devices from './Devices'
 import Logs from './Logs'
+import { useAuth } from '../context/AuthContext'
 
 const DevicesWithLogs = () => {
-  const [activeTab, setActiveTab] = useState('devices')
-
-  const tabs = [
-    { key:'devices', label:'Dispositivos', Icon:Tv2   },
-    { key:'logs',    label:'Logs & Bugs',  Icon:FileText },
+  const { user } = useAuth()
+  
+  const allTabs = [
+    { key:'devices', label:'Dispositivos', Icon:Tv2, perm: 'perm_dispositivos_lista' },
+    { key:'logs',    label:'Logs & Bugs',  Icon:FileText, perm: 'perm_dispositivos_logs' },
   ]
+  
+  const tabs = allTabs.filter(t => user?.tipo === 'admin' || user?.[t.perm] !== false)
+  
+  const [activeTab, setActiveTab] = useState(tabs.length > 0 ? tabs[0].key : '')
+
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.find(t => t.key === activeTab)) {
+      setActiveTab(tabs[0].key)
+    }
+  }, [tabs, activeTab])
 
   return (
     <div>
-      {/* Header */}
       <div style={{ marginBottom:24 }}>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
           <Tv2 size={26} color='#FC5F16'/> Dispositivos & Logs

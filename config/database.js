@@ -16,9 +16,9 @@ if (USE_SQLITE) {
     ssl: {
       rejectUnauthorized: false
     },
-    max: 30,
+    max: 15,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 30000,
   });
 
   pool.on('error', (err) => {

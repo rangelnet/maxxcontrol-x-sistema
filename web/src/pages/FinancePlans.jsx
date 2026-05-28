@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Plus, Settings, Activity, Trash2, Edit3, Monitor, Clock, CheckCircle, Search, Filter, Phone, User, CreditCard, ShoppingCart, Tag, Smartphone, Image } from 'lucide-react';
 import axios from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const FinancePlans = () => {
+  const { user } = useAuth();
   const [plans, setPlans] = useState([]);
   const [crmLogs, setCrmLogs] = useState([]);
   const [creditPackages, setCreditPackages] = useState([]);
@@ -11,7 +13,19 @@ const FinancePlans = () => {
   const [showModal, setShowModal] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('planos'); // 'planos' | 'crm' | 'loja' | 'apps' | 'gateways'
+  
+  const allTabs = [
+    { id: 'planos', label: 'Planos', perm: 'perm_planos_lista' },
+    { id: 'crm', label: 'CRM', perm: 'perm_planos_crm' },
+    { id: 'loja', label: 'Loja Créditos', perm: 'perm_planos_loja' },
+    { id: 'gateways', label: 'Gateways', perm: 'perm_planos_gateways' },
+    { id: 'apps', label: 'Apps', perm: 'perm_planos_apps' },
+    { id: 'assinaturas', label: 'Assinaturas Painel', masterOnly: true }
+  ];
+  
+  const visibleTabs = allTabs.filter(t => user?.tipo === 'admin' || user?.tipo === 'admin' || user?.role === 'admin' || (t.masterOnly !== true && user?.[t.perm] !== false));
+  
+  const [activeTab, setActiveTab] = useState(visibleTabs.length > 0 ? visibleTabs[0].id : 'planos');
   const [appUrl, setAppUrl] = useState('');
   const [savingAppUrl, setSavingAppUrl] = useState(false);
   const [appPackages, setAppPackages] = useState([]);
@@ -23,6 +37,18 @@ const FinancePlans = () => {
     price: '',
     duration_days: 365,
     description: '',
+    is_active: true
+  });
+  
+  // Panel Subscription Plans State
+  const [panelPlans, setPanelPlans] = useState([]);
+  const [showPanelPlanModal, setShowPanelPlanModal] = useState(false);
+  const [editPanelPlanId, setEditPanelPlanId] = useState(null);
+  const [panelPlanFormData, setPanelPlanFormData] = useState({
+    name: '',
+    price: '',
+    trial_days: 7,
+    features: [],
     is_active: true
   });
   
@@ -84,14 +110,15 @@ const FinancePlans = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [plansRes, statsRes, crmRes, creditRes, settingsRes, appsRes, activationsRes] = await Promise.all([
+      const [plansRes, statsRes, crmRes, creditRes, settingsRes, appsRes, activationsRes, panelPlansRes] = await Promise.all([
         axios.get('/api/finance/plans'),
         axios.get('/api/finance/revenue/stats'),
         axios.get('/api/finance/crm'),
         axios.get('/api/finance/credit-packages'),
         axios.get('/api/settings'),
         axios.get('/api/finance/app-packages'),
-        axios.get('/api/finance/app-activations')
+        axios.get('/api/finance/app-activations'),
+        axios.get('/api/finance/panel-plans')
       ]);
       setPlans(plansRes.data);
       setStats(statsRes.data);
@@ -99,6 +126,7 @@ const FinancePlans = () => {
       setCreditPackages(creditRes.data);
       setAppPackages(appsRes.data);
       setAppActivations(activationsRes.data);
+      setPanelPlans(panelPlansRes.data);
       
       const s = settingsRes.data;
       setAppUrl(s.player_app_url || 'https://maxxplayer.app');
@@ -455,6 +483,82 @@ const FinancePlans = () => {
     return true;
   });
 
+  const handleSavePanelPlan = async (e) => {
+    e.preventDefault();
+    try {
+      if (editPanelPlanId) {
+        await axios.put(`/api/finance/panel-plans/${editPanelPlanId}`, panelPlanFormData);
+        alert("Plano de Assinatura atualizado com sucesso!");
+      } else {
+        await axios.post('/api/finance/panel-plans', panelPlanFormData);
+        alert("Plano de Assinatura criado com sucesso!");
+      }
+      setShowPanelPlanModal(false);
+      setEditPanelPlanId(null);
+      fetchData();
+    } catch (error) {
+      alert("Erro ao salvar plano de assinatura.");
+      console.error(error);
+    }
+  };
+
+  const openEditPanelPlanModal = (plan) => {
+    setEditPanelPlanId(plan.id);
+    setPanelPlanFormData({
+      name: plan.name,
+      price: plan.price.toString(),
+      trial_days: plan.trial_days,
+      features: plan.features || [],
+      is_active: plan.is_active
+    });
+    setShowPanelPlanModal(true);
+  };
+
+  const handleDeletePanelPlan = async (id) => {
+    if (window.confirm("Deseja realmente excluir este plano de assinatura do painel?")) {
+      try {
+        await axios.delete(`/api/finance/panel-plans/${id}`);
+        fetchData();
+      } catch (e) {
+        alert("Erro ao deletar plano.");
+      }
+    }
+  };
+
+  const togglePanelFeature = (featureId) => {
+    const current = panelPlanFormData.features || [];
+    if (current.includes(featureId)) {
+      setPanelPlanFormData({ ...panelPlanFormData, features: current.filter(f => f !== featureId) });
+    } else {
+      setPanelPlanFormData({ ...panelPlanFormData, features: [...current, featureId] });
+    }
+  };
+
+  // Mapeamento de features disponiveis para os checkboxes
+  const availableFeatures = [
+    { id: 'dashboard', label: 'Dashboard & Métricas', category: 'Core' },
+    { id: 'devices', label: 'Dispositivos & Logs', category: 'Core' },
+    { id: 'tickets', label: 'Tickets de Suporte', category: 'Core' },
+    { id: 'versions', label: 'Versões do App', category: 'Core' },
+    { id: 'settings', label: 'Config. Globais', category: 'Core' },
+    { id: 'finance-plans', label: 'Planos Comerciais', category: 'Financeiro' },
+    { id: 'crm', label: 'Histórico CRM', category: 'Financeiro' },
+    { id: 'credit-store', label: 'Loja de Créditos', category: 'Financeiro' },
+    { id: 'white-label', label: 'Loja White Label', category: 'Financeiro' },
+    { id: 'iptv-server', label: 'Servidor IPTV', category: 'IPTV' },
+    { id: 'servers-management', label: 'Múltiplos Servidores', category: 'IPTV' },
+    { id: 'playlist-manager', label: 'Gestor Playlists', category: 'IPTV' },
+    { id: 'branding', label: 'Fábrica de Temas', category: 'Branding' },
+    { id: 'profile-screens', label: 'Telas de Perfil', category: 'Branding' },
+    { id: 'tv-manager', label: 'Gerenciar TV', category: 'Branding' },
+    { id: 'sports-manager', label: 'Gerenciar Esportes', category: 'Branding' },
+    { id: 'whatsapp-auto', label: 'Automação WhatsApp', category: 'Marketing' },
+    { id: 'livechat', label: 'Chat Ao Vivo', category: 'Marketing' },
+    { id: 'banner-generator', label: 'Gerador Banners', category: 'Marketing' },
+    { id: 'game-schedule', label: 'Grade de Jogos', category: 'Marketing' },
+    { id: 'agents', label: 'Agentes IA', category: 'Marketing' }
+  ];
+
   // Botão Primário Laranja Oficial
   const btnPrimaryClass = "inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
   const btnPrimary = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', background: '#FC5F16', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)', transition: 'all 0.2s' };
@@ -473,6 +577,11 @@ const FinancePlans = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+          {activeTab === 'assinaturas' && (
+            <button onClick={() => { setEditPanelPlanId(null); setPanelPlanFormData({ name: '', price: '', trial_days: 7, features: [], is_active: true }); setShowPanelPlanModal(true); }} className={btnPrimaryClass}>
+              <Plus size={18} /> Novo Plano de Painel
+            </button>
+          )}
           {activeTab === 'planos' && (
             <button onClick={() => { setEditPlanId(null); setFormData({ name: '', price: '', duration_days: '30', max_connections: '1', qpanel_id: '', sigma_package: '', sigma_packages: [], is_active: true }); setShowModal(true); }} className={btnPrimaryClass}>
               <Plus size={18} /> Novo Plano
@@ -488,13 +597,7 @@ const FinancePlans = () => {
 
       {/* ABAS */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', borderBottom: '1px solid #27272a', paddingBottom: '12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-        {[
-          { id: 'planos', label: 'Planos' },
-          { id: 'crm', label: 'CRM' },
-          { id: 'loja', label: 'Loja Créditos' },
-          { id: 'gateways', label: 'Gateways' },
-          { id: 'apps', label: 'Apps' }
-        ].map(tab => (
+        {visibleTabs.map(tab => (
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -765,7 +868,142 @@ const FinancePlans = () => {
         </>
       )}
 
-      {/* MODAL NOVO PLANO */}
+      {activeTab === 'assinaturas' && (
+        <>
+          <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Monitor size={20} color="#FC5F16" /> Planos de Assinatura do Painel (SaaS)
+          </h2>
+          <p style={{ color: '#a1a1aa', marginBottom: '30px' }}>
+            Crie os pacotes de mensalidade que seus revendedores deverão pagar para acessar o painel. Você pode restringir quais ferramentas eles terão acesso dependendo do plano escolhido.
+          </p>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '50px', color: '#71717a' }}>Carregando pacotes de assinatura...</div>
+          ) : panelPlans.length === 0 ? (
+            <div style={{ background: '#18181b', borderRadius: '16px', padding: '40px', textAlign: 'center', border: '1px dashed #3f3f46' }}>
+              <Monitor size={48} color="#3f3f46" style={{ marginBottom: '16px' }} />
+              <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: '#f4f4f5' }}>Nenhum pacote de assinatura criado</h3>
+              <p style={{ margin: 0, color: '#a1a1aa' }}>Crie pacotes (ex: Básico, Elite) para começar a cobrar pela plataforma.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '15px' }}>
+              {panelPlans.map((pkg) => {
+                 return (
+                  <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
+                    {!pkg.is_active && (
+                      <div style={{ position: 'absolute', top: '12px', right: '12px', background: '#ef4444', color: '#fff', fontSize: '10px', padding: '4px 8px', borderRadius: '8px', fontWeight: '800' }}>INATIVO</div>
+                    )}
+                    <h3 style={{ margin: '0 0 10px', fontSize: '18px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
+                    
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '32px', fontWeight: '900', color: '#FC5F16' }}>
+                        {formatCurrency(pkg.price)}
+                      </div>
+                      <span style={{ color: '#71717a', fontSize: '12px' }}>/ mês</span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px', background: '#09090b', padding: '15px', borderRadius: '12px', border: '1px solid #27272a' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#a1a1aa', fontSize: '14px', fontWeight: '700' }}>
+                        <span><Clock size={16} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#FC5F16' }} /> Período Grátis</span>
+                        <span style={{ color: '#fff', fontSize: '14px', fontWeight: '900' }}>{pkg.trial_days} Dias</span>
+                      </div>
+                      <div style={{ height: '1px', background: '#27272a' }}></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#a1a1aa', fontSize: '13px', fontWeight: '600' }}>
+                        <span>Ferramentas Liberadas</span>
+                        <span style={{ color: '#34d399' }}>{pkg.features?.length || 0} de {availableFeatures.length}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', paddingTop: '15px', borderTop: '1px solid #27272a' }}>
+                      <button onClick={() => openEditPanelPlanModal(pkg)} style={{ flex: 1, background: '#27272a', border: '1px solid #3f3f46', color: '#fff', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                        <Edit3 size={16} /> Editar
+                      </button>
+                      <button onClick={() => handleDeletePanelPlan(pkg.id)} style={{ flex: 1, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', fontWeight: '700' }}>
+                        <Trash2 size={16} /> Remover
+                      </button>
+                    </div>
+                  </div>
+                 )
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* MODAL NOVO PLANO DE ASSINATURA */}
+      {showPanelPlanModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
+          <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '20px', width: '100%', maxWidth: '700px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ margin: '0 0 25px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {editPanelPlanId ? <Edit3 size={24} color="#FC5F16" /> : <Plus size={24} color="#FC5F16" />} 
+              {editPanelPlanId ? 'Editar Plano de Assinatura' : 'Criar Plano de Assinatura'}
+            </h2>
+            
+            <form onSubmit={handleSavePanelPlan} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <div style={{ flex: 2 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Nome do Pacote (SaaS)</label>
+                  <input required type="text" placeholder="Ex: PLANO ELITE" value={panelPlanFormData.name} onChange={e => setPanelPlanFormData({...panelPlanFormData, name: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Preço Mensal (R$)</label>
+                  <input required type="number" step="0.01" placeholder="99.90" value={panelPlanFormData.price} onChange={e => setPanelPlanFormData({...panelPlanFormData, price: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Dias Grátis (Trial)</label>
+                  <input required type="number" placeholder="7" value={panelPlanFormData.trial_days} onChange={e => setPanelPlanFormData({...panelPlanFormData, trial_days: parseInt(e.target.value)})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '15px', fontSize: '14px', fontWeight: '900', color: '#fff' }}>Ferramentas Inclusas (Checkboxes)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+                  {availableFeatures.map(feat => {
+                    const isChecked = panelPlanFormData.features.includes(feat.id);
+                    return (
+                      <div 
+                        key={feat.id} 
+                        onClick={() => togglePanelFeature(feat.id)}
+                        style={{ 
+                          background: isChecked ? 'rgba(252, 95, 22, 0.1)' : '#09090b', 
+                          border: isChecked ? '1px solid #FC5F16' : '1px solid #27272a', 
+                          padding: '12px', 
+                          borderRadius: '8px', 
+                          cursor: 'pointer', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '10px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: isChecked ? 'none' : '1px solid #52525b', background: isChecked ? '#FC5F16' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {isChecked && <CheckCircle size={14} color="#fff" />}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13px', color: isChecked ? '#fff' : '#a1a1aa', fontWeight: isChecked ? '700' : '500' }}>{feat.label}</div>
+                          <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase' }}>{feat.category}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', background: '#09090b', padding: '15px', borderRadius: '12px', border: '1px solid #27272a' }}>
+                <input type="checkbox" id="panelPlanActive" checked={panelPlanFormData.is_active} onChange={e => setPanelPlanFormData({...panelPlanFormData, is_active: e.target.checked})} style={{ accentColor: '#FC5F16', width: '18px', height: '18px' }} />
+                <label htmlFor="panelPlanActive" style={{ fontSize: '14px', fontWeight: '700', color: '#fff', cursor: 'pointer' }}>Plano Ativo (Visível para compra)</label>
+              </div>
+
+              <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                <button type="button" onClick={() => setShowPanelPlanModal(false)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}>Cancelar</button>
+                <button type="submit" style={{ flex: 2, padding: '14px', background: '#FC5F16', border: 'none', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.4)' }}>Salvar Plano</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVO PLANO COMERCIAL */}
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
           <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>

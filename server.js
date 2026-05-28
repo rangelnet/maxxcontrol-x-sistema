@@ -168,6 +168,7 @@ async function runPendingMigrations() {
       name: 'whatsapp_flows',
       sql: `CREATE TABLE IF NOT EXISTS whatsapp_flows (
         id SERIAL PRIMARY KEY,
+        owner_id INTEGER DEFAULT 1,
         name VARCHAR(255) NOT NULL,
         content JSONB NOT NULL,
         is_active BOOLEAN DEFAULT false,
@@ -180,12 +181,13 @@ async function runPendingMigrations() {
       name: 'whatsapp_chatbot_sessions',
       sql: `CREATE TABLE IF NOT EXISTS whatsapp_chatbot_sessions (
         id SERIAL PRIMARY KEY,
+        owner_id INTEGER DEFAULT 1,
         contact_id VARCHAR(100) NOT NULL,
         flow_id INTEGER REFERENCES whatsapp_flows(id) ON DELETE CASCADE,
         current_node_id VARCHAR(100),
         variables JSONB DEFAULT '{}',
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(contact_id)
+        UNIQUE(contact_id, owner_id)
       )`
     },
     {
@@ -517,7 +519,8 @@ async function runPendingMigrations() {
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_conversations (
       id SERIAL PRIMARY KEY,
-      jid VARCHAR(100) NOT NULL UNIQUE,
+      owner_id INTEGER DEFAULT 1,
+      jid VARCHAR(100) NOT NULL,
       name VARCHAR(255),
       phone VARCHAR(30),
       avatar_url TEXT,
@@ -532,15 +535,17 @@ async function runPendingMigrations() {
       notes TEXT,
       metadata JSONB DEFAULT '{}',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(jid, owner_id)
     )`);
     console.log('  ✅ Tabela whatsapp_conversations OK');
 
     await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_messages (
       id SERIAL PRIMARY KEY,
+      owner_id INTEGER DEFAULT 1,
       conversation_id INTEGER REFERENCES whatsapp_conversations(id) ON DELETE CASCADE,
       jid VARCHAR(100) NOT NULL,
-      message_id VARCHAR(100) UNIQUE,
+      message_id VARCHAR(100),
       from_me BOOLEAN DEFAULT false,
       sender_name VARCHAR(255),
       content TEXT,
@@ -549,12 +554,14 @@ async function runPendingMigrations() {
       quoted_message_id VARCHAR(100),
       status VARCHAR(20) DEFAULT 'sent',
       is_bot_reply BOOLEAN DEFAULT false,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(message_id, owner_id)
     )`);
     console.log('  ✅ Tabela whatsapp_messages OK');
 
     await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_labels (
       id SERIAL PRIMARY KEY,
+      owner_id INTEGER DEFAULT 1,
       name VARCHAR(100) NOT NULL,
       color VARCHAR(7) NOT NULL DEFAULT '#FFA500',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -570,9 +577,11 @@ async function runPendingMigrations() {
 
     await pool.query(`CREATE TABLE IF NOT EXISTS whatsapp_quick_replies (
       id SERIAL PRIMARY KEY,
-      shortcut VARCHAR(50) NOT NULL UNIQUE,
+      owner_id INTEGER DEFAULT 1,
+      shortcut VARCHAR(50) NOT NULL,
       content TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(shortcut, owner_id)
     )`);
     console.log('  ✅ Tabela whatsapp_quick_replies OK');
 
@@ -588,6 +597,32 @@ async function runPendingMigrations() {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_wa_messages_jid ON whatsapp_messages(jid)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_wa_conversations_status ON whatsapp_conversations(status)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_wa_conversations_last_msg ON whatsapp_conversations(last_message_at DESC)`);
+
+    // Altera tabelas existentes (Migrations)
+    const tablesToAlter = [
+      'whatsapp_flows', 'whatsapp_chatbot_sessions', 'whatsapp_conversations', 
+      'whatsapp_messages', 'whatsapp_labels', 'whatsapp_quick_replies'
+    ];
+    for (const table of tablesToAlter) {
+      try {
+        await pool.query(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS owner_id INTEGER DEFAULT 1`);
+      } catch(e) {}
+    }
+    
+    // Fix existing constraints (Drop old UNIQUE and add new ones with owner_id)
+    try {
+      await pool.query(`ALTER TABLE whatsapp_chatbot_sessions DROP CONSTRAINT IF EXISTS whatsapp_chatbot_sessions_contact_id_key`);
+      await pool.query(`ALTER TABLE whatsapp_chatbot_sessions ADD CONSTRAINT whatsapp_chatbot_sessions_contact_id_owner_id_key UNIQUE(contact_id, owner_id)`);
+      
+      await pool.query(`ALTER TABLE whatsapp_conversations DROP CONSTRAINT IF EXISTS whatsapp_conversations_jid_key`);
+      await pool.query(`ALTER TABLE whatsapp_conversations ADD CONSTRAINT whatsapp_conversations_jid_owner_id_key UNIQUE(jid, owner_id)`);
+      
+      await pool.query(`ALTER TABLE whatsapp_messages DROP CONSTRAINT IF EXISTS whatsapp_messages_message_id_key`);
+      await pool.query(`ALTER TABLE whatsapp_messages ADD CONSTRAINT whatsapp_messages_message_id_owner_id_key UNIQUE(message_id, owner_id)`);
+      
+      await pool.query(`ALTER TABLE whatsapp_quick_replies DROP CONSTRAINT IF EXISTS whatsapp_quick_replies_shortcut_key`);
+      await pool.query(`ALTER TABLE whatsapp_quick_replies ADD CONSTRAINT whatsapp_quick_replies_shortcut_owner_id_key UNIQUE(shortcut, owner_id)`);
+    } catch(e) {}
 
     console.log('✅ Migration MaxxChat Live Chat concluída!');
   } catch (err) {
@@ -621,6 +656,19 @@ async function runPendingMigrations() {
     await pool.query(`ALTER TABLE mp_transactions ALTER COLUMN payment_id DROP NOT NULL`);
     await pool.query(`ALTER TABLE mp_transactions ALTER COLUMN package_id DROP NOT NULL`);
     console.log('  ✅ Tabela mp_transactions verificada/criada');
+
+    // ── Migração: Audit Logs ──────────────────────────────────────────────────
+    console.log('📝 Executando migration: Audit Logs...');
+    await pool.query(`CREATE TABLE IF NOT EXISTS audit_logs (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      action VARCHAR(100) NOT NULL,
+      details TEXT,
+      ip_address VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`);
+    console.log('  ✅ Tabela audit_logs OK');
   } catch (err) {
     if (!IGNORE_CODES.includes(err.code)) {
       console.error('❌ Erro na migration mp_transactions:', err.message);
@@ -747,28 +795,29 @@ async function runPendingMigrations() {
     // 3. Tabela de Ativação de Apps (MAXX PLAYER, etc)
     await pool.query(`CREATE TABLE IF NOT EXISTS app_activation_packages (
       id SERIAL PRIMARY KEY,
-      app_name VARCHAR(100) NOT NULL UNIQUE,
-      logo_url TEXT,
-      monthly_price DECIMAL(10, 2) NOT NULL,
-      yearly_price DECIMAL(10, 2) NOT NULL,
+      name VARCHAR(100) NOT NULL UNIQUE,
+      price DECIMAL(10, 2) NOT NULL,
       description TEXT,
       is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      duration_days INTEGER DEFAULT 365,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
     
-    // Garantir UNIQUE em app_name antes do INSERT para evitar erro de ON CONFLICT
-    await pool.query(`ALTER TABLE app_activation_packages ADD CONSTRAINT app_activation_packages_app_name_key UNIQUE (app_name)`).catch(() => {});
+    // Garantir UNIQUE em name antes do INSERT para evitar erro de ON CONFLICT
+    await pool.query(`ALTER TABLE app_activation_packages ADD CONSTRAINT app_activation_packages_name_key UNIQUE (name)`).catch(() => {});
 
     // Inserir pacotes padrão
     await pool.query(`
-      INSERT INTO app_activation_packages (app_name, logo_url, monthly_price, yearly_price, description)
+      INSERT INTO app_activation_packages (name, price, description)
       VALUES 
-      ('MAXX PLAYER PRO', 'https://tvmaxx.pro/logo.png', 14.90, 119.00, 'Ativação oficial para TV Box e Android TV.'),
-      ('SMARTONE IPTV', 'https://smartone-iptv.com/favicon.ico', 19.90, 149.00, 'Ativação vitalícia ou anual.'),
-      ('IBO PLAYER', 'https://iboplayer.com/favicon.ico', 24.90, 189.00, 'Ativação anual premium.')
-      ON CONFLICT (app_name) DO NOTHING
+      ('MAXX PLAYER PRO', 119.00, 'Ativação oficial para TV Box e Android TV.'),
+      ('SMARTONE IPTV', 149.00, 'Ativação vitalícia ou anual.'),
+      ('IBO PLAYER', 189.00, 'Ativação anual premium.')
+      ON CONFLICT (name) DO NOTHING
     `);
     console.log('  ✅ Tabela app_activation_packages e dados iniciais OK');
+
     
     // 2. Configurações padrão iniciais
     await pool.query(`
@@ -832,7 +881,21 @@ async function runPendingMigrations() {
       console.error('❌ Erro na migration Profile Backgrounds:', err.message);
     }
   }
+
+  // Executar migrações dos Módulos Resale e Financeiro sequencialmente
+  try {
+    console.log('💸 Executando migration: Resale VIP Fields...');
+    const resaleController = require('./modules/resale/resaleController');
+    await resaleController.migrateResale();
+
+    console.log('💰 Executando migration: Finance & Plans Modules...');
+    const financePlans = require('./modules/finance/finance-plans');
+    await financePlans.migrateFinance();
+  } catch (err) {
+    console.error('❌ Erro nas migrações de Revenda/Financeiro sequenciais:', err.message);
+  }
 }
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1069,12 +1132,16 @@ try {
   io = new Server(server, { cors: { origin: '*' } });
   io.on('connection', (socket) => {
     console.log('🔌 [Socket.IO] Cliente conectado:', socket.id);
+    // Multi-tenant: cada usuário entra na sua sala exclusiva
+    socket.on('join_user', (userId) => { socket.join(`user_${userId}`); });
+    // Retrocompatibilidade: join_chat por JID (agora dentro da sala do user)
     socket.on('join_chat', (jid) => { socket.join(`chat_${jid}`); });
     socket.on('disconnect', () => { /* silêncio */ });
   });
   // Exportar io globalmente para o whatsappClient poder emitir
   global.io = io;
-  console.log('🚀 [Socket.IO] Servidor inicializado');
+  global.__maxxchat_io = io;
+  console.log('🚀 [Socket.IO] Servidor inicializado (Multi-Tenant)');
 } catch (err) {
   console.error('⚠️ [Socket.IO] Falha ao inicializar:', err.message);
 }

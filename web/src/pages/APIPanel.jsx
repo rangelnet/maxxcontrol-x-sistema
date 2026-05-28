@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { Plus, Edit, Trash2, Save, X, CheckCircle, XCircle, Activity, Clock, AlertTriangle } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const APIPanel = () => {
-  const [activeTab, setActiveTab] = useState('config')
+  const { user } = useAuth()
+  
+  const canConfig = user?.tipo === 'admin' || user?.perm_api_config !== false;
+  const canMonitor = user?.tipo === 'admin' || user?.perm_api_monitor !== false;
+  
+  const [activeTab, setActiveTab] = useState(canConfig ? 'config' : (canMonitor ? 'monitor' : ''))
   const [apis, setApis] = useState([])
   const [categories, setCategories] = useState([])
   const [showModal, setShowModal] = useState(false)
@@ -80,8 +86,12 @@ const APIPanel = () => {
       </div>
 
       <div className="flex gap-1 mb-6 bg-gray-900 p-1 rounded-xl w-fit">
-        <button onClick={() => setActiveTab('config')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'config' ? 'bg-[#FF4D33] text-white' : 'text-gray-400 hover:text-white'}`}>Configuracao</button>
-        <button onClick={() => setActiveTab('monitor')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'monitor' ? 'bg-[#FF4D33] text-white' : 'text-gray-400 hover:text-white'}`}><Activity size={16} />Monitor</button>
+        {canConfig && (
+          <button onClick={() => setActiveTab('config')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'config' ? 'bg-[#FF4D33] text-white' : 'text-gray-400 hover:text-white'}`}>Configuracao</button>
+        )}
+        {canMonitor && (
+          <button onClick={() => setActiveTab('monitor')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'monitor' ? 'bg-[#FF4D33] text-white' : 'text-gray-400 hover:text-white'}`}><Activity size={16} />Monitor</button>
+        )}
       </div>
 
       {activeTab === 'config' && (

@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../../config/database');
 const axios = require('axios');
+const authMiddleware = require('../../middlewares/auth');
 
 // ============================================
 // AUTO-MIGRAÇÃO DE BANCO DE DADOS (REVENDA)
@@ -1356,12 +1357,27 @@ router.post('/qpanel-delete-user', async (req, res) => {
  * Painel insere um comando na fila para o plugin Chrome executar
  * Body: { panel_id, panel_url, command_type, payload }
  */
-router.post('/relay-command', async (req, res) => {
+router.post('/relay-command', authMiddleware, async (req, res) => {
   try {
     const { panel_id, panel_url, command_type, payload } = req.body;
 
     if (!command_type || !payload) {
       return res.status(400).json({ error: 'command_type e payload são obrigatórios' });
+    }
+
+    // Processamento de deduções de crédito (ex: Conversão de Teste)
+    if (payload._deduct_credit && req.user && req.user.tipo !== 'admin') {
+      const userRes = await pool.query('SELECT creditos FROM users WHERE id = $1', [req.user.id]);
+      if (userRes.rows.length === 0 || userRes.rows[0].creditos < 1) {
+        return res.status(403).json({ error: 'Créditos insuficientes para realizar esta ação.' });
+      }
+      await pool.query('UPDATE users SET creditos = creditos - 1 WHERE id = $1', [req.user.id]);
+      
+      // Registrar log financeiro (opcional, mas bom pra carteira)
+      await pool.query(`
+        INSERT INTO mp_transactions (payment_id, reseller_id, amount, credits, status, type, description)
+        VALUES ($1, $2, 0, -1, 'approved', 'credit_usage', $3)
+      `, [`CONV-${Date.now()}`, req.user.id, `Conversão de Teste: ${payload.username || 'Cliente'}`]);
     }
 
     const validTypes = [
@@ -1382,6 +1398,18 @@ router.post('/relay-command', async (req, res) => {
     `;
 
     const result = await pool.query(query, [panel_id || null, panel_url || null, command_type, payload]);
+
+    // ── Audit Log ──
+    if (req.user && command_type === 'create_test') {
+       const { logAction } = require('../resale/logsHelper');
+       await logAction(req.user.id, 'Teste Gerado', `Gerou teste para o cliente: ${payload.username}`, req.ip);
+    } else if (req.user && command_type === 'create_user') {
+       const { logAction } = require('../resale/logsHelper');
+       await logAction(req.user.id, 'Cliente Criado', `Criou cliente: ${payload.username}`, req.ip);
+    } else if (req.user && payload._deduct_credit) {
+       const { logAction } = require('../resale/logsHelper');
+       await logAction(req.user.id, 'Conversão de Teste', `Converteu o teste do cliente: ${payload.username || 'Desconhecido'} para Assinante`, req.ip);
+    }
 
     res.json({
       success: true,
@@ -1837,36 +1865,71 @@ router.get('/check-tables', async (req, res) => {
  * Agrupa contas criadas/sincronizadas por username e password.
  * Retorna os clientes e todos os servidores que eles possuem.
  */
-router.get('/qpanel-grouped-accounts', async (req, res) => {
+router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        a.username,
-        a.password,
-        json_agg(
-          json_build_object(
-            'id', a.id,
-            'username', a.username,
-            'password', a.password,
-            'panel_id', a.panel_id,
-            'panel_url', p.panel_url,
-            'server_id', a.server_id,
-            'panel_name', p.panel_name,
-            'expire_date', a.expire_date,
-            'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
-            'm3u_url', a.m3u_url,
-            'device_mac', a.device_mac,
-            'status', a.status,
-            'created_at', a.created_at,
-            'remote_id', a.id
-          )
-        ) as accounts
-      FROM qpanel_accounts a
-      LEFT JOIN qpanel_panels p ON a.panel_id = p.id
-      LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name
-      GROUP BY a.username, a.password
-      ORDER BY MIN(a.created_at) DESC
-    `);
+    let result;
+    if (req.userTipo === 'revendedor') {
+      // Revendedor só vê contas atreladas aos dispositivos associados a ele
+      result = await pool.query(`
+        SELECT 
+          a.username,
+          a.password,
+          json_agg(
+            json_build_object(
+              'id', a.id,
+              'username', a.username,
+              'password', a.password,
+              'panel_id', a.panel_id,
+              'panel_url', p.panel_url,
+              'server_id', a.server_id,
+              'panel_name', p.panel_name,
+              'expire_date', a.expire_date,
+              'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
+              'm3u_url', a.m3u_url,
+              'device_mac', a.device_mac,
+              'status', a.status,
+              'created_at', a.created_at,
+              'remote_id', a.id
+            )
+          ) as accounts
+        FROM qpanel_accounts a
+        LEFT JOIN qpanel_panels p ON a.panel_id = p.id
+        LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name
+        WHERE a.device_mac IN (SELECT mac_address FROM devices WHERE user_id = $1)
+        GROUP BY a.username, a.password
+        ORDER BY MIN(a.created_at) DESC
+      `, [req.userId]);
+    } else {
+      // Admin/Master vê tudo
+      result = await pool.query(`
+        SELECT 
+          a.username,
+          a.password,
+          json_agg(
+            json_build_object(
+              'id', a.id,
+              'username', a.username,
+              'password', a.password,
+              'panel_id', a.panel_id,
+              'panel_url', p.panel_url,
+              'server_id', a.server_id,
+              'panel_name', p.panel_name,
+              'expire_date', a.expire_date,
+              'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
+              'm3u_url', a.m3u_url,
+              'device_mac', a.device_mac,
+              'status', a.status,
+              'created_at', a.created_at,
+              'remote_id', a.id
+            )
+          ) as accounts
+        FROM qpanel_accounts a
+        LEFT JOIN qpanel_panels p ON a.panel_id = p.id
+        LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name
+        GROUP BY a.username, a.password
+        ORDER BY MIN(a.created_at) DESC
+      `);
+    }
     
     res.json({
       success: true,

@@ -1,55 +1,64 @@
 /**
  * WhatsApp Client — Motor Baileys (ESM dentro de CommonJS)
- * Usa import() dinâmico para compatibilidade com o servidor Node.js padrão.
+ * Refatorado para Multi-Tenant (Isolamento por owner_id)
  * 
  * === MaxxChat Live Chat Enterprise ===
- * - Persiste TODA mensagem no banco (whatsapp_messages)
- * - Cria conversas automaticamente (whatsapp_conversations)
- * - Emite eventos via Socket.IO para tempo real
- * - Suporta Bot Takeover (bot_active flag por conversa)
+ * - Cada revendedor tem sua própria sessão e conexão.
+ * - Persiste mensagem no banco (whatsapp_messages) com owner_id
+ * - Cria conversas automaticamente (whatsapp_conversations) com owner_id
+ * - Emite eventos via Socket.IO para tempo real usando room "user_ID"
  */
 
 const qrcode = require('qrcode');
 const path   = require('path');
 const fs     = require('fs');
+const pool   = require('../../config/database');
+const engine = require('./knowledgeEngine');
 
-const SESSION_PATH = path.join(__dirname, '../../.wpp-session');
+// Armazena as instâncias ativas por userId
+const clients = new Map();
+// { sock, currentStatus, currentQR }
 
-const pool      = require('../../config/database');
-const engine    = require('./knowledgeEngine');
+function getClientData(userId) {
+  if (!clients.has(userId)) {
+    clients.set(userId, { sock: null, currentStatus: 'disconnected', currentQR: null });
+  }
+  return clients.get(userId);
+}
 
-let sock          = null;
-let currentStatus = 'disconnected'; // 'loading' | 'disconnected' | 'connected'
-let currentQR     = null;           // base64 PNG
+function getSessionPath(userId) {
+  return path.join(__dirname, `../../.wpp-session-${userId}`);
+}
 
 // ─── Getter público ──────────────────────────────────────────────────────────
-function getStatus() {
-  return { status: currentStatus, qr_code: currentQR };
+function getStatus(userId) {
+  const data = getClientData(userId);
+  return { status: data.currentStatus, qr_code: data.currentQR };
 }
 
 // ─── Getter do socket Baileys (para enviar msg manual via controller) ────────
-function getSock() {
-  return sock;
+function getSock(userId) {
+  return getClientData(userId).sock;
 }
 
 // ─── Logging em arquivo para diagnóstico ─────────────────────────────────────
-function log(msg) {
+function log(userId, msg) {
   const time = new Date().toLocaleString();
-  const line = `[${time}] ${msg}\n`;
-  console.log(msg);
+  const line = `[${time}] [User ${userId}] ${msg}\n`;
+  console.log(line.trim());
   try {
     fs.appendFileSync(path.join(__dirname, '../../whatsapp_debug.log'), line);
   } catch (e) {}
 }
 
 // ─── Helper: Garantir conversa existe no banco ───────────────────────────────
-async function ensureConversation(jid, pushName) {
+async function ensureConversation(userId, jid, pushName) {
   try {
     let res;
     if (pool.query) {
-      res = await pool.query('SELECT id, bot_active FROM whatsapp_conversations WHERE jid = $1', [jid]);
+      res = await pool.query('SELECT id, bot_active FROM whatsapp_conversations WHERE jid = $1 AND owner_id = $2', [jid, userId]);
     } else {
-      res = { rows: await pool.all('SELECT id, bot_active FROM whatsapp_conversations WHERE jid = ?', [jid]) };
+      res = { rows: await pool.all('SELECT id, bot_active FROM whatsapp_conversations WHERE jid = ? AND owner_id = ?', [jid, userId]) };
     }
 
     if (res.rows.length > 0) return res.rows[0];
@@ -61,38 +70,38 @@ async function ensureConversation(jid, pushName) {
 
     if (pool.query) {
       const insertRes = await pool.query(
-        'INSERT INTO whatsapp_conversations (jid, name, phone, is_group) VALUES ($1, $2, $3, $4) RETURNING id, bot_active',
-        [jid, name, phone, isGroup]
+        'INSERT INTO whatsapp_conversations (jid, owner_id, name, phone, is_group) VALUES ($1, $2, $3, $4, $5) RETURNING id, bot_active',
+        [jid, userId, name, phone, isGroup]
       );
       return insertRes.rows[0];
     } else {
       await pool.run(
-        'INSERT INTO whatsapp_conversations (jid, name, phone, is_group) VALUES (?, ?, ?, ?)',
-        [jid, name, phone, isGroup ? 1 : 0]
+        'INSERT INTO whatsapp_conversations (jid, owner_id, name, phone, is_group) VALUES (?, ?, ?, ?, ?)',
+        [jid, userId, name, phone, isGroup ? 1 : 0]
       );
-      const newRes = { rows: await pool.all('SELECT id, bot_active FROM whatsapp_conversations WHERE jid = ?', [jid]) };
+      const newRes = { rows: await pool.all('SELECT id, bot_active FROM whatsapp_conversations WHERE jid = ? AND owner_id = ?', [jid, userId]) };
       return newRes.rows[0];
     }
   } catch (e) {
-    log(`⚠️ [MaxxChat] Erro ao garantir conversa: ${e.message}`);
+    log(userId, `⚠️ [MaxxChat] Erro ao garantir conversa: ${e.message}`);
     return { id: null, bot_active: true };
   }
 }
 
 // ─── Helper: Salvar mensagem no banco ────────────────────────────────────────
-async function persistMessage(conversationId, jid, messageId, fromMe, senderName, content, mediaType, isBotReply) {
+async function persistMessage(userId, conversationId, jid, messageId, fromMe, senderName, content, mediaType, isBotReply) {
   try {
     if (pool.query) {
       await pool.query(
-        `INSERT INTO whatsapp_messages (conversation_id, jid, message_id, from_me, sender_name, content, media_type, is_bot_reply) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (message_id) DO NOTHING`,
-        [conversationId, jid, messageId, fromMe, senderName, content, mediaType || 'text', isBotReply || false]
+        `INSERT INTO whatsapp_messages (conversation_id, owner_id, jid, message_id, from_me, sender_name, content, media_type, is_bot_reply) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (message_id, owner_id) DO NOTHING`,
+        [conversationId, userId, jid, messageId, fromMe, senderName, content, mediaType || 'text', isBotReply || false]
       );
     } else {
       await pool.run(
-        `INSERT OR IGNORE INTO whatsapp_messages (conversation_id, jid, message_id, from_me, sender_name, content, media_type, is_bot_reply) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [conversationId, jid, messageId, fromMe ? 1 : 0, senderName, content, mediaType || 'text', isBotReply ? 1 : 0]
+        `INSERT OR IGNORE INTO whatsapp_messages (conversation_id, owner_id, jid, message_id, from_me, sender_name, content, media_type, is_bot_reply) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [conversationId, userId, jid, messageId, fromMe ? 1 : 0, senderName, content, mediaType || 'text', isBotReply ? 1 : 0]
       );
     }
 
@@ -101,38 +110,40 @@ async function persistMessage(conversationId, jid, messageId, fromMe, senderName
       await pool.query(
         `UPDATE whatsapp_conversations SET last_message = $1, last_message_at = CURRENT_TIMESTAMP, 
          unread_count = CASE WHEN $2 THEN unread_count ELSE unread_count + 1 END,
-         updated_at = CURRENT_TIMESTAMP WHERE jid = $3`,
-        [content?.substring(0, 200), fromMe, jid]
+         updated_at = CURRENT_TIMESTAMP WHERE jid = $3 AND owner_id = $4`,
+        [content?.substring(0, 200), fromMe, jid, userId]
       );
     } else {
       await pool.run(
         `UPDATE whatsapp_conversations SET last_message = ?, last_message_at = CURRENT_TIMESTAMP, 
          unread_count = CASE WHEN ? THEN unread_count ELSE unread_count + 1 END,
-         updated_at = CURRENT_TIMESTAMP WHERE jid = ?`,
-        [content?.substring(0, 200), fromMe ? 1 : 0, jid]
+         updated_at = CURRENT_TIMESTAMP WHERE jid = ? AND owner_id = ?`,
+        [content?.substring(0, 200), fromMe ? 1 : 0, jid, userId]
       );
     }
   } catch (e) {
-    log(`⚠️ [MaxxChat] Erro ao persistir mensagem: ${e.message}`);
+    log(userId, `⚠️ [MaxxChat] Erro ao persistir mensagem: ${e.message}`);
   }
 }
 
 // ─── Helper: Broadcast via Socket.IO ─────────────────────────────────────────
-function broadcastMessage(jid, messageData) {
+function broadcastMessage(userId, jid, messageData) {
   const io = global.__maxxchat_io;
   if (io) {
-    io.to(`chat_${jid}`).emit('new_message', messageData);
-    io.emit('conversation_updated', { jid, ...messageData });
+    // Usar uma sala específica para o usuário para isolar notificações
+    io.to(`user_${userId}`).emit('new_message', messageData);
+    io.to(`user_${userId}`).emit('conversation_updated', { jid, ...messageData });
   }
 }
 
 // ─── Iniciar cliente ─────────────────────────────────────────────────────────
-async function initClient() {
-  if (sock && currentStatus === 'connected') return;
+async function initClient(userId) {
+  const data = getClientData(userId);
+  if (data.sock && data.currentStatus === 'connected') return;
 
-  currentStatus = 'loading';
-  currentQR     = null;
-  log('🤖 [Baileys] Iniciando conexão WhatsApp...');
+  data.currentStatus = 'loading';
+  data.currentQR     = null;
+  log(userId, '🤖 [Baileys] Iniciando conexão WhatsApp...');
 
   try {
     const baileys = await import('@whiskeysockets/baileys');
@@ -149,10 +160,11 @@ async function initClient() {
     const pino   = (await import('pino')).default;
     const logger = pino({ level: 'silent' });
 
-    const { state, saveCreds } = await useMultiFileAuthState(SESSION_PATH);
+    const sessionPath = getSessionPath(userId);
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const { version }          = await fetchLatestBaileysVersion();
 
-    sock = makeWASocket({
+    data.sock = makeWASocket({
       version,
       auth: {
         creds: state.creds,
@@ -167,25 +179,25 @@ async function initClient() {
       generateHighQualityLinkPreview: false
     });
 
-    sock.ev.on('creds.update', saveCreds);
+    data.sock.ev.on('creds.update', saveCreds);
 
     // ─── MaxxChat: Intercepção Universal de Mensagens ─────────────────────────
-    sock.ev.on('messages.upsert', async (m) => {
+    data.sock.ev.on('messages.upsert', async (m) => {
       const msg = m.messages[0];
       if (!msg.message) return;
 
       const remoteJid = msg.key.remoteJid;
       const fromMe = msg.key.fromMe;
       const pushName = msg.pushName || '';
-      const messageId = msg.key.id; // <-- CORREÇÃO: Variável restaurada
+      const messageId = msg.key.id;
       
-      // ─── Extração de Texto e Cliques de Botão ────────────────────────────────
+      // Extração de Texto e Cliques de Botão
       let text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
       
       if (msg.message.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
         try {
           const params = JSON.parse(msg.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson);
-          text = params.id || text; // O id será o próprio texto da opção
+          text = params.id || text;
         } catch (e) {}
       } else if (msg.message.buttonsResponseMessage?.selectedButtonId) {
         text = msg.message.buttonsResponseMessage.selectedButtonId;
@@ -206,14 +218,14 @@ async function initClient() {
               msg,
               'buffer',
               { },
-              { logger: sock.logger, reuploadRequest: sock.updateMediaMessage }
+              { logger: data.sock.logger, reuploadRequest: data.sock.updateMediaMessage }
             );
             
             const mediaDir = path.join(__dirname, '../../public/media');
             if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
             
             const ext = mediaType === 'image' ? 'jpg' : mediaType === 'video' ? 'mp4' : 'ogg';
-            const fileName = `whatsapp_${messageId}.${ext}`;
+            const fileName = `whatsapp_${userId}_${messageId}.${ext}`;
             const filePath = path.join(mediaDir, fileName);
             fs.writeFileSync(filePath, buffer);
             
@@ -221,21 +233,21 @@ async function initClient() {
           }
         }
       } catch (err) {
-        log(`Erro ao baixar mídia: ${err.message}`);
+        log(userId, `Erro ao baixar mídia: ${err.message}`);
       }
 
       const content = text || contentUrl || (mediaType !== 'text' ? `[${mediaType.toUpperCase()}]` : '');
       if (!content) return;
 
       // 1. Garantir conversa existe
-      const conversation = await ensureConversation(remoteJid, pushName);
+      const conversation = await ensureConversation(userId, remoteJid, pushName);
       if (!conversation.id) return;
 
       // 2. Persistir mensagem no banco
-      await persistMessage(conversation.id, remoteJid, messageId, fromMe, pushName, content, mediaType, false);
+      await persistMessage(userId, conversation.id, remoteJid, messageId, fromMe, pushName, content, mediaType, false);
 
       // 3. Broadcast via Socket.IO para o frontend
-      broadcastMessage(remoteJid, {
+      broadcastMessage(userId, remoteJid, {
         id: messageId,
         conversation_id: conversation.id,
         jid: remoteJid,
@@ -250,22 +262,21 @@ async function initClient() {
       // 4. Se for mensagem do próprio bot, parar aqui
       if (fromMe) return;
 
-      log(`📩 [MaxxChat] Msg de ${pushName || remoteJid}: "${content}"`);
+      log(userId, `📩 [MaxxChat] Msg de ${pushName || remoteJid}: "${content}"`);
 
       // 5. Verificar se o bot está ativo para esta conversa
       if (!conversation.bot_active) {
-        log(`🚫 [MaxxChat] Bot desativado para ${remoteJid} — atendimento humano`);
+        log(userId, `🚫 [MaxxChat] Bot desativado para ${remoteJid} — atendimento humano`);
         return;
       }
 
-      // ─── Chatbot Logic (MaxxFlow) — PRESERVADO 100% ─────────────────────
+      // ─── Chatbot Logic (MaxxFlow) ─────────────────────
       try {
-        // A. Buscar sessão ativa para este contato
         let sessionRes;
         if (pool.query) {
-           sessionRes = await pool.query('SELECT * FROM whatsapp_chatbot_sessions WHERE contact_id = $1', [remoteJid]);
+           sessionRes = await pool.query('SELECT * FROM whatsapp_chatbot_sessions WHERE contact_id = $1 AND owner_id = $2', [remoteJid, userId]);
         } else {
-           sessionRes = { rows: await pool.all('SELECT * FROM whatsapp_chatbot_sessions WHERE contact_id = ?', [remoteJid]) };
+           sessionRes = { rows: await pool.all('SELECT * FROM whatsapp_chatbot_sessions WHERE contact_id = ? AND owner_id = ?', [remoteJid, userId]) };
         }
         
         let session = sessionRes.rows[0];
@@ -276,9 +287,9 @@ async function initClient() {
         if (!session) {
           let flowRes;
           if (pool.query) {
-            flowRes = await pool.query('SELECT * FROM whatsapp_flows WHERE is_active = true ORDER BY is_default DESC LIMIT 1');
+            flowRes = await pool.query('SELECT * FROM whatsapp_flows WHERE is_active = true AND owner_id = $1 ORDER BY is_default DESC LIMIT 1', [userId]);
           } else {
-            flowRes = { rows: await pool.all('SELECT * FROM whatsapp_flows WHERE is_active = true ORDER BY is_default DESC LIMIT 1') };
+            flowRes = { rows: await pool.all('SELECT * FROM whatsapp_flows WHERE is_active = true AND owner_id = ? ORDER BY is_default DESC LIMIT 1', [userId]) };
           }
           
           if (flowRes.rows.length === 0) return; // Nenhum fluxo ativo
@@ -292,37 +303,37 @@ async function initClient() {
 
           // Iniciar sessão
           if (pool.query) {
-            await pool.query('INSERT INTO whatsapp_chatbot_sessions (contact_id, flow_id, current_node_id) VALUES ($1, $2, $3)', [remoteJid, flowId, firstNode.id]);
+            await pool.query('INSERT INTO whatsapp_chatbot_sessions (contact_id, owner_id, flow_id, current_node_id) VALUES ($1, $2, $3, $4)', [remoteJid, userId, flowId, firstNode.id]);
           } else {
-            await pool.run('INSERT INTO whatsapp_chatbot_sessions (contact_id, flow_id, current_node_id) VALUES (?, ?, ?)', [remoteJid, flowId, firstNode.id]);
+            await pool.run('INSERT INTO whatsapp_chatbot_sessions (contact_id, owner_id, flow_id, current_node_id) VALUES (?, ?, ?, ?)', [remoteJid, userId, flowId, firstNode.id]);
           }
           
-          // Enviar primeira mensagem (com botões se for do tipo choice)
+          // Enviar primeira mensagem
           const isChoice = firstNode.type === 'choice' && firstNode.options?.length > 0;
           let botMsgId = `bot_${Date.now()}`;
           
           if (isChoice) {
             const buttons = firstNode.options.map(opt => ({ id: opt.text, text: opt.text.substring(0, 20) }));
-            botMsgId = await sendInteractiveMessage(remoteJid, firstNode.content, "Selecione uma opção:", buttons) || botMsgId;
+            botMsgId = await sendInteractiveMessage(userId, remoteJid, firstNode.content, "Selecione uma opção:", buttons) || botMsgId;
           } else {
-            await sock.sendMessage(remoteJid, { text: firstNode.content });
+            await data.sock.sendMessage(remoteJid, { text: firstNode.content });
           }
           
-          await persistMessage(conversation.id, remoteJid, botMsgId, true, 'Maxx Bot', firstNode.content, 'text', true);
-          broadcastMessage(remoteJid, {
+          await persistMessage(userId, conversation.id, remoteJid, botMsgId, true, 'Maxx Bot', firstNode.content, 'text', true);
+          broadcastMessage(userId, remoteJid, {
             id: botMsgId, conversation_id: conversation.id, jid: remoteJid,
             from_me: true, sender_name: 'Maxx Bot', content: firstNode.content,
             media_type: 'text', is_bot_reply: true, created_at: new Date().toISOString()
           });
 
-          log(`🤖 [Chatbot] Iniciando fluxo "${flow.name}" para ${remoteJid}`);
+          log(userId, `🤖 [Chatbot] Iniciando fluxo "${flow.name}" para ${remoteJid}`);
           return;
         }
 
         // C. Processar nó atual se houver sessão
         const flowRes = pool.query 
-          ? await pool.query('SELECT * FROM whatsapp_flows WHERE id = $1', [flowId])
-          : { rows: await pool.all('SELECT * FROM whatsapp_flows WHERE id = ?', [flowId]) };
+          ? await pool.query('SELECT * FROM whatsapp_flows WHERE id = $1 AND owner_id = $2', [flowId, userId])
+          : { rows: await pool.all('SELECT * FROM whatsapp_flows WHERE id = ? AND owner_id = ?', [flowId, userId]) };
           
         if (flowRes.rows.length === 0) return;
         const flow = flowRes.rows[0];
@@ -336,24 +347,23 @@ async function initClient() {
         const sendBotReply = async (replyText, nextNodeId, options = null) => {
           let botMsgId = `bot_${Date.now()}`;
           if (options && options.length > 0) {
-            // Se passar options, usar NATIVE_FLOW (Botões hack)
             const buttons = options.map(opt => ({ id: opt.text, text: opt.text.substring(0, 20) }));
-            botMsgId = await sendInteractiveMessage(remoteJid, replyText, "Selecione uma opção:", buttons) || botMsgId;
+            botMsgId = await sendInteractiveMessage(userId, remoteJid, replyText, "Selecione uma opção:", buttons) || botMsgId;
           } else {
-            await sock.sendMessage(remoteJid, { text: replyText });
+            await data.sock.sendMessage(remoteJid, { text: replyText });
           }
           
-          await persistMessage(conversation.id, remoteJid, botMsgId, true, 'Maxx Bot', replyText, 'text', true);
-          broadcastMessage(remoteJid, {
+          await persistMessage(userId, conversation.id, remoteJid, botMsgId, true, 'Maxx Bot', replyText, 'text', true);
+          broadcastMessage(userId, remoteJid, {
             id: botMsgId, conversation_id: conversation.id, jid: remoteJid,
             from_me: true, sender_name: 'Maxx Bot', content: replyText,
             media_type: 'text', is_bot_reply: true, created_at: new Date().toISOString()
           });
           if (nextNodeId) {
             if (pool.query) {
-              await pool.query('UPDATE whatsapp_chatbot_sessions SET current_node_id = $1, updated_at = CURRENT_TIMESTAMP WHERE contact_id = $2', [nextNodeId, remoteJid]);
+              await pool.query('UPDATE whatsapp_chatbot_sessions SET current_node_id = $1, updated_at = CURRENT_TIMESTAMP WHERE contact_id = $2 AND owner_id = $3', [nextNodeId, remoteJid, userId]);
             } else {
-              await pool.run('UPDATE whatsapp_chatbot_sessions SET current_node_id = ?, updated_at = CURRENT_TIMESTAMP WHERE contact_id = ?', [nextNodeId, remoteJid]);
+              await pool.run('UPDATE whatsapp_chatbot_sessions SET current_node_id = ?, updated_at = CURRENT_TIMESTAMP WHERE contact_id = ? AND owner_id = ?', [nextNodeId, remoteJid, userId]);
             }
           }
         };
@@ -368,11 +378,9 @@ async function initClient() {
               await sendBotReply(nextNode.content, nextNodeId, isNextChoice ? nextNode.options : null);
             }
           } else {
-            // Re-envia com botões novamente se o usuário digitar algo errado
             await sendBotReply(`Desculpe, não entendi.\n\n${currentNode.content}`, null, currentNode.options);
           }
         } else {
-           // Se for apenas uma sequência de mensagens, pula para o próximo se houver
            if (currentNode.next_node_id) {
               const nextNode = nodes.find(n => n.id === currentNode.next_node_id);
               if (nextNode) {
@@ -382,20 +390,18 @@ async function initClient() {
            }
         }
       } catch (e) {
-        log(`❌ [Chatbot] Erro ao processar: ${e.message}`);
+        log(userId, `❌ [Chatbot] Erro ao processar: ${e.message}`);
       }
     });
 
-    // ─── MaxxChat: Sincronização de Histórico (Contatos antigos) ────────────────
-    sock.ev.on('messaging-history.set', async ({ chats, contacts, messages, isLatest }) => {
-      log(`📦 [MaxxChat] Sincronizando histórico do aparelho: ${chats.length} conversas, ${messages.length} mensagens`);
+    // ─── MaxxChat: Sincronização de Histórico ────────────────
+    data.sock.ev.on('messaging-history.set', async ({ chats, contacts, messages, isLatest }) => {
+      log(userId, `📦 [MaxxChat] Sincronizando histórico do aparelho: ${chats.length} conversas, ${messages.length} mensagens`);
       try {
-        // Restaurar conversas primeiro
         for (const chat of chats) {
-          await ensureConversation(chat.id, chat.name || chat.verifiedName || '');
+          await ensureConversation(userId, chat.id, chat.name || chat.verifiedName || '');
         }
 
-        // Restaurar histórico de mensagens recente de forma assíncrona (não-bloqueante)
         Promise.resolve().then(async () => {
           for (const m of messages) {
             if (!m.message) continue;
@@ -412,30 +418,30 @@ async function initClient() {
             if (!content && mediaType !== 'text') content = `[${mediaType.toUpperCase()}]`; 
             if (!content) continue;
 
-            const conversation = await ensureConversation(remoteJid, pushName);
-            await persistMessage(conversation.id, remoteJid, m.key.id, fromMe, pushName, content, mediaType, false);
+            const conversation = await ensureConversation(userId, remoteJid, pushName);
+            await persistMessage(userId, conversation.id, remoteJid, m.key.id, fromMe, pushName, content, mediaType, false);
           }
-          log(`✅ [MaxxChat] Histórico sincronizado no background com sucesso!`);
-        }).catch(err => log(`❌ Erro no histórico de background: ${err.message}`));
+          log(userId, `✅ [MaxxChat] Histórico sincronizado no background com sucesso!`);
+        }).catch(err => log(userId, `❌ Erro no histórico de background: ${err.message}`));
       } catch (err) {
-        log(`❌ [MaxxChat] Erro na sincronização de histórico: ${err.message}`);
+        log(userId, `❌ [MaxxChat] Erro na sincronização de histórico: ${err.message}`);
       }
     });
 
-    sock.ev.on('connection.update', async (update) => {
+    data.sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
-        log('📱 [Baileys] QR Code gerado.');
-        currentStatus = 'disconnected';
-        currentQR     = await qrcode.toDataURL(qr)
+        log(userId, '📱 [Baileys] QR Code gerado.');
+        data.currentStatus = 'disconnected';
+        data.currentQR     = await qrcode.toDataURL(qr)
           .then(url => url.replace('data:image/png;base64,', ''));
       }
 
       if (connection === 'open') {
-        log('✅ [Baileys] WhatsApp conectado!');
-        currentStatus = 'connected';
-        currentQR     = null;
+        log(userId, '✅ [Baileys] WhatsApp conectado!');
+        data.currentStatus = 'connected';
+        data.currentQR     = null;
       }
 
       if (connection === 'close') {
@@ -443,89 +449,84 @@ async function initClient() {
         const statusCode = boom?.output?.statusCode || boom?.statusCode;
         const shouldReconnect = statusCode !== 401;
 
-        log(`❌ [Baileys] Desconectado. Código: ${statusCode}`);
-        currentStatus = 'disconnected';
-        sock = null;
+        log(userId, `❌ [Baileys] Desconectado. Código: ${statusCode}`);
+        data.currentStatus = 'disconnected';
+        data.sock = null;
 
         if (statusCode === 515) {
-          log('🔄 [Baileys] Reinício solicitado (515). Conectando...');
-          initClient();
+          log(userId, '🔄 [Baileys] Reinício solicitado (515). Conectando...');
+          initClient(userId);
         } else if (shouldReconnect) {
-          log('🔄 [Baileys] Reconectando em 5s...');
-          setTimeout(() => initClient(), 5000);
+          log(userId, '🔄 [Baileys] Reconectando em 5s...');
+          setTimeout(() => initClient(userId), 5000);
         } else {
-          log('🛑 [Baileys] Logout detectado.');
-          destroyClient();
+          log(userId, '🛑 [Baileys] Logout detectado.');
+          destroyClient(userId);
         }
       }
     });
 
   } catch (err) {
-    log(`❌ [Baileys] Erro no init: ${err.message}`);
-    currentStatus = 'disconnected';
-    sock          = null;
+    log(userId, `❌ [Baileys] Erro no init: ${err.message}`);
+    data.currentStatus = 'disconnected';
+    data.sock          = null;
   }
 }
 
 // ─── Desconectar e apagar sessão ─────────────────────────────────────────────
-async function destroyClient() {
+async function destroyClient(userId) {
+  const data = getClientData(userId);
   try {
-    if (sock) await sock.logout();
+    if (data.sock) await data.sock.logout();
   } catch (_) {}
 
-  sock          = null;
-  currentStatus = 'disconnected';
-  currentQR     = null;
+  data.sock          = null;
+  data.currentStatus = 'disconnected';
+  data.currentQR     = null;
 
-  // Remove sessão salva para forçar novo QR Code
-  if (fs.existsSync(SESSION_PATH)) {
-    fs.rmSync(SESSION_PATH, { recursive: true, force: true });
-    console.log('🗑️ [Baileys] Sessão apagada do disco.');
+  const sessionPath = getSessionPath(userId);
+  if (fs.existsSync(sessionPath)) {
+    fs.rmSync(sessionPath, { recursive: true, force: true });
+    log(userId, '🗑️ [Baileys] Sessão apagada do disco.');
   }
-  console.log('🛑 [Baileys] Desconectado.');
+  log(userId, '🛑 [Baileys] Desconectado.');
 }
 
 // ─── Listar grupos ────────────────────────────────────────────────────────────
-async function getGroups() {
-  if (!sock || currentStatus !== 'connected') return [];
+async function getGroups(userId) {
+  const data = getClientData(userId);
+  if (!data.sock || data.currentStatus !== 'connected') return [];
   try {
-    const groups = await sock.groupFetchAllParticipating();
+    const groups = await data.sock.groupFetchAllParticipating();
     return Object.values(groups).map(g => ({
       id  : g.id,
       name: g.subject
     }));
   } catch (e) {
-    console.error('[Baileys] Erro ao buscar grupos:', e.message);
+    console.error(`[User ${userId}] Erro ao buscar grupos:`, e.message);
     return [];
   }
 }
 
 // ─── Enviar mensagem ──────────────────────────────────────────────────────────
-async function sendMessage(groupId, message, options = {}) {
-  if (!sock || currentStatus !== 'connected') {
+async function sendMessage(userId, groupId, message, options = {}) {
+  const data = getClientData(userId);
+  if (!data.sock || data.currentStatus !== 'connected') {
     throw new Error('WhatsApp não conectado');
   }
   const jid = groupId.includes('@g.us') ? groupId : `${groupId}@g.us`;
   
   if (options && options.buttons && options.buttons.length > 0) {
-     return await sendInteractiveMessage(jid, message, "MaxxControl", options.buttons);
+     return await sendInteractiveMessage(userId, jid, message, "MaxxControl", options.buttons);
   }
   
-  await sock.sendMessage(jid, { text: message });
+  await data.sock.sendMessage(jid, { text: message });
 }
 
-// ─── Auto-inicialização ao carregar o módulo ─────────────────────────────────
-// Se já existir uma sessão salva, tenta conectar automaticamente no boot.
-(async () => {
-  if (fs.existsSync(path.join(SESSION_PATH, 'creds.json'))) {
-    console.log('📦 [Baileys] Sessão encontrada. Restaurando conexão automaticamente...');
-    await initClient();
-  }
-})();
-
 // ─── Enviar Mensagem Interativa (Botões Hack) ─────────────────────────────────
-async function sendInteractiveMessage(groupId, text, footer, buttons) {
-  if (!sock || currentStatus !== 'connected') {
+async function sendInteractiveMessage(userId, groupId, text, footer, buttons) {
+  const data = getClientData(userId);
+  if (!data.sock || data.currentStatus !== 'connected') {
     throw new Error('WhatsApp não conectado');
   }
   const jid = groupId.includes('@g.us') ? groupId : `${groupId}@g.us`;
@@ -556,10 +557,29 @@ async function sendInteractiveMessage(groupId, text, footer, buttons) {
     }
   };
 
-  const msg = generateWAMessageFromContent(jid, msgContent, { userJid: sock?.user?.id });
-  await sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
+  const msg = generateWAMessageFromContent(jid, msgContent, { userJid: data.sock?.user?.id });
+  await data.sock.relayMessage(jid, msg.message, { messageId: msg.key.id });
   
   return msg.key.id;
 }
+
+// ─── Auto-inicialização ao carregar o módulo ─────────────────────────────────
+// Auto-conectar sessões que já existem na pasta (opcional para multi-tenant, podemos iniciar on-demand)
+setTimeout(() => {
+  const baseDir = path.join(__dirname, '../../');
+  fs.readdir(baseDir, (err, files) => {
+    if (err) return;
+    files.forEach(file => {
+      if (file.startsWith('.wpp-session-')) {
+        const userIdStr = file.replace('.wpp-session-', '');
+        const userId = parseInt(userIdStr, 10);
+        if (!isNaN(userId)) {
+          console.log(`📦 [Baileys] Sessão encontrada para User ${userId}. Restaurando conexão automaticamente...`);
+          initClient(userId);
+        }
+      }
+    });
+  });
+}, 2000);
 
 module.exports = { initClient, destroyClient, getGroups, sendMessage, getStatus, getSock, sendInteractiveMessage };

@@ -4,6 +4,7 @@ import {
   Eye, Loader2, Star, Zap, ShoppingCart, Package, Users, BadgeCheck, ChevronRight,
   Plus, Edit2, Trash2, X
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 const TEMAS = [
   { id: 'dark_orange', name: 'Dark Orange', primary: '#FC5F16', bg: '#09090b', preview: 'from-orange-500 to-red-600' },
@@ -59,7 +60,6 @@ export default function WhiteLabel() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [copiado, setCopiado] = useState(false)
-  const [tab, setTab] = useState('identidade')
 
   // Estado dos Planos
   const [planos, setPlanos] = useState(PLANOS_LOJA)
@@ -101,11 +101,17 @@ export default function WhiteLabel() {
     }
   }
 
-  const TABS = [
-    { id: 'identidade', label: 'Identidade', icon: Palette },
-    { id: 'planos', label: 'Planos & Preços', icon: Package },
-    { id: 'preview', label: 'Pré-visualizar', icon: Eye },
+  const { user } = useAuth()
+  
+  const TABS_ALL = [
+    { id: 'identidade', label: 'Identidade', icon: Palette, perm: 'perm_whitelabel_aparencia' },
+    { id: 'planos', label: 'Planos & Preços', icon: Package, perm: 'perm_whitelabel_planos' },
+    { id: 'preview', label: 'Pré-visualizar', icon: Eye, perm: 'perm_whitelabel_geral' },
   ]
+  
+  const TABS = TABS_ALL.filter(t => user?.tipo === 'admin' || user?.[t.perm] !== false)
+  
+  const [tab, setTab] = useState(TABS.length > 0 ? TABS[0].id : '')
 
   function handleLogoUpload(e) {
     const file = e.target.files[0]

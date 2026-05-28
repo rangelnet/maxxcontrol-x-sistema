@@ -239,6 +239,7 @@ export default function Landing() {
             <a href="#solucoes" className="hover:text-white transition">Soluções</a>
             <a href="#precos" className="hover:text-white transition">Preços</a>
             <a href="#apps" className="hover:text-white transition">Dispositivos</a>
+            <Link to="/subscribe-plans" className="hover:text-white transition flex items-center gap-1.5"><Crown size={14} className="text-brand-500 fill-current" /> Assinar Painel</Link>
             <button onClick={() => setShowClientModal(true)} className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-6 py-2.5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(252,95,22,0.4)] hover:shadow-[0_0_25px_rgba(252,95,22,0.6)]">
               Área do Cliente
             </button>

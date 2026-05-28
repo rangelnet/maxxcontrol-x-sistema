@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { Server, Save, TestTube, AlertCircle, CheckCircle, Plus, Edit, Trash2, Settings, Users, X, Eye, EyeOff, Globe, Zap } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 // ─── Estilos base ───────────────────────────────────────────
 const inputStyle = {
@@ -104,6 +105,8 @@ const ServerModal = ({ onClose, onSave, editing }) => {
 
 // ─── Componente Principal ────────────────────────────────────
 const IptvPanel = () => {
+  const { user } = useAuth()
+  
   const [activeTab, setActiveTab] = useState('global')
   const [config, setConfig]       = useState({ xtream_url:'', xtream_username:'', xtream_password:'' })
   const [loadingCfg, setLoadingCfg] = useState(false)
@@ -173,10 +176,18 @@ const IptvPanel = () => {
     } catch { showToast('Erro ao atualizar status','error') }
   }
 
-  const tabs = [
-    { key:'global',  label:'Servidor Global', Icon:Globe  },
-    { key:'servers', label:`Servidores (${servers.length})`, Icon:Server },
+  const allTabs = [
+    { key:'global',  label:'Servidor Global', Icon:Globe, perm: 'perm_iptv_global' },
+    { key:'servers', label:`Servidores (${servers.length})`, Icon:Server, perm: 'perm_iptv_servers' },
   ]
+  
+  const tabs = allTabs.filter(t => user?.tipo === 'admin' || user?.[t.perm] !== false)
+
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.find(t => t.key === activeTab)) {
+      setActiveTab(tabs[0].key)
+    }
+  }, [tabs, activeTab])
 
   return (
     <div>

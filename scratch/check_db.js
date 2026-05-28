@@ -2,8 +2,8 @@ const pool = require('../config/database');
 
 async function check() {
   try {
-    const r = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'app_activation_packages'");
-    console.log('📊 Colunas da tabela app_activation_packages:');
+    const r = await pool.query("SELECT id, nome, email, tipo FROM users");
+    console.log('📊 Todos os usuários na base:');
     console.table(r.rows);
     process.exit(0);
   } catch (e) {
@@ -13,3 +13,5 @@ async function check() {
 }
 
 check();
+
+

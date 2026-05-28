@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Branding from './Branding'
 import ProfileScreenManager from './ProfileScreenManager'
 import TvManager from './TvManager'
+import SportsManager from './SportsManager'
 
 const TABS = [
   {
@@ -24,6 +25,13 @@ const TABS = [
     icon: '📺',
     badge: 'NOVO',
     desc: 'Categorias, canais e organização',
+  },
+  {
+    id: 'sports-manager',
+    label: 'Gerenciar Esportes',
+    icon: '⚽',
+    badge: 'NOVO',
+    desc: 'Cards de modalidades e banners',
   },
 ]
 
@@ -97,6 +105,7 @@ const BrandingBanners = () => {
         {activeTab === 'branding' && <Branding />}
         {activeTab === 'profile-screen' && <ProfileScreenManager />}
         {activeTab === 'tv-manager' && <TvManager />}
+        {activeTab === 'sports-manager' && <SportsManager />}
       </div>
     </div>
   )

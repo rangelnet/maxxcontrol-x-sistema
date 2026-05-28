@@ -1,17 +1,61 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
-import { Users, Smartphone, TrendingUp, DollarSign, UserPlus, Tv, Wifi, Zap, Server, Activity, Image, ShoppingBag, Sparkles } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { Users, Smartphone, TrendingUp, DollarSign, UserPlus, Tv, Wifi, Zap, Server, Activity, Image, ShoppingBag, Sparkles, ShieldAlert, Eye, CheckCircle2 } from 'lucide-react'
 
 const Dashboard = () => {
+  const { user } = useAuth()
   const [stats, setStats] = useState(null)
   const [online, setOnline] = useState(0)
+
+  // === MODAL DE SEGURANÇA MANDATÓRIO ===
+  const [securityOpen, setSecurityOpen] = useState(false)
+  const [securityCountdown, setSecurityCountdown] = useState(15)
+  const [securityCanClose, setSecurityCanClose] = useState(false)
+  const countdownRef = useRef(null)
+  const delayRef = useRef(null)
 
   useEffect(() => {
     loadStats()
     const interval = setInterval(loadStats, 30000)
     return () => clearInterval(interval)
   }, [])
+
+  // Protocolo de aviso de segurança
+  useEffect(() => {
+    if (!user?.id) return
+    const storageKey = `security_warning_read_v2_${user.id}`
+    const hasRead = localStorage.getItem(storageKey)
+    if (!hasRead) {
+      delayRef.current = setTimeout(() => {
+        setSecurityOpen(true)
+        setSecurityCountdown(15)
+        setSecurityCanClose(false)
+        let count = 15
+        countdownRef.current = setInterval(() => {
+          count--
+          setSecurityCountdown(count)
+          if (count <= 0) {
+            setSecurityCanClose(true)
+            clearInterval(countdownRef.current)
+          }
+        }, 1000)
+      }, 10000) // 10s de delay
+    }
+    return () => {
+      if (delayRef.current) clearTimeout(delayRef.current)
+      if (countdownRef.current) clearInterval(countdownRef.current)
+    }
+  }, [user?.id])
+
+  const confirmSecurityWarning = useCallback(() => {
+    if (!securityCanClose) return
+    const storageKey = `security_warning_read_v2_${user?.id}`
+    localStorage.setItem(storageKey, 'true')
+    setSecurityOpen(false)
+  }, [securityCanClose, user?.id])
 
   const loadStats = async () => {
     try {
@@ -206,6 +250,34 @@ const Dashboard = () => {
         <p className="text-zinc-400 text-sm md:text-base">Bem-vindo ao MaxxControl X. Selecione uma ferramenta para começar.</p>
       </div>
 
+      {/* ══════ AVISO DE SEGURANÇA 2FA ══════ */}
+      {user && !user.tfa_enabled && (
+        <div className="relative overflow-hidden bg-gradient-to-r from-orange-500/10 via-brand-500/5 to-transparent border border-brand-500/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-md shadow-xl animate-in slide-in-from-top-4 duration-500">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+            <Sparkles size={120} className="text-brand-500" />
+          </div>
+          <div className="flex items-center gap-4 text-center md:text-left flex-col md:flex-row">
+            <div className="h-12 w-12 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-500 shrink-0 animate-pulse">
+              <Sparkles size={22} className="fill-current" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-base flex items-center gap-2 justify-center md:justify-start">
+                🔒 Proteja sua Conta com Duas Etapas (2FA)
+              </h3>
+              <p className="text-zinc-400 text-xs mt-1 max-w-xl">
+                Sua conta está desprotegida contra invasões. Habilite a autenticação por código via Telegram em menos de 1 minuto para blindar seus créditos e revendedores.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/settings"
+            className="w-full md:w-auto px-6 py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2"
+          >
+            Configurar Segurança Agora
+          </Link>
+        </div>
+      )}
+
       {/* ══════ CARDS DE MÉTRICAS ══════ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {metricCards.map((card, index) => (
@@ -345,6 +417,73 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* 🔒 MODAL DE SEGURANÇA MANDATÓRIO — NOTIFICAÇÃO DO ADMIN */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {securityOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-zinc-950 border-2 border-red-600 w-full max-w-lg rounded-2xl shadow-[0_0_60px_rgba(220,38,38,0.4)] overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
+            {/* Faixa Vermelha Piscante no Topo */}
+            <div className="h-2 w-full bg-red-600 animate-pulse" />
+
+            <div className="p-6 md:p-8 text-center">
+              {/* Ícone Escudo */}
+              <div className="mb-5 inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/10 border border-red-600/50 mx-auto">
+                <ShieldAlert className="h-10 w-10 text-red-500 animate-pulse" />
+              </div>
+
+              <h2 className="text-xl md:text-3xl font-black text-white mb-1 uppercase tracking-tight">
+                Notificação do <span className="text-red-500">Administrador</span>
+              </h2>
+
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-5">
+                Leitura Obrigatória
+              </p>
+
+              {/* Corpo do Aviso */}
+              <div className="bg-red-950/30 border border-red-900/50 p-5 rounded-xl text-left mb-6">
+                <p className="text-zinc-300 text-sm leading-relaxed mb-4">
+                  <strong className="text-white flex items-center gap-2 mb-2">
+                    <span className="text-red-500">⚠️</span> Aviso Importante:
+                  </strong>
+                  Qualquer tentativa de <strong>burlar, explorar vulnerabilidades, manipular requisições</strong> ou agir de má-fé dentro deste painel será detectada pelos nossos sistemas de segurança.
+                </p>
+                <p className="text-zinc-300 text-sm leading-relaxed">
+                  Caso qualquer atividade suspeita seja identificada, <strong>sua conta será banida permanentemente e imediatamente</strong>, sem aviso prévio e sem reembolso de créditos.
+                </p>
+                <p className="text-zinc-400 text-sm leading-relaxed mt-4 italic">
+                  Essas medidas existem para garantir a segurança da plataforma e de todos os usuários.
+                </p>
+                <p className="text-red-400 text-xs font-bold mt-4 border-t border-red-900/50 pt-3 flex items-center gap-2">
+                  <Eye className="h-4 w-4" /> O sistema possui logs de monitoramento ativos.
+                </p>
+              </div>
+
+              {/* Botão com Countdown */}
+              <button
+                onClick={confirmSecurityWarning}
+                disabled={!securityCanClose}
+                className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-wide transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3 ${
+                  securityCanClose
+                    ? 'bg-white text-black hover:bg-zinc-200 cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.3)]'
+                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700'
+                }`}
+              >
+                {!securityCanClose ? (
+                  <span>Leia o aviso ({securityCountdown}s)</span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    Li e Concordo
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
     </div>
   )

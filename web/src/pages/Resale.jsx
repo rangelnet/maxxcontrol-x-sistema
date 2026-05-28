@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Users, Plus, Edit2, Trash2, Power, PowerOff, Shield, Link2, KeyRound, ShoppingCart, History, QrCode, X, CheckCircle, MessageCircle, Zap, Loader2, CreditCard, Smartphone, Key, RefreshCw, FileJson, Globe, HelpCircle, ChevronRight, Layout, List } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Users, Plus, Edit2, Trash2, Power, PowerOff, Shield, Link2, KeyRound, ShoppingCart, History, QrCode, X, CheckCircle, MessageCircle, Zap, Loader2, CreditCard, Smartphone, Key, RefreshCw, FileJson, Globe, HelpCircle, ChevronRight, Layout, List, Activity } from 'lucide-react';
 
 const Resale = () => {
-  const [activeTab, setActiveTab] = useState('resellers'); // 'resellers' | 'shop' | 'apps' | 'playlists' | 'tools'
+  const { user } = useAuth();
+  const isMasterOrUnlimited = user && (user.tipo === 'admin' || (user.plano && String(user.plano).toLowerCase().includes('ilimitado')));
+  
+  const canResellers = user?.tipo === 'admin' || user?.perm_revenda_lista !== false;
+  const canShop = user?.tipo === 'admin' || user?.perm_revenda_shop !== false;
+  const canApps = user?.tipo === 'admin' || user?.perm_revenda_apps !== false;
+  const canLogs = user?.tipo === 'admin' || user?.perm_revenda_logs !== false;
+
+  const [activeTab, setActiveTab] = useState(canResellers ? 'resellers' : (canShop ? 'shop' : (canApps ? 'apps' : ''))); // 'resellers' | 'shop' | 'apps' | 'logs'
   const [deviceSession, setDeviceSession] = useState(null);
   const [deviceLoginMode, setDeviceLoginMode] = useState('mac'); // 'mac' | 'code'
   const [deviceCode, setDeviceCode] = useState('');
@@ -40,11 +49,21 @@ const Resale = () => {
   const [editandoRevendedor, setEditandoRevendedor] = useState(null);
   const [formData, setFormData] = useState({ 
     nome: '', email: '', senha: '', telefone: '', empresa: '', 
-    limite_dispositivos: 10, creditos: 0, ativo: true,
+    limite_dispositivos: 10, creditos: 0, plano_revenda: 'Revenda', ativo: true,
     provider_code: '', dns_url: '', test_api_urls: [''],
-    perm_dashboard: true, perm_dispositivos: true, perm_revenda: false, perm_jogos: false, perm_banners: false,
+    perm_dashboard: true, perm_dispositivos: true, perm_carteira: false, perm_revenda: false, perm_planos: false, perm_assinatura: false, perm_jogos: false, perm_banners: false, perm_chat: false, perm_agentes: false,
     perm_iptv: true, perm_plugin: true, perm_arvore: false, 
-    perm_api: false, perm_branding: false, perm_galeria: false, perm_whitelabel: false, perm_versoes: false, perm_config: false, perm_tickets: true
+    perm_api: false, perm_branding: false, perm_galeria: false, perm_whitelabel: false, perm_whatsapp: false, perm_versoes: false, perm_config: false, perm_tickets: true,
+    perm_dispositivos_lista: true, perm_dispositivos_logs: true,
+    perm_device_resumo: true, perm_device_assinatura: true, perm_device_tv: true, perm_device_apps: true, perm_device_credenciais: true, perm_device_futebol: true, perm_device_acoes: true,
+    perm_revenda_lista: false, perm_revenda_shop: false, perm_revenda_apps: false, perm_revenda_logs: false,
+    perm_planos_lista: false, perm_planos_crm: false, perm_planos_loja: false, perm_planos_apps: false, perm_planos_gateways: false,
+    perm_banners_gen: false, perm_banners_themes: false,
+    perm_api_config: false, perm_api_monitor: false,
+    perm_iptv_global: true, perm_iptv_mapping: true, perm_iptv_servers: true,
+    perm_whatsapp_bulk: false, perm_whatsapp_flow: false,
+    perm_tickets_abertos: true, perm_tickets_fechados: true,
+    perm_whitelabel_geral: false, perm_whitelabel_planos: false, perm_whitelabel_aparencia: false, perm_whitelabel_pagamento: false
   });
 
   // Mocks Finanças
@@ -61,12 +80,31 @@ const Resale = () => {
 
   const [creditPackages, setCreditPackages] = useState([]);
 
+  // States - Audit Logs
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
   useEffect(() => { 
     carregarRevendedores(); 
     carregarHistorico();
     carregarPacotesCreditos();
     carregarApps();
-  }, []);
+    if (isMasterOrUnlimited) {
+      carregarLogs();
+    }
+  }, [isMasterOrUnlimited]);
+
+  const carregarLogs = async () => {
+    try {
+      setLogsLoading(true);
+      const res = await api.get('/api/resale/logs');
+      setAuditLogs(res.data.logs);
+    } catch (e) {
+      console.error('Erro ao carregar logs:', e);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
 
   const carregarApps = async () => {
     try {
@@ -105,13 +143,7 @@ const Resale = () => {
       setRevendedores(response.data);
     } catch (error) {
       console.error('Erro ao carregar revendedores:', error);
-      if (revendedores.length === 0) {
-          setRevendedores([{
-              id: 1, nome: "João Silva", empresa: "TV MAXX João", email: "joao@iptv.com", 
-              dispositivos_ativos: 4, limite_dispositivos: 100, creditos: 50, ativo: true, 
-              provider_code: "885522", dns_url: "http://paineldojoao:8080"
-          }]);
-      }
+      // Removido o mock 'João Silva' fantasma para não gerar confusão de login
     } finally { setLoading(false); }
   };
 
@@ -131,7 +163,7 @@ const Resale = () => {
       setShowModal(false); resetForm(); carregarRevendedores();
     } catch (error) {
        console.error('Erro ao salvar revendedor:', error);
-       alert('Integrado: Crie o endpoint no Backend para salvar.');
+       alert(error.response?.data?.error || 'Erro ao salvar revendedor.');
        setShowModal(false); resetForm();
     }
   };
@@ -141,15 +173,20 @@ const Resale = () => {
     setFormData({ 
       nome: revendedor.nome, email: revendedor.email, senha: revendedor.senha || '', telefone: revendedor.telefone || '', 
       empresa: revendedor.empresa || '', limite_dispositivos: revendedor.limite_dispositivos,
-      creditos: revendedor.creditos || 0, ativo: revendedor.ativo,
-      provider_code: revendedor.provider_code || generateProviderCode(), 
-      dns_url: revendedor.dns_url || '',
-      test_api_urls: Array.isArray(revendedor.test_api_urls) ? revendedor.test_api_urls : (revendedor.dns_url ? [revendedor.dns_url] : ['']),
-      perm_dashboard: revendedor.perm_dashboard ?? true, perm_dispositivos: revendedor.perm_dispositivos ?? true, 
-      perm_revenda: revendedor.perm_revenda ?? false, perm_jogos: revendedor.perm_jogos ?? false, perm_banners: revendedor.perm_banners ?? false,
+      creditos: revendedor.creditos || 0, plano_revenda: revendedor.plano_revenda || 'Revenda', ativo: revendedor.ativo,
+      provider_code: revendedor.provider_code || '', dns_url: revendedor.dns_url || '', test_api_urls: Array.isArray(revendedor.test_api_urls) && revendedor.test_api_urls.length > 0 ? revendedor.test_api_urls : [''],
+      perm_dashboard: revendedor.perm_dashboard ?? true, perm_dispositivos: revendedor.perm_dispositivos ?? true, perm_carteira: revendedor.perm_carteira ?? false, perm_revenda: revendedor.perm_revenda ?? false, perm_planos: revendedor.perm_planos ?? false, perm_assinatura: revendedor.perm_assinatura ?? false, perm_jogos: revendedor.perm_jogos ?? false, perm_banners: revendedor.perm_banners ?? false, perm_chat: revendedor.perm_chat ?? false, perm_agentes: revendedor.perm_agentes ?? false,
       perm_iptv: revendedor.perm_iptv ?? true, perm_plugin: revendedor.perm_plugin ?? true, perm_arvore: revendedor.perm_arvore ?? false,
-      perm_api: revendedor.perm_api ?? false, perm_branding: revendedor.perm_branding ?? false, perm_galeria: revendedor.perm_galeria ?? false,
-      perm_whitelabel: revendedor.perm_whitelabel ?? false, perm_versoes: revendedor.perm_versoes ?? false, perm_config: revendedor.perm_config ?? false, perm_tickets: revendedor.perm_tickets ?? true
+      perm_api: revendedor.perm_api ?? false, perm_branding: revendedor.perm_branding ?? false, perm_galeria: revendedor.perm_galeria ?? false, perm_whitelabel: revendedor.perm_whitelabel ?? false, perm_whatsapp: revendedor.perm_whatsapp ?? false, perm_versoes: revendedor.perm_versoes ?? false, perm_config: revendedor.perm_config ?? false, perm_tickets: revendedor.perm_tickets ?? true,
+      perm_dispositivos_lista: revendedor.perm_dispositivos_lista ?? true, perm_dispositivos_logs: revendedor.perm_dispositivos_logs ?? true,
+      perm_revenda_lista: revendedor.perm_revenda_lista ?? false, perm_revenda_shop: revendedor.perm_revenda_shop ?? false, perm_revenda_apps: revendedor.perm_revenda_apps ?? false, perm_revenda_logs: revendedor.perm_revenda_logs ?? false,
+      perm_planos_lista: revendedor.perm_planos_lista ?? false, perm_planos_crm: revendedor.perm_planos_crm ?? false, perm_planos_loja: revendedor.perm_planos_loja ?? false, perm_planos_apps: revendedor.perm_planos_apps ?? false, perm_planos_gateways: revendedor.perm_planos_gateways ?? false,
+      perm_banners_gen: revendedor.perm_banners_gen ?? false, perm_banners_themes: revendedor.perm_banners_themes ?? false,
+      perm_api_config: revendedor.perm_api_config ?? false, perm_api_monitor: revendedor.perm_api_monitor ?? false,
+      perm_iptv_global: revendedor.perm_iptv_global ?? true, perm_iptv_mapping: revendedor.perm_iptv_mapping ?? true, perm_iptv_servers: revendedor.perm_iptv_servers ?? true,
+      perm_whatsapp_bulk: revendedor.perm_whatsapp_bulk ?? false, perm_whatsapp_flow: revendedor.perm_whatsapp_flow ?? false,
+      perm_tickets_abertos: revendedor.perm_tickets_abertos ?? true, perm_tickets_fechados: revendedor.perm_tickets_fechados ?? true,
+      perm_whitelabel_geral: revendedor.perm_whitelabel_geral ?? false, perm_whitelabel_planos: revendedor.perm_whitelabel_planos ?? false, perm_whitelabel_aparencia: revendedor.perm_whitelabel_aparencia ?? false, perm_whitelabel_pagamento: revendedor.perm_whitelabel_pagamento ?? false
     });
     setShowModal(true);
   };
@@ -165,14 +202,25 @@ const Resale = () => {
     catch (error) { console.error('Erro', error); }
   };
 
-  const resetForm = () => { 
+  const resetForm = () => {
+    setEditandoRevendedor(null);
     setFormData({ 
-       nome: '', email: '', senha: '', telefone: '', empresa: '', limite_dispositivos: 10, creditos: 0, ativo: true, provider_code: '', dns_url: '', test_api_urls: [''],
-       perm_dashboard: true, perm_dispositivos: true, perm_revenda: false, perm_jogos: false, perm_banners: false,
-       perm_iptv: true, perm_plugin: true, perm_arvore: false, 
-       perm_api: false, perm_branding: false, perm_galeria: false, perm_whitelabel: false, perm_versoes: false, perm_config: false, perm_tickets: true
-    }); 
-    setEditandoRevendedor(null); 
+      nome: '', email: '', senha: '', telefone: '', empresa: '', 
+      limite_dispositivos: 10, creditos: 0, plano_revenda: 'Revenda', ativo: true,
+      provider_code: '', dns_url: '', test_api_urls: [''],
+      perm_dashboard: true, perm_dispositivos: true, perm_carteira: false, perm_revenda: false, perm_planos: false, perm_assinatura: false, perm_jogos: false, perm_banners: false, perm_chat: false, perm_agentes: false,
+      perm_iptv: true, perm_plugin: true, perm_arvore: false, 
+      perm_api: false, perm_branding: false, perm_galeria: false, perm_whitelabel: false, perm_whatsapp: false, perm_versoes: false, perm_config: false, perm_tickets: true,
+      perm_dispositivos_lista: true, perm_dispositivos_logs: true,
+      perm_revenda_lista: false, perm_revenda_shop: false, perm_revenda_apps: false, perm_revenda_logs: false,
+      perm_planos_lista: false, perm_planos_crm: false, perm_planos_loja: false, perm_planos_apps: false, perm_planos_gateways: false,
+      perm_banners_gen: false, perm_banners_themes: false,
+      perm_api_config: false, perm_api_monitor: false,
+      perm_iptv_global: true, perm_iptv_mapping: true, perm_iptv_servers: true,
+      perm_whatsapp_bulk: false, perm_whatsapp_flow: false,
+      perm_tickets_abertos: true, perm_tickets_fechados: true,
+      perm_whitelabel_geral: false, perm_whitelabel_planos: false, perm_whitelabel_aparencia: false, perm_whitelabel_pagamento: false
+    });
   };
 
   // --- Funções Shop ---
@@ -385,15 +433,26 @@ const Resale = () => {
         
         {/* TABS DE NAVEGAÇÃO */}
         <div className="flex bg-dark-900 border border-dark-700 rounded-lg p-1 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
-            <button onClick={() => setActiveTab('resellers')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'resellers' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}>
-                <Users className="w-4 h-4" /> Revendedores
-            </button>
-            <button onClick={() => setActiveTab('shop')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'shop' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-zinc-500 hover:text-yellow-500/50'}`}>
-                <ShoppingCart className="w-4 h-4" /> Loja de Créditos
-            </button>
-            <button onClick={() => setActiveTab('apps')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'apps' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 'text-zinc-500 hover:text-blue-500/50'}`}>
-                <Smartphone className="w-4 h-4" /> Ativação de Apps
-            </button>
+            {canResellers && (
+              <button onClick={() => setActiveTab('resellers')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'resellers' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                  <Users className="w-4 h-4" /> Revendedores
+              </button>
+            )}
+            {canShop && (
+              <button onClick={() => setActiveTab('shop')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'shop' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-zinc-500 hover:text-yellow-500/50'}`}>
+                  <ShoppingCart className="w-4 h-4" /> Loja de Créditos
+              </button>
+            )}
+            {canApps && (
+              <button onClick={() => setActiveTab('apps')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'apps' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 'text-zinc-500 hover:text-blue-500/50'}`}>
+                  <Smartphone className="w-4 h-4" /> Ativação de Apps
+              </button>
+            )}
+            {(isMasterOrUnlimited || canLogs) && (
+              <button onClick={() => setActiveTab('logs')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'logs' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30' : 'text-zinc-500 hover:text-brand-500/50'}`}>
+                  <Activity className="w-4 h-4" /> Logs de Atividades
+              </button>
+            )}
         </div>
       </div>
 
@@ -425,11 +484,11 @@ const Resale = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-xl bg-dark-900 border border-dark-600 flex items-center justify-center text-zinc-300 font-bold">
-                                    {revendedor.nome.charAt(0).toUpperCase()}
+                                    {(revendedor.nome || 'R').charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                    <div className="text-sm font-bold text-white group-hover:text-orange-400 transition-colors">{revendedor.nome}</div>
-                                    <div className="text-xs text-zinc-500">{revendedor.email}</div>
+                                    <div className="text-sm font-bold text-white group-hover:text-orange-400 transition-colors">{revendedor.nome || 'Sem Nome'}</div>
+                                    <div className="text-xs text-zinc-500">{revendedor.email || 'Sem Email'}</div>
                                 </div>
                             </div>
                         </td>
@@ -605,6 +664,75 @@ const Resale = () => {
       </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* ABA: LOGS DE ATIVIDADES (AUDITORIA) */}
+      {/* ========================================================================= */}
+      {activeTab === 'logs' && isMasterOrUnlimited && (
+      <div className="animate-in fade-in duration-300">
+        <div className="flex justify-between items-center mb-4">
+           <h2 className="text-xl font-bold flex items-center gap-2"><Activity className="text-brand-500 w-5 h-5"/> Logs de Auditoria</h2>
+           <button onClick={carregarLogs} className="bg-dark-800 hover:bg-dark-700 text-zinc-300 px-4 py-2 rounded-lg font-bold border border-dark-600 transition-colors flex items-center gap-2 text-sm">
+              <RefreshCw className={`w-4 h-4 ${logsLoading ? 'animate-spin' : ''}`} /> Atualizar
+           </button>
+        </div>
+        <div className="glass-effect rounded-2xl border border-dark-700 shadow-xl bg-dark-800/60 overflow-hidden">
+            <div className="overflow-x-auto custom-scrollbar">
+                <table className="min-w-full divide-y divide-dark-700">
+                <thead className="bg-dark-900/50">
+                    <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Data e Hora</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Usuário</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Ação</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Detalhes</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-32">IP</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-dark-700">
+                    {logsLoading ? (
+                        <tr>
+                            <td colSpan="5" className="px-6 py-8 text-center text-zinc-500">
+                                <Loader2 className="animate-spin mx-auto text-brand-500 mb-2 w-6 h-6" />
+                                Carregando registros...
+                            </td>
+                        </tr>
+                    ) : auditLogs.length === 0 ? (
+                        <tr>
+                            <td colSpan="5" className="px-6 py-8 text-center text-zinc-500">
+                                <Shield className="mx-auto h-8 w-8 text-dark-600 mb-2" />
+                                Nenhum log registrado ainda.
+                            </td>
+                        </tr>
+                    ) : auditLogs.map((log) => {
+                        const dateObj = new Date(log.created_at);
+                        const dataStr = dateObj.toLocaleDateString('pt-BR');
+                        const horaStr = dateObj.toLocaleTimeString('pt-BR');
+                        
+                        return (
+                            <tr key={log.id} className="hover:bg-dark-700/30 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-400 font-mono">
+                                    <span className="text-zinc-300 font-bold">{dataStr}</span> às {horaStr}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="text-sm font-bold text-white bg-dark-900 px-2.5 py-1 rounded-md border border-dark-600">{log.user_name || `ID: ${log.user_id}`}</span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-brand-400 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">{log.action}</span>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-zinc-300">
+                                    {log.details}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-zinc-500">
+                                    {log.ip_address || 'N/A'}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+      )}
 
       {/* ========================================================================= */}
       {/* MODAL 1: CRIAR/EDITAR REVENDEDOR */}
@@ -625,15 +753,15 @@ const Resale = () => {
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome da Empresa</label><input type="text" value={formData.empresa} onChange={(e) => setFormData({ ...formData, empresa: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Email (Painel Web) *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
                 <div>
-                    <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Senha de Acesso *</label>
+                    <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Senha de Acesso {editandoRevendedor ? '(Deixe em branco para não alterar)' : '*'}</label>
                     <div className="relative">
                         <input 
                             type="text" 
-                            required 
+                            required={!editandoRevendedor} 
                             value={formData.senha} 
                             onChange={(e) => setFormData({ ...formData, senha: e.target.value })} 
                             className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:border-orange-500 font-mono" 
-                            placeholder="********"
+                            placeholder={editandoRevendedor ? "******** (Inalterada)" : "********"}
                         />
                         <Key className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3.5" />
                     </div>
@@ -697,7 +825,7 @@ const Resale = () => {
                   </div>
               </div>
 
-              <div className="bg-dark-800/50 rounded-xl p-4 border border-dark-600 mb-5 max-h-[180px] overflow-y-auto custom-scrollbar">
+              <div className="bg-dark-800/50 rounded-xl p-4 border border-dark-600 mb-5 max-h-[220px] overflow-y-auto custom-scrollbar">
                   <h4 className="text-sm font-bold text-zinc-300 mb-4 flex items-center gap-2 sticky top-0 bg-dark-800/90 py-1 backdrop-blur-sm z-10"><Shield className="w-4 h-4 text-zinc-400" /> Permissões de Acesso Ao Menu</h4>
                   <div className="space-y-4">
                       <div>
@@ -705,19 +833,72 @@ const Resale = () => {
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                              {[
                                 { label: 'Dashboard', field: 'perm_dashboard', color: 'bg-orange-500' },
-                                { label: 'Dispositivos', field: 'perm_dispositivos', color: 'bg-orange-500' },
-                                { label: 'Revenda', field: 'perm_revenda', color: 'bg-orange-500' },
+                                { label: 'Dispositivos', field: 'perm_dispositivos', color: 'bg-orange-500', 
+                                  subItems: [
+                                    { label: 'Lista', field: 'perm_dispositivos_lista', color: 'bg-orange-500' },
+                                    { label: 'Logs & Bugs', field: 'perm_dispositivos_logs', color: 'bg-orange-500' },
+                                    { label: 'Resumo', field: 'perm_device_resumo', color: 'bg-orange-500' },
+                                    { label: 'Assinatura', field: 'perm_device_assinatura', color: 'bg-orange-500' },
+                                    { label: 'Ger. Dispositivo', field: 'perm_device_tv', color: 'bg-orange-500' },
+                                    { label: 'Apps', field: 'perm_device_apps', color: 'bg-orange-500' },
+                                    { label: 'Credenciais', field: 'perm_device_credenciais', color: 'bg-orange-500' },
+                                    { label: 'Futebol', field: 'perm_device_futebol', color: 'bg-orange-500' },
+                                    { label: 'Ações Rápidas', field: 'perm_device_acoes', color: 'bg-orange-500' }
+                                  ]
+                                },
+                                { label: 'Minha Carteira', field: 'perm_carteira', color: 'bg-orange-500' },
+                                { label: 'Revenda', field: 'perm_revenda', color: 'bg-orange-500',
+                                  subItems: [
+                                    { label: 'Revendedores', field: 'perm_revenda_lista', color: 'bg-orange-500' },
+                                    { label: 'Loja', field: 'perm_revenda_shop', color: 'bg-orange-500' },
+                                    { label: 'Apps', field: 'perm_revenda_apps', color: 'bg-orange-500' },
+                                    { label: 'Logs', field: 'perm_revenda_logs', color: 'bg-orange-500' }
+                                  ]
+                                },
+                                { label: 'Planos & Receitas', field: 'perm_planos', color: 'bg-orange-500',
+                                  subItems: [
+                                    { label: 'Planos', field: 'perm_planos_lista', color: 'bg-orange-500' },
+                                    { label: 'CRM', field: 'perm_planos_crm', color: 'bg-orange-500' },
+                                    { label: 'Loja', field: 'perm_planos_loja', color: 'bg-orange-500' },
+                                    { label: 'Apps', field: 'perm_planos_apps', color: 'bg-orange-500' },
+                                    { label: 'Gateways', field: 'perm_planos_gateways', color: 'bg-orange-500' }
+                                  ]
+                                },
+                                { label: 'Assinar Painel', field: 'perm_assinatura', color: 'bg-orange-500' },
                                 { label: 'Grade de Jogos', field: 'perm_jogos', color: 'bg-brand-500' },
-                                { label: 'Gerador Banners', field: 'perm_banners', color: 'bg-orange-500' }
+                                { label: 'Gerador Banners', field: 'perm_banners', color: 'bg-orange-500',
+                                  subItems: [
+                                    { label: 'Gerador', field: 'perm_banners_gen', color: 'bg-orange-500' },
+                                    { label: 'Temas', field: 'perm_banners_themes', color: 'bg-orange-500' }
+                                  ]
+                                },
+                                { label: 'Chat Ao Vivo', field: 'perm_chat', color: 'bg-brand-500' },
+                                { label: 'Agentes IA', field: 'perm_agentes', color: 'bg-orange-500' }
                              ].map(item => (
-                                <label key={item.field} className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
-                                    <div className="relative flex-shrink-0">
-                                        <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
-                                        <div className={`block w-6 h-3.5 rounded-full transition-colors ${formData[item.field] ? item.color : 'bg-dark-600'}`}></div>
-                                        <div className={`dot absolute left-0.5 top-0.5 bg-white w-2.5 h-2.5 rounded-full transition-transform ${formData[item.field] ? 'transform translate-x-2.5' : ''}`}></div>
+                                <div key={item.field} className="flex flex-col gap-1">
+                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
+                                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
+                                      <div className="relative flex-shrink-0">
+                                          <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
+                                          <div className={`block w-6 h-3.5 rounded-full transition-colors ${formData[item.field] ? item.color : 'bg-dark-600'}`}></div>
+                                          <div className={`dot absolute left-0.5 top-0.5 bg-white w-2.5 h-2.5 rounded-full transition-transform ${formData[item.field] ? 'transform translate-x-2.5' : ''}`}></div>
+                                      </div>
+                                  </label>
+                                  {formData[item.field] && item.subItems && (
+                                    <div className="pl-4 border-l border-dark-700 ml-2 space-y-1 mt-1">
+                                      {item.subItems.map(sub => (
+                                        <label key={sub.field} className="flex items-center justify-between bg-dark-900/50 border border-dark-700/50 px-2 py-1 rounded-md cursor-pointer hover:border-brand-500/30 transition">
+                                            <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-wider truncate mr-2">{sub.label}</span>
+                                            <div className="relative flex-shrink-0">
+                                                <input type="checkbox" className="sr-only" checked={formData[sub.field]} onChange={(e) => setFormData({...formData, [sub.field]: e.target.checked})} />
+                                                <div className={`block w-5 h-3 rounded-full transition-colors ${formData[sub.field] ? sub.color : 'bg-dark-600'}`}></div>
+                                                <div className={`dot absolute left-[2px] top-[2px] bg-white w-2 h-2 rounded-full transition-transform ${formData[sub.field] ? 'transform translate-x-2' : ''}`}></div>
+                                            </div>
+                                        </label>
+                                      ))}
                                     </div>
-                                </label>
+                                  )}
+                                </div>
                              ))}
                           </div>
                       </div>
@@ -725,18 +906,40 @@ const Resale = () => {
                           <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 border-b border-dark-700 pb-1">IPTV & Servidores</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                              {[
-                                { label: 'Servidor IPTV', field: 'perm_iptv', color: 'bg-green-500' },
+                                { label: 'Servidor IPTV', field: 'perm_iptv', color: 'bg-green-500',
+                                  subItems: [
+                                    { label: 'Global', field: 'perm_iptv_global', color: 'bg-green-500' },
+                                    { label: 'Mapping', field: 'perm_iptv_mapping', color: 'bg-green-500' },
+                                    { label: 'Servidores', field: 'perm_iptv_servers', color: 'bg-green-500' }
+                                  ]
+                                },
                                 { label: 'Plugin Unificado', field: 'perm_plugin', color: 'bg-green-500' },
                                 { label: 'Árvore IPTV', field: 'perm_arvore', color: 'bg-green-500' }
                              ].map(item => (
-                                <label key={item.field} className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
-                                    <div className="relative flex-shrink-0">
-                                        <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
-                                        <div className={`block w-6 h-3.5 rounded-full transition-colors ${formData[item.field] ? item.color : 'bg-dark-600'}`}></div>
-                                        <div className={`dot absolute left-0.5 top-0.5 bg-white w-2.5 h-2.5 rounded-full transition-transform ${formData[item.field] ? 'transform translate-x-2.5' : ''}`}></div>
+                                <div key={item.field} className="flex flex-col gap-1">
+                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
+                                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
+                                      <div className="relative flex-shrink-0">
+                                          <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
+                                          <div className={`block w-6 h-3.5 rounded-full transition-colors ${formData[item.field] ? item.color : 'bg-dark-600'}`}></div>
+                                          <div className={`dot absolute left-0.5 top-0.5 bg-white w-2.5 h-2.5 rounded-full transition-transform ${formData[item.field] ? 'transform translate-x-2.5' : ''}`}></div>
+                                      </div>
+                                  </label>
+                                  {formData[item.field] && item.subItems && (
+                                    <div className="pl-4 border-l border-dark-700 ml-2 space-y-1 mt-1">
+                                      {item.subItems.map(sub => (
+                                        <label key={sub.field} className="flex items-center justify-between bg-dark-900/50 border border-dark-700/50 px-2 py-1 rounded-md cursor-pointer hover:border-brand-500/30 transition">
+                                            <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-wider truncate mr-2">{sub.label}</span>
+                                            <div className="relative flex-shrink-0">
+                                                <input type="checkbox" className="sr-only" checked={formData[sub.field]} onChange={(e) => setFormData({...formData, [sub.field]: e.target.checked})} />
+                                                <div className={`block w-5 h-3 rounded-full transition-colors ${formData[sub.field] ? sub.color : 'bg-dark-600'}`}></div>
+                                                <div className={`dot absolute left-[2px] top-[2px] bg-white w-2 h-2 rounded-full transition-transform ${formData[sub.field] ? 'transform translate-x-2' : ''}`}></div>
+                                            </div>
+                                        </label>
+                                      ))}
                                     </div>
-                                </label>
+                                  )}
+                                </div>
                              ))}
                           </div>
                       </div>
@@ -744,22 +947,61 @@ const Resale = () => {
                           <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 border-b border-dark-700 pb-1">Ferramentas & Extras</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                              {[
-                                { label: 'APIs', field: 'perm_api', color: 'bg-purple-500' },
+                                { label: 'APIs', field: 'perm_api', color: 'bg-purple-500',
+                                  subItems: [
+                                    { label: 'Config', field: 'perm_api_config', color: 'bg-purple-500' },
+                                    { label: 'Monitor', field: 'perm_api_monitor', color: 'bg-purple-500' }
+                                  ]
+                                },
                                 { label: 'Branding & Banners', field: 'perm_branding', color: 'bg-purple-500' },
                                 { label: 'Minha Galeria', field: 'perm_galeria', color: 'bg-blue-500' },
-                                { label: 'White Label', field: 'perm_whitelabel', color: 'bg-yellow-500' },
+                                { label: 'White Label', field: 'perm_whitelabel', color: 'bg-yellow-500',
+                                  subItems: [
+                                    { label: 'Geral', field: 'perm_whitelabel_geral', color: 'bg-yellow-500' },
+                                    { label: 'Planos', field: 'perm_whitelabel_planos', color: 'bg-yellow-500' },
+                                    { label: 'Aparência', field: 'perm_whitelabel_aparencia', color: 'bg-yellow-500' },
+                                    { label: 'Pagamento', field: 'perm_whitelabel_pagamento', color: 'bg-yellow-500' }
+                                  ]
+                                },
+                                { label: 'Automação WPP', field: 'perm_whatsapp', color: 'bg-green-500',
+                                  subItems: [
+                                    { label: 'Em Massa', field: 'perm_whatsapp_bulk', color: 'bg-green-500' },
+                                    { label: 'MaxxFlow', field: 'perm_whatsapp_flow', color: 'bg-green-500' }
+                                  ]
+                                },
                                 { label: 'Versões', field: 'perm_versoes', color: 'bg-zinc-500' },
                                 { label: 'Configurações', field: 'perm_config', color: 'bg-red-500' },
-                                { label: 'Tickets de Suporte', field: 'perm_tickets', color: 'bg-cyan-500' }
+                                { label: 'Tickets de Suporte', field: 'perm_tickets', color: 'bg-cyan-500',
+                                  subItems: [
+                                    { label: 'Abertos', field: 'perm_tickets_abertos', color: 'bg-cyan-500' },
+                                    { label: 'Fechados', field: 'perm_tickets_fechados', color: 'bg-cyan-500' }
+                                  ]
+                                }
                              ].map(item => (
-                                <label key={item.field} className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
-                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
-                                    <div className="relative flex-shrink-0">
-                                        <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
-                                        <div className={`block w-6 h-3.5 rounded-full transition-colors ${formData[item.field] ? item.color : 'bg-dark-600'}`}></div>
-                                        <div className={`dot absolute left-0.5 top-0.5 bg-white w-2.5 h-2.5 rounded-full transition-transform ${formData[item.field] ? 'transform translate-x-2.5' : ''}`}></div>
+                                <div key={item.field} className="flex flex-col gap-1">
+                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
+                                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
+                                      <div className="relative flex-shrink-0">
+                                          <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
+                                          <div className={`block w-6 h-3.5 rounded-full transition-colors ${formData[item.field] ? item.color : 'bg-dark-600'}`}></div>
+                                          <div className={`dot absolute left-0.5 top-0.5 bg-white w-2.5 h-2.5 rounded-full transition-transform ${formData[item.field] ? 'transform translate-x-2.5' : ''}`}></div>
+                                      </div>
+                                  </label>
+                                  {formData[item.field] && item.subItems && (
+                                    <div className="pl-4 border-l border-dark-700 ml-2 space-y-1 mt-1">
+                                      {item.subItems.map(sub => (
+                                        <label key={sub.field} className="flex items-center justify-between bg-dark-900/50 border border-dark-700/50 px-2 py-1 rounded-md cursor-pointer hover:border-brand-500/30 transition">
+                                            <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-wider truncate mr-2">{sub.label}</span>
+                                            <div className="relative flex-shrink-0">
+                                                <input type="checkbox" className="sr-only" checked={formData[sub.field]} onChange={(e) => setFormData({...formData, [sub.field]: e.target.checked})} />
+                                                <div className={`block w-5 h-3 rounded-full transition-colors ${formData[sub.field] ? sub.color : 'bg-dark-600'}`}></div>
+                                                <div className={`dot absolute left-[2px] top-[2px] bg-white w-2 h-2 rounded-full transition-transform ${formData[sub.field] ? 'transform translate-x-2' : ''}`}></div>
+                                            </div>
+                                        </label>
+                                      ))}
                                     </div>
-                                </label>
+                                  )}
+                                </div>
                              ))}
                           </div>
                       </div>
@@ -767,8 +1009,30 @@ const Resale = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 mb-5 border-t border-dark-700 pt-5">
-                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Limite de Acessos *</label><input type="number" required min="1" value={formData.limite_dispositivos} onChange={(e) => setFormData({ ...formData, limite_dispositivos: parseInt(e.target.value) })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
-                <div><label className="block text-xs font-bold w-full text-yellow-500 mb-1.5 uppercase"><i className="fas fa-coins"></i> Créditos Para Ativação *</label><input type="number" required min="0" value={formData.creditos} onChange={(e) => setFormData({ ...formData, creditos: parseInt(e.target.value) || 0 })} className="w-full bg-dark-900 border border-yellow-500/30 text-yellow-500 font-bold rounded-lg px-4 py-2.5 focus:outline-none focus:border-yellow-500" /></div>
+                <div>
+                  {isMasterOrUnlimited && (
+                    <label className="flex items-center cursor-pointer mb-2">
+                      <span className="text-xs font-bold text-brand-400 mr-2 uppercase">Painel Ilimitado?</span>
+                      <div className="relative">
+                        <input type="checkbox" className="sr-only" checked={formData.plano_revenda === 'Ilimitado'} onChange={(e) => setFormData({ ...formData, plano_revenda: e.target.checked ? 'Ilimitado' : 'Revenda', limite_dispositivos: e.target.checked ? 999999 : 10, creditos: e.target.checked ? 0 : formData.creditos })} />
+                        <div className={`block w-10 h-5 rounded-full transition-colors ${formData.plano_revenda === 'Ilimitado' ? 'bg-brand-500' : 'bg-dark-600'}`}></div>
+                        <div className={`dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform ${formData.plano_revenda === 'Ilimitado' ? 'transform translate-x-5' : ''}`}></div>
+                      </div>
+                    </label>
+                  )}
+                  {formData.plano_revenda !== 'Ilimitado' && (
+                    <>
+                      <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Limite de Acessos *</label>
+                      <input type="number" required min="1" value={formData.limite_dispositivos} onChange={(e) => setFormData({ ...formData, limite_dispositivos: parseInt(e.target.value) })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" />
+                    </>
+                  )}
+                </div>
+                
+                {formData.plano_revenda !== 'Ilimitado' ? (
+                   <div><label className="block text-xs font-bold w-full text-yellow-500 mb-1.5 uppercase"><i className="fas fa-coins"></i> Créditos Iniciais *</label><input type="number" required min="0" value={formData.creditos} onChange={(e) => setFormData({ ...formData, creditos: parseInt(e.target.value) || 0 })} className="w-full bg-dark-900 border border-yellow-500/30 text-yellow-500 font-bold rounded-lg px-4 py-2.5 focus:outline-none focus:border-yellow-500" /></div>
+                ) : (
+                   <div></div>
+                )}
                 <div className="flex items-center justify-start sm:justify-end">
                   <label className="flex items-center cursor-pointer mt-2 sm:mt-5">
                     <span className="mr-3 text-sm font-bold text-white">Ativo</span>

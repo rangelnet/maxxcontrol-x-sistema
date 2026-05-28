@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import {
   Ban, CheckCircle, Server, X, Save, Trash2, Download,
@@ -8,7 +9,8 @@ import {
   MoreVertical, Link, MessageSquare, Users, Repeat, Scissors,
   ExternalLink, Share2, Edit2, Tablet, ChevronDown, ChevronUp,
   Pencil, Play, Calendar, UserCheck, Monitor, Smartphone, 
-  Settings, LogIn, LayoutGrid, CalendarCheck, Power, AppWindow, Zap
+  Settings, LogIn, LayoutGrid, CalendarCheck, Power, AppWindow, Zap,
+  Wand2
 } from 'lucide-react'
 import TestApiModal from '../components/TestApiModal'
 import footballTeams from '../data/footballTeams'
@@ -237,6 +239,7 @@ const selectStyle = {
 // COMPONENTE PRINCIPAL
 // ══════════════════════════════════════════════════════════════════════════════
 const Devices = () => {
+  const { user } = useAuth()
   const [devices, setDevices]               = useState([])
   const [filteredDevices, setFilteredDevices] = useState([])
   const [searchTerm, setSearchTerm]         = useState('')
@@ -435,6 +438,38 @@ const Devices = () => {
       notas: 'Teste numérico gerado pelo Nexus.'
     });
     showToast("Dados numéricos gerados!", "success");
+  };
+
+  const handleQuickTrial = () => {
+    const user = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const pass = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const isoDate = new Date().toISOString().split('T')[0];
+    setNewClientForm({
+      selected_servers: iptvServers.length > 0 ? [iptvServers[0].name] : [],
+      username: user, password: pass,
+      is_trial: true, months: 0, vencimento: isoDate,
+      max_connections: 1, package_name: dynamicPlans.find(p => p.toLowerCase().includes('teste')) || 'TESTE 24H (SIGMA)',
+      nome: 'Teste Rápido', email: '', telefone: '', mac: '',
+      notificacao_whatsapp: '0', notas: 'Teste rápido 1-click gerado pelo Revendedor.'
+    });
+    setNewClientTab('dados');
+    setShowNewClientModal(true);
+    showToast("Formulário de teste preenchido!", "success");
+  };
+
+  const handleConvertTrial = async (acc) => {
+    if (!confirm(`Deseja converter o teste de ${acc.username} em Assinante Oficial?\n\nIsso deduzirá 1 crédito da sua carteira.`)) return;
+    try {
+      const planToSet = defaultPlans.find(p => p.toLowerCase().includes('mensal')) || 'PLANO MENSAL (SIGMA)';
+      await sendRemoteAction(acc.id, 'edit_user', acc.remote_id, acc.panel_url, {
+         package_name: planToSet,
+         is_trial: false,
+         notas: acc.notas + ' | Convertido para assinante',
+         _deduct_credit: true
+      });
+    } catch (e) {
+      showToast("Erro ao converter teste", "error");
+    }
   };
 
   const showToast = (msg, type = 'success') => {
@@ -868,6 +903,9 @@ const Devices = () => {
         </div>
 
         <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          <button onClick={handleQuickTrial} style={{ ...btnPrimary, background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}>
+            <Wand2 size={15} /> Gerar Teste Rápido
+          </button>
           <button onClick={() => setShowNewClientModal(true)} style={btnPrimary}>
             <Users size={15} /> + Novo Cliente
           </button>
@@ -1011,10 +1049,11 @@ const Devices = () => {
                       )}
 
                       {/* Botões Ação Mobile */}
-                      <div style={{ display:'flex', gap:8, paddingTop:10, borderTop:'1px solid rgba(255,255,255,0.05)' }}>
-                        <button onClick={() => openManageModal(item)} style={{ ...btnPrimary, flex:1, justifyContent:'center' }}><Settings size={15}/> Gerenciar</button>
-                        {acc && <button onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)} style={{ ...btnGhost, flex:1, justifyContent:'center' }}><CalendarCheck size={15}/> Renovar</button>}
-                        {!acc && dev && <button onClick={() => blockDevice(dev.id)} style={{ ...btnGhost, flex:1, justifyContent:'center', color:'#f87171', borderColor:'rgba(239,68,68,0.3)' }}><Power size={15}/> Bloquear</button>}
+                      <div style={{ display:'flex', gap:8, paddingTop:10, borderTop:'1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                        <button onClick={() => openManageModal(item)} style={{ ...btnPrimary, flex:1, minWidth: '100px', justifyContent:'center' }}><Settings size={15}/> Gerenciar</button>
+                        {acc && !isTrial && <button onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)} style={{ ...btnGhost, flex:1, minWidth: '100px', justifyContent:'center' }}><CalendarCheck size={15}/> Renovar</button>}
+                        {acc && isTrial && <button onClick={() => handleConvertTrial(acc)} style={{ ...btnGhost, flex:1, minWidth: '100px', justifyContent:'center', color:'#10b981', borderColor:'rgba(16,185,129,0.3)' }}><UserCheck size={15}/> Converter</button>}
+                        {!acc && dev && <button onClick={() => blockDevice(dev.id)} style={{ ...btnGhost, flex:1, minWidth: '100px', justifyContent:'center', color:'#f87171', borderColor:'rgba(239,68,68,0.3)' }}><Power size={15}/> Bloquear</button>}
                       </div>
                     </div>
                 );
@@ -1206,8 +1245,11 @@ const Devices = () => {
                                   style={{ padding:'6px 12px', background: colors.action, border:'none', borderRadius:6, color:'#fff', fontSize:11, fontWeight:800, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
                                   <Settings size={14} /> Gerenciar
                                 </button>
-                                {acc && (
+                                {acc && !isTrial && (
                                   <SigmaActionButton color={colors.yellow} icon={CalendarCheck} title="Renovar" onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)} />
+                                )}
+                                {acc && isTrial && (
+                                  <SigmaActionButton color={colors.green} icon={UserCheck} title="Converter em Assinante" onClick={() => handleConvertTrial(acc)} />
                                 )}
                                 {!acc && dev && (
                                   <SigmaActionButton color={colors.red} icon={Power} title="Bloquear" onClick={() => blockDevice(dev.id)} />
@@ -1261,13 +1303,27 @@ const Devices = () => {
           <ModalHeader icon={Settings} title="Central de Gerenciamento" onClose={() => setShowManageModal(false)} />
           
           <div style={{ display:'flex', gap:8, marginBottom:16, overflowX:'auto', paddingBottom:4 }}>
-             <TabPill label="🏠 Resumo" active={manageTab==='resumo'} onClick={() => setManageTab('resumo')} />
-             <TabPill label="📋 Assinatura" active={manageTab==='dados'} onClick={() => setManageTab('dados')} />
-             <TabPill label="📺 Dispositivo" active={manageTab==='device'} onClick={() => setManageTab('device')} />
-             <TabPill label="📦 Apps" active={manageTab==='apps'} onClick={() => setManageTab('apps')} />
-             <TabPill label="⚡ Credenciais" active={manageTab==='credenciais'} onClick={() => setManageTab('credenciais')} />
-             <TabPill label="⚽ Futebol" active={manageTab==='futebol'} onClick={() => setManageTab('futebol')} />
-             <TabPill label="🚀 Ações" active={manageTab==='acoes'} onClick={() => setManageTab('acoes')} />
+             {(user?.tipo === 'admin' || user?.perm_device_resumo !== false) && (
+               <TabPill label="🏠 Resumo" active={manageTab==='resumo'} onClick={() => setManageTab('resumo')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_assinatura !== false) && (
+               <TabPill label="📋 Assinatura" active={manageTab==='dados'} onClick={() => setManageTab('dados')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_tv !== false) && (
+               <TabPill label="📺 Dispositivo" active={manageTab==='device'} onClick={() => setManageTab('device')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_apps !== false) && (
+               <TabPill label="📦 Apps" active={manageTab==='apps'} onClick={() => setManageTab('apps')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_credenciais !== false) && (
+               <TabPill label="⚡ Credenciais" active={manageTab==='credenciais'} onClick={() => setManageTab('credenciais')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_futebol !== false) && (
+               <TabPill label="⚽ Futebol" active={manageTab==='futebol'} onClick={() => setManageTab('futebol')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_acoes !== false) && (
+               <TabPill label="🚀 Ações" active={manageTab==='acoes'} onClick={() => setManageTab('acoes')} />
+             )}
           </div>
           
           <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 4 }}>

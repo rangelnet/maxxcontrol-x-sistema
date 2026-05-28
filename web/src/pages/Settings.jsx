@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import {
   Settings as SettingsIcon, Upload, Lock, Phone, Send, MessageCircle,
   Key, Eye, EyeOff, Bot, AlertTriangle, CheckCircle, X, QrCode,
@@ -10,6 +11,7 @@ import {
 } from 'lucide-react'
 
 export default function Settings() {
+  const { user } = useAuth()
   const [whatsapp, setWhatsapp] = useState('')
   const [whatsappInput, setWhatsappInput] = useState('')
   const [supportWhatsapp, setSupportWhatsapp] = useState('')
@@ -17,11 +19,20 @@ export default function Settings() {
   const [telegramId, setTelegramId] = useState('')
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoUrl, setLogoUrl] = useState(null)
+  const [selectedLogoFile, setSelectedLogoFile] = useState(null)
   const [currentPwd, setCurrentPwd] = useState('')
   const [newPwd, setNewPwd] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [saving, setSaving] = useState({})
   const [message, setMessage] = useState(null)
+
+  const formatPhone = (val) => {
+    const digits = val.replace(/\D/g, '');
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  }
 
   // === Perfil do Usuário ===
   const [profileName, setProfileName] = useState('')
@@ -310,21 +321,39 @@ export default function Settings() {
     }
   }
 
-  const handleLogoUpload = async (e) => {
+  const handleLogoSelect = (e) => {
     const file = e.target.files[0]
     if (!file) return
+    
+    // Apenas JPG e PNG
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.type)) {
+      showFeedback('Por favor, selecione apenas imagens JPG ou PNG.', 'error');
+      return;
+    }
+
+    setSelectedLogoFile(file)
+    setLogoPreview(URL.createObjectURL(file))
+  }
+
+  const handleSaveLogo = async () => {
+    if (!selectedLogoFile) {
+      showFeedback('Selecione uma imagem de logo primeiro.', 'error')
+      return
+    }
 
     setSaving(prev => ({ ...prev, logo: true }))
     const formData = new FormData()
-    formData.append('logo', file)
+    formData.append('logo', selectedLogoFile)
 
     try {
       const { data } = await api.post('/api/settings/logo', formData)
       setLogoUrl(data.logo_url)
+      setSelectedLogoFile(null)
       setLogoPreview(null)
-      showFeedback('Logo atualizada!')
+      showFeedback('Logo salva com sucesso!')
     } catch (err) {
-      showFeedback('Erro ao subir logo.', 'error')
+      showFeedback('Erro ao salvar logo.', 'error')
     } finally {
       setSaving(prev => ({ ...prev, logo: false }))
     }
@@ -500,76 +529,93 @@ export default function Settings() {
         </div>
       </header>
 
+      {/* ⚠️ AVISO DE LIMITE DE 24H */}
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex gap-4 items-center shadow-sm backdrop-blur-sm animate-in slide-in-from-top-2 duration-500">
+        <div className="h-12 w-12 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0 text-amber-500 border border-amber-500/10">
+          <Clock size={20} />
+        </div>
+        <div>
+          <h4 className="text-amber-500 font-bold text-xs uppercase tracking-wider mb-1">Política de Alteração</h4>
+          <p className="text-xs text-zinc-300 leading-relaxed font-medium">
+            Por medidas de segurança, a <strong>Logo oficial (Identidade Visual)</strong> só pode ser alterada 1 vez a cada 24 horas. Escolha sua imagem com atenção antes de salvar.
+          </p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Seção trial e entrega */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
-              <Zap className="h-5 w-5 text-orange-500" />
-              <h2 className="text-lg font-bold text-white">Sistema de Trial (Teste)</h2>
-            </div>
-            <div className="space-y-4">
-              <p className="text-xs text-zinc-500">Configure o tempo de acesso gratuito e a URL oficial.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase ml-1 mb-2 block">Tempo de Teste (Horas)</label>
-                  <select 
-                    value={trialHours} 
-                    onChange={e => setTrialHours(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
-                  >
-                    <option value="1">01 Hora</option>
-                    <option value="2">02 Horas</option>
-                    <option value="6">06 Horas</option>
-                    <option value="12">12 Horas</option>
-                    <option value="24">24 Horas</option>
-                  </select>
+          {user?.tipo !== 'revendedor' && (
+            <>
+              {/* Seção trial e entrega */}
+              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <Zap className="h-5 w-5 text-orange-500" />
+                  <h2 className="text-lg font-bold text-white">Sistema de Trial (Teste)</h2>
                 </div>
-                <div>
-                  <label className="text-[11px] font-bold text-zinc-500 uppercase ml-1 mb-2 block">Link do Painel</label>
-                  <input 
-                    type="text" 
-                    value={panelUrl} 
-                    onChange={e => setPanelUrl(e.target.value)}
-                    placeholder="https://meu-painel.com"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
-                  />
+                <div className="space-y-4">
+                  <p className="text-xs text-zinc-500">Configure o tempo de acesso gratuito e a URL oficial.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[11px] font-bold text-zinc-500 uppercase ml-1 mb-2 block">Tempo de Teste (Horas)</label>
+                      <select 
+                        value={trialHours} 
+                        onChange={e => setTrialHours(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
+                      >
+                        <option value="1">01 Hora</option>
+                        <option value="2">02 Horas</option>
+                        <option value="6">06 Horas</option>
+                        <option value="12">12 Horas</option>
+                        <option value="24">24 Horas</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-zinc-500 uppercase ml-1 mb-2 block">Link do Painel</label>
+                      <input 
+                        type="text" 
+                        value={panelUrl} 
+                        onChange={e => setPanelUrl(e.target.value)}
+                        placeholder="https://meu-painel.com"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
+                      />
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleSave('trial')}
+                    disabled={saving.trial}
+                    className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-black transition shadow-lg shadow-orange-500/20"
+                  >
+                    {saving.trial ? 'Salvando...' : 'Salvar Configurações de Cadastro'}
+                  </button>
                 </div>
               </div>
-              <button 
-                onClick={() => handleSave('trial')}
-                disabled={saving.trial}
-                className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-black transition shadow-lg shadow-orange-500/20"
-              >
-                {saving.trial ? 'Salvando...' : 'Salvar Configurações de Cadastro'}
-              </button>
-            </div>
-          </div>
 
-          {/* Boas vindas WhatsApp */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
-              <MessageCircle className="h-5 w-5 text-emerald-500" />
-              <h2 className="text-lg font-bold text-white">Boas-vindas WhatsApp</h2>
-            </div>
-            <div className="space-y-4">
-              <p className="text-xs text-zinc-500">Personalize a mensagem enviada aos novos revendedores.</p>
-              <textarea 
-                value={welcomeTemplate}
-                onChange={e => setWelcomeTemplate(e.target.value)}
-                placeholder="Olá {nome}, seu acesso foi criado..."
-                className="w-full h-32 bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-white resize-none focus:ring-2 focus:ring-orange-500/20 outline-none"
-              />
-              <button 
-                onClick={() => handleSave('trial')}
-                disabled={saving.trial}
-                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition"
-              >
-                {saving.trial ? 'Salvando...' : 'Salvar Texto de Boas-vindas'}
-              </button>
-            </div>
-          </div>
+              {/* Boas vindas WhatsApp */}
+              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <MessageCircle className="h-5 w-5 text-emerald-500" />
+                  <h2 className="text-lg font-bold text-white">Boas-vindas WhatsApp</h2>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-xs text-zinc-500">Personalize a mensagem enviada aos novos revendedores.</p>
+                  <textarea 
+                    value={welcomeTemplate}
+                    onChange={e => setWelcomeTemplate(e.target.value)}
+                    placeholder="Olá {nome}, seu acesso foi criado..."
+                    className="w-full h-32 bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-white resize-none focus:ring-2 focus:ring-orange-500/20 outline-none"
+                  />
+                  <button 
+                    onClick={() => handleSave('trial')}
+                    disabled={saving.trial}
+                    className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition"
+                  >
+                    {saving.trial ? 'Salvando...' : 'Salvar Texto de Boas-vindas'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* P2P Mesh Engine (Rule 5) */}
           <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
@@ -603,28 +649,36 @@ export default function Settings() {
                <Phone className="h-5 w-5 text-orange-500" />
                <h3 className="font-bold text-white">Contato do Banner</h3>
              </div>
-             <p className="text-[11px] text-zinc-500 mb-4">Este número aparecerá no rodapé das suas artes.</p>
+             <p className="text-[11px] text-zinc-500 mb-4">Configura o número que será estampado automaticamente no rodapé das artes e banners promocionais.</p>
+             
+             {whatsapp ? (
+               <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mb-4">
+                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Número Atual: {whatsapp}</span>
+               </div>
+             ) : (
+               <div className="flex items-center gap-2 px-3 py-2 bg-zinc-850/50 border border-zinc-800 rounded-xl mb-4">
+                 <div className="h-2 w-2 rounded-full bg-zinc-650" />
+                 <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Sem número configurado</span>
+               </div>
+             )}
+
              <div className="space-y-3">
                <input 
                  type="text"
                  value={whatsappInput}
-                 onChange={e => setWhatsappInput(e.target.value)}
-                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm"
-                 placeholder="551199999999"
+                 onChange={e => setWhatsappInput(formatPhone(e.target.value))}
+                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20 transition"
+                 placeholder="(11) 99912-3745"
                />
                <button 
                  onClick={() => handleSave('wpp')}
                  disabled={saving.wpp}
-                 className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
+                 className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl text-xs font-black transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
                >
-                 {saving.wpp ? 'Salvando...' : 'Atualizar Número'}
+                 {saving.wpp ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                 {saving.wpp ? 'Atualizando...' : 'Atualizar Número'}
                </button>
-               {whatsapp && (
-                 <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
-                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                   <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Número Atual: {whatsapp}</span>
-                 </div>
-               )}
              </div>
           </div>
 
@@ -632,56 +686,113 @@ export default function Settings() {
           <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <Globe className="h-5 w-5 text-blue-500" />
-              <h3 className="font-bold text-white">Identidade Visual</h3>
+              <h3 className="font-bold text-white">Identidade Visual (Logo)</h3>
             </div>
-            <p className="text-[11px] text-zinc-500 mb-6">Sua logo será aplicada automaticamente nos templates.</p>
+            <p className="text-[11px] text-zinc-500 mb-6">Gerencia a imagem de logotipo que a IA aplica nos templates de banners.</p>
             
-            <div className="flex flex-col items-center">
-              <label 
-                className="w-full aspect-square md:aspect-video rounded-2xl border-2 border-dashed border-zinc-800 hover:border-orange-500/50 hover:bg-orange-500/5 flex flex-col items-center justify-center gap-3 cursor-pointer transition relative overflow-hidden group mb-4"
+            <div className="flex flex-col gap-4">
+              {/* Quadro dashed de preview */}
+              <div 
+                className="w-full aspect-square md:aspect-video rounded-2xl border-2 border-dashed border-zinc-800 bg-zinc-950/50 flex flex-col items-center justify-center gap-3 relative overflow-hidden group p-2"
               >
-                {logoUrl || logoPreview ? (
-                  <img src={logoPreview || logoUrl} alt="Logo" className="w-full h-full object-contain p-4 group-hover:opacity-30 transition" />
+                {logoPreview || logoUrl ? (
+                  <img 
+                    src={logoPreview || logoUrl} 
+                    alt="Preview da Logo" 
+                    className="w-full h-full object-contain transition" 
+                  />
                 ) : (
-                  <Upload className="h-8 w-8 text-zinc-600 group-hover:text-orange-500 transition" />
+                  <div className="flex flex-col items-center justify-center text-center p-4">
+                    <img 
+                      src="/logo_476.png" 
+                      alt="Logo Padrão Suporte" 
+                      className="max-h-16 object-contain opacity-50 mb-2"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase">logo_476.png (padrão)</span>
+                  </div>
                 )}
-                <div className="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition">
-                   <span className="text-[10px] font-black text-white uppercase bg-orange-500 px-3 py-1 rounded-full">Trocar Logo</span>
-                </div>
-                {!logoUrl && !logoPreview && <span className="text-[10px] font-bold text-zinc-600 uppercase">Arraste ou selecione</span>}
-                <input type="file" onChange={handleLogoUpload} className="hidden" accept="image/*" />
-              </label>
-              {saving.logo && <div className="flex items-center gap-2 text-[10px] text-orange-500 animate-pulse font-bold"><Loader2 className="h-3 w-3 animate-spin"/> ATUALIZANDO SERVIDOR...</div>}
+                {selectedLogoFile && (
+                  <div className="absolute top-2 right-2 bg-orange-500 text-zinc-950 font-black text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    Não Salvo
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <input 
+                  type="file" 
+                  id="logo-file-input" 
+                  onChange={handleLogoSelect} 
+                  className="hidden" 
+                  accept=".jpg,.jpeg,.png" 
+                />
+                
+                <button 
+                  type="button"
+                  onClick={() => document.getElementById('logo-file-input').click()}
+                  className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Selecionar Arquivo
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={handleSaveLogo}
+                  disabled={saving.logo || !selectedLogoFile}
+                  className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-850 disabled:opacity-50 text-white rounded-xl text-xs font-black transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+                >
+                  {saving.logo ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {saving.logo ? 'Enviando...' : 'Salvar Logo'}
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Suporte */}
+          {/* Seu Contato de Suporte */}
           <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6 backdrop-blur-sm shadow-xl">
             <div className="flex items-center gap-3 mb-4">
-              <UserCheck className="h-5 w-5 text-indigo-500" />
-              <h3 className="font-bold text-white">Contato de Suporte</h3>
+              <MessageCircle className="h-5 w-5 text-emerald-500" />
+              <h3 className="font-bold text-white">Seu Contato de Suporte</h3>
             </div>
-            <p className="text-[11px] text-zinc-500 mb-4">Aparecerá para seus Sub-Revendedores quando o painel estiver vencendo.</p>
-            <input 
-              type="text"
-              value={supportInput}
-              onChange={e => setSupportInput(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm mb-3"
-              placeholder="Ex: 554799999999"
-            />
-            <button 
-              onClick={() => handleSave('sup')}
-              className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition"
-            >
-              Salvar Contato
-            </button>
-            <div className="mt-3 p-3 bg-zinc-950/50 rounded-xl border border-zinc-800">
-              <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest block mb-1">Número Configurado</span>
-              <span className="text-xs text-white font-medium">{supportWhatsapp || 'Não configurado'}</span>
+            <p className="text-[11px] text-zinc-500 mb-4">Este número aparecerá para seus Sub-Revendedores quando o painel deles estiver vencendo.</p>
+            
+            {supportWhatsapp ? (
+              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mb-4">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Número Configurado: {supportWhatsapp}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2 bg-zinc-850/50 border border-zinc-800 rounded-xl mb-4">
+                <div className="h-2 w-2 rounded-full bg-zinc-650" />
+                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider font-semibold">Não configurado</span>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <input 
+                type="text"
+                value={supportInput}
+                onChange={e => setSupportInput(formatPhone(e.target.value))}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20 transition"
+                placeholder="(11) 99912-3745"
+              />
+              <button 
+                onClick={() => handleSave('sup')}
+                disabled={saving.sup}
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-zinc-950 rounded-xl text-xs font-black transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+              >
+                {saving.sup ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {saving.sup ? 'Salvando...' : 'Salvar Contato'}
+              </button>
             </div>
           </div>
         </div>
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          {/* Envio Automático Telegram */}
@@ -1071,7 +1182,7 @@ export default function Settings() {
                   </li>
                 </ol>
                 <div className="bg-zinc-900 p-3 rounded-xl border border-zinc-800 font-mono text-[11px] text-emerald-400 break-all select-all cursor-copy">
-                  /2fa start {profileEmail || 'seu-email'}
+                  /2fa start {user?.email || 'seu-email'}
                 </div>
                 
                 <div className="pt-2 flex gap-2">
