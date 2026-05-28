@@ -73,15 +73,16 @@ const Dashboard = () => {
   const metricCards = [
     {
       title: 'Receita do Mês',
-      value: 'R$ 25.430',
+      value: stats?.receita_mes !== undefined ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receita_mes) : 'R$ 0,00',
       icon: DollarSign,
       color: 'from-brand-500/20 to-transparent',
       iconColor: 'text-brand-500',
       iconBg: 'bg-brand-500/10 border-brand-500/20',
+      link: '/finance'
     },
     {
       title: 'Usuários Ativos',
-      value: stats?.usuarios_ativos?.toLocaleString() || '8.120',
+      value: stats?.usuarios_ativos !== undefined ? stats.usuarios_ativos.toLocaleString() : '0',
       icon: Users,
       color: 'from-blue-500/20 to-transparent',
       iconColor: 'text-blue-400',
@@ -89,7 +90,7 @@ const Dashboard = () => {
     },
     {
       title: 'Dispositivos Online',
-      value: online?.toLocaleString() || '2.345',
+      value: online !== undefined ? online.toLocaleString() : '0',
       icon: Smartphone,
       color: 'from-green-500/20 to-transparent',
       iconColor: 'text-green-400',
@@ -97,11 +98,13 @@ const Dashboard = () => {
     },
     {
       title: 'Crescimento',
-      value: '+12.5%',
+      value: stats?.crescimento !== undefined 
+        ? `${stats.crescimento >= 0 ? '+' : ''}${stats.crescimento.toFixed(1)}%` 
+        : '0.0%',
       icon: TrendingUp,
-      color: 'from-purple-500/20 to-transparent',
-      iconColor: 'text-purple-400',
-      iconBg: 'bg-purple-500/10 border-purple-500/20',
+      color: stats?.crescimento >= 0 ? 'from-emerald-500/20 to-transparent' : 'from-red-500/20 to-transparent',
+      iconColor: stats?.crescimento >= 0 ? 'text-emerald-400' : 'text-red-400',
+      iconBg: stats?.crescimento >= 0 ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20',
     },
   ]
 
@@ -280,28 +283,32 @@ const Dashboard = () => {
 
       {/* ══════ CARDS DE MÉTRICAS ══════ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metricCards.map((card, index) => (
-          <div
-            key={index}
-            className="relative bg-dark-800 rounded-2xl p-6 overflow-hidden group hover:scale-[1.02] transition-all duration-300 border border-dark-700 hover:border-dark-600"
-            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
-          >
-            {/* Glow base */}
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent" />
-            {/* Gradiente bg */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-60`} />
-            {/* Conteúdo */}
-            <div className="relative z-10">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-xl border ${card.iconBg}`}>
-                  <card.icon className={card.iconColor} size={22} />
+        {metricCards.map((card, index) => {
+          const CardWrapper = card.link ? Link : 'div'
+          return (
+            <CardWrapper
+              key={index}
+              to={card.link}
+              className="relative bg-dark-800 rounded-2xl p-6 overflow-hidden group hover:scale-[1.02] transition-all duration-300 border border-dark-700 hover:border-dark-600 block"
+              style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+            >
+              {/* Glow base */}
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent" />
+              {/* Gradiente bg */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-60`} />
+              {/* Conteúdo */}
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-3 rounded-xl border ${card.iconBg}`}>
+                    <card.icon className={card.iconColor} size={22} />
+                  </div>
                 </div>
+                <p className="text-zinc-400 text-sm mb-1">{card.title}</p>
+                <p className="text-3xl font-bold text-white">{card.value}</p>
               </div>
-              <p className="text-zinc-400 text-sm mb-1">{card.title}</p>
-              <p className="text-3xl font-bold text-white">{card.value}</p>
-            </div>
-          </div>
-        ))}
+            </CardWrapper>
+          )
+        })}
       </div>
 
       {/* ══════ GRID DE FERRAMENTAS (ESTILO GERADOR PREMIUM) ══════ */}

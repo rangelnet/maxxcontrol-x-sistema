@@ -347,7 +347,9 @@ export default function Settings() {
     formData.append('logo', selectedLogoFile)
 
     try {
-      const { data } = await api.post('/api/settings/logo', formData)
+      const { data } = await api.post('/api/settings/logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
       setLogoUrl(data.logo_url)
       setSelectedLogoFile(null)
       setLogoPreview(null)
@@ -697,7 +699,7 @@ export default function Settings() {
               >
                 {logoPreview || logoUrl ? (
                   <img 
-                    src={logoPreview || logoUrl} 
+                    src={logoPreview || (logoUrl ? (logoUrl.startsWith('http') ? logoUrl : `${api.defaults.baseURL || ''}${logoUrl}`) : '')} 
                     alt="Preview da Logo" 
                     className="w-full h-full object-contain transition" 
                   />

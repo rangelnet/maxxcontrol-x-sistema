@@ -21,6 +21,7 @@ import Landing from './pages/Landing'
 import Tickets from './pages/Tickets'
 import Store from './pages/Store'
 import WhatsAppAuto from './pages/WhatsAppAuto'
+import Finance from './pages/Finance'
 import FinancePlans from './pages/FinancePlans'
 import SubscribePlans from './pages/SubscribePlans'
 import Wallet from './pages/Wallet'
@@ -64,6 +65,7 @@ function App() {
             <Route path="tickets" element={<Tickets />} />
             <Route path="banner-generator" element={<BannerGenerator />} />
             <Route path="whatsapp-auto" element={<WhatsAppAuto />} />
+            <Route path="finance" element={<Finance />} />
             <Route path="finance-plans" element={<FinancePlans />} />
             <Route path="wallet" element={<Wallet />} />
             <Route path="agents" element={<NexusAgent />} />

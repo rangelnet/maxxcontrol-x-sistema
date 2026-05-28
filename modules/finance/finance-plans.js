@@ -828,6 +828,50 @@ router.get('/extract', authMiddleware, async (req, res) => {
 });
 
 router.migrateFinance = migrateFinance;
+// ============================================
+// HISTÓRICO FINANCEIRO (CRM & RECEITAS)
+// ============================================
+router.get('/history', authMiddleware, async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    let mpWhere = [];
+    let revWhere = [];
+    let params = [];
+
+    if (req.userTipo === 'revendedor') {
+      params.push(req.userId);
+      mpWhere.push(`reseller_id = $${params.length}`);
+      revWhere.push(`1 = 0`); // Revendedor não vê log global
+    }
+
+    if (month && year) {
+      params.push(month, year);
+      mpWhere.push(`EXTRACT(MONTH FROM created_at) = $${params.length - 1}`);
+      mpWhere.push(`EXTRACT(YEAR FROM created_at) = $${params.length}`);
+      revWhere.push(`EXTRACT(MONTH FROM created_at) = $${params.length - 1}`);
+      revWhere.push(`EXTRACT(YEAR FROM created_at) = $${params.length}`);
+    }
+
+    let mpQuery = `SELECT 'Mercado Pago' as source, id, amount, status, created_at, 'Venda Automática' as client_name, type as details FROM mp_transactions`;
+    let revQuery = `SELECT 'Manual' as source, id, amount, status, created_at, client_name, payment_method as details FROM revenue_logs`;
+
+    if (mpWhere.length > 0) mpQuery += ` WHERE ` + mpWhere.join(' AND ');
+    if (revWhere.length > 0) revQuery += ` WHERE ` + revWhere.join(' AND ');
+
+    const [mpRes, revRes] = await Promise.all([
+      pool.query(mpQuery, params),
+      pool.query(revQuery, params)
+    ]);
+
+    const history = [...mpRes.rows, ...revRes.rows].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    res.json(history);
+  } catch (error) {
+    console.error('Erro ao buscar histórico financeiro:', error);
+    res.status(500).json({ error: 'Erro ao buscar histórico financeiro' });
+  }
+});
 
 module.exports = router;
 

@@ -9,15 +9,29 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>,
 )
 
-// Registra o Service Worker do PWA para exibir o popup automático de "Instalar App"
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('SW PWA Registrado com sucesso:', registration.scope);
-      })
-      .catch(error => {
-        console.log('Falha ao registrar SW PWA:', error);
-      });
+    // CÓDIGO NUCLEAR: Deleta todos os caches antigos do navegador
+    caches.keys().then(names => {
+      for (let name of names) {
+        caches.delete(name);
+      }
+    });
+
+    // Desregistra SW antigos presos e registra o novo com versão baseada no horário
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for(let registration of registrations) {
+        registration.unregister();
+      }
+    }).then(() => {
+      navigator.serviceWorker.register('/sw.js?v=' + new Date().getTime())
+        .then(registration => {
+          console.log('SW PWA Registrado com sucesso:', registration.scope);
+          registration.update();
+        })
+        .catch(error => {
+          console.log('Falha ao registrar SW PWA:', error);
+        });
+    });
   });
 }

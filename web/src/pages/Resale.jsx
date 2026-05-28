@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Users, Plus, Edit2, Trash2, Power, PowerOff, Shield, Link2, KeyRound, ShoppingCart, History, QrCode, X, CheckCircle, MessageCircle, Zap, Loader2, CreditCard, Smartphone, Key, RefreshCw, FileJson, Globe, HelpCircle, ChevronRight, Layout, List, Activity } from 'lucide-react';
 
 const Resale = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const isMasterOrUnlimited = user && (user.tipo === 'admin' || (user.plano && String(user.plano).toLowerCase().includes('ilimitado')));
   
   const canResellers = user?.tipo === 'admin' || user?.perm_revenda_lista !== false;
@@ -12,7 +14,15 @@ const Resale = () => {
   const canApps = user?.tipo === 'admin' || user?.perm_revenda_apps !== false;
   const canLogs = user?.tipo === 'admin' || user?.perm_revenda_logs !== false;
 
-  const [activeTab, setActiveTab] = useState(canResellers ? 'resellers' : (canShop ? 'shop' : (canApps ? 'apps' : ''))); // 'resellers' | 'shop' | 'apps' | 'logs'
+  const initialTab = location.hash === '#shop' ? 'shop' : (canResellers ? 'resellers' : (canShop ? 'shop' : (canApps ? 'apps' : '')));
+  const [activeTab, setActiveTab] = useState(initialTab); // 'resellers' | 'shop' | 'apps' | 'logs'
+  
+  useEffect(() => {
+    if (location.hash === '#shop' && canShop) {
+      setActiveTab('shop');
+    }
+  }, [location.hash, canShop]);
+
   const [deviceSession, setDeviceSession] = useState(null);
   const [deviceLoginMode, setDeviceLoginMode] = useState('mac'); // 'mac' | 'code'
   const [deviceCode, setDeviceCode] = useState('');

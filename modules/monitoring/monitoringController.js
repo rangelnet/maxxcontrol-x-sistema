@@ -21,7 +21,31 @@ exports.getOnlineUsers = async (req, res) => {
 // Dashboard stats
 exports.getDashboardStats = async (req, res) => {
   try {
-    let usersCount, devicesCount, bugsCount, logsCount;
+    let usersCount, devicesCount, bugsCount, logsCount, receitaMes = 0, crescimento = 0;
+
+    try {
+      const [mpTotalRes, revTotalRes, mpPastRes, revPastRes] = await Promise.all([
+        pool.query(`SELECT SUM(amount) as total FROM mp_transactions WHERE status IN ('approved', 'pago', 'completed') AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)`),
+        pool.query(`SELECT SUM(amount) as total FROM revenue_logs WHERE status IN ('approved', 'pago', 'completed') AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)`),
+        pool.query(`SELECT SUM(amount) as total FROM mp_transactions WHERE status IN ('approved', 'pago', 'completed') AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE - INTERVAL '1 month')`),
+        pool.query(`SELECT SUM(amount) as total FROM revenue_logs WHERE status IN ('approved', 'pago', 'completed') AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE - INTERVAL '1 month')`)
+      ]);
+      const mpTotal = parseFloat(mpTotalRes.rows[0].total) || 0;
+      const revTotal = parseFloat(revTotalRes.rows[0].total) || 0;
+      receitaMes = mpTotal + revTotal;
+
+      const mpPast = parseFloat(mpPastRes.rows[0].total) || 0;
+      const revPast = parseFloat(revPastRes.rows[0].total) || 0;
+      const receitaMesPassado = mpPast + revPast;
+
+      if (receitaMesPassado > 0) {
+        crescimento = ((receitaMes - receitaMesPassado) / receitaMesPassado) * 100;
+      } else if (receitaMes > 0) {
+        crescimento = 100;
+      }
+    } catch (e) {
+      console.error('Erro ao somar receita:', e);
+    }
 
     if (req.userTipo === 'revendedor') {
       // Revendedor só vê estatísticas dos seus próprios dispositivos/clientes
@@ -52,7 +76,9 @@ exports.getDashboardStats = async (req, res) => {
       usuarios_ativos: usersCount,
       dispositivos_ativos: devicesCount,
       bugs_pendentes: bugsCount,
-      logs_24h: logsCount
+      logs_24h: logsCount,
+      receita_mes: receitaMes,
+      crescimento: crescimento
     });
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error);

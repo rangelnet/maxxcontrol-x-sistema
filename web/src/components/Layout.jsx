@@ -162,7 +162,7 @@ const Layout = () => {
               {user?.creditos !== undefined ? user.creditos : '0'} <span className="text-sm font-normal text-zinc-500">créditos</span>
             </div>
             <Link
-              to="/wallet"
+              to="/resale#shop"
               onClick={onNavClick}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600"
             >

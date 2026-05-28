@@ -1,0 +1,198 @@
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import { Download, Calendar, DollarSign, Filter, RefreshCw, FileText } from 'lucide-react';
+
+export default function Finance() {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [stats, setStats] = useState({ total: 0, mp: 0, manual: 0 });
+
+  useEffect(() => {
+    loadHistory();
+  }, [month, year]);
+
+  const loadHistory = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/api/finance/history', { params: { month, year } });
+      setHistory(data);
+      
+      let total = 0, mp = 0, manual = 0;
+      data.forEach(item => {
+        const amt = parseFloat(item.amount) || 0;
+        if (['approved', 'pago', 'completed'].includes(item.status?.toLowerCase())) {
+          total += amt;
+          if (item.source === 'Mercado Pago') mp += amt;
+          else manual += amt;
+        }
+      });
+      setStats({ total, mp, manual });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportPDF = () => {
+    window.print();
+  };
+
+  return (
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 print:hidden">
+            <DollarSign className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-white tracking-tight">Gestão Financeira</h1>
+            <p className="text-zinc-500 text-sm font-medium">Relatório de receitas e CRM de vendas mensais.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 print:hidden">
+          <button onClick={loadHistory} className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition">
+            <RefreshCw className={`h-5 w-5 text-zinc-400 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button onClick={exportPDF} className="flex items-center gap-2 px-4 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-500/20 transition">
+            <Download className="h-4 w-4" />
+            Exportar PDF
+          </button>
+        </div>
+      </header>
+
+      {/* FILTROS */}
+      <div className="flex items-center gap-4 bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl backdrop-blur-sm print:hidden">
+        <div className="flex items-center gap-3">
+          <Calendar className="h-5 w-5 text-brand-500" />
+          <span className="text-sm font-bold text-zinc-300">Período:</span>
+        </div>
+        <select 
+          value={month} 
+          onChange={e => setMonth(e.target.value)}
+          className="bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-brand-500/50"
+        >
+          {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+            <option key={m} value={m}>{new Date(2000, m - 1).toLocaleString('pt-BR', { month: 'long' })}</option>
+          ))}
+        </select>
+        <select 
+          value={year} 
+          onChange={e => setYear(e.target.value)}
+          className="bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white text-sm outline-none focus:border-brand-500/50"
+        >
+          {[2024, 2025, 2026, 2027].map(y => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-zinc-900/80 border border-emerald-500/20 p-6 rounded-2xl relative overflow-hidden group print:border-none print:p-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-50 print:hidden" />
+          <div className="relative z-10">
+            <p className="text-emerald-500 text-xs font-bold uppercase mb-1 print:text-black">Receita Total do Mês</p>
+            <h2 className="text-4xl font-black text-white print:text-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.total)}</h2>
+          </div>
+        </div>
+        <div className="bg-zinc-900/80 border border-blue-500/20 p-6 rounded-2xl relative overflow-hidden group print:border-none print:p-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-50 print:hidden" />
+          <div className="relative z-10">
+            <p className="text-blue-500 text-xs font-bold uppercase mb-1 print:text-black">Mercado Pago</p>
+            <h2 className="text-3xl font-black text-white print:text-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.mp)}</h2>
+          </div>
+        </div>
+        <div className="bg-zinc-900/80 border border-zinc-700 p-6 rounded-2xl relative overflow-hidden group print:border-none print:p-0">
+          <div className="relative z-10">
+            <p className="text-zinc-400 text-xs font-bold uppercase mb-1 print:text-black">Pagamentos Manuais</p>
+            <h2 className="text-3xl font-black text-white print:text-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.manual)}</h2>
+          </div>
+        </div>
+      </div>
+
+      {/* TABELA CRM */}
+      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl overflow-hidden backdrop-blur-sm print:border-none print:bg-transparent">
+        <div className="p-6 border-b border-zinc-800/50 flex justify-between items-center print:hidden">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <FileText className="h-5 w-5 text-brand-500" />
+            Histórico Detalhado (CRM)
+          </h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-zinc-950/50 print:bg-transparent">
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Data</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Origem</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Cliente/Detalhes</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Valor</th>
+                <th className="p-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800/50 print:divide-zinc-300">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-zinc-500">
+                    <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    Carregando histórico...
+                  </td>
+                </tr>
+              ) : history.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-zinc-500 font-medium">Nenhuma transação encontrada neste período.</td>
+                </tr>
+              ) : (
+                history.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-zinc-800/30 transition print:text-black">
+                    <td className="p-4 text-sm text-zinc-300 print:text-black">
+                      {new Date(item.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider print:border-none print:p-0 ${
+                        item.source === 'Mercado Pago' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 print:text-black' : 'bg-zinc-800 text-zinc-400 border border-zinc-700 print:text-black'
+                      }`}>
+                        {item.source}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm font-bold text-white print:text-black">{item.client_name || 'Desconhecido'}</p>
+                      <p className="text-xs text-zinc-500 print:text-gray-600">{item.details}</p>
+                    </td>
+                    <td className="p-4 text-sm font-black text-white print:text-black">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.amount)}
+                    </td>
+                    <td className="p-4">
+                      <span className={`text-[11px] font-bold px-2 py-1 rounded border print:border-none print:p-0 ${
+                        ['approved', 'pago', 'completed'].includes(item.status?.toLowerCase()) 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 print:text-green-700'
+                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20 print:text-amber-700'
+                      }`}>
+                        {item.status || 'Pendente'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      {/* Estilos de impressão injetados na tela */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body { background: white !important; color: black !important; }
+          .animate-in { animation: none !important; }
+          header h1 { color: black !important; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border-bottom: 1px solid #ccc; padding: 8px; text-align: left; }
+          .text-white { color: black !important; }
+          .text-zinc-500, .text-zinc-400 { color: #555 !important; }
+        }
+      `}} />
+    </div>
+  );
+}
