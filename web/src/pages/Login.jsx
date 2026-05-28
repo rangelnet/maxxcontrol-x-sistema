@@ -159,15 +159,13 @@ const Login = () => {
     <div className="min-h-screen bg-[#050505] flex flex-col lg:flex-row relative overflow-hidden">
 
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* FUNDO FULLSCREEN COM POSTERS                                     */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      <ScrollingPostersBackground />
-      <div className="absolute inset-0 bg-black/60 z-10 backdrop-blur-[2px]" />
-
-      {/* ══════════════════════════════════════════════════════════════════ */}
       {/* PAINEL ESQUERDO — BRANDING / MARKETING (Oculto no Mobile)       */}
       {/* ══════════════════════════════════════════════════════════════════ */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-transparent z-20">
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#050505] z-20">
+        
+        {/* Fundo com Posters SOMENTE na Esquerda */}
+        <ScrollingPostersBackground />
+        <div className="absolute inset-0 bg-black/60 z-10 backdrop-blur-[2px]" />
         
         {/* Gradiente Overlay (Escurecendo a parte de baixo e direita para dar foco ao texto) */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/90 to-transparent z-10" />
@@ -325,13 +323,11 @@ const Login = () => {
                 {show2FA ? 'Confirme seu acesso' : 'Entre para acessar o painel'}
               </p>
 
-              {/* Divider decorativo (inspirado DTLive) */}
-              <div className="flex items-center gap-3 mt-5">
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent to-white/10" />
-                <div className="w-7 h-7 rounded-full bg-[#FC5F16]/10 border border-[#FC5F16]/20 flex items-center justify-center">
-                  <Shield className="w-3.5 h-3.5 text-[#FC5F16]" />
+              {/* Divider decorativo centralizado */}
+              <div className="flex items-center justify-center mt-6">
+                <div className="w-8 h-8 rounded-full bg-[#FC5F16]/10 border border-[#FC5F16]/20 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-[#FC5F16]" />
                 </div>
-                <div className="flex-1 h-px bg-gradient-to-l from-transparent to-white/10" />
               </div>
             </div>
 
@@ -345,14 +341,14 @@ const Login = () => {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Mail size={16} className="text-zinc-600 transition-colors group-focus-within:text-[#FC5F16]" />
+                      <Mail size={16} className="text-zinc-500 transition-colors group-focus-within:text-[#FC5F16]" />
                     </div>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 bg-[#111111]/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all"
-                      placeholder="seu@email.com"
+                      className="w-full pl-11 pr-4 py-3.5 bg-[#EEF2F6] border border-transparent rounded-xl text-[#111111] font-bold placeholder-zinc-500 focus:bg-white focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all shadow-inner"
+                      placeholder="admin@maxxcontrol.com"
                       required
                     />
                   </div>
@@ -365,20 +361,20 @@ const Login = () => {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock size={16} className="text-zinc-600 transition-colors group-focus-within:text-[#FC5F16]" />
+                      <Lock size={16} className="text-zinc-500 transition-colors group-focus-within:text-[#FC5F16]" />
                     </div>
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={senha}
                       onChange={(e) => setSenha(e.target.value)}
-                      className="w-full pl-11 pr-12 py-3 bg-[#111111]/50 border border-white/10 rounded-xl text-white placeholder-zinc-600 focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all"
+                      className="w-full pl-11 pr-12 py-3.5 bg-[#EEF2F6] border border-transparent rounded-xl text-[#111111] font-bold tracking-widest placeholder-zinc-500 focus:bg-white focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all shadow-inner"
                       placeholder="••••••••"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-white transition-colors"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-zinc-800 transition-colors"
                     >
                       {showPassword ? (
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
