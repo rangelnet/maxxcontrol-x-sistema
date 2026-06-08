@@ -807,15 +807,17 @@ async function runPendingMigrations() {
     // Garantir UNIQUE em name antes do INSERT para evitar erro de ON CONFLICT
     await pool.query(`ALTER TABLE app_activation_packages ADD CONSTRAINT app_activation_packages_name_key UNIQUE (name)`).catch(() => {});
 
-    // Inserir pacotes padrão
-    await pool.query(`
-      INSERT INTO app_activation_packages (name, price, description)
-      VALUES 
-      ('MAXX PLAYER PRO', 119.00, 'Ativação oficial para TV Box e Android TV.'),
-      ('SMARTONE IPTV', 149.00, 'Ativação vitalícia ou anual.'),
-      ('IBO PLAYER', 189.00, 'Ativação anual premium.')
-      ON CONFLICT (name) DO NOTHING
-    `);
+    /* 
+      // Inserir pacotes padrão (COMENTADO PARA NÃO RECRIAR APÓS EXCLUÍDOS)
+      await pool.query(`
+        INSERT INTO app_activation_packages (name, price, description)
+        VALUES 
+        ('MAXX PLAYER PRO', 119.00, 'Ativação oficial para TV Box e Android TV.'),
+        ('SMARTONE IPTV', 149.00, 'Ativação vitalícia ou anual.'),
+        ('IBO PLAYER', 189.00, 'Ativação anual premium.')
+        ON CONFLICT (name) DO NOTHING
+      `);
+      */
     console.log('  ✅ Tabela app_activation_packages e dados iniciais OK');
 
     

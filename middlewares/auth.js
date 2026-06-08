@@ -19,4 +19,25 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+const optionalAuth = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;
+    req.userEmail = decoded.email;
+    req.userTipo = decoded.tipo;
+    req.user = decoded;
+    next();
+  } catch (error) {
+    // If token is invalid, just proceed as unauthenticated
+    next();
+  }
+};
+
 module.exports = authMiddleware;
+module.exports.optional = optionalAuth;

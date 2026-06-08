@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, Fragment } from 'react'
+�import { useState, useEffect, useMemo, Fragment } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import {
@@ -16,11 +16,11 @@ import TestApiModal from '../components/TestApiModal'
 import UploadExcelModal from '../components/UploadExcelModal'
 import footballTeams from '../data/footballTeams'
 
-// ══════════════════════════════════════════════════════════════════════════════
+// â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
 // HELPERS
-// ══════════════════════════════════════════════════════════════════════════════
+// â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
 const formatDate = (date) => {
-  if (!date) return '—'
+  if (!date) return 'â�'
   return new Date(date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
@@ -48,7 +48,7 @@ const formatQuality = (quality) => {
 }
 
 const getExpireColor = (dateStr) => {
-  if (!dateStr || dateStr === '—' || typeof dateStr !== 'string') return '#71717a'
+  if (!dateStr || dateStr === 'â�' || typeof dateStr !== 'string') return '#71717a'
   
   try {
     const parts = dateStr.split('/')
@@ -72,7 +72,7 @@ const getExpireColor = (dateStr) => {
 }
 
 const DaysLeftBadge = ({ dateStr }) => {
-  if (!dateStr || dateStr === '—' || typeof dateStr !== 'string') return null;
+  if (!dateStr || dateStr === 'â�' || typeof dateStr !== 'string') return null;
   try {
     const parts = dateStr.split('/');
     if (parts.length < 3) return null;
@@ -90,9 +90,9 @@ const DaysLeftBadge = ({ dateStr }) => {
   } catch { return null; }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
 // SUB-COMPONENTES
-// ══════════════════════════════════════════════════════════════════════════════
+// â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
 const StatCard = ({ icon: Icon, label, value, color = '#FC5F16', sub }) => (
   <div style={{
     background: 'rgba(17,17,17,0.7)',
@@ -222,7 +222,7 @@ const inputStyle = {
   transition: 'border-color .2s, background-color .2s',
 }
 
-// Select style — garante que as options tenham fundo escuro
+// Select style â� garante que as options tenham fundo escuro
 const selectStyle = {
   ...inputStyle,
   background: '#111111',
@@ -236,9 +236,9 @@ const selectStyle = {
   paddingRight: 32,
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
 // COMPONENTE PRINCIPAL
-// ══════════════════════════════════════════════════════════════════════════════
+// â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
 const Devices = () => {
   const { user } = useAuth()
   const [devices, setDevices]               = useState([])
@@ -263,7 +263,7 @@ const Devices = () => {
   const [visiblePasswords, setVisiblePasswords] = useState({})
   const [toast, setToast]                   = useState(null)
   
-  // ── Controle de Visão (Devices Físicos vs Clientes Painel) ──
+  // â�â� Controle de Visão (Devices Físicos vs Clientes Painel) â�â�
   const [viewMode, setViewMode]             = useState('unified') // 'unified', 'devices' ou 'clients'
   const [panelClients, setPanelClients]     = useState([])
   const [expandedClients, setExpandedClients] = useState({})
@@ -378,7 +378,7 @@ const Devices = () => {
   );
 
   const generateReminder = (acc) => {
-    const msg = `Olá! Passando para lembrar que seu acesso IPTV (${acc.username}) vence em ${acc.expire_date}. Gostaria de renovar? 🚀`;
+    const msg = `Olá! Passando para lembrar que seu acesso IPTV (${acc.username}) vence em ${acc.expire_date}. Gostaria de renovar? �xa�`;
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   };
@@ -593,7 +593,7 @@ const Devices = () => {
 
   useEffect(() => setCurrentPage(1), [searchTerm]);
 
-  // ── API ───────────────────────────────────────────
+  // â�â� API â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�
   const loadDevices = async () => {
     try {
       const r = await api.get('/api/device/list-all')
@@ -654,13 +654,13 @@ const Devices = () => {
     
     try {
       const serverNames = Array.isArray(data.selected_servers) ? data.selected_servers.join(', ') : (data.server_name || 'Servidor');
-      const msg = `🚀 *ACESSO LIBERADO - TV MAXX PRO* 🚀\n\n` +
+      const msg = `�xa� *ACESSO LIBERADO - TV MAXX PRO* �xa�\n\n` +
                   `Olá *${data.nome || 'Cliente'}*, seu acesso foi gerado com sucesso!\n\n` +
-                  `🌐 *Servidor:* ${serverNames}\n` +
-                  `👤 *Usuário:* \`${data.username}\`\n` +
-                  `🔑 *Senha:* \`${data.password}\`\n` +
-                  `📅 *Vencimento:* ${data.vencimento || '2 Horas'}\n\n` +
-                  `📥 *Baixe nosso App:* https://bit.ly/m-player-pro\n\n` +
+                  `�xR� *Servidor:* ${serverNames}\n` +
+                  `�x� *Usuário:* \`${data.username}\`\n` +
+                  `�x *Senha:* \`${data.password}\`\n` +
+                  `�x& *Vencimento:* ${data.vencimento || '2 Horas'}\n\n` +
+                  `�x� *Baixe nosso App:* https://bit.ly/m-player-pro\n\n` +
                   `_Dúvidas? Estamos à disposição!_`;
 
       await api.post('/api/whatsapp/chat/send', {
@@ -674,7 +674,7 @@ const Devices = () => {
     }
   };
 
-  // Extrator M3U — extrai user/pass/dns de URL M3U
+  // Extrator M3U â� extrai user/pass/dns de URL M3U
   const extractM3U = (url, target = 'new') => {
     if (!url) return;
     try {
@@ -708,9 +708,9 @@ const Devices = () => {
     'PLAY FIRE MAXX PREMIUN 4.0', 'PLAY MAXX PREMIUM ULTRA 12.4 - 4 TELAS',
     'MAGO FIRE 12 ANUAL 5.0', 'MAXX ANUAL FIRE 478.8 - TELAS=2',
     'MAXX SEMESTRAL ULTRA 249.9', 'Play Top Lite 7.0', 'TV BOX FIRE+PLAY MAXX 269.9',
-    'PLAY FAMÍLIA 4 MAXX 7.2', 'PLAY STORY AVANÇADO 4.4', 'MAXX PREMIER 4.9 - TELAS=1',
+    'PLAY FAMÍLIA 4 MAXX 7.2', 'PLAY STORY AVAN�!ADO 4.4', 'MAXX PREMIER 4.9 - TELAS=1',
     'PLAY MAXX ANUAL 12', 'TV BOX MAXX FIRE', 'VIRADA DE ANO 3.6',
-    'FIRE MAX AVANÇADO PREMIUM 3.9', 'TESTE', 'FIRE TV', 'MESHTV',
+    'FIRE MAX AVAN�!ADO PREMIUM 3.9', 'TESTE', 'FIRE TV', 'MESHTV',
   ];
 
   // Tab pill style reutilizável
@@ -789,7 +789,7 @@ const Devices = () => {
     finally { setSaving(false) }
   }
 
-  // ── Paginação ──────────────────────────────────
+  // â�â� Paginação â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�â�
   const totalPages  = Math.ceil(filteredDevices.length / itemsPerPage)
   const startIndex  = (currentPage - 1) * itemsPerPage
   const paginatedDevices = filteredDevices.slice(startIndex, startIndex + itemsPerPage)
@@ -803,7 +803,7 @@ const Devices = () => {
     return lastUpdate.toLocaleTimeString('pt-BR')
   }
 
-  // ── Separadores de Estilo ──
+  // â�â� Separadores de Estilo â�â�
   const btnPrimary = {
     display:'flex', alignItems:'center', gap:6, padding:'8px 18px',
     background:'linear-gradient(135deg, #fbbf24, #f59e0b)', border:'none',
@@ -824,14 +824,14 @@ const Devices = () => {
   const sigmaAssinantes = allAccounts.filter(a => a.status === 'active' || a.status === 'ativo').length;
   const sigmaTests = allAccounts.filter(a => a.is_trial || a.package_name?.toLowerCase().includes('teste')).length;
 
-  // ══════════════════════════════════════════════════════════════════════════════
+  // â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
   // RENDER PRINCIPAL
-  // ══════════════════════════════════════════════════════════════════════════════
+  // â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�â"�
   return (
     <>
     <div style={{ position:'relative' }}>
 
-      {/* ── Toast ── */}
+      {/* â�â� Toast â�â� */}
       {toast && (
         <div style={{
           position:'fixed', top:24, right:24, zIndex:200,
@@ -846,7 +846,7 @@ const Devices = () => {
         </div>
       )}
 
-      {/* ── Header ── */}
+      {/* â�â� Header â�â� */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24, gap:16, flexWrap:'wrap' }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', marginBottom:4, display:'flex', alignItems:'center', gap:10 }}>
@@ -937,7 +937,7 @@ const Devices = () => {
         </div>
       </div>
 
-      {/* ── Stats Cards ── */}
+      {/* â�â� Stats Cards â�â� */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14, marginBottom:24 }}>
         <StatCard icon={Tv2}        label="TVs Físicas"  value={totalTvs}    color="#FC5F16" sub={`${onlineCount} Online agora`} />
         <StatCard icon={Users}      label="Assinantes"   value={sigmaAssinantes} color="#60a5fa" sub="Contas Ativas Sigma" />
@@ -945,7 +945,7 @@ const Devices = () => {
         <StatCard icon={Activity}   label="Total Geral"  value={totalTvs + allAccounts.length} color="#34d399" sub="Ecossistema Maxx" />
       </div>
 
-      {/* ── Tabela ── */}
+      {/* â�â� Tabela â�â� */}
       <div style={{
         background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)',
         border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16,
@@ -994,7 +994,7 @@ const Devices = () => {
                               <p style={{ fontSize:9, color:'#71717a', textTransform:'uppercase', fontWeight:700, marginBottom:2 }}>Acesso Sigma</p>
                               <p style={{ fontSize:13, color:'#60a5fa', fontWeight:800 }}>{acc.username}</p>
                               <p style={{ fontSize:11, color:'#71717a', fontFamily:'monospace', marginTop:2 }}>
-                                {acc.password || '—'}
+                                {acc.password || 'â�'}
                               </p>
                             </div>
                             <div style={{ display:'flex', gap:6 }}>
@@ -1125,7 +1125,7 @@ const Devices = () => {
                               </div>
                               <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:2 }}>
                                 <span style={{ fontSize:11, color:'#71717a', fontFamily:'monospace', fontWeight:700 }}>
-                                  {acc.password || '—'}
+                                  {acc.password || 'â�'}
                                 </span>
                                 <button onClick={() => copyToClipboard(acc.password, 'Senha')} style={{ background:'none', border:'none', cursor:'pointer', color:'#52525b', padding:2, display:'flex' }}><Copy size={11} /></button>
                               </div>
@@ -1138,12 +1138,12 @@ const Devices = () => {
                               </div>
                               {(dev.current_iptv_password || dev.password) && (
                                 <div style={{ fontSize:10, color:'#71717a', marginTop:2, fontFamily:'monospace', fontWeight:700 }}>
-                                  {(dev.current_iptv_password || dev.password) || '—'}
+                                  {(dev.current_iptv_password || dev.password) || 'â�'}
                                 </div>
                               )}
                             </div>
                           ) : (
-                            <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>
+                            <span style={{ fontSize:11, color:'#3f3f46' }}>â�</span>
                           )}
                         </td>
 
@@ -1151,9 +1151,9 @@ const Devices = () => {
                         <td style={{ padding:'10px 14px' }}>
                           {acc && <div style={{ fontSize:12, fontWeight:700, color:'#e4e4e7' }}>{acc.server_name || 'Sigma'}</div>}
                           {acc && <div style={{ fontSize:8.5, color:'#52525b', fontFamily:'monospace' }}>{acc.panel_url ? new URL(acc.panel_url).hostname : ''}</div>}
-                          {dev && <div style={{ fontSize:11, color: acc ? '#52525b' : '#71717a', marginTop: acc ? 3 : 0 }}><span style={{ fontSize:8, color:'#3f3f46', marginRight:4 }}>IP:</span>{dev.ip || '—'}</div>}
+                          {dev && <div style={{ fontSize:11, color: acc ? '#52525b' : '#71717a', marginTop: acc ? 3 : 0 }}><span style={{ fontSize:8, color:'#3f3f46', marginRight:4 }}>IP:</span>{dev.ip || 'â�'}</div>}
                           {dev && dev.versao_app && <div style={{ fontSize:8, color:'#3f3f46', background:'rgba(255,255,255,0.03)', padding:'1px 4px', borderRadius:3, display:'inline-block', marginTop:2 }}>v{dev.versao_app}</div>}
-                          {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>}
+                          {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>â�</span>}
                         </td>
 
                         {/* COL 4: Vencimento + Acesso (Unificado) */}
@@ -1162,7 +1162,7 @@ const Devices = () => {
                             {acc && (
                               <>
                                 <div style={{ fontSize:12, fontWeight:700, color:'#e4e4e7', display:'flex', alignItems:'center' }}>
-                                  {acc.expire_date || '—'} <DaysLeftBadge dateStr={acc.expire_date} />
+                                  {acc.expire_date || 'â�'} <DaysLeftBadge dateStr={acc.expire_date} />
                                 </div>
                                 <div style={{ fontSize:8.5, color:'#52525b', marginTop:2 }}>Criado: {formatDate(acc.created_at)}</div>
                               </>
@@ -1171,12 +1171,12 @@ const Devices = () => {
                               <div style={{ marginTop: acc ? 4 : 0, paddingTop: acc ? 4 : 0, borderTop: acc ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                                 <div style={{ fontSize:10, color:'#71717a', display:'flex', alignItems:'center', gap:4 }}>
                                   <Wifi size={10} color={isOnline ? '#34d399' : '#52525b'} />
-                                  {dev.ultimo_acesso ? formatDate(dev.ultimo_acesso) : '—'}
+                                  {dev.ultimo_acesso ? formatDate(dev.ultimo_acesso) : 'â�'}
                                 </div>
-                                <div style={{ fontSize:7.5, color:'#3f3f46', textTransform:'uppercase' }}>Último Acesso TV</div>
+                                <div style={{ fontSize:7.5, color:'#3f3f46', textTransform:'uppercase' }}>�altimo Acesso TV</div>
                               </div>
                             )}
-                            {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>}
+                            {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>â�</span>}
                           </div>
                         </td>
 
@@ -1234,7 +1234,7 @@ const Devices = () => {
                                 {dev.versao_app && <div style={{ fontSize:8, color:'#52525b', marginTop:1 }}>App v{dev.versao_app}</div>}
                               </div>
                             )}
-                            {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>}
+                            {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>â�</span>}
                           </div>
                         </td>
 
@@ -1302,32 +1302,32 @@ const Devices = () => {
         )}
       </div>
 
-      {/* ════ MODAL UNIFICADO (CENTRAL DO CLIENTE/DISPOSITIVO) ════ */}
+      {/* â"�â"�â"�â"� MODAL UNIFICADO (CENTRAL DO CLIENTE/DISPOSITIVO) â"�â"�â"�â"� */}
       {showManageModal && (
         <ModalBase onClose={() => setShowManageModal(false)} maxWidth={700}>
           <ModalHeader icon={Settings} title="Central de Gerenciamento" onClose={() => setShowManageModal(false)} />
           
           <div style={{ display:'flex', gap:8, marginBottom:16, overflowX:'auto', paddingBottom:4 }}>
              {(user?.tipo === 'admin' || user?.perm_device_resumo !== false) && (
-               <TabPill label="🏠 Resumo" active={manageTab==='resumo'} onClick={() => setManageTab('resumo')} />
+               <TabPill label="�x�� Resumo" active={manageTab==='resumo'} onClick={() => setManageTab('resumo')} />
              )}
              {(user?.tipo === 'admin' || user?.perm_device_assinatura !== false) && (
-               <TabPill label="📋 Assinatura" active={manageTab==='dados'} onClick={() => setManageTab('dados')} />
+               <TabPill label="�x9 Assinatura" active={manageTab==='dados'} onClick={() => setManageTab('dados')} />
              )}
              {(user?.tipo === 'admin' || user?.perm_device_tv !== false) && (
-               <TabPill label="📺 Dispositivo" active={manageTab==='device'} onClick={() => setManageTab('device')} />
+               <TabPill label="�x� Dispositivo" active={manageTab==='device'} onClick={() => setManageTab('device')} />
              )}
              {(user?.tipo === 'admin' || user?.perm_device_apps !== false) && (
-               <TabPill label="📦 Apps" active={manageTab==='apps'} onClick={() => setManageTab('apps')} />
+               <TabPill label="�x� Apps" active={manageTab==='apps'} onClick={() => setManageTab('apps')} />
              )}
              {(user?.tipo === 'admin' || user?.perm_device_credenciais !== false) && (
-               <TabPill label="⚡ Credenciais" active={manageTab==='credenciais'} onClick={() => setManageTab('credenciais')} />
+               <TabPill label="âa� Credenciais" active={manageTab==='credenciais'} onClick={() => setManageTab('credenciais')} />
              )}
              {(user?.tipo === 'admin' || user?.perm_device_futebol !== false) && (
-               <TabPill label="⚽ Futebol" active={manageTab==='futebol'} onClick={() => setManageTab('futebol')} />
+               <TabPill label="âa� Futebol" active={manageTab==='futebol'} onClick={() => setManageTab('futebol')} />
              )}
              {(user?.tipo === 'admin' || user?.perm_device_acoes !== false) && (
-               <TabPill label="🚀 Ações" active={manageTab==='acoes'} onClick={() => setManageTab('acoes')} />
+               <TabPill label="�xa� Ações" active={manageTab==='acoes'} onClick={() => setManageTab('acoes')} />
              )}
           </div>
           
@@ -1347,19 +1347,19 @@ const Devices = () => {
 
                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                    <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:12, padding:16, border:'1px solid rgba(255,255,255,0.06)' }}>
-                     <h4 style={{ margin:'0 0 12px 0', fontSize:11, color:'#FC5F16', textTransform:'uppercase', letterSpacing:'0.1em' }}>📦 Plano & Assinatura</h4>
+                     <h4 style={{ margin:'0 0 12px 0', fontSize:11, color:'#FC5F16', textTransform:'uppercase', letterSpacing:'0.1em' }}>�x� Plano & Assinatura</h4>
                      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Plano:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.package_name || '—'}</span></div>
-                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Vencimento:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.expire_date || '—'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Plano:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.package_name || 'â�'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Vencimento:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.expire_date || 'â�'}</span></div>
                        <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Conexões:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.max_connections || 1} Tela(s)</span></div>
                      </div>
                    </div>
 
                    <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:12, padding:16, border:'1px solid rgba(255,255,255,0.06)' }}>
-                     <h4 style={{ margin:'0 0 12px 0', fontSize:11, color:'#60a5fa', textTransform:'uppercase', letterSpacing:'0.1em' }}>📺 Dispositivo</h4>
+                     <h4 style={{ margin:'0 0 12px 0', fontSize:11, color:'#60a5fa', textTransform:'uppercase', letterSpacing:'0.1em' }}>�x� Dispositivo</h4>
                      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>IP Rede:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedDevice?.ip || '—'}</span></div>
-                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>MAC Address:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedDevice?.mac_address || '—'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>IP Rede:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedDevice?.ip || 'â�'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>MAC Address:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedDevice?.mac_address || 'â�'}</span></div>
                        <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Status TV:</span><span style={{color: selectedDevice?.connection_status==='online' ? '#34d399' : '#ef4444',fontSize:12,fontWeight:700}}>{selectedDevice?.connection_status === 'online' ? 'ON' : 'OFF'}</span></div>
                      </div>
                    </div>
@@ -1417,7 +1417,7 @@ const Devices = () => {
                     <FormField label="Nº Telas"><select style={selectStyle} value={editForm.max_connections} onChange={e => setEditForm({...editForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
                   </div>
                   
-                  <FormField label="Notificação WhatsApp"><select style={selectStyle} value={editForm.notificacao_whatsapp} onChange={e => setEditForm({...editForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar Vencimento</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
+                  <FormField label="Notificação WhatsApp"><select style={selectStyle} value={editForm.notificacao_whatsapp} onChange={e => setEditForm({...editForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim â� Notificar Vencimento</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
                   
                   <FormField label="Notas Internas"><textarea style={{...inputStyle,minHeight:60,resize:'vertical'}} value={editForm.notas} onChange={e => setEditForm({...editForm, notas: e.target.value})} placeholder="Observações sobre este cliente..." /></FormField>
                   
@@ -1564,7 +1564,7 @@ const Devices = () => {
              
              {manageTab === 'futebol' && selectedAccount && (
                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-                 <FormField label="Notificar Gols e Jogos"><select style={selectStyle} value={editForm.events_clube} onChange={e => setEditForm({...editForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar na TV</option></select></FormField>
+                 <FormField label="Notificar Gols e Jogos"><select style={selectStyle} value={editForm.events_clube} onChange={e => setEditForm({...editForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim â� Notificar na TV</option></select></FormField>
                  <FormField label="Time do Coração"><select style={selectStyle} value={editForm.clube_id} onChange={e => setEditForm({...editForm, clube_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Nenhum Time Selecionado</option>{footballTeams.map(t => <option key={t} value={t} style={{background:'#111',color:'#fff'}}>{t}</option>)}</select></FormField>
                  <button onClick={() => { sendRemoteAction(selectedAccount.id, 'edit_user', selectedAccount.remote_id, selectedAccount.panel_url, editForm); }} style={{ ...btnPrimary, justifyContent:'center' }}><Save size={15}/> Salvar Preferências de Futebol</button>
                </div>
@@ -1643,9 +1643,9 @@ const Devices = () => {
               </button>
             </div>
           <div style={{ display:'flex', gap:8, marginBottom:16 }}>
-            <TabPill label="📋 Dados" active={newClientTab==='dados'} onClick={() => setNewClientTab('dados')} />
-            <TabPill label="⚡ Extras" active={newClientTab==='extras'} onClick={() => setNewClientTab('extras')} />
-            <TabPill label="⚽ Futebol" active={newClientTab==='futebol'} onClick={() => setNewClientTab('futebol')} />
+            <TabPill label="�x9 Dados" active={newClientTab==='dados'} onClick={() => setNewClientTab('dados')} />
+            <TabPill label="âa� Extras" active={newClientTab==='extras'} onClick={() => setNewClientTab('extras')} />
+            <TabPill label="âa� Futebol" active={newClientTab==='futebol'} onClick={() => setNewClientTab('futebol')} />
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:12, maxHeight:440, overflowY:'auto', paddingRight:4 }}>
             {newClientTab === 'dados' && (<>
@@ -1726,7 +1726,7 @@ const Devices = () => {
               </div>
               <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="MAC (Opcional)"><input style={inputStyle} value={newClientForm.mac} onChange={e => setNewClientForm({...newClientForm, mac: e.target.value})} placeholder="ID Externo" maxLength={17} /></FormField>
-                <FormField label="Notificação WhatsApp"><select style={selectStyle} value={newClientForm.notificacao_whatsapp} onChange={e => setNewClientForm({...newClientForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
+                <FormField label="Notificação WhatsApp"><select style={selectStyle} value={newClientForm.notificacao_whatsapp} onChange={e => setNewClientForm({...newClientForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim â� Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
               </div>
               <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
                 <FormField label="Pacote no Painel Sigma *"><select style={selectStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar Pacote</option>{[...new Set([...dynamicPlans, ...defaultPlans, ...gestorLitePlans])].map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
@@ -1746,7 +1746,7 @@ const Devices = () => {
               <FormField label="DNS"><input style={inputStyle} value={newClientForm.dns} onChange={e => setNewClientForm({...newClientForm, dns: e.target.value})} placeholder="http://dns.servidor.com:8080" /></FormField>
             </>)}
             {newClientTab === 'futebol' && (<>
-              <FormField label="Notificar sobre eventos do time"><select style={selectStyle} value={newClientForm.events_clube || ''} onChange={e => setNewClientForm({...newClientForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option></select></FormField>
+              <FormField label="Notificar sobre eventos do time"><select style={selectStyle} value={newClientForm.events_clube || ''} onChange={e => setNewClientForm({...newClientForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim â� Notificar</option></select></FormField>
               <FormField label="Selecione o Time"><select style={selectStyle} value={newClientForm.clube_id || ''} onChange={e => setNewClientForm({...newClientForm, clube_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecione...</option>{footballTeams.map(t => <option key={t} value={t} style={{background:'#111',color:'#fff'}}>{t}</option>)}</select></FormField>
             </>)}
 
@@ -1806,3 +1806,4 @@ const Devices = () => {
 }
 
 export default Devices
+

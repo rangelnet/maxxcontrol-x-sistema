@@ -2027,4 +2027,86 @@ router.get('/relay-status/:ids', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/iptv-plugin/bulk-import
+ * Importa clientes de uma planilha Excel
+ */
+router.post('/bulk-import', async (req, res) => {
+  try {
+    const { clients, import_type } = req.body;
+    if (!clients || !Array.isArray(clients) || clients.length === 0) {
+      return res.status(400).json({ error: 'Nenhum cliente fornecido' });
+    }
+
+    if (import_type === 'local') {
+      const panelRes = await pool.query("SELECT id FROM qpanel_panels WHERE status = 'active' LIMIT 1");
+      const panel_id = panelRes.rows.length > 0 ? panelRes.rows[0].id : 1;
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const c of clients) {
+          await client.query(`
+            INSERT INTO qpanel_accounts (
+              panel_id, server_id, package_id, username, password, device_mac, expire_date, status, created_at
+            ) VALUES ($1, 0, 0, $2, $3, $4, $5, 'active', NOW())
+          `, [panel_id, c.username, c.password, c.mac || '', c.expire_date || '']);
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+      
+      return res.json({ success: true, imported: clients.length });
+    } else if (import_type === 'relay') {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        let panelUrl = null;
+        if (clients[0].server_name) {
+          const srvRes = await pool.query("SELECT xtream_url FROM iptv_servers WHERE server_name = $1 LIMIT 1", [clients[0].server_name]);
+          if (srvRes.rows.length > 0) panelUrl = srvRes.rows[0].xtream_url;
+        }
+
+        for (const c of clients) {
+          const payload = {
+            username: c.username,
+            password: c.password,
+            package_name: c.package_name,
+            selected_servers: c.server_name ? [c.server_name] : [],
+            months: 1,
+            nome: c.nome,
+            email: c.email,
+            telefone: c.telefone,
+            mac: c.mac,
+            notas: 'Importado via Excel'
+          };
+          
+          await client.query(`
+            INSERT INTO plugin_relay_commands (command_type, payload, panel_url, status, created_at)
+            VALUES ($1, $2, $3, 'pending', NOW())
+          `, ['create_user', JSON.stringify(payload), panelUrl]);
+        }
+        await client.query('COMMIT');
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
+      }
+
+      return res.json({ success: true, imported: clients.length });
+    }
+
+    res.status(400).json({ error: 'Tipo de importação inválido' });
+  } catch (error) {
+    console.error('❌ Erro no bulk-import:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

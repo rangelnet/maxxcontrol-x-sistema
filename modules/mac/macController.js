@@ -709,3 +709,87 @@ exports.updateTestConfig = async (req, res) => {
     res.status(500).json({ error: 'Erro ao atualizar configuração' });
   }
 };
+
+// Bulk Import para Dispositivos e Contas
+exports.bulkImport = async (req, res) => {
+  try {
+    const { clients } = req.body;
+    if (!clients || clients.length === 0) return res.status(400).json({ error: 'Nenhum dispositivo' });
+    const pool = require('../../config/database');
+    const userId = req.user?.id || 1;
+
+    // Buscar o primeiro painel ativo para associar as novas contas (caso não exista)
+    const panelIdRes = await pool.query("SELECT id FROM qpanel_panels WHERE status = 'active' LIMIT 1");
+    const panelId = panelIdRes.rows.length > 0 ? panelIdRes.rows[0].id : null;
+
+    const chunkSize = 50;
+
+    const processClient = async (c) => {
+      const macStr = c.mac ? String(c.mac).trim() : '';
+      const usernameStr = c.username ? String(c.username).trim() : '';
+      const passwordStr = c.password ? String(c.password).trim() : '';
+
+      // 1. Sincronizar DEVICES
+      if (macStr !== '') {
+        const existingDevice = await pool.query('SELECT id FROM devices WHERE mac_address = $1', [macStr]);
+        if (existingDevice.rows.length === 0) {
+          await pool.query(
+            'INSERT INTO devices (user_id, mac_address, app_version, status, connection_status, server, username, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [userId, macStr, String(c.app_version || ''), 'ativo', 'offline', String(c.server || ''), usernameStr, passwordStr]
+          );
+        } else {
+          // UPDATE inteligente (atualiza só se tiver valor novo)
+          await pool.query(
+            `UPDATE devices SET 
+              app_version = COALESCE(NULLIF($1, ''), app_version), 
+              server = COALESCE(NULLIF($2, ''), server), 
+              username = COALESCE(NULLIF($3, ''), username), 
+              password = COALESCE(NULLIF($4, ''), password),
+              updated_at = NOW()
+            WHERE id = $5`,
+            [String(c.app_version || ''), String(c.server || ''), usernameStr, passwordStr, existingDevice.rows[0].id]
+          );
+        }
+      }
+
+      // 2. Sincronizar QPANEL_ACCOUNTS
+      if (usernameStr !== '') {
+        const existingAccount = await pool.query('SELECT id FROM qpanel_accounts WHERE username = $1', [usernameStr]);
+        if (existingAccount.rows.length > 0) {
+          // Atualização Inteligente
+          await pool.query(
+            `UPDATE qpanel_accounts SET 
+              password = COALESCE(NULLIF($1, ''), password),
+              device_mac = COALESCE(NULLIF($2, ''), device_mac),
+              nome = COALESCE(NULLIF($3, ''), nome),
+              email = COALESCE(NULLIF($4, ''), email),
+              telefone = COALESCE(NULLIF($5, ''), telefone),
+              notas = COALESCE(NULLIF($6, ''), notas),
+              expire_date = COALESCE(NULLIF($7, ''), expire_date),
+              updated_at = NOW() 
+            WHERE id = $8`,
+            [passwordStr, macStr, String(c.nome || ''), String(c.email || ''), String(c.telefone || ''), String(c.notas || ''), String(c.expire_date || ''), existingAccount.rows[0].id]
+          );
+        } else if (panelId) {
+          // Inserir nova conta na central
+          await pool.query(
+            `INSERT INTO qpanel_accounts 
+             (panel_id, server_id, package_id, username, password, device_mac, status, expire_date, nome, email, telefone, notas) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+            [panelId, 1, 0, usernameStr, passwordStr || '123456', macStr, 'active', String(c.expire_date || ''), String(c.nome || ''), String(c.email || ''), String(c.telefone || ''), String(c.notas || '')]
+          );
+        }
+      }
+    };
+
+    // Processar em lotes de forma paralela usando o pool
+    for (let i = 0; i < clients.length; i += chunkSize) {
+      const chunk = clients.slice(i, i + chunkSize);
+      await Promise.all(chunk.map(c => processClient(c)));
+    }
+
+    res.json({ success: true, imported: clients.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Tv2, FileText } from 'lucide-react'
-import Devices from './Devices'
+import { Rocket, FileText } from 'lucide-react'
+import Versions from './Versions'
 import Logs from './Logs'
 import { useAuth } from '../context/AuthContext'
 
-const DevicesWithLogs = () => {
+const VersionsWithLogs = () => {
   const { user } = useAuth()
   
   const allTabs = [
-    { key:'devices', label:'Dispositivos', Icon:Tv2, perm: 'perm_dispositivos_lista' },
-    { key:'logs',    label:'Logs & Bugs',  Icon:FileText, perm: 'perm_dispositivos_logs' },
+    { key:'versions', label:'Versões do App', Icon:Rocket, perm: 'perm_versoes' },
+    { key:'logs',     label:'Logs & Bugs',  Icon:FileText, perm: 'perm_dispositivos_logs' },
   ]
   
   const tabs = allTabs.filter(t => user?.tipo === 'admin' || user?.[t.perm] !== false)
@@ -26,9 +26,9 @@ const DevicesWithLogs = () => {
     <div>
       <div style={{ marginBottom:24 }}>
         <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-          <Tv2 size={26} color='#FC5F16'/> Dispositivos & Logs
+          <Rocket size={26} color='#FC5F16'/> Versões & Logs
         </h1>
-        <p style={{ fontSize:12, color:'#52525b' }}>Monitore dispositivos, bugs e eventos do sistema em tempo real</p>
+        <p style={{ fontSize:12, color:'#52525b' }}>Gerencie as versões do aplicativo e monitore logs de sistema</p>
       </div>
 
       {/* Tabs premium */}
@@ -50,7 +50,7 @@ const DevicesWithLogs = () => {
 
       {/* Conteúdo com fade */}
       <div key={activeTab} style={{ animation:'fadeIn .2s ease' }}>
-        {activeTab==='devices' && <Devices/>}
+        {activeTab==='versions' && <Versions/>}
         {activeTab==='logs'    && <Logs/>}
       </div>
 
@@ -59,4 +59,4 @@ const DevicesWithLogs = () => {
   )
 }
 
-export default DevicesWithLogs
+export default VersionsWithLogs

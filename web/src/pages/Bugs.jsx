@@ -18,10 +18,18 @@ const severityConfig = {
   info:     { color:'#3b82f6', bg:'rgba(59,130,246,0.12)', border:'rgba(59,130,246,0.25)' },
 }
 
-// ─── BugCard ───────────────────────────────────────────────
 const BugCard = ({ bug, onResolve }) => {
   const [expanded, setExpanded] = useState(false)
   const sev = severityConfig[bug.severity] || { color:'#71717a', bg:'rgba(113,113,122,0.1)', border:'rgba(113,113,122,0.2)' }
+
+  // Garante que o contexto é um objeto parseado
+  let ctx = {};
+  try {
+    ctx = typeof bug.context === 'string' ? JSON.parse(bug.context) : (bug.context || {});
+  } catch (e) { console.error("Erro ao fazer parse do context do bug", e); }
+
+  const screenshot = ctx.screenshot || ctx.screenshotBase64;
+  const logcat = ctx.logcat;
 
   return (
     <div style={{
@@ -50,7 +58,7 @@ const BugCard = ({ bug, onResolve }) => {
         </div>
 
         {/* Info do dispositivo/usuário */}
-        <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom: bug.stack_trace || !bug.resolvido ? 10 : 0 }}>
+        <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom: bug.stack_trace || screenshot || !bug.resolvido ? 10 : 0 }}>
           {bug.nome && (
             <span style={{ fontSize:12, color:'#a1a1aa' }}>{bug.nome} <span style={{ color:'#52525b' }}>({bug.email})</span></span>
           )}
@@ -66,22 +74,54 @@ const BugCard = ({ bug, onResolve }) => {
           )}
         </div>
 
-        {/* Stack Trace expansível */}
-        {bug.stack_trace && (
+        {/* Conteúdo Expansível (Stack Trace, Logs e Print) */}
+        {(bug.stack_trace || screenshot || logcat) && (
           <>
             <button onClick={() => setExpanded(v => !v)}
               style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', cursor:'pointer', color:'#FC5F16', fontSize:12, fontWeight:700, padding:0, marginBottom: expanded ? 10 : 0 }}>
               {expanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
-              {expanded ? 'Ocultar' : 'Ver'} Stack Trace
+              {expanded ? 'Ocultar' : 'Ver'} Relatório Completo
             </button>
             {expanded && (
-              <pre style={{
-                background:'rgba(5,5,5,0.75)', border:'1px solid rgba(255,255,255,0.05)',
-                borderRadius:10, padding:'12px 14px', fontSize:11, color:'#a1a1aa',
-                overflowX:'auto', maxHeight:200, lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word',
-              }}>
-                {bug.stack_trace}
-              </pre>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Stack Trace */}
+                {bug.stack_trace && (
+                  <div>
+                    <h4 style={{ fontSize: 11, color: '#a1a1aa', marginBottom: 4, textTransform: 'uppercase' }}>Stack Trace</h4>
+                    <pre style={{
+                      background:'rgba(5,5,5,0.75)', border:'1px solid rgba(255,255,255,0.05)',
+                      borderRadius:10, padding:'12px 14px', fontSize:11, color:'#f87171',
+                      overflowX:'auto', maxHeight:200, lineHeight:1.6, whiteSpace:'pre-wrap', wordBreak:'break-word',
+                    }}>
+                      {bug.stack_trace}
+                    </pre>
+                  </div>
+                )}
+                
+                {/* Screenshot */}
+                {screenshot && (
+                  <div>
+                    <h4 style={{ fontSize: 11, color: '#a1a1aa', marginBottom: 4, textTransform: 'uppercase' }}>Print da Tela (Crash)</h4>
+                    <a href={screenshot} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <img src={screenshot} alt="Screenshot do Crash" style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', background: '#000', display: 'block' }} />
+                    </a>
+                  </div>
+                )}
+
+                {/* Logcat */}
+                {logcat && (
+                  <div>
+                    <h4 style={{ fontSize: 11, color: '#a1a1aa', marginBottom: 4, textTransform: 'uppercase' }}>Logcat do Sistema</h4>
+                    <pre style={{
+                      background:'rgba(5,5,5,0.75)', border:'1px solid rgba(255,255,255,0.05)',
+                      borderRadius:10, padding:'12px 14px', fontSize:10, color:'#34d399',
+                      overflowX:'auto', maxHeight:200, lineHeight:1.4, whiteSpace:'pre-wrap', wordBreak:'break-word',
+                    }}>
+                      {logcat}
+                    </pre>
+                  </div>
+                )}
+              </div>
             )}
           </>
         )}

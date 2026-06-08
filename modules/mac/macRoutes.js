@@ -52,4 +52,8 @@ router.post('/update-dns', deviceController.updateDNS);
 router.get('/generate-code/:mac_address', deviceController.generateCode);
 router.post('/login-by-code', deviceController.loginByCode);
 
+
+// Rota para Bulk Import de Devices
+router.post('/bulk-import', authMiddleware, macController.bulkImport);
+
 module.exports = router;

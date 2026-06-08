@@ -57,7 +57,7 @@ const Layout = () => {
         { path: '/gallery', icon: FolderOpen, label: 'Minha Galeria', permission: 'perm_galeria' },
         { path: '/white-label', icon: Store, label: 'Minha Loja White Label', badge: 'NOVO', permission: 'perm_whitelabel' },
         { path: '/whatsapp-auto', icon: MessageCircle, label: 'Automação WhatsApp', badge: 'NOVO', permission: 'perm_whatsapp' },
-        { path: '/versions', icon: Package, label: 'Versões', permission: 'perm_versoes' },
+        { path: '/versions', icon: Package, label: 'Versões & Logs', permission: 'perm_versoes' },
         { path: '/settings', icon: Settings2, label: 'Configurações', permission: 'perm_config' },
         { path: '/tickets', icon: MessageSquare, label: 'Tickets de Suporte', permission: 'perm_tickets' },
       ]

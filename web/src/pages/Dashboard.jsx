@@ -112,7 +112,7 @@ const Dashboard = () => {
   const toolCards = [
     {
       title: 'Dispositivos',
-      description: 'Gerencie e monitore todos os dispositivos conectados com logs em tempo real.',
+      description: 'Gerencie e monitore todos os dispositivos e clientes conectados.',
       icon: Smartphone,
       iconColor: 'text-blue-400',
       iconBg: 'bg-blue-500/10 border-blue-500/20',
@@ -191,8 +191,8 @@ const Dashboard = () => {
       badge: null,
     },
     {
-      title: 'Versões do App',
-      description: 'Controle versões do aplicativo, forçar atualizações e changelog.',
+      title: 'Versões & Logs',
+      description: 'Controle versões do aplicativo e monitore erros e logs do sistema.',
       icon: Server,
       iconColor: 'text-cyan-400',
       iconBg: 'bg-cyan-500/10 border-cyan-500/20',

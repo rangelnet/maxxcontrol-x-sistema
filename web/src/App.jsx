@@ -3,13 +3,13 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { WhatsAppProvider } from './context/WhatsAppContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
-import DevicesWithLogs from './pages/DevicesWithLogs'
+import Devices from './pages/Devices'
 import APIPanel from './pages/APIPanel'
 import BrandingBanners from './pages/BrandingBanners'
 import BannerGallery from './pages/BannerGallery'
 import GameSchedule from './pages/GameSchedule'
 import WhiteLabel from './pages/WhiteLabel'
-import Versions from './pages/Versions'
+import VersionsWithLogs from './pages/VersionsWithLogs'
 import IptvPanel from './pages/IptvPanel'
 import IptvTreeViewer from './pages/IptvTreeViewer'
 import IptvServer from './pages/IptvServer'
@@ -18,6 +18,7 @@ import Resale from './pages/Resale'
 import Settings from './pages/Settings'
 import BannerGenerator from './pages/BannerGenerator'
 import Landing from './pages/Landing'
+import UploadPlaylist from './pages/UploadPlaylist'
 import Tickets from './pages/Tickets'
 import Store from './pages/Store'
 import WhatsAppAuto from './pages/WhatsAppAuto'
@@ -28,6 +29,9 @@ import Wallet from './pages/Wallet'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 import NexusAgent from './pages/NexusAgent'
+import Active from './pages/Active'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfUse from './pages/TermsOfUse'
 
 function App() {
   return (
@@ -37,6 +41,10 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Landing />} />
+          <Route path="/upload-playlist" element={<UploadPlaylist />} />
+          <Route path="/active" element={<Active />} />
+          <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+          <Route path="/termos-de-uso" element={<TermsOfUse />} />
           <Route path="/loja/:slug" element={<Store />} />
           <Route path="/subscribe-plans" element={<SubscribePlans />} />
           <Route element={
@@ -45,13 +53,13 @@ function App() {
             </PrivateRoute>
           }>
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="devices" element={<DevicesWithLogs />} />
+            <Route path="devices" element={<Devices />} />
             <Route path="api-monitor" element={<Navigate to="/api-config" replace />} />
             <Route path="api-config" element={<APIPanel />} />
             <Route path="branding-banners" element={<BrandingBanners />} />
-            <Route path="logs" element={<Navigate to="/devices" replace />} />
-            <Route path="bugs" element={<Navigate to="/devices" replace />} />
-            <Route path="versions" element={<Versions />} />
+            <Route path="logs" element={<Navigate to="/versions" replace />} />
+            <Route path="bugs" element={<Navigate to="/versions" replace />} />
+            <Route path="versions" element={<VersionsWithLogs />} />
             <Route path="iptv-server" element={<IptvServer />} />
             <Route path="iptv-servers" element={<Navigate to="/iptv-server" replace />} />
             <Route path="iptv-plugin" element={<IptvServersManager />} />
