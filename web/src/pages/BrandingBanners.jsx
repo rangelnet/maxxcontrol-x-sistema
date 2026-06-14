@@ -3,6 +3,9 @@ import Branding from './Branding'
 import ProfileScreenManager from './ProfileScreenManager'
 import TvManager from './TvManager'
 import SportsManager from './SportsManager'
+import HomeManager from './HomeManager'
+import VodManager from './VodManager'
+import SeriesManager from './SeriesManager'
 
 const TABS = [
   {
@@ -32,6 +35,27 @@ const TABS = [
     icon: '⚽',
     badge: 'NOVO',
     desc: 'Cards de modalidades e banners',
+  },
+  {
+    id: 'home-manager',
+    label: 'Gerenciar Home',
+    icon: '🏠',
+    badge: 'UI',
+    desc: 'Banners principais e fileiras',
+  },
+  {
+    id: 'vod-manager',
+    label: 'Gerenciar Filmes',
+    icon: '🎬',
+    badge: 'UI',
+    desc: 'Categorias em destaque',
+  },
+  {
+    id: 'series-manager',
+    label: 'Gerenciar Séries',
+    icon: '📺',
+    badge: 'UI',
+    desc: 'Séries em destaque',
   },
 ]
 
@@ -106,6 +130,9 @@ const BrandingBanners = () => {
         {activeTab === 'profile-screen' && <ProfileScreenManager />}
         {activeTab === 'tv-manager' && <TvManager />}
         {activeTab === 'sports-manager' && <SportsManager />}
+        {activeTab === 'home-manager' && <HomeManager />}
+        {activeTab === 'vod-manager' && <VodManager />}
+        {activeTab === 'series-manager' && <SeriesManager />}
       </div>
     </div>
   )
