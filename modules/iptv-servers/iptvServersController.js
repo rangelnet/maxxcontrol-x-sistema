@@ -15,6 +15,11 @@ exports.listServers = async (req, res) => {
       SELECT id, name, url, region, priority 
       FROM servers 
       WHERE status = 'ativo'
+        AND lower(url) NOT IN ('https://play.google.com', 'https://dl.ntdev.in', 'http://alibi.com', 'http://negativo.cr')
+        AND lower(url) NOT LIKE '%play.google.com%'
+        AND lower(url) NOT LIKE '%dl.ntdev.in%'
+        AND lower(url) NOT LIKE '%alibi.com%'
+        AND lower(url) NOT LIKE '%negativo.cr%'
       ORDER BY priority ASC
     `;
     

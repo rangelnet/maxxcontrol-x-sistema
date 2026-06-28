@@ -42,6 +42,43 @@ exports.getSettings = async (req, res) => {
   }
 };
 
+const PUBLIC_SETTING_KEYS = new Set([
+  'panel_url',
+  'trial_hours',
+  'player_app_url',
+  'whatsapp',
+  'support_whatsapp',
+  'logo_url',
+  'mp_public_key',
+  'mp_receive_pix',
+  'mp_receive_boleto',
+  'mp_receive_credit',
+  'mp_status_active',
+  'paypal_status_active',
+  'sports_cards'
+]);
+
+exports.getPublicSettings = async (req, res) => {
+  try {
+    const globalResult = await pool.query('SELECT key, value FROM global_settings');
+    const settings = {};
+
+    globalResult.rows.forEach(row => {
+      if (!PUBLIC_SETTING_KEYS.has(row.key)) return;
+      try {
+        settings[row.key] = JSON.parse(row.value);
+      } catch (e) {
+        settings[row.key] = row.value;
+      }
+    });
+
+    res.json(settings);
+  } catch (error) {
+    console.error('Erro ao buscar configurações públicas:', error);
+    res.status(500).json({ error: 'Erro ao buscar configurações públicas' });
+  }
+};
+
 exports.updateSetting = async (req, res) => {
   const { key } = req.params;
   const { value } = req.body;

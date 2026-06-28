@@ -164,7 +164,9 @@ export default function Active() {
               </span>
             </Link>
             
+            {/* Nav Menu */}
             <div className="hidden md:flex space-x-6 items-center">
+              <Link to="/upload-playlist?tab=pricing" className="text-[14px] font-medium text-white hover:text-brand-500 transition-colors">Planos MAXX PLAYERS</Link>
               <Link to="/upload-playlist" className="text-[14px] font-medium text-white hover:text-brand-500 transition-colors">Carregar Playlist</Link>
             </div>
           </div>
@@ -389,11 +391,27 @@ export default function Active() {
                    )}
                 </div>
              ) : (
-                <div className="relative w-[300px] md:w-[400px] aspect-video bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(252,95,22,0.15)] flex flex-col items-center justify-center overflow-hidden transition-all duration-500 group">
-                   <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 to-transparent group-hover:opacity-100 opacity-50 transition-opacity"></div>
-                   <MonitorPlay size={80} className="text-brand-500/50 mb-4 relative z-10 drop-shadow-[0_0_15px_rgba(252,95,22,0.8)] group-hover:scale-110 transition-transform" />
-                   <span className="text-white/30 font-bold tracking-widest relative z-10 text-sm">MAXX CONTROL PREMIUM</span>
-                   <div className="absolute bottom-4 right-4 w-3 h-3 rounded-full bg-brand-500 shadow-[0_0_15px_rgba(252,95,22,1)] animate-pulse"></div>
+                <div className="relative w-[300px] md:w-[450px] aspect-video bg-black border-2 border-brand-500/20 rounded-2xl shadow-[0_0_50px_rgba(252,95,22,0.25)] flex flex-col items-center justify-center overflow-hidden transition-all duration-700 group cursor-pointer hover:border-brand-500/50">
+                   {/* Background Image of the actual APP */}
+                   <img src="/app-login.png" alt="MAXX PLAYERS Login Screen" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
+                   
+                   {/* Glow and Overlays */}
+                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 group-hover:opacity-70 transition-opacity"></div>
+                   <div className="absolute inset-0 bg-brand-500/10 mix-blend-overlay"></div>
+                   
+                   {/* Centered Logo */}
+                   <img src="/logo-app.png" alt="MAXX PLAYERS Logo" className="relative z-10 w-24 md:w-32 drop-shadow-[0_0_25px_rgba(252,95,22,0.8)] transform group-hover:-translate-y-2 transition-transform duration-500" />
+                   
+                   {/* Status Indicator */}
+                   <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 z-10">
+                       <div className="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_10px_rgba(252,95,22,1)] animate-pulse"></div>
+                       <span className="text-[9px] font-black text-white tracking-widest uppercase">Sistema Online</span>
+                   </div>
+                   
+                   {/* Bottom Text */}
+                   <span className="absolute bottom-4 text-white/50 font-bold tracking-widest z-10 text-xs md:text-sm uppercase group-hover:text-white transition-colors duration-500 drop-shadow-md">
+                       O Melhor Reprodutor
+                   </span>
                 </div>
              )}
           </div>

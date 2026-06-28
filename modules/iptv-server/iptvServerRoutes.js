@@ -15,6 +15,7 @@ router.delete('/curation/:id', iptvProviderController.deleteCurationItem);
 const iptvServerController = require('./iptvServerController');
 
 // Rotas de Configuração Global (PostgreSQL Local)
+router.get('/public-config', iptvServerController.getPublicConfig);
 router.get('/config', iptvServerController.getConfig);
 router.post('/config', iptvServerController.saveConfig);
 router.post('/test', iptvServerController.testConnection);

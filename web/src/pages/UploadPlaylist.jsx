@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeft, Monitor, Code, User, Link as LinkIcon, Loader2, Play, FileJson, X, Plus, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ChevronLeft, Monitor, Code, User, Link as LinkIcon, Loader2, Play, FileJson, X, Plus, ShieldCheck, Zap } from 'lucide-react';
 import api from '../services/api';
+import MaxxPlayerShowcase from '../components/MaxxPlayerShowcase';
 
 export default function UploadPlaylist() {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('mac_key'); 
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'pricing') {
+      setActiveTab('pricing');
+    }
+  }, [location]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' }); 
 
@@ -112,6 +121,7 @@ export default function UploadPlaylist() {
     { id: 'code', title: 'Carregar playlist com código', subtitle: 'Adicione sua playlist via código de acesso', icon: <Code size={24}/> },
     { id: 'xtream', title: 'Carregar playlist com Xtream', subtitle: 'Adicione sua playlist via conta Xtream', icon: <User size={24}/> },
     { id: 'url', title: 'Carregar playlist com URL', subtitle: 'Adicione sua playlist via URL da Playlist', icon: <LinkIcon size={24}/> },
+    { id: 'pricing', title: 'Conheça o MAXX PLAYERS', subtitle: 'Recursos e planos premium', icon: <Zap size={24} className="text-brand-500"/> },
   ];
 
   return (
@@ -133,6 +143,7 @@ export default function UploadPlaylist() {
             
             {/* Nav Menu */}
             <div className="hidden md:flex space-x-6 items-center">
+              <button onClick={() => setActiveTab('pricing')} className="text-[14px] font-medium text-white hover:text-brand-500 transition-colors">Planos e Preços</button>
               <Link to="/active" className="text-[14px] font-medium text-white hover:text-brand-500 transition-colors">Ativação</Link>
             </div>
           </div>
@@ -145,8 +156,13 @@ export default function UploadPlaylist() {
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-grow w-full max-w-[1500px] mx-auto mt-4 md:mt-[20px] px-2 md:px-[40px] relative z-10">
+      {/* MAIN CONTENT OR SHOWCASE */}
+      {activeTab === 'pricing' ? (
+         <div className="w-full relative z-10 animate-fade-in border-t border-white/5">
+            <MaxxPlayerShowcase />
+         </div>
+      ) : (
+        <main className="flex-grow w-full max-w-[1500px] mx-auto mt-4 md:mt-[20px] px-2 md:px-[40px] relative z-10">
         
         {/* CABEÇALHO DO HUB DE AUTOATENDIMENTO */}
         <div className="text-center mb-10 pt-4">
@@ -171,187 +187,188 @@ export default function UploadPlaylist() {
             </button>
         </div>
 
-        <div className="max-w-[949px] mx-auto py-2 px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 max-w-[470px] lg:max-w-none mx-auto lg:mx-0">
-             
-             {/* LEFT COLUMN: TABS */}
-             <div className="space-y-4">
-                <h2 className="text-white mb-[29px]" style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '28px', lineHeight: '105%', letterSpacing: '-1.6px' }}>
-                  Como deseja carregar sua playlist?
-                </h2>
-                
-                {tabs.map((tab) => (
-                   <div key={tab.id} className="relative flex items-center group">
-                     <button 
-                       onClick={() => { setActiveTab(tab.id); setMessage({text:'', type:''}); }}
-                       className={`w-full max-w-[470px] h-[57px] lg:h-[65px] flex flex-row items-center justify-start px-5 lg:pl-6 border-2 rounded-xl lg:rounded-2xl transition-all focus:outline-none relative group ${
-                          activeTab === tab.id 
-                          ? 'bg-white/10 border-brand-500 shadow-[0_0_20px_rgba(252,95,22,0.2)]' 
-                          : 'bg-[#141414]/50 border-white/5 hover:border-brand-500/50 opacity-60 hover:opacity-100'
-                       }`}
-                     >
-                        <div className="flex items-center w-full gap-[10px] lg:gap-[19px]">
-                           <div className={`flex items-center justify-center min-w-[48px] min-h-[48px] transition-colors ${activeTab === tab.id ? 'text-white' : 'text-[#D9D9D9]'}`}>
-                              {tab.icon}
-                           </div>
-                           <div className="flex flex-col justify-center text-left min-w-0 gap-[2px]">
-                              <div className={`truncate text-[14px] lg:text-[18px] font-normal lg:font-light ${activeTab === tab.id ? 'text-white font-bold' : 'text-white'}`}>
-                                 {tab.title}
-                              </div>
-                              <div className="text-white/70 truncate text-[10px] font-normal">
-                                 {tab.subtitle}
-                              </div>
-                           </div>
-                        </div>
-                     </button>
-                     {/* Active Arrow indicator */}
-                     {activeTab === tab.id && (
-                        <span className="absolute -right-6 top-1/2 -translate-y-1/2 hidden lg:block text-brand-500">
-                           <Play className="fill-current" size={24} />
-                        </span>
-                     )}
-                   </div>
-                ))}
-             </div>
+          <div className="max-w-[949px] mx-auto py-2 px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 max-w-[470px] lg:max-w-none mx-auto lg:mx-0">
+               
+               {/* LEFT COLUMN: TABS */}
+               <div className="space-y-4">
+                  <h2 className="text-white mb-[29px]" style={{ fontFamily: 'Inter', fontWeight: 500, fontSize: '28px', lineHeight: '105%', letterSpacing: '-1.6px' }}>
+                    Como deseja carregar sua playlist?
+                  </h2>
+                  
+                  {tabs.map((tab) => (
+                     <div key={tab.id} className="relative flex items-center group">
+                       <button 
+                         onClick={() => { setActiveTab(tab.id); setMessage({text:'', type:''}); }}
+                         className={`w-full max-w-[470px] h-[57px] lg:h-[65px] flex flex-row items-center justify-start px-5 lg:pl-6 border-2 rounded-xl lg:rounded-2xl transition-all focus:outline-none relative group ${
+                            activeTab === tab.id 
+                            ? 'bg-white/10 border-brand-500 shadow-[0_0_20px_rgba(252,95,22,0.2)]' 
+                            : 'bg-[#141414]/50 border-white/5 hover:border-brand-500/50 opacity-60 hover:opacity-100'
+                         }`}
+                       >
+                          <div className="flex items-center w-full gap-[10px] lg:gap-[19px]">
+                             <div className={`flex items-center justify-center min-w-[48px] min-h-[48px] transition-colors ${activeTab === tab.id ? 'text-white' : 'text-[#D9D9D9]'}`}>
+                                {tab.icon}
+                             </div>
+                             <div className="flex flex-col justify-center text-left min-w-0 gap-[2px]">
+                                <div className={`truncate text-[14px] lg:text-[18px] font-normal lg:font-light ${activeTab === tab.id ? 'text-white font-bold' : 'text-white'}`}>
+                                   {tab.title}
+                                </div>
+                                <div className="text-white/70 truncate text-[10px] font-normal">
+                                   {tab.subtitle}
+                                </div>
+                             </div>
+                          </div>
+                       </button>
+                       {/* Active Arrow indicator */}
+                       {activeTab === tab.id && (
+                          <span className="absolute -right-6 top-1/2 -translate-y-1/2 hidden lg:block text-brand-500">
+                             <Play className="fill-current" size={24} />
+                          </span>
+                       )}
+                     </div>
+                  ))}
+               </div>
 
-             {/* RIGHT COLUMN: FORM */}
-             <div className="lg:p-6 h-fit overflow-visible lg:border-2 lg:rounded-[30px] border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm max-w-[470px] lg:max-w-none shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-                <h2 className="text-white mb-6 lg:block hidden font-light text-[16px] leading-[24px]">
-                  Carregue sua lista de reprodução no aplicativo e desfrute dos benefícios.
-                </h2>
-                
-                {message.text && (
-                  <div className={`mb-6 p-4 rounded-xl border font-bold text-center text-sm ${message.type === 'success' ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>
-                    {message.text}
+               {/* RIGHT COLUMN: FORM */}
+               <div className="lg:p-6 h-fit overflow-visible lg:border-2 lg:rounded-[30px] border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm max-w-[470px] lg:max-w-none shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                  <h2 className="text-white mb-6 lg:block hidden font-light text-[16px] leading-[24px]">
+                    Carregue sua lista de reprodução no aplicativo e desfrute dos benefícios.
+                  </h2>
+                  
+                  {message.text && (
+                    <div className={`mb-6 p-4 rounded-xl border font-bold text-center text-sm ${message.type === 'success' ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>
+                      {message.text}
+                    </div>
+                  )}
+
+                  <div className="mt-[19px]">
+                    {/* FORM: MAC & KEY */}
+                    {activeTab === 'mac_key' && (
+                       <form onSubmit={handleMacKeyLogin} className="space-y-4 overflow-visible animate-fade-in">
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
+                             <input required type="text" placeholder="Endereço MAC" value={macKeyForm.mac} onChange={e => setMacKeyForm({...macKeyForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">KEY</label>
+                             <input required type="password" placeholder="KEY" value={macKeyForm.key} onChange={e => setMacKeyForm({...macKeyForm, key: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono tracking-widest transition-colors" />
+                          </div>
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login'}
+                          </button>
+                       </form>
+                    )}
+
+                    {/* FORM: CÓDIGO */}
+                    {activeTab === 'code' && (
+                       <form onSubmit={handleUploadCode} className="space-y-4 overflow-visible animate-fade-in">
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
+                             <input required type="text" placeholder="Endereço MAC" value={codeForm.mac} onChange={e => setCodeForm({...codeForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Código</label>
+                             <input required type="text" placeholder="Código" value={codeForm.code} onChange={e => setCodeForm({...codeForm, code: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Nome de usuário</label>
+                             <input required type="text" placeholder="Nome de usuário" value={codeForm.username} onChange={e => setCodeForm({...codeForm, username: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Senha</label>
+                             <input required type="password" placeholder="Senha" value={codeForm.password} onChange={e => setCodeForm({...codeForm, password: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
+                          </button>
+                       </form>
+                    )}
+
+                    {/* FORM: XTREAM */}
+                    {activeTab === 'xtream' && (
+                       <form onSubmit={handleUploadXtream} className="space-y-4 overflow-visible animate-fade-in">
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
+                             <input required type="text" placeholder="Endereço MAC" value={xtreamForm.mac} onChange={e => setXtreamForm({...xtreamForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Nome da lista de reprodução</label>
+                             <input required type="text" placeholder="Nome da lista" value={xtreamForm.name} onChange={e => setXtreamForm({...xtreamForm, name: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">URL</label>
+                             <input required type="url" placeholder="URL" value={xtreamForm.url} onChange={e => setXtreamForm({...xtreamForm, url: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Nome de usuário</label>
+                             <input required type="text" placeholder="Nome de usuário" value={xtreamForm.username} onChange={e => setXtreamForm({...xtreamForm, username: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Senha</label>
+                             <input required type="password" placeholder="Senha" value={xtreamForm.password} onChange={e => setXtreamForm({...xtreamForm, password: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+
+                          {/* Define PIN Checkbox */}
+                          <div className="flex gap-2 items-center mt-2">
+                             <div className="relative flex-shrink-0">
+                                <input id="define-pin" className="sr-only" type="checkbox" checked={definePin} onChange={(e) => setDefinePin(e.target.checked)} />
+                                <div onClick={() => setDefinePin(!definePin)} className={`w-6 h-6 cursor-pointer flex items-center justify-center rounded border transition-colors ${definePin ? 'bg-brand-500 border-brand-500' : 'bg-[#141414] border-white/20 hover:border-white/40'}`}>
+                                   {definePin && <ShieldCheck size={16} className="text-white" />}
+                                </div>
+                             </div>
+                             <label htmlFor="define-pin" onClick={() => setDefinePin(!definePin)} className="text-sm text-white font-normal cursor-pointer select-none flex items-center">
+                                Definir Pin
+                             </label>
+                          </div>
+
+                          {/* PIN Fields (Conditional) */}
+                          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${definePin ? 'max-h-[200px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+                             <div className="space-y-4">
+                                <div>
+                                   <label className="block text-sm mb-1 text-white/80 font-light">PIN</label>
+                                   <input required={definePin} type="password" placeholder="PIN" value={xtreamForm.pin} onChange={e => setXtreamForm({...xtreamForm, pin: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                                </div>
+                                <div>
+                                   <label className="block text-sm mb-1 text-white/80 font-light">Digite o PIN novamente</label>
+                                   <input required={definePin} type="password" placeholder="Confirmar PIN" value={xtreamForm.confirmPin} onChange={e => setXtreamForm({...xtreamForm, confirmPin: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                                </div>
+                             </div>
+                          </div>
+
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
+                          </button>
+                       </form>
+                    )}
+
+                    {/* FORM: URL */}
+                    {activeTab === 'url' && (
+                       <form onSubmit={handleUploadUrl} className="space-y-4 overflow-visible animate-fade-in">
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
+                             <input required type="text" placeholder="Endereço MAC" value={urlForm.mac} onChange={e => setUrlForm({...urlForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">Nome da lista de reprodução</label>
+                             <input required type="text" placeholder="Nome da lista" value={urlForm.name} onChange={e => setUrlForm({...urlForm, name: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <div>
+                             <label className="block text-sm mb-1 text-white/80 font-light">URL</label>
+                             <input required type="url" placeholder="URL" value={urlForm.url} onChange={e => setUrlForm({...urlForm, url: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
+                          </div>
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
+                          </button>
+                       </form>
+                    )}
+
                   </div>
-                )}
-
-                <div className="mt-[19px]">
-                  {/* FORM: MAC & KEY */}
-                  {activeTab === 'mac_key' && (
-                     <form onSubmit={handleMacKeyLogin} className="space-y-4 overflow-visible animate-fade-in">
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
-                           <input required type="text" placeholder="Endereço MAC" value={macKeyForm.mac} onChange={e => setMacKeyForm({...macKeyForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">KEY</label>
-                           <input required type="password" placeholder="KEY" value={macKeyForm.key} onChange={e => setMacKeyForm({...macKeyForm, key: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono tracking-widest transition-colors" />
-                        </div>
-                        <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
-                           {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login'}
-                        </button>
-                     </form>
-                  )}
-
-                  {/* FORM: CÓDIGO */}
-                  {activeTab === 'code' && (
-                     <form onSubmit={handleUploadCode} className="space-y-4 overflow-visible animate-fade-in">
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
-                           <input required type="text" placeholder="Endereço MAC" value={codeForm.mac} onChange={e => setCodeForm({...codeForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Código</label>
-                           <input required type="text" placeholder="Código" value={codeForm.code} onChange={e => setCodeForm({...codeForm, code: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Nome de usuário</label>
-                           <input required type="text" placeholder="Nome de usuário" value={codeForm.username} onChange={e => setCodeForm({...codeForm, username: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Senha</label>
-                           <input required type="password" placeholder="Senha" value={codeForm.password} onChange={e => setCodeForm({...codeForm, password: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
-                           {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
-                        </button>
-                     </form>
-                  )}
-
-                  {/* FORM: XTREAM */}
-                  {activeTab === 'xtream' && (
-                     <form onSubmit={handleUploadXtream} className="space-y-4 overflow-visible animate-fade-in">
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
-                           <input required type="text" placeholder="Endereço MAC" value={xtreamForm.mac} onChange={e => setXtreamForm({...xtreamForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Nome da lista de reprodução</label>
-                           <input required type="text" placeholder="Nome da lista" value={xtreamForm.name} onChange={e => setXtreamForm({...xtreamForm, name: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">URL</label>
-                           <input required type="url" placeholder="URL" value={xtreamForm.url} onChange={e => setXtreamForm({...xtreamForm, url: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Nome de usuário</label>
-                           <input required type="text" placeholder="Nome de usuário" value={xtreamForm.username} onChange={e => setXtreamForm({...xtreamForm, username: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Senha</label>
-                           <input required type="password" placeholder="Senha" value={xtreamForm.password} onChange={e => setXtreamForm({...xtreamForm, password: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-
-                        {/* Define PIN Checkbox */}
-                        <div className="flex gap-2 items-center mt-2">
-                           <div className="relative flex-shrink-0">
-                              <input id="define-pin" className="sr-only" type="checkbox" checked={definePin} onChange={(e) => setDefinePin(e.target.checked)} />
-                              <div onClick={() => setDefinePin(!definePin)} className={`w-6 h-6 cursor-pointer flex items-center justify-center rounded border transition-colors ${definePin ? 'bg-brand-500 border-brand-500' : 'bg-[#141414] border-white/20 hover:border-white/40'}`}>
-                                 {definePin && <ShieldCheck size={16} className="text-white" />}
-                              </div>
-                           </div>
-                           <label htmlFor="define-pin" onClick={() => setDefinePin(!definePin)} className="text-sm text-white font-normal cursor-pointer select-none flex items-center">
-                              Definir Pin
-                           </label>
-                        </div>
-
-                        {/* PIN Fields (Conditional) */}
-                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${definePin ? 'max-h-[200px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
-                           <div className="space-y-4">
-                              <div>
-                                 <label className="block text-sm mb-1 text-white/80 font-light">PIN</label>
-                                 <input required={definePin} type="password" placeholder="PIN" value={xtreamForm.pin} onChange={e => setXtreamForm({...xtreamForm, pin: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                              </div>
-                              <div>
-                                 <label className="block text-sm mb-1 text-white/80 font-light">Digite o PIN novamente</label>
-                                 <input required={definePin} type="password" placeholder="Confirmar PIN" value={xtreamForm.confirmPin} onChange={e => setXtreamForm({...xtreamForm, confirmPin: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                              </div>
-                           </div>
-                        </div>
-
-                        <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
-                           {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
-                        </button>
-                     </form>
-                  )}
-
-                  {/* FORM: URL */}
-                  {activeTab === 'url' && (
-                     <form onSubmit={handleUploadUrl} className="space-y-4 overflow-visible animate-fade-in">
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Endereço MAC</label>
-                           <input required type="text" placeholder="Endereço MAC" value={urlForm.mac} onChange={e => setUrlForm({...urlForm, mac: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">Nome da lista de reprodução</label>
-                           <input required type="text" placeholder="Nome da lista" value={urlForm.name} onChange={e => setUrlForm({...urlForm, name: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <div>
-                           <label className="block text-sm mb-1 text-white/80 font-light">URL</label>
-                           <input required type="url" placeholder="URL" value={urlForm.url} onChange={e => setUrlForm({...urlForm, url: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
-                        </div>
-                        <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
-                           {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
-                        </button>
-                     </form>
-                  )}
-
-                </div>
-             </div>
+               </div>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      )}
 
       {/* FOOTER */}
       <footer className="bg-[#050505] border-t border-white/5 py-12 mt-20 relative z-10">
@@ -364,9 +381,9 @@ export default function UploadPlaylist() {
                  
                  <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 text-xs md:text-sm text-zinc-500 font-medium">
                      <Link to="/active" className="hover:text-white transition">Ativação</Link>
-                     <a href="#" className="hover:text-white transition">Política de Privacidade</a>
-                     <a href="#" className="hover:text-white transition">Termos de Uso</a>
-                     <a href="#" className="hover:text-white transition">Política de Cookies</a>
+                     <Link to="/privacy" className="hover:text-white transition">Política de Privacidade</Link>
+                     <Link to="/terms" className="hover:text-white transition">Termos de Uso</Link>
+                     <Link to="/cookies" className="hover:text-white transition">Política de Cookies</Link>
                  </div>
               </div>
 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle, Play, Crown, Zap, LayoutGrid, Globe, ShieldCheck, ChevronRight, X, User, Mail, Phone, Lock, Layout, FileJson, Key, RefreshCw, Plus, Loader2, CreditCard, Smartphone, Upload } from 'lucide-react'
+import { CheckCircle, Play, Crown, Zap, LayoutGrid, Globe, ShieldCheck, ChevronRight, X, User, Mail, Phone, Lock, Layout, FileJson, Key, RefreshCw, Plus, Loader2, CreditCard, Smartphone, Upload, Menu } from 'lucide-react'
 import api from '../services/api'
 
 export default function Landing() {
   const [showClientModal, setShowClientModal] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [clientData, setClientData] = useState({ nome: '', email: '', telefone: '', senha: '' })
 
   // --- HUB DE SERVIÇOS STATES ---
@@ -235,10 +236,18 @@ export default function Landing() {
             <img src="/logo-maxx.svg" alt="Maxx Control" className="w-12 h-12 object-contain drop-shadow-[0_0_15px_rgba(252, 95, 22,0.5)] transition-transform group-hover:scale-110" />
             <span className="text-xl font-black tracking-tight text-white group-hover:text-brand-500 transition">MAXX<span className="text-brand-500">Control</span></span>
           </div>
+          {/* BOTÃO MOBILE */}
+          <div className="md:hidden flex items-center">
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-zinc-300 hover:text-white transition">
+              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
+
           <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-zinc-400">
             <a href="#solucoes" className="hover:text-white transition">Soluções</a>
-            <a href="#precos" className="hover:text-white transition">Preços</a>
+            <a href="#precos" className="hover:text-white transition">Painéis Revenda</a>
             <a href="#apps" className="hover:text-white transition">Dispositivos</a>
+            <Link to="/upload-playlist?tab=pricing" className="hover:text-white transition flex items-center gap-1.5 text-brand-500"><Zap size={14} className="fill-current" /> Planos MAXX PLAYERS</Link>
             <Link to="/upload-playlist" className="hover:text-white transition flex items-center gap-1.5"><Upload size={14} className="text-brand-500" /> Upload Rápido</Link>
             <Link to="/subscribe-plans" className="hover:text-white transition flex items-center gap-1.5"><Crown size={14} className="text-brand-500 fill-current" /> Assinar Painel</Link>
             <button onClick={() => setShowClientModal(true)} className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-6 py-2.5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(252,95,22,0.4)] hover:shadow-[0_0_25px_rgba(252,95,22,0.6)]">
@@ -246,6 +255,25 @@ export default function Landing() {
             </button>
           </div>
         </div>
+
+        {/* MENU MOBILE EXPANDIDO */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-black/95 backdrop-blur-3xl border-b border-white/10 flex flex-col items-center py-8 gap-6 text-base font-semibold text-zinc-300 shadow-2xl animate-fade-in">
+            <a href="#solucoes" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition w-full text-center py-2">Soluções</a>
+            <a href="#precos" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition w-full text-center py-2">Painéis Revenda</a>
+            <a href="#apps" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition w-full text-center py-2">Dispositivos</a>
+            <Link to="/upload-playlist?tab=pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-brand-500 hover:text-brand-400 w-full text-center py-2 flex items-center justify-center gap-2"><Zap size={18} className="fill-current"/> Planos MAXX PLAYERS</Link>
+            <Link to="/upload-playlist" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition flex items-center justify-center gap-2 w-full py-2">
+              <Upload size={18} className="text-brand-500" /> Upload Rápido
+            </Link>
+            <Link to="/subscribe-plans" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition flex items-center justify-center gap-2 w-full py-2">
+              <Crown size={18} className="text-brand-500 fill-current" /> Assinar Painel
+            </Link>
+            <button onClick={() => { setIsMobileMenuOpen(false); setShowClientModal(true); }} className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-10 py-3.5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(252,95,22,0.4)] mt-4">
+              Área do Cliente
+            </button>
+          </div>
+        )}
       </nav>
 
       <main className="relative z-10 pt-28">
@@ -256,8 +284,8 @@ export default function Landing() {
             <div className="absolute bottom-20 right-10 w-32 h-32 bg-brand-600/20 rounded-full blur-[80px] animate-pulse z-0" style={{ animationDelay: '2s' }}></div>
 
             {/* BACKGROUND TMDB POSTERS - LADO ESQUERDO (MARQUEE) */}
-            <div className="absolute left-0 lg:left-10 top-0 bottom-0 overflow-hidden hidden xl:flex flex-col z-0 pointer-events-none opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-40 -rotate-6 scale-110">
-                <div className="flex flex-col gap-6 w-full animate-marquee-y">
+            <div className="absolute -left-10 md:left-0 lg:left-10 top-0 bottom-0 overflow-hidden flex flex-col z-0 pointer-events-none opacity-10 md:opacity-15 xl:opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-24 md:w-32 xl:w-40 -rotate-6 scale-110">
+                <div className="flex flex-col gap-4 md:gap-6 w-full animate-marquee-y">
                     {[...leftPosters, ...leftPosters].map((url, i) => (
                         <div key={i} className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 shrink-0 aspect-[2/3] bg-black/50">
                             <img src={url} alt="TMDB" className="w-full h-full object-cover" />
@@ -267,8 +295,8 @@ export default function Landing() {
             </div>
 
             {/* BACKGROUND TMDB POSTERS - LADO DIREITO (MARQUEE INVERSO) */}
-            <div className="absolute right-0 lg:right-10 top-0 bottom-0 overflow-hidden hidden xl:flex flex-col z-0 pointer-events-none opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-40 rotate-6 scale-110">
-                <div className="flex flex-col gap-6 w-full animate-marquee-y-reverse">
+            <div className="absolute -right-10 md:right-0 lg:right-10 top-0 bottom-0 overflow-hidden flex flex-col z-0 pointer-events-none opacity-10 md:opacity-15 xl:opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-24 md:w-32 xl:w-40 rotate-6 scale-110">
+                <div className="flex flex-col gap-4 md:gap-6 w-full animate-marquee-y-reverse">
                     {[...rightPosters, ...rightPosters].map((url, i) => (
                         <div key={i} className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 shrink-0 aspect-[2/3] bg-black/50">
                             <img src={url} alt="TMDB" className="w-full h-full object-cover" />
@@ -319,9 +347,9 @@ export default function Landing() {
                          <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
                          <div className="mx-auto bg-white/5 px-20 py-1 rounded-full text-[10px] text-zinc-500 font-mono tracking-widest hidden md:block">https://maxxcontrol.pro</div>
                      </div>
-                     <div className="flex-1 w-full bg-[url('https://geradorpremium.online/static/img/tema2apresentacao.jpg')] bg-cover bg-top opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center relative">
-                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-                         <span className="text-white/50 font-black text-4xl md:text-6xl uppercase tracking-widest absolute mix-blend-overlay">MAXX CONTROL OS</span>
+                     <div className="flex-1 w-full relative overflow-hidden bg-[#0a0a0a] flex items-center justify-center">
+                         <img src="/dashboard-preview.png" alt="MaxxControl Dashboard Preview" className="absolute top-0 left-0 w-full h-full object-cover object-top opacity-85 group-hover:opacity-100 transition-all duration-700" />
+                         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none"></div>
                      </div>
                 </div>
             </div>
@@ -781,30 +809,45 @@ export default function Landing() {
         </section>
 
         {/* APPS DOWNLOADS */}
-        <section id="apps" className="py-24 bg-black">
-             <div className="container mx-auto px-4 text-center max-w-4xl">
-                 <h2 className="text-3xl md:text-5xl font-black text-white mb-6">Download MAXX Control Apps</h2>
-                 <p className="text-zinc-500 mb-12">Nosso reprodutor premium unificado já está presente na loja de todos estes gigantes:</p>
+        <section id="apps" className="py-24 bg-[#030303] relative overflow-hidden">
+             {/* Glow de fundo */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+             
+             <div className="container mx-auto px-4 text-center max-w-5xl relative z-10">
+                 <div className="flex flex-col items-center mb-8">
+                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(252,95,22,0.4)] mb-6 border border-white/10 hover:scale-105 transition-transform">
+                         <img src="/logo-app.png" alt="MAXX PLAYERS Logo" className="w-full h-full object-cover" />
+                     </div>
+                     <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">Conheça o <span className="text-brand-500 drop-shadow-[0_0_15px_rgba(252,95,22,0.8)]">MAXX PLAYERS</span></h2>
+                 </div>
+                 
+                 <p className="text-zinc-400 mb-12 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
+                     O reprodutor premium mais rápido e elegante do mercado já está disponível nativamente nas lojas oficiais dos gigantes da tecnologia.
+                 </p>
 
-                 <div className="flex flex-wrap justify-center gap-4">
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-400 hover:bg-white/10 hover:text-white transition cursor-pointer">
+                 <div className="flex flex-wrap justify-center gap-4 mb-16">
+                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          LG Smart TV
                      </div>
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-400 hover:bg-white/10 hover:text-white transition cursor-pointer">
+                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          Samsung Tizen
                      </div>
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-400 hover:bg-white/10 hover:text-white transition cursor-pointer">
+                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          Android TV
                      </div>
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-400 hover:bg-white/10 hover:text-white transition cursor-pointer">
+                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          ROKU TV
                      </div>
                  </div>
 
-                 <div className="mt-16 bg-[#111] border border-brand-500/30 p-6 md:p-8 rounded-3xl max-w-2xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0 text-center md:text-left">
-                     <span className="text-zinc-300 font-bold mb-2 md:mb-0 text-sm md:text-base">Código de Instalação Downloader (Android)</span>
-                     <div className="flex gap-4 items-center">
-                         <span className="text-3xl md:text-4xl font-black text-brand-500 tracking-widest">533810</span>
+                 <div className="bg-[#0a0a0a] border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden group">
+                     <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                     <div className="text-center md:text-left z-10">
+                         <span className="text-brand-500 font-black text-sm uppercase tracking-widest block mb-1">Android & Firestick</span>
+                         <span className="text-white font-bold text-lg md:text-xl">Código Downloader Oficial</span>
+                     </div>
+                     <div className="flex gap-4 items-center bg-black/50 px-8 py-4 rounded-2xl border border-white/5 z-10">
+                         <span className="text-4xl md:text-5xl font-black text-brand-500 tracking-widest drop-shadow-md">533810</span>
                      </div>
                  </div>
              </div>
@@ -819,8 +862,9 @@ export default function Landing() {
                 </div>
                 
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 text-xs md:text-sm text-zinc-500 font-medium">
-                    <a href="#" className="hover:text-white transition">Política de Privacidade</a>
-                    <a href="#" className="hover:text-white transition">Termos de Uso</a>
+                    <Link to="/privacy" className="hover:text-white transition">Política de Privacidade</Link>
+                    <Link to="/terms" className="hover:text-white transition">Termos de Uso</Link>
+                    <Link to="/cookies" className="hover:text-white transition">Política de Cookies</Link>
                 </div>
 
                 <div className="text-zinc-600 text-xs">

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Tv, ListPlus, FolderPlus, Download, Trash2, Edit3, GripVertical, Folders, Check, Search, ArrowRightLeft, Move, RefreshCw, Wand2, Trash, X, CheckCircle2, AlertCircle, Brain } from 'lucide-react'
+import PreviewContainer from '../components/previews/PreviewContainer'
+import TvPreview from '../components/previews/TvPreview'
 
 const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '')
 
@@ -634,6 +636,12 @@ const TvManager = () => {
         >
           <RefreshCw className="w-4 h-4" /> Sincronizar TVs (Push)
         </button>
+      </div>
+
+      <div className="mb-6">
+        <PreviewContainer title="TV Ao Vivo">
+          <TvPreview categories={categories} />
+        </PreviewContainer>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -28,10 +28,11 @@ const upload = multer({
   }
 });
 
-router.get('/', settingsController.getSettings);
-router.post('/', settingsController.bulkUpdateSettings);
+router.get('/public', settingsController.getPublicSettings);
+router.get('/', authMiddleware, settingsController.getSettings);
+router.post('/', authMiddleware, settingsController.bulkUpdateSettings);
 router.post('/logo', authMiddleware, upload.single('logo'), settingsController.uploadLogo);
-router.post('/:key', settingsController.updateSetting);
+router.post('/:key', authMiddleware, settingsController.updateSetting);
 
 module.exports = router;
 

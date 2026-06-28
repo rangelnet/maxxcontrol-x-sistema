@@ -31,6 +31,14 @@ const getDefaultSeriesConfig = () => ({
   ]
 });
 
+const getDefaultTmdbFilters = () => ({
+  words: "4k, 1080p, 720p, fhd, hd, sd, dual, dublado, legendado, leg, dub, nacional, netflix, nfx, amaz, disney, globo, hbo, apple, paramount, starz, youtube, ts, cam, lancamento"
+});
+
+const getDefaultPlatformConfig = () => ({
+  platforms: {} 
+});
+
 async function getConfig(key, defaultFn) {
   try {
     const result = await pool.query("SELECT value FROM global_settings WHERE key = $1", [key]);
@@ -93,5 +101,33 @@ exports.updateSeriesConfig = async (req, res) => {
     res.json({ success: true, message: 'Series Config atualizada com sucesso' });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Erro ao atualizar Series Config' });
+  }
+};
+
+exports.getTmdbFilters = async (req, res) => {
+  const data = await getConfig('tmdb_filters', getDefaultTmdbFilters);
+  res.json({ success: true, data });
+};
+
+exports.updateTmdbFilters = async (req, res) => {
+  try {
+    await updateConfig('tmdb_filters', req.body);
+    res.json({ success: true, message: 'Filtros TMDB atualizados com sucesso' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Erro ao atualizar Filtros' });
+  }
+};
+
+exports.getPlatformConfig = async (req, res) => {
+  const data = await getConfig('ui_platform_config', getDefaultPlatformConfig);
+  res.json({ success: true, data });
+};
+
+exports.updatePlatformConfig = async (req, res) => {
+  try {
+    await updateConfig('ui_platform_config', req.body);
+    res.json({ success: true, message: 'Platform Config atualizada com sucesso' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Erro ao atualizar Platform Config' });
   }
 };

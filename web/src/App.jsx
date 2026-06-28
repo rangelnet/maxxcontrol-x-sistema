@@ -30,21 +30,25 @@ import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 import NexusAgent from './pages/NexusAgent'
 import Active from './pages/Active'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import TermsOfUse from './pages/TermsOfUse'
+import LegalDocs from './pages/LegalDocs'
+import LegalDisclaimerModal from './components/LegalDisclaimerModal'
 
 function App() {
   return (
     <AuthProvider>
       <WhatsAppProvider>
       <BrowserRouter>
+        <LegalDisclaimerModal />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Landing />} />
           <Route path="/upload-playlist" element={<UploadPlaylist />} />
           <Route path="/active" element={<Active />} />
-          <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
-          <Route path="/termos-de-uso" element={<TermsOfUse />} />
+          <Route path="/terms" element={<LegalDocs />} />
+          <Route path="/termos-de-uso" element={<LegalDocs />} />
+          <Route path="/privacy" element={<LegalDocs />} />
+          <Route path="/politica-de-privacidade" element={<LegalDocs />} />
+          <Route path="/cookies" element={<LegalDocs />} />
           <Route path="/loja/:slug" element={<Store />} />
           <Route path="/subscribe-plans" element={<SubscribePlans />} />
           <Route element={

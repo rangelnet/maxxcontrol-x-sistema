@@ -6,6 +6,7 @@ import SportsManager from './SportsManager'
 import HomeManager from './HomeManager'
 import VodManager from './VodManager'
 import SeriesManager from './SeriesManager'
+import PlatformUiManager from './PlatformUiManager'
 
 const TABS = [
   {
@@ -56,6 +57,13 @@ const TABS = [
     icon: '📺',
     badge: 'UI',
     desc: 'Séries em destaque',
+  },
+  {
+    id: 'platform-ui',
+    label: 'Inteligência das Plataformas',
+    icon: '🧠',
+    badge: 'NOVO',
+    desc: 'Server-Driven UI e Filtros TMDB',
   },
 ]
 
@@ -133,6 +141,7 @@ const BrandingBanners = () => {
         {activeTab === 'home-manager' && <HomeManager />}
         {activeTab === 'vod-manager' && <VodManager />}
         {activeTab === 'series-manager' && <SeriesManager />}
+        {activeTab === 'platform-ui' && <PlatformUiManager />}
       </div>
     </div>
   )

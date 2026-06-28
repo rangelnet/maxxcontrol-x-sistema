@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import PreviewContainer from '../components/previews/PreviewContainer';
+import HomePreview from '../components/previews/HomePreview';
 
 const HomeManager = () => {
   const [config, setConfig] = useState({
@@ -106,8 +108,10 @@ const HomeManager = () => {
         </button>
       </div>
 
-      <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-dark-600 pb-4">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
+          <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-dark-600 pb-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">📸 Banner Destaque (Hero)</h3>
           <button onClick={() => updateHero('active', !config.heroBanner.active)} className={`w-11 h-6 rounded-full transition-colors ${config.heroBanner.active ? 'bg-brand-500' : 'bg-dark-600'} relative`}>
             <span className={`block w-4 h-4 rounded-full bg-white transition-transform absolute top-1 ${config.heroBanner.active ? 'left-6' : 'left-1'}`} />
@@ -176,6 +180,15 @@ const HomeManager = () => {
               </div>
             </div>
           ))}
+          </div>
+        </div>
+      </div>
+
+        {/* Lado Direito: Preview */}
+        <div className="xl:col-span-1 space-y-6">
+          <PreviewContainer title="Tela Inicial (Home)">
+            <HomePreview heroBanner={config.heroBanner} rows={config.rows} />
+          </PreviewContainer>
         </div>
       </div>
     </div>

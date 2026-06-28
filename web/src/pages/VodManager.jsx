@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import PreviewContainer from '../components/previews/PreviewContainer';
+import VodSeriesPreview from '../components/previews/VodSeriesPreview';
 
 const VodManager = () => {
   const [config, setConfig] = useState({ featuredCategories: [] });
@@ -82,8 +84,10 @@ const VodManager = () => {
         </button>
       </div>
 
-      <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-dark-600 pb-4">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
+          <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-dark-600 pb-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">🎬 Categorias em Destaque</h3>
           <button onClick={addCategory} className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white text-sm font-bold rounded-lg transition-colors">
             + Adicionar
@@ -119,6 +123,15 @@ const VodManager = () => {
               </div>
             </div>
           ))}
+          </div>
+        </div>
+      </div>
+
+        {/* Lado Direito: Preview */}
+        <div className="xl:col-span-1 space-y-6">
+          <PreviewContainer title="Filmes (VOD)">
+            <VodSeriesPreview featuredCategories={config.featuredCategories} type="vod" />
+          </PreviewContainer>
         </div>
       </div>
     </div>

@@ -214,43 +214,6 @@ const Branding = () => {
 
   const set = (key) => (val) => setFormData(prev => ({ ...prev, [key]: val }))
 
-  const addPlatform = () => {
-    setFormData(prev => ({
-      ...prev,
-      custom_platforms: [
-        ...prev.custom_platforms,
-        {
-          id: `plat_${Date.now()}`,
-          label: 'Nova Plataforma',
-          active: true,
-          banner: '',
-          logo: '',
-          keywords: '',
-          bgColor: '#000000',
-          primaryColor: '#FC5F16',
-          highlightTag: 'Em Alta',
-          billboard: true,
-          rows: DEFAULT_PLATFORM_ROWS,
-          tabs: DEFAULT_PLATFORM_TABS,
-        }
-      ]
-    }))
-  }
-
-  const updatePlatform = (id, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      custom_platforms: prev.custom_platforms.map(p => p.id === id ? { ...p, [field]: value } : p)
-    }))
-  }
-
-  const deletePlatform = (id) => {
-    if(!window.confirm('Excluir plataforma?')) return
-    setFormData(prev => ({
-      ...prev,
-      custom_platforms: prev.custom_platforms.filter(p => p.id !== id)
-    }))
-  }
 
 
   const updateTopMenu = (id, field, value) => {
@@ -422,7 +385,6 @@ const Branding = () => {
     { id: 'identidade', label: 'Identidade',  icon: '🏷️' },
     { id: 'cores',      label: 'Cores',        icon: '🎨' },
     { id: 'midias',     label: 'Imagens',      icon: '🖼️' },
-    { id: 'plataformas', label: 'Plataformas', icon: '🚀' },
     { id: 'menu-superior', label: 'Top Menu',  icon: '📍' },
   ]
 
@@ -585,9 +547,13 @@ const Branding = () => {
                     type="url"
                     hint="Recomendado: PNG transparente 512×512px"
                   />
-                  {formData.logo_url && (
-                    <div className="bg-white rounded-xl p-3 flex justify-center">
-                      <img src={getFullUrl(formData.logo_url)} alt="Logo" className="h-14 object-contain" onError={e => e.target.style.display='none'} />
+                  {formData.logo_url && formData.logo_url.length > 5 && (
+                    <div className="rounded-xl overflow-hidden border border-dark-600 bg-dark-800 flex justify-center p-4">
+                      <img 
+                        src={getFullUrl(formData.logo_url)} 
+                        alt="Logo Preview" 
+                        className="h-16 w-auto object-contain drop-shadow-xl" 
+                      />
                     </div>
                   )}
                 </div>
@@ -600,9 +566,13 @@ const Branding = () => {
                     type="url"
                     hint="Versão para fundos claros"
                   />
-                  {formData.logo_dark_url && (
-                    <div className="bg-zinc-900 rounded-xl p-3 flex justify-center border border-dark-600">
-                      <img src={getFullUrl(formData.logo_dark_url)} alt="Logo Dark" className="h-14 object-contain" onError={e => e.target.style.display='none'} />
+                  {formData.logo_dark_url && formData.logo_dark_url.length > 5 && (
+                    <div className="rounded-xl overflow-hidden border border-dark-600 bg-zinc-300 flex justify-center p-4">
+                      <img 
+                        src={getFullUrl(formData.logo_dark_url)} 
+                        alt="Logo Dark Preview" 
+                        className="h-16 w-auto object-contain drop-shadow-md" 
+                      />
                     </div>
                   )}
                 </div>
@@ -909,246 +879,6 @@ const Branding = () => {
             </div>
           )}
 
-          {/* 🚀 PLATAFORMAS */}
-          {activeSection === 'plataformas' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-dark-900/50 border border-dark-600 rounded-2xl p-6">
-                <div className="flex items-center justify-between gap-4 mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-2xl">
-                      🚀
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-black text-white uppercase tracking-tighter">Gerenciar Plataformas</h3>
-                      <p className="text-zinc-500 text-xs font-medium">Controle total sobre as plataformas exibidas no App. As regras de busca (keywords) são usadas pelo aplicativo para encontrar o conteúdo.</p>
-                    </div>
-                  </div>
-                  <button type="button" onClick={addPlatform} className="bg-brand-500 hover:bg-brand-400 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">
-                    + Adicionar Plataforma
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {(formData.custom_platforms || []).map((plat) => (
-                    <div key={plat.id} className={`flex flex-col border rounded-xl overflow-hidden transition-all ${plat.active ? 'bg-dark-800 border-brand-500/30' : 'bg-dark-900/50 border-dark-700 opacity-70'}`}>
-                      {/* Header Compacto da Plataforma */}
-                      <div className="flex items-center gap-4 p-4">
-                        <button type="button" onClick={() => updatePlatform(plat.id, 'active', !plat.active)} className={`w-12 h-6 rounded-full relative shrink-0 transition-colors ${plat.active ? 'bg-brand-500' : 'bg-dark-700'}`}>
-                          <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${plat.active ? 'left-7' : 'left-1'}`} />
-                        </button>
-                        
-                        <div className="w-16 h-9 rounded bg-black/50 overflow-hidden shrink-0 border border-dark-600 flex items-center justify-center">
-                          {plat.banner ? <img src={getFullUrl(plat.banner)} alt="" className="w-full h-full object-cover" /> : <span className="text-[8px] text-zinc-500">SEM BANNER</span>}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <input type="text" value={plat.label} onChange={e => updatePlatform(plat.id, 'label', e.target.value)} className="bg-transparent border-b border-dark-600 focus:border-brand-500 text-white font-bold outline-none px-1 py-0.5 w-full max-w-[200px]" placeholder="Nome da Plataforma" />
-                          <div className="text-[10px] text-zinc-500 mt-1 truncate">ID: {plat.id} | Busca: {plat.keywords}</div>
-                        </div>
-
-                        <button type="button" onClick={() => deletePlatform(plat.id)} className="text-red-500 hover:text-red-400 p-2 shrink-0" title="Excluir">🗑️</button>
-                      </div>
-
-                      {/* Configurações Avançadas da Plataforma */}
-                      <div className="p-4 border-t border-dark-700 bg-black/20 space-y-6">
-                        
-                        {/* LINHA 1: Keywords + Cores + Imagens (compacto) */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                          {/* Col 1: Busca e Tags */}
-                          <div className="space-y-3">
-                            <div>
-                              <label className="text-[10px] font-bold text-zinc-500 uppercase">Palavras-chave de Busca</label>
-                              <input type="text" value={plat.keywords} onChange={e => updatePlatform(plat.id, 'keywords', e.target.value)} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="ex: netflix, ntx, nflx" />
-                              <p className="text-[9px] text-zinc-600 mt-0.5">Separadas por vírgula. O App busca categorias com essas palavras.</p>
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-zinc-500 uppercase">Tag de Destaque</label>
-                              <input type="text" value={plat.highlightTag} onChange={e => updatePlatform(plat.id, 'highlightTag', e.target.value)} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="ex: Em Alta na Netflix" />
-                            </div>
-                          </div>
-
-                          {/* Col 2: Cores + Billboard */}
-                          <div className="space-y-3">
-                            <div className="flex gap-4">
-                              <div className="flex-1">
-                                <label className="text-[10px] font-bold text-zinc-500 uppercase">Cor do Fundo</label>
-                                <input type="color" value={plat.bgColor || '#000000'} onChange={e => updatePlatform(plat.id, 'bgColor', e.target.value)} className="w-full h-8 rounded bg-transparent" />
-                              </div>
-                              <div className="flex-1">
-                                <label className="text-[10px] font-bold text-zinc-500 uppercase">Cor Principal</label>
-                                <input type="color" value={plat.primaryColor || '#FC5F16'} onChange={e => updatePlatform(plat.id, 'primaryColor', e.target.value)} className="w-full h-8 rounded bg-transparent" />
-                              </div>
-                            </div>
-                            {/* Billboard Toggle */}
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-900 border border-dark-600">
-                              <button type="button" onClick={() => updatePlatform(plat.id, 'billboard', !plat.billboard)} className={`w-10 h-5 rounded-full relative shrink-0 transition-colors ${plat.billboard !== false ? 'bg-brand-500' : 'bg-dark-700'}`}>
-                                <div className={`w-3.5 h-3.5 rounded-full bg-white absolute top-[3px] transition-all ${plat.billboard !== false ? 'left-[22px]' : 'left-[3px]'}`} />
-                              </button>
-                              <div>
-                                <span className="text-xs font-bold text-white">Efeito Billboard</span>
-                                <p className="text-[9px] text-zinc-500">Card expande com backdrop TMDB ao focar</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Col 3: Imagens */}
-                          <div className="space-y-3 border-l border-dark-700 pl-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-zinc-500 uppercase flex justify-between">
-                                Banner Home (800x450)
-                                {plat.banner && <button type="button" onClick={() => updatePlatform(plat.id, 'banner', '')} className="text-red-500 hover:text-red-400">Remover</button>}
-                              </label>
-                              <div className="relative group w-full h-20 bg-dark-900 border border-dark-600 rounded-lg overflow-hidden mt-1 hover:border-brand-500">
-                                <input type="file" accept="image/*" onChange={async (e) => {
-                                  const file = e.target.files[0]; if(!file) return;
-                                  const formData = new FormData(); formData.append('file', file);
-                                  try { const r = await api.post('/api/branding/upload', formData); updatePlatform(plat.id, 'banner', r.data.url); } catch(err){}
-                                }} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                {plat.banner ? <img src={getFullUrl(plat.banner)} className="w-full h-full object-cover" /> : <div className="absolute inset-0 flex items-center justify-center text-xs text-zinc-500">Upload Banner</div>}
-                              </div>
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-zinc-500 uppercase flex justify-between">
-                                Logo Transparente
-                                {plat.logo && <button type="button" onClick={() => updatePlatform(plat.id, 'logo', '')} className="text-red-500 hover:text-red-400">Remover</button>}
-                              </label>
-                              <div className="relative group w-full h-14 bg-dark-900 border border-dark-600 rounded-lg overflow-hidden mt-1 hover:border-brand-500 flex items-center justify-center">
-                                <input type="file" accept="image/*" onChange={async (e) => {
-                                  const file = e.target.files[0]; if(!file) return;
-                                  const formData = new FormData(); formData.append('file', file);
-                                  try { const r = await api.post('/api/branding/upload', formData); updatePlatform(plat.id, 'logo', r.data.url); } catch(err){}
-                                }} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                {plat.logo ? <img src={getFullUrl(plat.logo)} className="h-8 object-contain p-1" /> : <div className="text-xs text-zinc-500">Upload Logo</div>}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* LINHA 2: Layout das Fileiras (SDUI) */}
-                        <div className="bg-dark-900 border border-dark-600 rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-lg">🎬</span>
-                            <h4 className="text-sm font-bold text-white uppercase">Layout das Fileiras</h4>
-                            <span className="text-[9px] text-zinc-500 ml-auto">Arraste para reordenar • Configure limites e estilos</span>
-                          </div>
-                          <div className="space-y-2">
-                            {(plat.rows || DEFAULT_PLATFORM_ROWS).map((row, rowIdx) => (
-                              <div key={row.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-all ${row.active ? 'bg-dark-800 border-dark-600' : 'bg-dark-900/50 border-dark-700 opacity-50'}`}>
-                                {/* Mover para cima/baixo */}
-                                <div className="flex flex-col gap-0.5 shrink-0">
-                                  <button type="button" disabled={rowIdx === 0} onClick={() => {
-                                    const newRows = [...(plat.rows || DEFAULT_PLATFORM_ROWS)];
-                                    [newRows[rowIdx - 1], newRows[rowIdx]] = [newRows[rowIdx], newRows[rowIdx - 1]];
-                                    updatePlatform(plat.id, 'rows', newRows);
-                                  }} className="text-[10px] text-zinc-500 hover:text-white disabled:opacity-20">▲</button>
-                                  <button type="button" disabled={rowIdx === (plat.rows || DEFAULT_PLATFORM_ROWS).length - 1} onClick={() => {
-                                    const newRows = [...(plat.rows || DEFAULT_PLATFORM_ROWS)];
-                                    [newRows[rowIdx], newRows[rowIdx + 1]] = [newRows[rowIdx + 1], newRows[rowIdx]];
-                                    updatePlatform(plat.id, 'rows', newRows);
-                                  }} className="text-[10px] text-zinc-500 hover:text-white disabled:opacity-20">▼</button>
-                                </div>
-
-                                {/* Ativar/Desativar */}
-                                <button type="button" onClick={() => {
-                                  const newRows = [...(plat.rows || DEFAULT_PLATFORM_ROWS)];
-                                  newRows[rowIdx] = { ...newRows[rowIdx], active: !newRows[rowIdx].active };
-                                  updatePlatform(plat.id, 'rows', newRows);
-                                }} className={`w-8 h-4 rounded-full relative shrink-0 transition-colors ${row.active ? 'bg-brand-500' : 'bg-dark-700'}`}>
-                                  <div className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-all ${row.active ? 'left-[18px]' : 'left-[2px]'}`} />
-                                </button>
-
-                                {/* Nome da Fileira */}
-                                <input type="text" value={row.name} onChange={e => {
-                                  const newRows = [...(plat.rows || DEFAULT_PLATFORM_ROWS)];
-                                  newRows[rowIdx] = { ...newRows[rowIdx], name: e.target.value };
-                                  updatePlatform(plat.id, 'rows', newRows);
-                                }} className="bg-transparent text-white text-xs font-medium flex-1 min-w-0 outline-none border-b border-transparent focus:border-brand-500 px-1" />
-
-                                {/* Estilo do Card */}
-                                <select value={row.style} onChange={e => {
-                                  const newRows = [...(plat.rows || DEFAULT_PLATFORM_ROWS)];
-                                  newRows[rowIdx] = { ...newRows[rowIdx], style: e.target.value };
-                                  updatePlatform(plat.id, 'rows', newRows);
-                                }} className="bg-dark-900 text-[10px] text-zinc-400 border border-dark-600 rounded px-2 py-1 outline-none">
-                                  <option value="hero">🖼️ Hero Banner</option>
-                                  <option value="ranked">🏆 Ranking (1-10)</option>
-                                  <option value="landscape">📺 Paisagem (Deitado)</option>
-                                  <option value="portrait">📱 Retrato (Em pé)</option>
-                                </select>
-
-                                {/* Limite */}
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <span className="text-[9px] text-zinc-500">Qtd:</span>
-                                  <input type="number" min="1" max="50" value={row.limit} onChange={e => {
-                                    const newRows = [...(plat.rows || DEFAULT_PLATFORM_ROWS)];
-                                    newRows[rowIdx] = { ...newRows[rowIdx], limit: parseInt(e.target.value) || 5 };
-                                    updatePlatform(plat.id, 'rows', newRows);
-                                  }} className="w-12 bg-dark-900 border border-dark-600 rounded px-1.5 py-0.5 text-white text-[11px] text-center" />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* LINHA 3: Abas de Navegação */}
-                        <div className="bg-dark-900 border border-dark-600 rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-lg">📑</span>
-                            <h4 className="text-sm font-bold text-white uppercase">Abas de Navegação</h4>
-                            <span className="text-[9px] text-zinc-500 ml-auto">Controle quais abas aparecem na plataforma</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {(plat.tabs || DEFAULT_PLATFORM_TABS).map((tab, tabIdx) => (
-                              <div key={tab.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${tab.active ? 'bg-dark-800 border-brand-500/30' : 'bg-dark-900/50 border-dark-700 opacity-50'}`}>
-                                <button type="button" onClick={() => {
-                                  const newTabs = [...(plat.tabs || DEFAULT_PLATFORM_TABS)];
-                                  newTabs[tabIdx] = { ...newTabs[tabIdx], active: !newTabs[tabIdx].active };
-                                  updatePlatform(plat.id, 'tabs', newTabs);
-                                }} className={`w-8 h-4 rounded-full relative shrink-0 transition-colors ${tab.active ? 'bg-brand-500' : 'bg-dark-700'}`}>
-                                  <div className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-all ${tab.active ? 'left-[18px]' : 'left-[2px]'}`} />
-                                </button>
-                                <input type="text" value={tab.label} onChange={e => {
-                                  const newTabs = [...(plat.tabs || DEFAULT_PLATFORM_TABS)];
-                                  newTabs[tabIdx] = { ...newTabs[tabIdx], label: e.target.value };
-                                  updatePlatform(plat.id, 'tabs', newTabs);
-                                }} className="bg-transparent text-white text-xs font-bold outline-none border-b border-transparent focus:border-brand-500 w-24 px-1" />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 🧹 FILTRO TMDB (Palavras Sujas) — dentro da seção de plataformas */}
-          {activeSection === 'plataformas' && (
-            <div className="space-y-6 animate-fadeIn mt-6">
-              <div className="bg-dark-900/50 border border-dark-600 rounded-2xl p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="h-12 w-12 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-2xl">
-                    🧹
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter">Filtro TMDB (Palavras Sujas)</h3>
-                    <p className="text-zinc-500 text-xs font-medium">Palavras que o App remove dos títulos IPTV antes de buscar capas no TMDB. Se o seu provedor colocar "4K" ou "DUAL" no nome do filme, adicione aqui para o TMDB encontrar a capa corretamente.</p>
-                  </div>
-                </div>
-                <textarea 
-                  value={formData.tmdb_filter_words || ''} 
-                  onChange={e => set('tmdb_filter_words')(e.target.value)} 
-                  rows={3} 
-                  className="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-3 text-white text-sm font-mono focus:border-brand-500 outline-none transition resize-none"
-                  placeholder="4k, 1080p, 720p, fhd, hd, dual, dublado, legendado..."
-                />
-                <p className="text-[9px] text-zinc-600 mt-1">Separadas por vírgula. Ex: <span className="text-brand-400">4k, 1080p, dublado, leg, ts, cam</span></p>
-              </div>
-            </div>
-          )}
 
           {/* 📍 MENU SUPERIOR */}
           {activeSection === 'menu-superior' && (

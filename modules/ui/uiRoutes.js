@@ -14,4 +14,12 @@ router.post('/vod', uiController.updateVodConfig);
 router.get('/series', uiController.getSeriesConfig);
 router.post('/series', uiController.updateSeriesConfig);
 
+// TMDB Filters
+router.get('/tmdb-filters', uiController.getTmdbFilters);
+router.post('/tmdb-filters', uiController.updateTmdbFilters);
+
+// Platforms UI
+router.get('/platforms', uiController.getPlatformConfig);
+router.post('/platforms', uiController.updatePlatformConfig);
+
 module.exports = router;

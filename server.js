@@ -1011,6 +1011,12 @@ app.use('/api/finance', require('./modules/finance/finance-plans'));
 // Rotas do Gerenciador de TV
 app.use('/api/tv-manager', require('./modules/tv-manager/tvManagerRoutes'));
 
+// Rotas de UI (Server-Driven UI)
+app.use('/api/ui', require('./modules/ui/uiRoutes'));
+
+// Rotas do Centro de Agentes Nexus (IA e VOD Scan)
+app.use('/api/agents', require('./modules/ai-agent/aiAgentRoutes'));
+
 // ============================================
 // ============================================
 // OUTROS SERVIÇOS E FALLBACK SPA

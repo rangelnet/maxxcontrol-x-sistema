@@ -448,6 +448,9 @@ const BannerGenerator = () => {
   const [generatingBatch, setGeneratingBatch] = useState(false)
   const [batchResult, setBatchResult] = useState(null)
   const [autoSelectedThemes, setAutoSelectedThemes] = useState([])
+  const [vodType, setVodType] = useState('movie')
+  const [vodCategory, setVodCategory] = useState('all')
+  const [vodCategoriesList, setVodCategoriesList] = useState([])
   
   // ─── ESTADO DA FÁBRICA DE TEMAS ──────────────────────────────────────────────
   const [adminTemplates, setAdminTemplates] = useState([])
@@ -574,7 +577,7 @@ const BannerGenerator = () => {
     }
     setSearchingTMDB(true)
     try {
-      const res = await api.get(`/api/content/search?query=${encodeURIComponent(query)}`)
+      const res = await api.get(`/api/agents/vod/search?query=${encodeURIComponent(query)}`)
       setTmdbSearchResults(res.data.resultados || [])
     } catch (err) {
       console.error('Erro na pesquisa TMDB:', err)
@@ -634,11 +637,30 @@ const BannerGenerator = () => {
   const loadContents = async () => {
     setLoading(true)
     try {
-      const r = await api.get('/api/content/list?limit=50')
+      const r = await api.get(`/api/agents/vod/top?type=${vodType}&category=${encodeURIComponent(vodCategory)}`)
       setContents(r.data.conteudos || [])
     } catch { setContents([]) }
     finally { setLoading(false) }
   }
+
+  const fetchVodCategories = async () => {
+    try {
+      const r = await api.get(`/api/agents/vod/categories?type=${vodType}`)
+      setVodCategoriesList(r.data.categories || [])
+    } catch { setVodCategoriesList([]) }
+  }
+
+  useEffect(() => {
+    if (activeCategory === 'filmes' || activeCategory === 'admin') {
+      loadContents()
+    }
+  }, [vodType, vodCategory])
+
+  useEffect(() => {
+    if (activeCategory === 'filmes' || activeCategory === 'admin') {
+       fetchVodCategories()
+    }
+  }, [vodType])
 
   const themes = THEMES[activeCategory] || []
   const cat = CATEGORIES.find(c => c.id === activeCategory)
@@ -975,39 +997,67 @@ const BannerGenerator = () => {
       )}
 
       {/* ── GALERIA DE FILMES (para banners de filmes) ─────────── */}
+      {/* ── GALERIA DE FILMES (Full Width) ─────────── */}
       {(activeCategory === 'filmes' || activeCategory === 'admin') && selectedTheme && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="w-full">
           <FilmesConfigurator 
             theme={selectedTheme} 
             contents={tmdbSearchResults.length > 0 ? tmdbSearchResults : contents} 
             trendingMovies={trendingMovies}
             trendingSeries={trendingSeries}
-            loading={searchingTMDB || loading} 
+            loading={searchingTMDB || loading}
+            vodType={vodType}
+            setVodType={setVodType}
+            vodCategory={vodCategory}
+            setVodCategory={setVodCategory}
+            vodCategoriesList={vodCategoriesList}
             onSearch={handleTmdbSearch}
-            onMovieSelect={setSelectedMovie}
+            onMovieSelect={(movie) => {
+               setSelectedMovie(movie);
+               // Aciona o Modal do Digital Twin
+               setTimeout(() => {
+                 document.getElementById('digital-twin-modal')?.showModal();
+               }, 100);
+            }}
             contact={bannerContact}
           />
-          <div className="hidden lg:flex flex-col items-center gap-6 bg-dark-900/50 p-8 rounded-[2rem] border border-dark-700 sticky top-24 w-full">
-            <h4 className="text-[12px] font-black text-brand-400 uppercase tracking-[0.2em] self-start border-l-4 border-brand-500 pl-3">Digital Twin Live Preview (UHD)</h4>
-            <div className="w-full aspect-[9/16] max-h-[750px] overflow-y-auto overflow-x-hidden rounded-[1.5rem] border-4 border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)] bg-black/40 custom-scrollbar-thin flex justify-center">
-              <div ref={bannerRef} className="bg-black origin-top scale-[0.45] w-[1080px] h-[1920px] flex-shrink-0">
-                {(['filme-t1', 'fire-series'].includes(selectedTheme) || activeCategory === 'admin') ? (
-                  <MovieBannerElite 
-                    movie={selectedMovie || sampleMovie} 
-                    contact={bannerContact} 
-                    theme={selectedTheme} 
-                    config={activeCategory === 'admin' 
-                      ? adminTemplates.find(t => t.id === selectedTheme)?.config 
-                      : {}}
-                  />
-                ) : (
-                  <div className="w-[1080px] h-[1920px] flex items-center justify-center text-4xl text-zinc-600 font-black uppercase text-center p-20">
-                    Selecione um tema mestre para ver o preview Elite
+
+          {/* DIGITAL TWIN MODAL PREVIEW */}
+          <dialog id="digital-twin-modal" className="bg-transparent m-auto backdrop:bg-black/90 backdrop:backdrop-blur-sm fixed inset-0 z-[100] outline-none">
+             <div className="flex flex-col items-center gap-6 bg-dark-900/80 p-8 md:p-12 rounded-[3rem] border border-dark-700 shadow-2xl relative w-[95vw] max-w-xl animate-scale-up overflow-hidden">
+                <button onClick={() => { document.getElementById('digital-twin-modal').close(); setSelectedMovie(null); }} className="absolute top-6 right-6 w-10 h-10 bg-black/50 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-white/10 rounded-full flex items-center justify-center transition-all z-10">✕</button>
+                
+                <h4 className="text-[14px] font-black text-brand-400 uppercase tracking-[0.2em] border-l-4 border-brand-500 pl-3">Preview UHD (Digital Twin)</h4>
+                
+                <div className="w-full aspect-[9/16] max-h-[65vh] overflow-y-auto overflow-x-hidden rounded-[1.5rem] border-4 border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.8)] bg-black/40 custom-scrollbar flex justify-center mt-2">
+                  <div ref={bannerRef} className="bg-black origin-top scale-[0.45] sm:scale-[0.50] w-[1080px] h-[1920px] flex-shrink-0">
+                    {(['filme-t1', 'fire-series'].includes(selectedTheme) || activeCategory === 'admin') ? (
+                      <MovieBannerElite 
+                        movie={selectedMovie || sampleMovie} 
+                        contact={bannerContact} 
+                        theme={selectedTheme} 
+                        config={activeCategory === 'admin' 
+                          ? adminTemplates.find(t => t.id === selectedTheme)?.config 
+                          : {}}
+                      />
+                    ) : (
+                      <div className="w-[1080px] h-[1920px] flex items-center justify-center text-5xl text-zinc-600 font-black uppercase text-center p-20 bg-dark-950">
+                        {selectedMovie?.titulo || 'Selecione um tema mestre Elite'}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
+                </div>
+
+                <div className="w-full flex gap-4 mt-2">
+                   <button onClick={() => document.getElementById('digital-twin-modal').close()} className="flex-1 py-4 font-black rounded-2xl bg-dark-700 hover:bg-dark-600 text-white uppercase text-sm border border-white/10 transition">
+                      VOLTAR
+                   </button>
+                   <button onClick={handleExportBanner} className="flex-[2] py-4 font-black rounded-2xl bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white uppercase text-sm shadow-xl shadow-brand-500/30 transition transform hover:scale-[1.02]">
+                      ⬇️ BAIXAR ARTE HD
+                   </button>
+                </div>
+             </div>
+          </dialog>
         </div>
       )}
 
@@ -1580,7 +1630,7 @@ const SportConfigurator = ({ category, theme, sportsData = [], loading }) => {
 }
 
 // ─── CONFIGURADOR DE FILMES ────────────────────────────────────────────────────
-const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeries = [], loading, onSearch, onMovieSelect, onGenerate }) => {
+const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeries = [], loading, onSearch, onMovieSelect, onGenerate, vodType, setVodType, vodCategory, setVodCategory, vodCategoriesList }) => {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
   const [generating, setGenerating] = useState(false)
@@ -1609,12 +1659,22 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
 
   return (
     <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
-      <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
-        <h3 className="font-bold text-white flex items-center gap-2">🎬 Selecione o Filme / Série</h3>
-        {selected && <span className="text-xs text-purple-400 font-bold">{selected.titulo}</span>}
+      {/* TABS (Filmes vs Séries) */}
+      <div className="flex border-b border-dark-700 bg-dark-900/80">
+        <button 
+           onClick={() => { setVodType('movie'); setVodCategory('all'); }} 
+           className={`flex-1 py-4 text-sm font-black uppercase tracking-widest transition ${vodType === 'movie' ? 'text-brand-500 border-b-2 border-brand-500 bg-brand-500/5' : 'text-zinc-500 hover:text-white'}`}>
+          🎬 Filmes
+        </button>
+        <button 
+           onClick={() => { setVodType('series'); setVodCategory('all'); }} 
+           className={`flex-1 py-4 text-sm font-black uppercase tracking-widest transition ${vodType === 'series' ? 'text-purple-500 border-b-2 border-purple-500 bg-purple-500/5' : 'text-zinc-500 hover:text-white'}`}>
+          📺 Séries
+        </button>
       </div>
-      <div className="p-6 space-y-4">
-        <div className="relative">
+
+      <div className="px-6 py-4 border-b border-dark-700 flex flex-col md:flex-row items-start md:items-center justify-between bg-dark-900/50 gap-4">
+        <div className="relative w-full md:w-auto md:flex-1">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
           <input
             value={search} 
@@ -1623,9 +1683,32 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
               onSearch(e.target.value)
             }}
             className="w-full bg-dark-900 border border-dark-600 rounded-lg pl-9 pr-4 py-2.5 text-white text-sm focus:border-purple-500 outline-none transition"
-            placeholder="Buscar filme ou série no catálogo e TMDB..."
+            placeholder="Buscar título..."
           />
         </div>
+        {selected && <span className="text-xs text-brand-400 font-bold max-w-[200px] truncate md:block hidden">{selected.titulo}</span>}
+      </div>
+
+      {/* CATEGORY SCROLLER */}
+      {vodCategoriesList && vodCategoriesList.length > 0 && (
+        <div className="bg-dark-900 px-4 py-3 border-b border-dark-700 overflow-x-auto scrollbar-none flex items-center gap-2">
+          <button 
+            onClick={() => setVodCategory('all')} 
+            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition ${vodCategory === 'all' ? (vodType === 'movie' ? 'bg-brand-500 text-white' : 'bg-purple-500 text-white') : 'bg-dark-800 text-zinc-400 hover:text-white border border-dark-600'}`}>
+            TUDO
+          </button>
+          {vodCategoriesList.map(cat => (
+            <button 
+              key={cat}
+              onClick={() => setVodCategory(cat)} 
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition border ${vodCategory === cat ? (vodType === 'movie' ? 'bg-brand-500 text-white border-brand-500' : 'bg-purple-500 text-white border-purple-500') : 'bg-dark-800 text-zinc-400 hover:text-white border-dark-600'}`}>
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="p-6 space-y-4">
         {loading ? (
           <div className="flex items-center justify-center py-10 text-zinc-500">
             <span className="animate-spin mr-2">⏳</span> Carregando títulos...
@@ -1641,7 +1724,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
                       {trendingMovies.map(c => (
                         <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
-                          <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
+                          <img src={c.poster_path?.startsWith('http') ? c.poster_path : `https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
                         </button>
                       ))}
                     </div>
@@ -1654,7 +1737,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
                       {trendingSeries.map(c => (
                         <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
-                          <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
+                          <img src={c.poster_path?.startsWith('http') ? c.poster_path : `https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
                         </button>
                       ))}
                     </div>
@@ -1680,7 +1763,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
                       }`}
                   >
                     {c.poster_path ? (
-                      <img src={`https://image.tmdb.org/t/p/w200${c.poster_path}`} alt={c.titulo}
+                      <img src={c.poster_path?.startsWith('http') ? c.poster_path : `https://image.tmdb.org/t/p/w200${c.poster_path}`} alt={c.titulo}
                         className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-dark-800 flex items-center justify-center text-xs text-zinc-600 text-center p-1 uppercase font-black">

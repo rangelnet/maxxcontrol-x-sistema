@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Upload, Trash2, Eye, EyeOff, GripVertical, Clock, Film, Shuffle, ArrowUp, ArrowDown, Image, Settings2, Monitor } from 'lucide-react'
+import PreviewContainer from '../components/previews/PreviewContainer'
+import ProfilePreview from '../components/previews/ProfilePreview'
 
 const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '')
 
@@ -153,7 +155,9 @@ const ProfileScreenManager = () => {
         </div>
       </div>
 
-      {/* ═══ CONFIG DO SLIDESHOW ═══ */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
+          {/* ═══ CONFIG DO SLIDESHOW ═══ */}
       <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 space-y-5">
         <div className="flex items-center gap-2 mb-1">
           <Settings2 className="w-4 h-4 text-brand-400" />
@@ -354,6 +358,15 @@ const ProfileScreenManager = () => {
             ))}
           </div>
         )}
+      </div>
+        </div>
+        
+        {/* Lado Direito: Preview */}
+        <div className="xl:col-span-1 space-y-6">
+          <PreviewContainer title="Seleção de Perfil">
+            <ProfilePreview backgrounds={backgrounds} config={config} />
+          </PreviewContainer>
+        </div>
       </div>
     </div>
   )

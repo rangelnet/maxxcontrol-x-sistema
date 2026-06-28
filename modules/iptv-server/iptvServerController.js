@@ -1,7 +1,7 @@
 const pool = require('../../config/database');
 const { broadcast } = require('../../websocket/wsServer');
 
-// GET /api/iptv-server/config - Buscar configuração global
+// GET /api/iptv-server/config - Buscar configuração global completa (somente painel autenticado)
 exports.getConfig = async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM iptv_server_config LIMIT 1');
@@ -13,6 +13,27 @@ exports.getConfig = async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// GET /api/iptv-server/public-config - Configuração segura para apps/web sem credenciais sensíveis
+exports.getPublicConfig = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT xtream_url, test_api_url, test_api_urls, updated_at FROM iptv_server_config LIMIT 1');
+
+    if (result.rows.length > 0) {
+      const row = result.rows[0];
+      return res.json({
+        xtream_url: row.xtream_url || '',
+        test_api_url: row.test_api_url || '',
+        test_api_urls: row.test_api_urls || [],
+        updated_at: row.updated_at || null
+      });
+    }
+
+    res.json({ xtream_url: '', test_api_url: '', test_api_urls: [] });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar configuração pública IPTV' });
   }
 };
 

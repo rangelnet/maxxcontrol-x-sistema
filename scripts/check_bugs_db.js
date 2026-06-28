@@ -33,8 +33,6 @@ async function checkLatestBugs() {
     });
   } catch (e) {
     console.error(e);
-  } finally {
-    pool.end();
   }
 }
 
