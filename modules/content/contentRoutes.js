@@ -10,7 +10,7 @@ router.get('/search', contentController.pesquisarTMDB); // Sem autenticação pa
 router.post('/importar-filme/:id', authMiddleware, contentController.importarFilme);
 router.post('/importar-serie/:id', authMiddleware, contentController.importarSerie);
 router.get('/pesquisar', authMiddleware, contentController.pesquisarTMDB);
-router.get('/populares', authMiddleware, contentController.obterPopulares);
+router.get('/populares', contentController.obterPopulares);
 router.delete('/:id', authMiddleware, contentController.deletarConteudo);
 
 // Banners
