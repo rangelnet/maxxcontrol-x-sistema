@@ -129,7 +129,7 @@ const ProfileScreenManager = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-10">
         <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -140,7 +140,7 @@ const ProfileScreenManager = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
             <Monitor className="w-5 h-5 text-purple-400" />
           </div>
           <div>
@@ -158,7 +158,7 @@ const ProfileScreenManager = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
           {/* ═══ CONFIG DO SLIDESHOW ═══ */}
-      <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 space-y-5">
+      <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-5">
         <div className="flex items-center gap-2 mb-1">
           <Settings2 className="w-4 h-4 text-brand-400" />
           <h3 className="text-sm font-bold text-white">Configuração do Slideshow</h3>
@@ -191,7 +191,7 @@ const ProfileScreenManager = () => {
             </label>
             <button
               onClick={() => setConfig(prev => ({ ...prev, use_tmdb: !prev.use_tmdb }))}
-              className={`w-full py-2.5 px-4 rounded-xl border-2 text-sm font-bold transition-all
+              className={`w-full py-2.5 px-4 rounded-lg border-2 text-sm font-bold transition-all
                 ${config.use_tmdb
                   ? 'bg-green-500/10 border-green-500/40 text-green-400'
                   : 'bg-dark-900 border-dark-600 text-zinc-500'
@@ -210,7 +210,7 @@ const ProfileScreenManager = () => {
               value={config.tmdb_position}
               onChange={e => setConfig(prev => ({ ...prev, tmdb_position: e.target.value }))}
               disabled={!config.use_tmdb}
-              className="w-full bg-dark-900 border-2 border-dark-600 rounded-xl px-3 py-2.5 text-sm text-white font-semibold focus:border-brand-500 outline-none disabled:opacity-40"
+              className="w-full bg-dark-900 border-2 border-dark-600 rounded-lg px-3 py-2.5 text-sm text-white font-semibold focus:border-brand-500 outline-none disabled:opacity-40"
             >
               <option value="mixed">🔀 Misturadas</option>
               <option value="first">⬆️ TMDB Primeiro</option>
@@ -222,14 +222,14 @@ const ProfileScreenManager = () => {
         <button
           onClick={handleSaveConfig}
           disabled={saving}
-          className="bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-all disabled:opacity-50"
+          className="bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm px-6 py-2.5 rounded-lg transition-all disabled:opacity-50"
         >
           {saving ? 'Salvando...' : '💾 Salvar Configuração'}
         </button>
       </div>
 
       {/* ═══ UPLOAD ═══ */}
-      <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 space-y-4">
+      <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Upload className="w-4 h-4 text-brand-400" />
           <h3 className="text-sm font-bold text-white">Adicionar Imagem de Fundo</h3>
@@ -244,14 +244,14 @@ const ProfileScreenManager = () => {
               value={uploadTitle}
               onChange={e => setUploadTitle(e.target.value)}
               placeholder="Ex: Banner Maxx, Promo Verão..."
-              className="w-full bg-dark-900 border-2 border-dark-600 rounded-xl px-3 py-2 text-sm text-white focus:border-brand-500 outline-none"
+              className="w-full bg-dark-900 border-2 border-dark-600 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none"
             />
           </div>
           <label
             onDragOver={e => { e.preventDefault(); setDragFile(true) }}
             onDragLeave={() => setDragFile(false)}
             onDrop={e => { e.preventDefault(); setDragFile(false); handleUpload(e.dataTransfer.files[0]) }}
-            className={`relative cursor-pointer flex items-center gap-2 px-5 py-2 rounded-xl border-2 border-dashed transition-all
+            className={`relative cursor-pointer flex items-center gap-2 px-5 py-2 rounded-lg border-2 border-dashed transition-all
               ${dragFile ? 'border-brand-500 bg-brand-500/10' : 'border-dark-600 hover:border-brand-500/50'}
               ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
           >
@@ -275,7 +275,7 @@ const ProfileScreenManager = () => {
       </div>
 
       {/* ═══ GALERIA DE BACKGROUNDS ═══ */}
-      <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 space-y-4">
+      <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Image className="w-4 h-4 text-brand-400" />
           <h3 className="text-sm font-bold text-white">Galeria de Backgrounds</h3>
@@ -293,7 +293,7 @@ const ProfileScreenManager = () => {
             {backgrounds.map((bg, idx) => (
               <div
                 key={bg.id}
-                className={`relative group rounded-xl overflow-hidden border-2 transition-all
+                className={`relative group rounded-lg overflow-hidden border-2 transition-all
                   ${bg.ativo
                     ? 'border-brand-500/40 shadow-lg shadow-brand-500/5'
                     : 'border-dark-600 opacity-50'

@@ -105,6 +105,7 @@ export default function PlatformUiManager() {
         const newBranding = { 
           ...fullBrandingData, 
           custom_platforms: customPlatforms,
+          platforms: customPlatforms,
           tmdb_filter_words: tmdbWords 
         }
         await api.put(`/api/branding/${fullBrandingData.id}`, newBranding).catch(e => console.warn(e))
@@ -186,9 +187,9 @@ export default function PlatformUiManager() {
   const selectedPlat = customPlatforms.find(p => p.id === selectedPlatId) || null
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn">
       {message && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border ${
           message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
         } backdrop-blur-md`}>
           <CheckCircle className="h-5 w-5" />
@@ -197,7 +198,7 @@ export default function PlatformUiManager() {
       )}
 
       {/* 1. Dicionário TMDB e Inteligência */}
-      <div className="bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
+      <div className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden shadow-lg shadow-black/20">
         <div className="p-5 border-b border-dark-600 bg-dark-800/80 flex items-center gap-3">
           <Filter className="h-5 w-5 text-brand-500" />
           <div>
@@ -213,7 +214,7 @@ export default function PlatformUiManager() {
               value={tmdbApiKey}
               onChange={e => setTmdbApiKey(e.target.value)}
               placeholder="7bc56e27708a9d2069fc999d..."
-              className="w-full bg-dark-900 border border-dark-600 rounded-xl p-3 text-white outline-none focus:border-brand-500 transition text-sm"
+              className="w-full bg-dark-900 border border-dark-600 rounded-lg p-3 text-white outline-none focus:border-brand-500 transition text-sm"
             />
           </div>
           <div>
@@ -222,14 +223,14 @@ export default function PlatformUiManager() {
               value={tmdbWords}
               onChange={e => setTmdbWords(e.target.value)}
               placeholder="Ex: 4k, 1080p, dublado, legendado..."
-              className="w-full h-24 bg-dark-900 border border-dark-600 rounded-xl p-4 text-white resize-none outline-none focus:border-brand-500 font-mono transition"
+              className="w-full h-24 bg-dark-900 border border-dark-600 rounded-lg p-4 text-white resize-none outline-none focus:border-brand-500 font-mono transition"
             />
           </div>
         </div>
       </div>
 
       {/* 2. Gerenciador de Plataformas Unificado */}
-      <div className="bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
+      <div className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden shadow-lg shadow-black/20">
         <div className="p-5 border-b border-dark-600 bg-dark-800/80 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <SlidersHorizontal className="h-5 w-5 text-brand-500" />
@@ -284,7 +285,7 @@ export default function PlatformUiManager() {
             </div>
 
             {/* Painel Central de Edição */}
-            <div className="flex-1 p-6 space-y-6 bg-dark-900/50 overflow-y-auto max-h-[800px]">
+            <div className="flex-1 p-5 space-y-6 bg-dark-900/50 overflow-y-auto max-h-[800px]">
               
               {selectedPlat ? (
                 <>
@@ -344,7 +345,7 @@ export default function PlatformUiManager() {
                             Logo Transparente
                             {selectedPlat.logo && <button type="button" onClick={() => updatePlatform(selectedPlat.id, 'logo', '')} className="text-red-500 hover:text-red-400">Remover</button>}
                           </label>
-                          <div className="relative group w-full h-16 bg-dark-900 border border-dark-600 rounded-lg overflow-hidden mt-1 hover:border-brand-500 flex items-center justify-center">
+                          <div className="relative group w-full h-14 bg-dark-900 border border-dark-600 rounded-lg overflow-hidden mt-1 hover:border-brand-500 flex items-center justify-center">
                             <input type="file" accept="image/*" onChange={(e) => handleUpload(e, selectedPlat.id, 'logo')} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                             {selectedPlat.logo ? <img src={getFullUrl(selectedPlat.logo)} className="h-10 object-contain p-1" /> : <div className="text-xs text-zinc-500">Upload Logo</div>}
                           </div>
@@ -365,7 +366,7 @@ export default function PlatformUiManager() {
                   <div className="grid grid-cols-1 gap-6 pt-4 border-t border-dark-700">
                     
                     {/* Abas */}
-                    <div className="bg-dark-800 border border-dark-600 rounded-xl p-4">
+                    <div className="bg-dark-800 border border-dark-600 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <Settings2 className="w-4 h-4 text-zinc-400" />
                         <h4 className="text-sm font-bold text-white uppercase">Abas de Navegação</h4>
@@ -391,7 +392,7 @@ export default function PlatformUiManager() {
                     </div>
 
                     {/* Linhas */}
-                    <div className="bg-dark-800 border border-dark-600 rounded-xl p-4">
+                    <div className="bg-dark-800 border border-dark-600 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <SlidersHorizontal className="w-4 h-4 text-zinc-400" />
                         <h4 className="text-sm font-bold text-white uppercase">Layout das Fileiras</h4>
@@ -489,7 +490,7 @@ export default function PlatformUiManager() {
             </div>
 
             {/* Lado Direito: Preview (Oculto em telas pequenas) */}
-            <div className="hidden 2xl:flex w-[400px] border-l border-dark-600 bg-dark-900/30 p-6 flex-col space-y-4 overflow-y-auto max-h-[800px]">
+            <div className="hidden 2xl:flex w-[400px] border-l border-dark-600 bg-dark-900/30 p-5 flex-col space-y-4 overflow-y-auto max-h-[800px]">
               {selectedPlat && (
                 <PreviewContainer title={`Preview: ${selectedPlat.label}`}>
                   <PlatformPreview 

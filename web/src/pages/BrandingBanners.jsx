@@ -75,7 +75,7 @@ const BrandingBanners = () => {
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
+        <div className="h-10 w-10 rounded-lg bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
           🎨
         </div>
         <div>
@@ -90,14 +90,14 @@ const BrandingBanners = () => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`relative flex items-center gap-4 px-5 py-4 rounded-2xl border-2 text-left transition-all duration-200 group
+            className={`relative flex items-center gap-4 px-5 py-4 rounded-xl border-2 text-left transition-all duration-200 group
               ${activeTab === tab.id
                 ? 'bg-dark-800 border-brand-500 shadow-lg shadow-brand-500/10'
                 : 'bg-dark-800 border-dark-700 hover:border-dark-600 hover:bg-dark-700/50'
               }`}
           >
             {/* Ícone */}
-            <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-2xl shrink-0 transition-colors
+            <div className={`h-12 w-12 rounded-lg flex items-center justify-center text-2xl shrink-0 transition-colors
               ${activeTab === tab.id ? 'bg-brand-500/20 border border-brand-500/30' : 'bg-dark-900 border border-dark-600'}`}>
               {tab.icon}
             </div>

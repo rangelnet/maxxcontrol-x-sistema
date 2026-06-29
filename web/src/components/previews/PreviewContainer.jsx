@@ -6,7 +6,7 @@ export default function PreviewContainer({ title, children }) {
 
   return (
     <>
-      <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4 shadow-xl flex flex-col">
+      <div className="bg-dark-800 border border-dark-700 rounded-xl p-4 shadow-xl flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-white text-sm flex items-center gap-2">
             <span>📺</span> Preview — {title}
@@ -24,7 +24,7 @@ export default function PreviewContainer({ title, children }) {
           <div className="pointer-events-none">
             {children}
           </div>
-          <div className="absolute inset-0 bg-brand-500/0 group-hover:bg-brand-500/10 transition-colors flex items-center justify-center rounded-xl z-50">
+          <div className="absolute inset-0 bg-brand-500/0 group-hover:bg-brand-500/10 transition-colors flex items-center justify-center rounded-lg z-50">
             <div className="opacity-0 group-hover:opacity-100 bg-brand-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg transition-all transform scale-95 group-hover:scale-100 flex items-center gap-2">
               <Maximize2 className="w-3 h-3" /> Ampliar
             </div>
@@ -33,9 +33,9 @@ export default function PreviewContainer({ title, children }) {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-8" onClick={() => setIsModalOpen(false)}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-6" onClick={() => setIsModalOpen(false)}>
           <div 
-            className="bg-dark-900 border border-dark-600 rounded-2xl shadow-2xl overflow-hidden relative flex flex-col max-w-5xl w-full max-h-full"
+            className="bg-dark-900 border border-dark-600 rounded-xl shadow-2xl overflow-hidden relative flex flex-col max-w-5xl w-full max-h-full"
             onClick={e => e.stopPropagation()}
             style={{ animation: 'fadeIn 0.2s ease-out' }}
           >
@@ -50,7 +50,7 @@ export default function PreviewContainer({ title, children }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 sm:p-8 overflow-y-auto flex items-center justify-center flex-1 bg-dark-950">
+            <div className="p-4 sm:p-6 overflow-y-auto flex items-center justify-center flex-1 bg-dark-950">
               <div className="w-full max-w-4xl">
                 {children}
               </div>

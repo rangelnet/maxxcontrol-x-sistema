@@ -32,8 +32,8 @@ export default function WhiteLabelStore() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
+          <h1 className="text-2xl md:text-2xl font-bold text-white flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
               <Store className="h-5 w-5 text-yellow-500" />
             </div>
             Minha Loja White Label
@@ -44,7 +44,7 @@ export default function WhiteLabelStore() {
         {/* Toggle Ativo */}
         <div 
           onClick={() => setStoreActive(!storeActive)}
-          className={`flex items-center gap-3 px-5 py-3 rounded-xl border cursor-pointer transition-all duration-300 ${
+          className={`flex items-center gap-3 px-5 py-3 rounded-lg border cursor-pointer transition-all duration-300 ${
             storeActive 
               ? 'bg-green-500/10 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.15)]' 
               : 'bg-dark-800 border-dark-700 hover:border-zinc-500'
@@ -61,7 +61,7 @@ export default function WhiteLabelStore() {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-gradient-to-r from-yellow-900/20 to-dark-800 border border-yellow-500/20 rounded-xl p-5 flex gap-4 items-start shadow-lg">
+      <div className="bg-gradient-to-r from-yellow-900/20 to-dark-800 border border-yellow-500/20 rounded-lg p-5 flex gap-4 items-start shadow-lg">
         <div className="h-12 w-12 bg-yellow-500/20 rounded-full flex items-center justify-center text-yellow-500 shrink-0">
           <Sparkles className="h-5 w-5" />
         </div>
@@ -79,7 +79,7 @@ export default function WhiteLabelStore() {
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-2 ${
               activeTab === tab.id 
                 ? 'bg-maxx/10 text-maxx border-maxx/30 shadow-lg shadow-maxx/10' 
                 : 'bg-dark-800 text-zinc-400 border-dark-700 hover:border-zinc-500'
@@ -92,11 +92,11 @@ export default function WhiteLabelStore() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-dark-800 rounded-2xl border border-dark-700 shadow-xl overflow-hidden">
+      <div className="bg-dark-800 rounded-xl border border-dark-700 shadow-xl overflow-hidden">
         
         {/* GERAL */}
         {activeTab === 'general' && (
-          <div className="p-6 space-y-6 animate-fadeIn">
+          <div className="p-5 space-y-6 animate-fadeIn">
             <div className="border-b border-dark-700 pb-4 mb-2">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Store className="h-5 w-5 text-maxx" /> Informações da Loja
@@ -139,7 +139,7 @@ export default function WhiteLabelStore() {
             <div>
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Logo da Loja</label>
               <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="w-full sm:w-40 h-32 bg-dark-900 rounded-xl border border-dashed border-dark-600 flex items-center justify-center overflow-hidden group hover:border-maxx/50 transition">
+                <div className="w-full sm:w-40 h-32 bg-dark-900 rounded-lg border border-dashed border-dark-600 flex items-center justify-center overflow-hidden group hover:border-maxx/50 transition">
                   {logoPreview ? (
                     <img src={logoPreview} alt="Preview" className="max-w-full max-h-full object-contain p-2" />
                   ) : (
@@ -166,7 +166,7 @@ export default function WhiteLabelStore() {
 
         {/* PLANOS */}
         {activeTab === 'plans' && (
-          <div className="p-6 space-y-6 animate-fadeIn">
+          <div className="p-5 space-y-6 animate-fadeIn">
             <div className="border-b border-dark-700 pb-4 mb-2">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-maxx" /> Planos e Preços
@@ -181,7 +181,7 @@ export default function WhiteLabelStore() {
                 { label: 'Semestral', days: '180 dias', value: semiannualPrice, setter: setSemiannualPrice, color: 'purple' },
                 { label: 'Anual', days: '365 dias', value: annualPrice, setter: setAnnualPrice, color: 'green', popular: true },
               ].map((plan) => (
-                <div key={plan.label} className={`bg-dark-900 rounded-xl border p-5 relative overflow-hidden transition-all hover:border-zinc-500 ${
+                <div key={plan.label} className={`bg-dark-900 rounded-lg border p-5 relative overflow-hidden transition-all hover:border-zinc-500 ${
                   plan.popular ? 'border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'border-dark-600'
                 }`}>
                   {plan.popular && (
@@ -207,7 +207,7 @@ export default function WhiteLabelStore() {
 
         {/* APARÊNCIA */}
         {activeTab === 'appearance' && (
-          <div className="p-6 space-y-6 animate-fadeIn">
+          <div className="p-5 space-y-6 animate-fadeIn">
             <div className="border-b border-dark-700 pb-4 mb-2">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Palette className="h-5 w-5 text-maxx" /> Personalização Visual
@@ -242,8 +242,8 @@ export default function WhiteLabelStore() {
             {/* Preview */}
             <div>
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3 block">Pré-Visualização</label>
-              <div className="bg-dark-900 rounded-xl border border-dark-600 p-6 text-center">
-                <div className="h-12 w-12 rounded-xl mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: primaryColor + '20' }}>
+              <div className="bg-dark-900 rounded-lg border border-dark-600 p-5 text-center">
+                <div className="h-12 w-12 rounded-lg mx-auto mb-3 flex items-center justify-center" style={{ backgroundColor: primaryColor + '20' }}>
                   <Store className="h-6 w-6" style={{ color: primaryColor }} />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1">{storeName || 'Sua Loja'}</h3>
@@ -258,7 +258,7 @@ export default function WhiteLabelStore() {
 
         {/* PAGAMENTO */}
         {activeTab === 'payment' && (
-          <div className="p-6 space-y-6 animate-fadeIn">
+          <div className="p-5 space-y-6 animate-fadeIn">
             <div className="border-b border-dark-700 pb-4 mb-2">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <ShoppingBag className="h-5 w-5 text-maxx" /> Forma de Pagamento
@@ -266,7 +266,7 @@ export default function WhiteLabelStore() {
               <p className="text-sm text-zinc-400">Cadastre sua chave PIX para receber pagamentos automáticos.</p>
             </div>
 
-            <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4 flex gap-4 items-start">
+            <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-4 flex gap-4 items-start">
               <div className="h-10 w-10 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 shrink-0">
                 <CreditCard className="h-5 w-5" />
               </div>
@@ -291,11 +291,11 @@ export default function WhiteLabelStore() {
         )}
 
         {/* Save Button */}
-        <div className="p-6 border-t border-dark-700 flex justify-end gap-3">
+        <div className="p-5 border-t border-dark-700 flex justify-end gap-3">
           <button 
             onClick={handleSave}
             disabled={saving}
-            className="bg-maxx hover:bg-maxx/90 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg shadow-maxx/20 flex items-center gap-2 disabled:opacity-50 active:scale-95"
+            className="bg-maxx hover:bg-maxx/90 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg shadow-maxx/20 flex items-center gap-2 disabled:opacity-50 active:scale-95"
           >
             {saving ? (
               <><span className="animate-spin">⏳</span> Salvando...</>

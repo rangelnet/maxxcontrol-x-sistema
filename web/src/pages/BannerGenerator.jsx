@@ -340,7 +340,7 @@ const ThemeCard = ({ theme, selected, onSelect, tick }) => {
       {/* Card Principal */}
       <div
         onClick={handleClick}
-        className={`cursor-pointer group relative rounded-xl overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
+        className={`cursor-pointer group relative rounded-lg overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
           ${isSelected
             ? 'border-brand-500 ring-2 ring-brand-500/50 shadow-lg shadow-brand-500/30 scale-[1.02]'
             : 'border-dark-700 hover:border-zinc-500'
@@ -349,7 +349,7 @@ const ThemeCard = ({ theme, selected, onSelect, tick }) => {
         {/* Imagem com carrossel */}
         <div className="absolute inset-0 bg-dark-900 overflow-hidden">
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-4xl opacity-20">🖼️</span>
+            <span className="text-3xl opacity-20">🖼️</span>
           </div>
           {theme.images.map((img, idx) => (
             <img
@@ -405,7 +405,7 @@ const ThemeCard = ({ theme, selected, onSelect, tick }) => {
 
       {/* Gaveta de variantes */}
       {theme.isGroup && showVariants && (
-        <div className="bg-dark-800 border border-dark-700 rounded-xl p-2 grid grid-cols-3 gap-2 shadow-inner animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-dark-800 border border-dark-700 rounded-lg p-2 grid grid-cols-3 gap-2 shadow-inner animate-in slide-in-from-top-2 duration-200">
           {theme.variants.map(v => (
             <button
               key={v.id}
@@ -708,10 +708,10 @@ const BannerGenerator = () => {
   return (
     <div className="space-y-6 pb-20 animate-fade-in">
       {/* ── HEADER & TABS (Marketing Hub Style) ────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-dark-800/50 p-6 rounded-[2rem] border border-white/5 shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-dark-800/50 p-5 rounded-[2rem] border border-white/5 shadow-2xl">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
+          <h1 className="text-2xl md:text-2xl font-black text-white tracking-tight flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
                🚀
             </div>
             Marketing <span className="text-brand-500">Hub</span>
@@ -719,11 +719,11 @@ const BannerGenerator = () => {
           <p className="text-zinc-400 text-sm mt-1">Sua central de criação de artes e identidade visual.</p>
         </div>
 
-        <div className="flex bg-black/40 p-1.5 rounded-2xl border border-white/10 self-start md:self-center">
+        <div className="flex bg-black/40 p-1.5 rounded-xl border border-white/10 self-start md:self-center">
           {canGen && (
             <button 
               onClick={() => setActiveTab('generator')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'generator' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
+              className={`px-6 py-2.5 rounded-lg text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'generator' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
             >
               <ImageIcon size={16} /> Gerar Banner
             </button>
@@ -731,7 +731,7 @@ const BannerGenerator = () => {
           {canTheme && (
             <button 
               onClick={() => setActiveTab('themes')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'themes' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
+              className={`px-6 py-2.5 rounded-lg text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${activeTab === 'themes' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-zinc-500 hover:text-white'}`}
             >
               <Sparkles size={16} className={activeTab === 'themes' ? 'animate-pulse' : ''} /> Fábrica de Temas
             </button>
@@ -743,7 +743,7 @@ const BannerGenerator = () => {
         <>
           {/* ── SEÇÃO DE CURADORIA ───────────────────────────────────── */}
           {curationItems.length > 0 && (
-            <div className="bg-dark-800/80 backdrop-blur-md border border-brand-500/20 rounded-[2rem] p-6 shadow-xl">
+            <div className="bg-dark-800/80 backdrop-blur-md border border-brand-500/20 rounded-[2rem] p-5 shadow-xl">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xs font-black text-white flex items-center gap-2 uppercase tracking-widest">
                   <span className="text-lg">🎬</span> Sua Seleção (Criação Direta)
@@ -764,7 +764,7 @@ const BannerGenerator = () => {
                     }}
                     className="flex-shrink-0 group relative w-28 transition-transform hover:scale-105 active:scale-95"
                   >
-                    <div className="aspect-[2/3] rounded-xl overflow-hidden border-2 border-white/5 group-hover:border-brand-500/50 shadow-lg">
+                    <div className="aspect-[2/3] rounded-lg overflow-hidden border-2 border-white/5 group-hover:border-brand-500/50 shadow-lg">
                       <img src={item.poster_path || '/placeholder-poster.jpg'} className="w-full h-full object-cover" />
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black p-2">
                         <p className="text-[8px] font-black text-white truncate text-left uppercase">{item.title}</p>
@@ -802,14 +802,14 @@ const BannerGenerator = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div
             onClick={() => setMode('manual')}
-            className={`group bg-dark-800 border-2 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 relative overflow-hidden text-center
+            className={`group bg-dark-800 border-2 rounded-xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 relative overflow-hidden text-center
               ${mode === 'manual'
                 ? 'border-brand-500 bg-brand-500/5 shadow-lg shadow-brand-500/20'
                 : 'border-dark-700 hover:border-brand-500/50'
               }`}
           >
             <div className="absolute -right-8 -top-8 w-28 h-28 bg-brand-500/10 rounded-full blur-2xl group-hover:bg-brand-500/20 transition-all" />
-            <div className={`h-14 w-14 rounded-2xl mx-auto flex items-center justify-center mb-3 border transition-colors
+            <div className={`h-14 w-14 rounded-xl mx-auto flex items-center justify-center mb-3 border transition-colors
               ${mode === 'manual' ? 'bg-brand-500 border-brand-400 text-white' : 'bg-dark-900 border-dark-600 group-hover:border-brand-500/50 text-brand-500'}`}>
               <span className="text-2xl">🖐️</span>
             </div>
@@ -826,14 +826,14 @@ const BannerGenerator = () => {
 
           <div
             onClick={() => setMode('auto')}
-            className={`group bg-dark-800 border-2 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 relative overflow-hidden text-center
+            className={`group bg-dark-800 border-2 rounded-xl p-5 cursor-pointer transition-all duration-300 hover:-translate-y-1 relative overflow-hidden text-center
               ${mode === 'auto'
                 ? 'border-green-500 bg-green-500/5 shadow-lg shadow-green-500/20'
                 : 'border-dark-700 hover:border-green-500/50'
               }`}
           >
             <div className="absolute -right-8 -top-8 w-28 h-28 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-all" />
-            <div className={`h-14 w-14 rounded-2xl mx-auto flex items-center justify-center mb-3 border transition-colors
+            <div className={`h-14 w-14 rounded-xl mx-auto flex items-center justify-center mb-3 border transition-colors
               ${mode === 'auto' ? 'bg-green-500 border-green-400 text-white' : 'bg-dark-900 border-dark-600 group-hover:border-green-500/50 text-green-500'}`}>
               <span className="text-2xl">⚡</span>
             </div>
@@ -904,7 +904,7 @@ const BannerGenerator = () => {
               <div
                 key={theme.id}
                 onClick={() => toggleAutoTheme(theme.id)}
-                className={`cursor-pointer relative rounded-xl overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
+                className={`cursor-pointer relative rounded-lg overflow-hidden aspect-[4/5] border-2 transition-all duration-300 active:scale-[0.97]
                   ${autoSelectedThemes.includes(theme.id)
                     ? 'border-green-500 ring-2 ring-green-500/40 shadow-lg scale-[1.02]'
                     : 'border-dark-700 hover:border-zinc-500'
@@ -952,7 +952,7 @@ const BannerGenerator = () => {
 
       {/* ── RESULTADO LOTE ──────────────────────────────────────── */}
       {batchResult && (
-        <div className="bg-gradient-to-r from-green-900/40 to-dark-800 border border-green-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-green-900/40 to-dark-800 border border-green-500/30 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 bg-green-500/20 rounded-full flex items-center justify-center text-2xl border border-green-500/30">
               ✅
@@ -965,12 +965,12 @@ const BannerGenerator = () => {
             </div>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-2.5 rounded-xl transition shadow-lg text-sm">
+            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-2.5 rounded-lg transition shadow-lg text-sm">
               📥 Baixar ZIP
             </button>
             <button
               onClick={() => setBatchResult(null)}
-              className="flex items-center gap-2 bg-dark-700 hover:bg-dark-600 text-zinc-300 font-bold px-4 py-2.5 rounded-xl transition text-sm"
+              className="flex items-center gap-2 bg-dark-700 hover:bg-dark-600 text-zinc-300 font-bold px-4 py-2.5 rounded-lg transition text-sm"
             >
               ✕ Fechar
             </button>
@@ -1024,7 +1024,7 @@ const BannerGenerator = () => {
 
           {/* DIGITAL TWIN MODAL PREVIEW */}
           <dialog id="digital-twin-modal" className="bg-transparent m-auto backdrop:bg-black/90 backdrop:backdrop-blur-sm fixed inset-0 z-[100] outline-none">
-             <div className="flex flex-col items-center gap-6 bg-dark-900/80 p-8 md:p-12 rounded-[3rem] border border-dark-700 shadow-2xl relative w-[95vw] max-w-xl animate-scale-up overflow-hidden">
+             <div className="flex flex-col items-center gap-6 bg-dark-900/80 p-6 md:p-12 rounded-[3rem] border border-dark-700 shadow-2xl relative w-[95vw] max-w-xl animate-scale-up overflow-hidden">
                 <button onClick={() => { document.getElementById('digital-twin-modal').close(); setSelectedMovie(null); }} className="absolute top-6 right-6 w-10 h-10 bg-black/50 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-white/10 rounded-full flex items-center justify-center transition-all z-10">✕</button>
                 
                 <h4 className="text-[14px] font-black text-brand-400 uppercase tracking-[0.2em] border-l-4 border-brand-500 pl-3">Preview UHD (Digital Twin)</h4>
@@ -1041,7 +1041,7 @@ const BannerGenerator = () => {
                           : {}}
                       />
                     ) : (
-                      <div className="w-[1080px] h-[1920px] flex items-center justify-center text-5xl text-zinc-600 font-black uppercase text-center p-20 bg-dark-950">
+                      <div className="w-[1080px] h-[1920px] flex items-center justify-center text-4xl text-zinc-600 font-black uppercase text-center p-20 bg-dark-950">
                         {selectedMovie?.titulo || 'Selecione um tema mestre Elite'}
                       </div>
                     )}
@@ -1049,10 +1049,10 @@ const BannerGenerator = () => {
                 </div>
 
                 <div className="w-full flex gap-4 mt-2">
-                   <button onClick={() => document.getElementById('digital-twin-modal').close()} className="flex-1 py-4 font-black rounded-2xl bg-dark-700 hover:bg-dark-600 text-white uppercase text-sm border border-white/10 transition">
+                   <button onClick={() => document.getElementById('digital-twin-modal').close()} className="flex-1 py-4 font-black rounded-xl bg-dark-700 hover:bg-dark-600 text-white uppercase text-sm border border-white/10 transition">
                       VOLTAR
                    </button>
-                   <button onClick={handleExportBanner} className="flex-[2] py-4 font-black rounded-2xl bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white uppercase text-sm shadow-xl shadow-brand-500/30 transition transform hover:scale-[1.02]">
+                   <button onClick={handleExportBanner} className="flex-[2] py-4 font-black rounded-xl bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white uppercase text-sm shadow-xl shadow-brand-500/30 transition transform hover:scale-[1.02]">
                       ⬇️ BAIXAR ARTE HD
                    </button>
                 </div>
@@ -1063,8 +1063,8 @@ const BannerGenerator = () => {
 
       {/* ── EMPTY STATE ─────────────────────────────────────────── */}
       {!selectedTheme && mode !== 'auto' && (
-        <div className="flex flex-col items-center justify-center py-16 text-zinc-600 border border-dashed border-dark-700 rounded-2xl">
-          <span className="text-5xl mb-4 opacity-40">🎨</span>
+        <div className="flex flex-col items-center justify-center py-8 text-zinc-600 border border-dashed border-dark-700 rounded-xl">
+          <span className="text-4xl mb-4 opacity-40">🎨</span>
           <p className="text-sm font-medium">Selecione um tema acima para continuar</p>
           <p className="text-xs mt-1 opacity-60">Passe o mouse sobre os cards para ver o carrossel</p>
         </div>
@@ -1073,7 +1073,7 @@ const BannerGenerator = () => {
         </>
       ) : (
         /* ── ABA FÁBRICA DE TEMAS (MASTER ONLY) ─────────────────── */
-        <div className="space-y-8 animate-slide-up">
+        <div className="space-y-6 animate-slide-up">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-black text-white">Oficina de <span className="text-brand-500">Modelos Elite</span></h2>
@@ -1081,13 +1081,13 @@ const BannerGenerator = () => {
               </div>
               <button 
                 onClick={() => { setEditingTheme(null); setShowThemeModal(true); }}
-                className="bg-brand-500 hover:bg-brand-600 text-white font-bold px-8 py-4 rounded-2xl transition-all shadow-xl shadow-brand-500/20 flex items-center gap-3 hover:scale-105 active:scale-95"
+                className="bg-brand-500 hover:bg-brand-600 text-white font-bold px-6 py-4 rounded-xl transition-all shadow-xl shadow-brand-500/20 flex items-center gap-3 hover:scale-105 active:scale-95"
               >
                 <Plus size={20} /> Criar Novo Modelo
               </button>
            </div>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {adminTemplates.map(temp => (
                 <div key={temp.id} className="group relative bg-dark-800 border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-brand-500/50 transition-all shadow-2xl">
                   <div className="aspect-video bg-black relative flex items-center justify-center overflow-hidden">
@@ -1102,7 +1102,7 @@ const BannerGenerator = () => {
                       {temp.type === 'movie' ? 'Cinematográfico' : temp.type === 'soccer' ? 'Sports' : temp.type}
                     </span>
                   </div>
-                  <div className="p-6 flex justify-between items-center bg-dark-900 border-t border-white/5">
+                  <div className="p-5 flex justify-between items-center bg-dark-900 border-t border-white/5">
                     <div>
                       <h3 className="text-white font-bold text-lg">{temp.name}</h3>
                       <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black flex items-center gap-1">
@@ -1119,7 +1119,7 @@ const BannerGenerator = () => {
            </div>
 
            {adminTemplates.length === 0 && (
-             <div className="py-20 text-center bg-dark-800/30 border border-dashed border-white/10 rounded-[3rem]">
+             <div className="py-10 text-center bg-dark-800/30 border border-dashed border-white/10 rounded-[3rem]">
                 <Palette size={48} className="mx-auto text-zinc-700 mb-6" />
                 <h3 className="text-xl font-bold text-white mb-2">Sua Oficina está vazia</h3>
                 <p className="text-zinc-500 max-w-sm mx-auto">Crie seu primeiro modelo de encarte para começar a automatizar o marketing da sua rede.</p>
@@ -1134,9 +1134,9 @@ const BannerGenerator = () => {
           <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setShowThemeModal(false)}></div>
           <div className="relative bg-dark-800 border border-white/10 rounded-[3rem] w-full max-w-7xl h-[90vh] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,0,0,1)] animate-scale-in">
             {/* Header Modal */}
-            <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 bg-brand-500/20 rounded-2xl flex items-center justify-center text-brand-500 border border-brand-500/30">
+                <div className="h-12 w-12 bg-brand-500/20 rounded-xl flex items-center justify-center text-brand-500 border border-brand-500/30">
                   <Sparkles size={24} />
                 </div>
                 <div>
@@ -1146,15 +1146,15 @@ const BannerGenerator = () => {
               </div>
               <button 
                 onClick={() => setShowThemeModal(false)} 
-                className="w-12 h-12 flex items-center justify-center text-zinc-500 hover:text-white transition bg-white/5 rounded-2xl border border-white/5 hover:bg-red-500/20 hover:border-red-500/30"
+                className="w-12 h-12 flex items-center justify-center text-zinc-500 hover:text-white transition bg-white/5 rounded-xl border border-white/5 hover:bg-red-500/20 hover:border-red-500/30"
               >
                 <X size={24} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col lg:flex-row p-8 gap-8">
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col lg:flex-row p-6 gap-6">
               {/* FORMULÁRIO */}
-              <form onSubmit={handleSaveTheme} className="flex-1 space-y-8">
+              <form onSubmit={handleSaveTheme} className="flex-1 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Nome do Dispositivo</label>
@@ -1163,7 +1163,7 @@ const BannerGenerator = () => {
                       value={themeFormData.name} 
                       onChange={e => setThemeFormData({...themeFormData, name: e.target.value})}
                       placeholder="Ex: Encarte Cinema Black Friday" 
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white placeholder-zinc-700 outline-none focus:border-brand-500 transition-all shadow-inner focus:ring-4 focus:ring-brand-500/10 font-bold" 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-6 text-white placeholder-zinc-700 outline-none focus:border-brand-500 transition-all shadow-inner focus:ring-4 focus:ring-brand-500/10 font-bold" 
                     />
                   </div>
                   <div className="space-y-2">
@@ -1171,7 +1171,7 @@ const BannerGenerator = () => {
                     <select 
                       value={themeFormData.type} 
                       onChange={e => setThemeFormData({...themeFormData, type: e.target.value})}
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-brand-500 transition-all appearance-none cursor-pointer font-bold"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-6 text-white outline-none focus:border-brand-500 transition-all appearance-none cursor-pointer font-bold"
                     >
                       <option value="movie">Filmes & Séries (VOD)</option>
                       <option value="soccer">Esportes (Futebol)</option>
@@ -1185,15 +1185,15 @@ const BannerGenerator = () => {
                    <div className="space-y-3">
                       <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Layout Principal</label>
                       <div className="flex gap-2">
-                         <button type="button" onClick={() => setPreviewActive('feed')} className={`flex-1 py-3.5 rounded-2xl border text-[10px] font-black uppercase transition-all ${previewActive === 'feed' ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-black/20 border-white/5 text-zinc-600'}`}>FEED (1:1)</button>
-                         <button type="button" onClick={() => setPreviewActive('story')} className={`flex-1 py-3.5 rounded-2xl border text-[10px] font-black uppercase transition-all ${previewActive === 'story' ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-black/20 border-white/5 text-zinc-600'}`}>STORY (9:16)</button>
+                         <button type="button" onClick={() => setPreviewActive('feed')} className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase transition-all ${previewActive === 'feed' ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-black/20 border-white/5 text-zinc-600'}`}>FEED (1:1)</button>
+                         <button type="button" onClick={() => setPreviewActive('story')} className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase transition-all ${previewActive === 'story' ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-black/20 border-white/5 text-zinc-600'}`}>STORY (9:16)</button>
                       </div>
                    </div>
                    <div className="space-y-3">
                       <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Cromatismo Elite</label>
-                      <div className="flex-1 bg-black/40 border border-white/10 rounded-2xl flex items-center p-1 px-4 gap-4 h-[58px] shadow-inner">
+                      <div className="flex-1 bg-black/40 border border-white/10 rounded-xl flex items-center p-1 px-4 gap-4 h-[58px] shadow-inner">
                          <input type="color" value={themeFormData.config.text_color} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, text_color: e.target.value}})}
-                            className="h-9 w-9 bg-transparent cursor-pointer rounded-xl border-none" />
+                            className="h-9 w-9 bg-transparent cursor-pointer rounded-lg border-none" />
                          <input type="text" value={themeFormData.config.text_color} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, text_color: e.target.value}})}
                             className="bg-transparent border-none text-white font-mono uppercase text-sm w-full outline-none font-bold" />
                       </div>
@@ -1203,7 +1203,7 @@ const BannerGenerator = () => {
                       <select 
                         value={themeFormData.config.font_family} 
                         onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, font_family: e.target.value}})}
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl h-[58px] px-6 text-white outline-none focus:border-brand-500 transition-all appearance-none cursor-pointer font-extrabold text-sm shadow-inner"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl h-[58px] px-6 text-white outline-none focus:border-brand-500 transition-all appearance-none cursor-pointer font-extrabold text-sm shadow-inner"
                       >
                         <option value="Inter">INTER (Sleek)</option>
                         <option value="Outfit">OUTFIT (Modern)</option>
@@ -1215,7 +1215,7 @@ const BannerGenerator = () => {
                       <button 
                         type="button"
                         onClick={() => setThemeFormData({...themeFormData, config: {...themeFormData.config, show_synopsis: !themeFormData.config.show_synopsis}})}
-                        className={`w-full h-[58px] rounded-2xl border text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${themeFormData.config.show_synopsis ? 'bg-brand-500/20 border-brand-500 text-brand-500' : 'bg-black/20 border-white/5 text-zinc-600'}`}
+                        className={`w-full h-[58px] rounded-xl border text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${themeFormData.config.show_synopsis ? 'bg-brand-500/20 border-brand-500 text-brand-500' : 'bg-black/20 border-white/5 text-zinc-600'}`}
                       >
                         {themeFormData.config.show_synopsis ? (
                             <><span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" /> Sinopse Ativa</>
@@ -1224,11 +1224,11 @@ const BannerGenerator = () => {
                    </div>
                 </div>
 
-                <div className="space-y-6 bg-black/40 p-6 rounded-[2rem] border border-white/5">
+                <div className="space-y-6 bg-black/40 p-5 rounded-[2rem] border border-white/5">
                   <h4 className="text-[10px] font-black text-zinc-500 flex items-center gap-2 uppercase tracking-widest border-b border-white/5 pb-2">
                     <Monitor size={14} /> Calibração Mestre de Layout (Digital Twin)
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                      <div className="space-y-4">
                         <div className="flex justify-between items-center">
                            <span className="text-[10px] font-black text-white uppercase tracking-tighter">Poster Eixo X: {themeFormData.config.poster_x}%</span>
@@ -1253,7 +1253,7 @@ const BannerGenerator = () => {
                   </div>
                 </div>
 
-                <div className="space-y-6 bg-black/40 p-6 rounded-[2rem] border border-white/5">
+                <div className="space-y-6 bg-black/40 p-5 rounded-[2rem] border border-white/5">
                   <h4 className="text-[10px] font-black text-zinc-500 flex items-center gap-2 uppercase tracking-widest border-b border-white/5 pb-2">
                     <Shield size={14} /> Branding & Identidade Visual
                   </h4>
@@ -1261,12 +1261,12 @@ const BannerGenerator = () => {
                     <div className="space-y-3">
                       <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Nome da Marca</label>
                       <input value={themeFormData.config.brand_name} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, brand_name: e.target.value}})} 
-                        placeholder="Ex: TV MAXX" className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 px-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-bold" />
+                        placeholder="Ex: TV MAXX" className="w-full bg-black/40 border border-white/10 rounded-xl py-4.5 px-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-bold" />
                     </div>
                     <div className="space-y-3">
                       <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">URL da Logo (PNG Transparente)</label>
                       <input value={themeFormData.config.brand_logo_url} onChange={e => setThemeFormData({...themeFormData, config: {...themeFormData.config, brand_logo_url: e.target.value}})} 
-                        placeholder="Link da sua logo..." className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 px-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono text-[10px]" />
+                        placeholder="Link da sua logo..." className="w-full bg-black/40 border border-white/10 rounded-xl py-4.5 px-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono text-[10px]" />
                     </div>
                   </div>
 
@@ -1277,18 +1277,18 @@ const BannerGenerator = () => {
                     <div className="relative group">
                       <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Link da imagem BASE (Fundo Estático)</label>
                       <input value={themeFormData.bg_url} onChange={e => setThemeFormData({...themeFormData, bg_url: e.target.value})} 
-                        placeholder="Cole a URL da imagem de fundo..." className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 pl-12 pr-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono font-bold" />
+                        placeholder="Cole a URL da imagem de fundo..." className="w-full bg-black/40 border border-white/10 rounded-xl py-4.5 pl-12 pr-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono font-bold" />
                     </div>
                     <div className="relative group">
                       <label className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] block ml-1">Link do OVERLAY PNG (Moldura Transparente)</label>
                       <input value={themeFormData.overlay_url} onChange={e => setThemeFormData({...themeFormData, overlay_url: e.target.value})} 
-                        placeholder="Cole a URL do overlay transparente..." className="w-full bg-black/40 border border-white/10 rounded-2xl py-4.5 pl-12 pr-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono font-bold" />
+                        placeholder="Cole a URL do overlay transparente..." className="w-full bg-black/40 border border-white/10 rounded-xl py-4.5 pl-12 pr-6 text-sm text-white placeholder-zinc-700 outline-none focus:border-brand-500/50 transition-all font-mono font-bold" />
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-8">
-                  <button type="submit" className="w-full h-16 bg-gradient-to-r from-brand-600 to-orange-500 text-white font-black rounded-[1.5rem] shadow-2xl shadow-brand-500/30 hover:scale-[1.02] active:scale-95 transition-all text-lg flex items-center justify-center gap-3">
+                <div className="pt-6">
+                  <button type="submit" className="w-full h-14 bg-gradient-to-r from-brand-600 to-orange-500 text-white font-black rounded-[1.5rem] shadow-2xl shadow-brand-500/30 hover:scale-[1.02] active:scale-95 transition-all text-lg flex items-center justify-center gap-3">
                     <Save size={24} /> SELAR E SALVAR PROTOCOLO
                   </button>
                 </div>
@@ -1296,7 +1296,7 @@ const BannerGenerator = () => {
 
               {/* LIVE DUAL PREVIEW */}
               <div className="lg:w-[450px] space-y-6">
-                 <div className="bg-black/60 border border-white/5 rounded-[2.5rem] p-8 flex flex-col items-center gap-6 shadow-2xl">
+                 <div className="bg-black/60 border border-white/5 rounded-[2.5rem] p-6 flex flex-col items-center gap-6 shadow-2xl">
                     <div className="flex items-center gap-2 mb-2">
                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Digital Twin Preview</span>
@@ -1330,7 +1330,7 @@ const BannerGenerator = () => {
                         </div>
                     </div>
 
-                    <div className="bg-brand-500/5 border border-brand-500/20 p-4 rounded-2xl flex gap-3">
+                    <div className="bg-brand-500/5 border border-brand-500/20 p-4 rounded-xl flex gap-3">
                        <Info size={18} className="text-brand-500 shrink-0" />
                        <p className="text-[9px] text-zinc-500 leading-relaxed italic">
                          O motor de renderização Maxx compositor empilha as imagens nativamente. Certifique-se que o Overlay é um PNG de 24 bits com canal alpha transparente.
@@ -1380,7 +1380,7 @@ const FootballConfigurator = ({ theme, sportsData = [], loading }) => {
   }
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden shadow-xl">
       {/* Header */}
       <div className="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-900/50">
         <h3 className="font-bold text-white flex items-center gap-2">
@@ -1390,10 +1390,10 @@ const FootballConfigurator = ({ theme, sportsData = [], loading }) => {
           Tema: {theme}
         </span>
       </div>
-      <div className="p-6 space-y-5">
+      <div className="p-5 space-y-5">
         {/* Sugestões da API */}
         {(sportsData.length > 0 || loading) && (
-          <div className="bg-brand-500/5 border border-brand-500/10 rounded-xl p-4">
+          <div className="bg-brand-500/5 border border-brand-500/10 rounded-lg p-4">
             <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-3 flex items-center gap-2">
               ⚡ Sugestões de Hoje (API Real)
             </h4>
@@ -1450,7 +1450,7 @@ const FootballConfigurator = ({ theme, sportsData = [], loading }) => {
             </button>
           </div>
           {matches.map((match, i) => (
-            <div key={i} className="bg-dark-900 border border-dark-600 rounded-xl p-4 space-y-3 relative">
+            <div key={i} className="bg-dark-900 border border-dark-600 rounded-lg p-4 space-y-3 relative">
               <button onClick={() => removeMatch(i)}
                 className="absolute top-3 right-3 text-zinc-600 hover:text-red-400 transition text-sm">✕</button>
               <div>
@@ -1481,7 +1481,7 @@ const FootballConfigurator = ({ theme, sportsData = [], loading }) => {
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+          className={`w-full font-bold py-2.5 rounded-lg shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
             ${done
               ? 'bg-green-600 text-white'
               : 'bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white'
@@ -1527,15 +1527,15 @@ const SportConfigurator = ({ category, theme, sportsData = [], loading }) => {
   }
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden shadow-xl">
       <div className="px-6 py-4 border-b border-dark-700 flex items-center gap-2 bg-dark-900/50">
         <span className="text-lg">{info.icon}</span>
         <h3 className="font-bold text-white">Configurar Banner de {info.label}</h3>
       </div>
-      <div className="p-6 space-y-4">
+      <div className="p-5 space-y-4">
         {/* Sugestões da API */}
         {category !== 'divulgacao' && (sportsData.length > 0 || loading) && (
-          <div className="bg-brand-500/5 border border-brand-500/10 rounded-xl p-4">
+          <div className="bg-brand-500/5 border border-brand-500/10 rounded-lg p-4">
             <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-3 flex items-center gap-2">
               ⚡ {category === 'ufc' ? 'Eventos MMA Próximos' : 'Jogos NBA de Hoje'}
             </h4>
@@ -1605,8 +1605,8 @@ const SportConfigurator = ({ category, theme, sportsData = [], loading }) => {
           </>
         )}
         {category === 'divulgacao' && (
-          <div className="bg-dark-900 border border-dashed border-dark-600 rounded-xl p-6 text-center text-zinc-500">
-            <span className="text-3xl mb-2 block">📣</span>
+          <div className="bg-dark-900 border border-dashed border-dark-600 rounded-lg p-5 text-center text-zinc-500">
+            <span className="text-2xl mb-2 block">📣</span>
             <p className="text-sm">Banners de divulgação não precisam de configuração.</p>
             <p className="text-xs mt-1">Clique em gerar para criar o banner com seu contato.</p>
           </div>
@@ -1614,7 +1614,7 @@ const SportConfigurator = ({ category, theme, sportsData = [], loading }) => {
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+          className={`w-full font-bold py-2.5 rounded-lg shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
             ${done
               ? 'bg-green-600 text-white'
               : 'bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white'
@@ -1658,7 +1658,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
   )
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-xl">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden shadow-xl">
       {/* TABS (Filmes vs Séries) */}
       <div className="flex border-b border-dark-700 bg-dark-900/80">
         <button 
@@ -1708,7 +1708,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
         </div>
       )}
 
-      <div className="p-6 space-y-4">
+      <div className="p-5 space-y-4">
         {loading ? (
           <div className="flex items-center justify-center py-10 text-zinc-500">
             <span className="animate-spin mr-2">⏳</span> Carregando títulos...
@@ -1723,7 +1723,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
                     <h4 className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-3 flex items-center gap-2">🔥 Top 10 Filmes Hoje</h4>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
                       {trendingMovies.map(c => (
-                        <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
+                        <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-lg overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
                           <img src={c.poster_path?.startsWith('http') ? c.poster_path : `https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
                         </button>
                       ))}
@@ -1736,7 +1736,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
                     <h4 className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-3 flex items-center gap-2">📺 Top 10 Séries Hoje</h4>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
                       {trendingSeries.map(c => (
-                        <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
+                        <button key={c.id} onClick={() => handleSelect(c)} className={`flex-shrink-0 w-24 aspect-[2/3] rounded-lg overflow-hidden border-2 transition-all ${selected?.id === c.id ? 'border-brand-500 scale-105' : 'border-dark-700 hover:border-zinc-500'}`}>
                           <img src={c.poster_path?.startsWith('http') ? c.poster_path : `https://image.tmdb.org/t/p/w200${c.poster_path}`} className="w-full h-full object-cover" />
                         </button>
                       ))}
@@ -1756,7 +1756,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
                   <button
                     key={c.id}
                     onClick={() => handleSelect(c)}
-                    className={`group relative rounded-xl overflow-hidden aspect-[2/3] border-2 transition-all
+                    className={`group relative rounded-lg overflow-hidden aspect-[2/3] border-2 transition-all
                       ${selected?.id === c.id
                         ? 'border-brand-500 ring-2 ring-brand-500/40 scale-[1.03]'
                         : 'border-dark-700 hover:border-zinc-500'
@@ -1780,7 +1780,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
 
             {filtered.length === 0 && search.length >= 3 && (
               <div className="text-center py-8 text-zinc-600">
-                <span className="block text-3xl mb-2">🎬</span>
+                <span className="block text-2xl mb-2">🎬</span>
                 <p className="text-sm">Nenhum título encontrado</p>
               </div>
             )}
@@ -1789,7 +1789,7 @@ const FilmesConfigurator = ({ theme, contents, trendingMovies = [], trendingSeri
         <button
           onClick={handleGenerateClick}
           disabled={!selected || generating}
-          className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
+          className={`w-full font-bold py-2.5 rounded-lg shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm
             ${done
               ? 'bg-green-600 text-white'
               : 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white disabled:opacity-50'

@@ -63,7 +63,7 @@ const ScrollingPostersBackground = () => {
             }}
           >
             {[...finalColPosters, ...finalColPosters, ...finalColPosters, ...finalColPosters].map((url, i) => (
-              <div key={i} className="flex-shrink-0 h-[250px] rounded-xl overflow-hidden bg-[#0d0d0d] shadow-lg">
+              <div key={i} className="flex-shrink-0 h-[250px] rounded-lg overflow-hidden bg-[#0d0d0d] shadow-lg">
                 <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
               </div>
             ))}
@@ -185,7 +185,7 @@ const Login = () => {
           {/* TOPBAR — Logo + Versão */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#FC5F16]/10 border border-[#FC5F16]/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-[#FC5F16]/10 border border-[#FC5F16]/20 flex items-center justify-center">
                 <img src="/logo-maxx.svg" alt="Maxx" className="w-6 h-6 object-contain" />
               </div>
               <span className="text-white font-black text-lg tracking-tight">
@@ -202,7 +202,7 @@ const Login = () => {
           <div className="flex-1 flex flex-col justify-center -mt-8">
             
             {/* Headline */}
-            <h1 className="text-4xl xl:text-5xl font-black text-white leading-tight tracking-tight mb-4">
+            <h1 className="text-3xl xl:text-4xl font-black text-white leading-tight tracking-tight mb-4">
               Gerencie.<br />
               Escale.<br />
               <em className="not-italic text-transparent bg-clip-text bg-gradient-to-r from-[#FC5F16] to-orange-400">
@@ -210,7 +210,7 @@ const Login = () => {
               </em>
             </h1>
 
-            <p className="text-zinc-400 text-sm xl:text-base leading-relaxed max-w-md mb-8">
+            <p className="text-zinc-400 text-sm xl:text-base leading-relaxed max-w-md mb-6">
               O painel de controle definitivo para gerenciar dispositivos, revendas, 
               servidores IPTV e automações — tudo em tempo real.
             </p>
@@ -220,7 +220,7 @@ const Login = () => {
               {features.map((feat, i) => (
                 <div 
                   key={i}
-                  className="group flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 hover:border-[#FC5F16]/30 hover:bg-[#FC5F16]/[0.04] transition-all duration-300"
+                  className="group flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-3 hover:border-[#FC5F16]/30 hover:bg-[#FC5F16]/[0.04] transition-all duration-300"
                 >
                   <div className="w-9 h-9 rounded-lg bg-[#FC5F16]/10 border border-[#FC5F16]/15 flex items-center justify-center flex-shrink-0 group-hover:bg-[#FC5F16]/20 transition-colors">
                     <feat.icon className="w-4 h-4 text-[#FC5F16]" />
@@ -234,7 +234,7 @@ const Login = () => {
             </div>
 
             {/* Stats Bar */}
-            <div className="flex items-center gap-0 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 max-w-md">
+            <div className="flex items-center gap-0 bg-white/[0.03] border border-white/[0.06] rounded-lg p-4 max-w-md">
               {stats.map((stat, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center relative">
                   <span className="text-xl font-black text-white">{stat.value}</span>
@@ -295,7 +295,7 @@ const Login = () => {
             </span>
           </div>
 
-          <div className="glass-effect rounded-2xl p-8 md:p-10 relative overflow-hidden" 
+          <div className="glass-effect rounded-lg p-6 md:p-8 relative overflow-hidden" 
             style={{
               background: 'rgba(17, 17, 17, 0.6)',
               backdropFilter: 'blur(16px)',
@@ -304,7 +304,7 @@ const Login = () => {
           >
 
             {/* ══════ CABEÇALHO ══════ */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               {/* Logo Maxx Control (Desktop — dentro do card) */}
               <div className="hidden lg:inline-flex items-center justify-center mb-4 transition hover:scale-105 duration-300">
                 <img src="/logo-maxx.svg" alt="Maxx Control" className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(252,95,22,0.6)] animate-pulse" style={{ animationDuration: '3s' }} />
@@ -347,7 +347,7 @@ const Login = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3.5 bg-[#EEF2F6] border border-transparent rounded-xl text-[#111111] font-bold placeholder-zinc-500 focus:bg-white focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all shadow-inner"
+                      className="w-full pl-11 pr-4 py-2.5 bg-[#EEF2F6] border border-transparent rounded-lg text-[#111111] font-bold placeholder-zinc-500 focus:bg-white focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all shadow-inner"
                       placeholder="admin@maxxcontrol.com"
                       required
                     />
@@ -367,7 +367,7 @@ const Login = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={senha}
                       onChange={(e) => setSenha(e.target.value)}
-                      className="w-full pl-11 pr-12 py-3.5 bg-[#EEF2F6] border border-transparent rounded-xl text-[#111111] font-bold tracking-widest placeholder-zinc-500 focus:bg-white focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all shadow-inner"
+                      className="w-full pl-11 pr-12 py-2.5 bg-[#EEF2F6] border border-transparent rounded-lg text-[#111111] font-bold tracking-widest placeholder-zinc-500 focus:bg-white focus:border-[#FC5F16] focus:ring-1 focus:ring-[#FC5F16] outline-none transition-all shadow-inner"
                       placeholder="••••••••"
                       required
                     />
@@ -389,7 +389,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full group relative flex justify-center items-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-[#FC5F16] to-orange-600 hover:from-orange-400 hover:to-orange-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg mt-2 active:scale-95 transform"
+                  className="w-full group relative flex justify-center items-center py-2.5 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-gradient-to-r from-[#FC5F16] to-orange-600 hover:from-orange-400 hover:to-orange-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg mt-2 active:scale-95 transform"
                   style={{ boxShadow: '0 10px 15px -3px rgba(252, 95, 22, 0.2)' }}
                 >
                   {loading ? (
@@ -425,7 +425,7 @@ const Login = () => {
                     maxLength={6}
                     value={tfaCode}
                     onChange={(e) => setTfaCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full text-center text-3xl tracking-[0.6em] font-mono py-4 bg-[#111111]/50 border-2 border-[#FC5F16]/30 rounded-2xl text-white focus:border-[#FC5F16] focus:ring-0 outline-none transition-all shadow-2xl shadow-[#FC5F16]/10 placeholder:text-zinc-800 placeholder:tracking-normal"
+                    className="w-full text-center text-3xl tracking-[0.6em] font-mono py-3 bg-[#111111]/50 border-2 border-[#FC5F16]/30 rounded-lg text-white focus:border-[#FC5F16] focus:ring-0 outline-none transition-all shadow-2xl shadow-[#FC5F16]/10 placeholder:text-zinc-800 placeholder:tracking-normal"
                     placeholder="000000"
                     required
                     autoFocus
@@ -442,7 +442,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading || tfaCode.length !== 6}
-                  className="w-full group py-4 px-4 font-black rounded-2xl text-white bg-[#FC5F16] hover:bg-orange-600 disabled:opacity-50 disabled:grayscale transition-all shadow-lg active:scale-95"
+                  className="w-full group py-3 px-4 font-black rounded-lg text-white bg-[#FC5F16] hover:bg-orange-600 disabled:opacity-50 disabled:grayscale transition-all shadow-lg active:scale-95"
                 >
                   {loading ? (
                       <Loader2 size={18} className="animate-spin mx-auto" />
@@ -455,14 +455,14 @@ const Login = () => {
 
             {/* ══════ MENSAGENS DE FEEDBACK ══════ */}
             {error && (
-              <div className="mt-4 text-center text-sm font-medium p-3 rounded-xl border flex items-center justify-center gap-2 text-red-400 bg-red-500/10 border-red-500/20 animate-fade-in">
+              <div className="mt-4 text-center text-sm font-medium p-3 rounded-lg border flex items-center justify-center gap-2 text-red-400 bg-red-500/10 border-red-500/20 animate-fade-in">
                 <AlertTriangle size={16} />
                 <p>{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="mt-4 text-center text-sm font-medium p-3 rounded-xl border flex items-center justify-center gap-2 text-green-400 bg-green-500/10 border-green-500/20 animate-fade-in">
+              <div className="mt-4 text-center text-sm font-medium p-3 rounded-lg border flex items-center justify-center gap-2 text-green-400 bg-green-500/10 border-green-500/20 animate-fade-in">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 <p>{success}</p>
               </div>

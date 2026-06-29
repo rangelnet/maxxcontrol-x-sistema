@@ -15,11 +15,16 @@ const NexusAgent = () => {
   const [config, setConfig] = useState({
     dns_list: '',
     cron_schedule: '0 3 * * *',
-    is_active: false
+    is_active: false,
+    auto_approve_words: false
   })
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [message, setMessage] = useState(null)
+
+  // TMDB Dirty Words
+  const [dirtyWords, setDirtyWords] = useState([])
+  const [processingWords, setProcessingWords] = useState(false)
 
   useEffect(() => {
     loadConfig();
@@ -30,14 +35,27 @@ const NexusAgent = () => {
       setAiLoad(Math.floor(Math.random() * 15) + 5)
     }, 3000)
 
-    // Polling de logs a cada 3s
-    const logsInterval = setInterval(fetchLogs, 3000)
+    // Polling de logs e palavras a cada 5s
+    const logsInterval = setInterval(() => {
+      fetchLogs();
+      fetchDirtyWords();
+    }, 5000)
+
 
     return () => {
       clearInterval(loadInterval)
       clearInterval(logsInterval)
     }
   }, [])
+
+  const fetchDirtyWords = async () => {
+    try {
+      const res = await api.get('/api/agents/dirty-words');
+      if (res.data && res.data.words) {
+        setDirtyWords(res.data.words);
+      }
+    } catch(e) {}
+  }
 
   const loadConfig = async () => {
     try {
@@ -98,6 +116,32 @@ const NexusAgent = () => {
     } catch(e) {}
   }
 
+  const handleUpdateWordStatus = async (id, status) => {
+    try {
+      await api.post(`/api/agents/dirty-words/${id}/status`, { status });
+      setMessage({ type: 'success', text: `Palavra ${status === 'approved' ? 'Aprovada' : 'Ignorada'} com sucesso!` });
+      setTimeout(() => setMessage(null), 3000);
+      fetchDirtyWords();
+    } catch (e) {
+      setMessage({ type: 'error', text: 'Erro ao atualizar palavra.' });
+    }
+  }
+
+  const handleApproveAllWords = async () => {
+    if (!window.confirm('Deseja aprovar todas as palavras detectadas? Elas serão adicionadas ao Filtro Global do TMDB.')) return;
+    setProcessingWords(true);
+    try {
+      const res = await api.post('/api/agents/dirty-words/approve-all');
+      setMessage({ type: 'success', text: `${res.data.count} palavras aprovadas e enviadas ao Filtro Global!` });
+      setTimeout(() => setMessage(null), 4000);
+      fetchDirtyWords();
+    } catch (e) {
+      setMessage({ type: 'error', text: 'Erro ao aprovar todas as palavras.' });
+    } finally {
+      setProcessingWords(false);
+    }
+  }
+
   const agents = [
     {
       id: 'nexus_ai',
@@ -135,10 +179,10 @@ const NexusAgent = () => {
   ]
 
   return (
-    <div className="space-y-8 animate-fadeIn relative">
+    <div className="space-y-6 animate-fadeIn relative">
       
       {message && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border ${
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border ${
           message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
         } backdrop-blur-md`}>
           <CheckCircle2 className="h-5 w-5" />
@@ -147,23 +191,23 @@ const NexusAgent = () => {
       )}
 
       {/* ══ HEADER PREMIUM ══ */}
-      <div className="relative p-8 rounded-3xl bg-dark-800 border border-dark-700 overflow-hidden shadow-xl shadow-black/20">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
+      <div className="relative p-6 rounded-3xl bg-dark-800 border border-dark-700 overflow-hidden shadow-xl shadow-black/20">
+        <div className="absolute top-0 right-0 p-6 opacity-10">
           <Zap size={120} className="text-orange-500 animate-pulse" />
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-             <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-2xl">
+             <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
                 <Cpu className="text-orange-500" size={32} />
              </div>
              <div>
-                <h1 className="text-3xl font-bold text-white">Centro de Agentes Nexus</h1>
+                <h1 className="text-2xl font-bold text-white">Centro de Agentes Nexus</h1>
                 <p className="text-zinc-400">Inteligência Artificial e Automação Gerenciada</p>
              </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-             <div className="bg-dark-900/50 p-4 rounded-2xl border border-dark-700 shadow-inner">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+             <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 shadow-inner">
                 <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Carga de Processamento</p>
                 <div className="flex items-end gap-2">
                    <span className="text-2xl font-bold text-white">{aiLoad}%</span>
@@ -172,7 +216,7 @@ const NexusAgent = () => {
                    </div>
                 </div>
              </div>
-             <div className="bg-dark-900/50 p-4 rounded-2xl border border-dark-700 shadow-inner">
+             <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 shadow-inner">
                 <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Protocolos Ativos</p>
                 <div className="flex items-center gap-2">
                    <span className="text-2xl font-bold text-white">{activeProtocols}</span>
@@ -183,7 +227,7 @@ const NexusAgent = () => {
                    </div>
                 </div>
              </div>
-             <div className="bg-dark-900/50 p-4 rounded-2xl border border-dark-700 shadow-inner">
+             <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 shadow-inner">
                 <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Status de Segurança</p>
                 <div className="flex items-center gap-2 text-green-500">
                    <CheckCircle2 size={24} />
@@ -197,7 +241,7 @@ const NexusAgent = () => {
       {/* ══ CONFIGURAÇÃO CONDICIONAL (MODAL) ══ */}
       {showConfig && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-800 border border-dark-600 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl">
+          <div className="bg-dark-800 border border-dark-600 rounded-xl w-full max-w-3xl overflow-hidden shadow-2xl">
             <div className="p-5 border-b border-dark-600 flex items-center justify-between bg-dark-850">
               <div className="flex items-center gap-3">
                 <Cpu className="text-orange-500" />
@@ -208,8 +252,8 @@ const NexusAgent = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="flex items-center gap-4 bg-dark-900 p-4 rounded-xl border border-dark-700">
+            <div className="p-5 space-y-6">
+              <div className="flex items-center gap-4 bg-dark-900 p-4 rounded-lg border border-dark-700">
                 <button 
                   onClick={() => setConfig({...config, is_active: !config.is_active})}
                   className={`w-12 h-6 rounded-full relative transition-colors ${config.is_active ? 'bg-orange-500' : 'bg-dark-600'}`}
@@ -219,6 +263,19 @@ const NexusAgent = () => {
                 <div>
                   <h3 className="text-sm font-bold text-white">Ativar Robô Varredor</h3>
                   <p className="text-xs text-zinc-400">Permite que o Nexus AI rode rotinas automáticas de varredura.</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 bg-dark-900 p-4 rounded-lg border border-dark-700">
+                <button 
+                  onClick={() => setConfig({...config, auto_approve_words: !config.auto_approve_words})}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${config.auto_approve_words ? 'bg-green-500' : 'bg-dark-600'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${config.auto_approve_words ? 'left-7' : 'left-1'}`} />
+                </button>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Auto-Aprovar Palavras Sujas (TMDB)</h3>
+                  <p className="text-xs text-zinc-400">Todas as sujeiras e tags detectadas irão automaticamente para o filtro global, sem precisar aprovar manualmente.</p>
                 </div>
               </div>
 
@@ -267,8 +324,8 @@ const NexusAgent = () => {
       {/* ══ AGENTES ══ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {agents.map((agent) => (
-          <div key={agent.id} className="bg-dark-800 border border-dark-700 p-6 rounded-3xl hover:border-orange-500/30 transition-all group flex flex-col">
-             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 border ${agent.bg}`}>
+          <div key={agent.id} className="bg-dark-800 border border-dark-700 p-5 rounded-3xl hover:border-orange-500/30 transition-all group flex flex-col">
+             <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 border ${agent.bg}`}>
                 <agent.icon className={agent.color} size={28} />
              </div>
              <div className="flex justify-between items-start mb-2">
@@ -281,16 +338,79 @@ const NexusAgent = () => {
              <p className="text-sm text-zinc-400 leading-relaxed mb-6 flex-1">
                 {agent.description}
              </p>
-             <button onClick={agent.action} className="w-full py-3 bg-dark-900 border border-dark-700 rounded-2xl text-xs font-bold hover:bg-orange-500 hover:text-white transition-all mt-auto">
+             <button onClick={agent.action} className="w-full py-3 bg-dark-900 border border-dark-700 rounded-xl text-xs font-bold hover:bg-orange-500 hover:text-white transition-all mt-auto">
                 Configurar Agente
              </button>
           </div>
         ))}
       </div>
 
+      {/* ══ PALAVRAS DETECTADAS (TMDB FILTER) ══ */}
+      <div className="bg-dark-800 border border-dark-700 rounded-3xl overflow-hidden shadow-xl shadow-black/20">
+        <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/30">
+           <div className="flex items-center gap-2">
+              <Search className="text-orange-500" size={20} />
+              <h2 className="text-lg font-bold text-white">Palavras detectadas pelo Scanner</h2>
+           </div>
+           <button 
+              onClick={handleApproveAllWords} 
+              disabled={processingWords || dirtyWords.filter(w => w.status === 'new').length === 0}
+              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition"
+           >
+              {processingWords ? 'Processando...' : 'Adicionar Tudo'}
+           </button>
+        </div>
+        <div className="p-0 overflow-x-auto max-h-80 overflow-y-auto custom-scrollbar">
+           <table className="w-full text-left border-collapse">
+              <thead className="bg-dark-900 text-[10px] uppercase text-zinc-500 font-bold sticky top-0 z-10">
+                 <tr>
+                    <th className="p-4 border-b border-dark-700">Palavra Detectada</th>
+                    <th className="p-4 border-b border-dark-700">Qtd</th>
+                    <th className="p-4 border-b border-dark-700">Exemplo de Título</th>
+                    <th className="p-4 border-b border-dark-700">Origem</th>
+                    <th className="p-4 border-b border-dark-700">Status</th>
+                    <th className="p-4 border-b border-dark-700 text-right">Ação</th>
+                 </tr>
+              </thead>
+              <tbody className="text-sm divide-y divide-dark-700">
+                 {dirtyWords.length === 0 ? (
+                   <tr><td colSpan="6" className="p-8 text-center text-zinc-500">Nenhuma palavra detectada ainda.</td></tr>
+                 ) : dirtyWords.map(word => (
+                   <tr key={word.id} className="hover:bg-dark-900/50 transition-colors">
+                      <td className="p-4 font-mono text-orange-400 font-bold">{word.word}</td>
+                      <td className="p-4 text-zinc-300 font-bold">{word.occurrences}</td>
+                      <td className="p-4 text-zinc-400 text-xs truncate max-w-[200px]">{word.example_title}</td>
+                      <td className="p-4 text-zinc-500 text-xs truncate max-w-[150px]">{word.source_dns}</td>
+                      <td className="p-4">
+                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                           word.status === 'new' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                           word.status === 'approved' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                         }`}>
+                            {word.status === 'new' ? 'Nova' : word.status === 'approved' ? 'Aprovada' : 'Ignorada'}
+                         </span>
+                      </td>
+                      <td className="p-4 text-right flex justify-end gap-2">
+                         {word.status === 'new' && (
+                           <>
+                              <button onClick={() => handleUpdateWordStatus(word.id, 'approved')} className="p-2 bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg transition" title="Aprovar">
+                                 <CheckCircle2 size={16} />
+                              </button>
+                              <button onClick={() => handleUpdateWordStatus(word.id, 'ignored')} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/40 rounded-lg transition" title="Ignorar">
+                                 <X size={16} />
+                              </button>
+                           </>
+                         )}
+                      </td>
+                   </tr>
+                 ))}
+              </tbody>
+           </table>
+        </div>
+      </div>
+
       {/* ══ LOGS DO SISTEMA ══ */}
       <div className="bg-dark-800 border border-dark-700 rounded-3xl overflow-hidden shadow-xl shadow-black/20">
-        <div className="p-6 border-b border-dark-700 flex justify-between items-center bg-dark-900/30">
+        <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/30">
            <div className="flex items-center gap-2">
               <Terminal className="text-orange-500" size={20} />
               <h2 className="text-lg font-bold text-white">Monitor de Operações Globais</h2>

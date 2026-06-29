@@ -125,8 +125,8 @@ const APIConfig = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Configuração de APIs</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Configuração de APIs</h1>
         <button onClick={openNewModal} className="btn-primary flex items-center gap-2">
           <Plus size={20} />
           Nova API

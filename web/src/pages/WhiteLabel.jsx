@@ -144,8 +144,8 @@ export default function WhiteLabel() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
+          <h1 className="text-2xl md:text-2xl font-bold text-white flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20">
               <Store className="h-5 w-5 text-yellow-500" />
             </div>
             Minha Loja White Label
@@ -154,7 +154,7 @@ export default function WhiteLabel() {
         </div>
 
         {/* Badge Novo */}
-        <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-yellow-500/10 text-yellow-400 px-3 py-2 rounded-xl border border-yellow-500/30 animate-pulse">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-yellow-500/10 text-yellow-400 px-3 py-2 rounded-lg border border-yellow-500/30 animate-pulse">
           <Zap className="h-3.5 w-3.5" /> NOVO RECURSO
         </span>
       </div>
@@ -167,7 +167,7 @@ export default function WhiteLabel() {
           { label: 'Faturamento', value: 'R$ 0,00', icon: Star, cor: 'text-yellow-400' },
           { label: 'Link Ativo', value: 'Sim', icon: BadgeCheck, cor: 'text-brand' },
         ].map((stat, i) => (
-          <div key={i} className="glass-effect rounded-xl p-4 border border-white/5">
+          <div key={i} className="glass-effect rounded-lg p-4 border border-white/5">
             <stat.icon className={`h-5 w-5 ${stat.cor} mb-2`} />
             <p className={`text-xl font-black ${stat.cor}`}>{stat.value}</p>
             <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">{stat.label}</p>
@@ -197,7 +197,7 @@ export default function WhiteLabel() {
       {tab === 'identidade' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Identidade Visual */}
-          <div className="glass-effect rounded-2xl p-6 border border-white/5 space-y-5">
+          <div className="glass-effect rounded-xl p-5 border border-white/5 space-y-5">
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <Palette className="h-4 w-4 text-brand" /> Identidade Visual
             </h2>
@@ -209,7 +209,7 @@ export default function WhiteLabel() {
                 type="text"
                 value={nomeLoja}
                 onChange={e => setNomeLoja(e.target.value)}
-                className="w-full bg-dark-900 border border-white/10 rounded-xl py-2.5 px-4 text-white text-sm focus:border-brand/50 focus:outline-none transition placeholder-zinc-600"
+                className="w-full bg-dark-900 border border-white/10 rounded-lg py-2.5 px-4 text-white text-sm focus:border-brand/50 focus:outline-none transition placeholder-zinc-600"
                 placeholder="Ex: Minha IPTV Premium"
               />
             </div>
@@ -218,9 +218,9 @@ export default function WhiteLabel() {
             <div>
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider block mb-1.5">Logo da Loja</label>
               <label className="cursor-pointer block">
-                <div className={`border-2 border-dashed rounded-xl p-6 text-center transition ${logo ? 'border-brand/40 bg-brand/5' : 'border-white/10 hover:border-brand/30 hover:bg-brand/5'}`}>
+                <div className={`border-2 border-dashed rounded-lg p-5 text-center transition ${logo ? 'border-brand/40 bg-brand/5' : 'border-white/10 hover:border-brand/30 hover:bg-brand/5'}`}>
                   {logo ? (
-                    <img src={logo} alt="Logo" className="h-16 mx-auto object-contain rounded-lg" />
+                    <img src={logo} alt="Logo" className="h-14 mx-auto object-contain rounded-lg" />
                   ) : (
                     <>
                       <Upload className="h-8 w-8 mx-auto text-zinc-600 mb-2" />
@@ -241,7 +241,7 @@ export default function WhiteLabel() {
                   <button
                     key={tema.id}
                     onClick={() => setTemaSelecionado(tema.id)}
-                    className={`relative rounded-xl overflow-hidden border-2 transition-all ${
+                    className={`relative rounded-lg overflow-hidden border-2 transition-all ${
                       temaSelecionado === tema.id ? 'border-white scale-[1.02]' : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
@@ -261,7 +261,7 @@ export default function WhiteLabel() {
 
           {/* Contato e Link */}
           <div className="space-y-6">
-            <div className="glass-effect rounded-2xl p-6 border border-white/5 space-y-5">
+            <div className="glass-effect rounded-xl p-5 border border-white/5 space-y-5">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <Phone className="h-4 w-4 text-green-400" /> Contato
               </h2>
@@ -274,7 +274,7 @@ export default function WhiteLabel() {
                     type="text"
                     value={whatsapp}
                     onChange={e => setWhatsapp(e.target.value)}
-                    className="w-full bg-dark-900 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm focus:border-green-500/50 focus:outline-none transition placeholder-zinc-600"
+                    className="w-full bg-dark-900 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm focus:border-green-500/50 focus:outline-none transition placeholder-zinc-600"
                     placeholder="5511999999999"
                   />
                 </div>
@@ -283,7 +283,7 @@ export default function WhiteLabel() {
             </div>
 
             {/* Link Personalizado */}
-            <div className="glass-effect rounded-2xl p-6 border border-white/5 space-y-4">
+            <div className="glass-effect rounded-xl p-5 border border-white/5 space-y-4">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <Globe className="h-4 w-4 text-blue-400" /> Link da Loja
               </h2>
@@ -291,21 +291,21 @@ export default function WhiteLabel() {
               <div>
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider block mb-1.5">Slug Personalizado</label>
                 <div className="flex gap-2">
-                  <div className="bg-dark-900 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-500 text-sm whitespace-nowrap">
+                  <div className="bg-dark-900 border border-white/10 rounded-lg px-3 py-2.5 text-zinc-500 text-sm whitespace-nowrap">
                     loja.mxxcontrol.com/
                   </div>
                   <input
                     type="text"
                     value={linkPersonalizado}
                     onChange={e => setLinkPersonalizado(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    className="flex-1 bg-dark-900 border border-white/10 rounded-xl py-2.5 px-3 text-white text-sm focus:border-brand/50 focus:outline-none transition placeholder-zinc-600"
+                    className="flex-1 bg-dark-900 border border-white/10 rounded-lg py-2.5 px-3 text-white text-sm focus:border-brand/50 focus:outline-none transition placeholder-zinc-600"
                     placeholder="minha-loja"
                   />
                 </div>
               </div>
 
               {/* Prévia do Link */}
-              <div className="bg-dark-900/50 rounded-xl p-3 border border-white/5 flex items-center justify-between gap-3">
+              <div className="bg-dark-900/50 rounded-lg p-3 border border-white/5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <Link className="h-3.5 w-3.5 text-brand shrink-0" />
                   <span className="text-xs text-zinc-400 truncate">
@@ -326,7 +326,7 @@ export default function WhiteLabel() {
             <button
               onClick={salvarConfiguracoes}
               disabled={saving}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm shadow-lg transition transform active:scale-95 bg-brand hover:bg-brand/90 text-white disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm shadow-lg transition transform active:scale-95 bg-brand hover:bg-brand/90 text-white disabled:opacity-60"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle className="h-4 w-4" /> : <Store className="h-4 w-4" />}
               {saving ? 'Salvando...' : saved ? 'Salvo com sucesso!' : 'Salvar Configurações'}
@@ -344,7 +344,7 @@ export default function WhiteLabel() {
             {planos.map(plano => {
               const cor = PLANO_COR[plano.cor]
               return (
-                <div key={plano.id} className={`glass-effect rounded-2xl border-2 p-5 space-y-4 relative transition-all hover:-translate-y-1 ${cor.border}`}>
+                <div key={plano.id} className={`glass-effect rounded-xl border-2 p-5 space-y-4 relative transition-all hover:-translate-y-1 ${cor.border}`}>
                   {plano.badge && (
                     <span className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-black tracking-wider px-3 py-1 rounded-full ${cor.btn} text-white shadow-lg ${cor.glow} shadow-md`}>
                       {plano.badge}
@@ -352,7 +352,7 @@ export default function WhiteLabel() {
                   )}
 
                   <div className="flex justify-between items-start">
-                    <div className={`h-10 w-10 rounded-xl ${cor.bg} flex items-center justify-center border ${cor.border}`}>
+                    <div className={`h-10 w-10 rounded-lg ${cor.bg} flex items-center justify-center border ${cor.border}`}>
                       <Package className={`h-5 w-5 ${cor.text}`} />
                     </div>
                     <div className="flex gap-2">
@@ -367,7 +367,7 @@ export default function WhiteLabel() {
                   </div>
 
                   <div>
-                    <span className={`text-3xl font-black ${cor.text}`}>{plano.preco}</span>
+                    <span className={`text-2xl font-black ${cor.text}`}>{plano.preco}</span>
                     <span className="text-zinc-500 text-xs">/período</span>
                   </div>
 
@@ -384,7 +384,7 @@ export default function WhiteLabel() {
             })}
           </div>
 
-          <div onClick={handleCreatePlan} className="glass-effect rounded-xl border border-dashed border-white/10 p-6 text-center hover:border-brand/30 hover:bg-brand/5 transition cursor-pointer group flex flex-col items-center justify-center">
+          <div onClick={handleCreatePlan} className="glass-effect rounded-lg border border-dashed border-white/10 p-5 text-center hover:border-brand/30 hover:bg-brand/5 transition cursor-pointer group flex flex-col items-center justify-center">
             <div className="h-12 w-12 rounded-full bg-dark-800 border border-dark-600 flex items-center justify-center group-hover:bg-brand group-hover:border-brand mb-3 transition shadow-lg">
               <Plus className="h-6 w-6 text-zinc-500 group-hover:text-white transition" />
             </div>
@@ -395,7 +395,7 @@ export default function WhiteLabel() {
           {/* Modal Criar/Editar Plano */}
           {showPlanModal && (
             <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-              <div className="glass-effect relative w-full max-w-lg shadow-2xl rounded-2xl border border-dark-700 bg-dark-900/95 p-1 flex flex-col max-h-[90vh]">
+              <div className="glass-effect relative w-full max-w-lg shadow-2xl rounded-xl border border-dark-700 bg-dark-900/95 p-1 flex flex-col max-h-[90vh]">
                 <div className="px-5 py-4 border-b border-dark-700 bg-dark-800/50 flex justify-between items-center rounded-t-2xl shrink-0">
                   <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <Package className="w-5 h-5 text-brand" /> {planForm.id ? 'Editar Plano' : 'Novo Plano'}
@@ -457,7 +457,7 @@ export default function WhiteLabel() {
           <p className="text-zinc-400 text-sm">Prévia de como sua loja ficará para os clientes.</p>
 
           <div
-            className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+            className="rounded-xl overflow-hidden border border-white/10 shadow-2xl"
             style={{ background: temaSel.bg }}
           >
             {/* Navbar da Loja */}
@@ -485,12 +485,12 @@ export default function WhiteLabel() {
 
             {/* Hero da Loja */}
             <div className="py-12 px-6 text-center">
-              <h1 className="text-2xl md:text-4xl font-black text-white mb-3">{nomeLoja}</h1>
+              <h1 className="text-2xl md:text-3xl font-black text-white mb-3">{nomeLoja}</h1>
               <p className="text-zinc-400 text-sm max-w-md mx-auto mb-6">
                 A melhor plataforma de streaming com canais ao vivo, filmes e séries em HD, Full HD e 4K.
               </p>
               <button
-                className="px-8 py-3 rounded-xl font-bold text-white text-sm shadow-lg"
+                className="px-6 py-3 rounded-lg font-bold text-white text-sm shadow-lg"
                 style={{ background: `linear-gradient(135deg, ${temaSel.primary}, ${temaSel.primary}cc)` }}
               >
                 Ver Planos
@@ -502,7 +502,7 @@ export default function WhiteLabel() {
               {planos.map(plano => (
                 <div
                   key={plano.id}
-                  className="rounded-xl p-4 border text-center transition hover:-translate-y-1 shadow-lg cursor-pointer"
+                  className="rounded-lg p-4 border text-center transition hover:-translate-y-1 shadow-lg cursor-pointer"
                   style={{ borderColor: `${temaSel.primary}30`, background: `${temaSel.primary}08` }}
                 >
                   {plano.badge && (

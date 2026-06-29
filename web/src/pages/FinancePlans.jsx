@@ -560,7 +560,7 @@ const FinancePlans = () => {
   ];
 
   // Botão Primário Laranja Oficial
-  const btnPrimaryClass = "inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
+  const btnPrimaryClass = "inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-black rounded-lg transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
   const btnPrimary = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', background: '#FC5F16', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)', transition: 'all 0.2s' };
 
   return (
@@ -601,7 +601,7 @@ const FinancePlans = () => {
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black cursor-pointer border-none transition-all transform active:scale-95 whitespace-nowrap text-xs sm:text-sm ${activeTab === tab.id ? 'bg-brand-500/10 text-brand-500' : 'bg-transparent text-zinc-500 hover:text-zinc-300'}`}
+            className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-black cursor-pointer border-none transition-all transform active:scale-95 whitespace-nowrap text-xs sm:text-sm ${activeTab === tab.id ? 'bg-brand-500/10 text-brand-500' : 'bg-transparent text-zinc-500 hover:text-zinc-300'}`}
           >
             {tab.label}
           </button>
@@ -1119,8 +1119,8 @@ const FinancePlans = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
-                <button type="button" onClick={() => { setShowModal(false); setEditPlanId(null); }} className="flex-1 py-3.5 bg-transparent border border-white/10 hover:border-white/20 active:scale-95 text-white font-black rounded-xl transition-all">Cancelar</button>
-                <button type="submit" className="flex-2 py-3.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-black rounded-xl shadow-[0_4px_15px_rgba(252,95,22,0.3)] transition-all">
+                <button type="button" onClick={() => { setShowModal(false); setEditPlanId(null); }} className="flex-1 py-2.5 bg-transparent border border-white/10 hover:border-white/20 active:scale-95 text-white font-black rounded-lg transition-all">Cancelar</button>
+                <button type="submit" className="flex-2 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-black rounded-lg shadow-[0_4px_15px_rgba(252,95,22,0.3)] transition-all">
                   {editPlanId ? 'Salvar Alterações' : 'Salvar Plano'}
                 </button>
               </div>

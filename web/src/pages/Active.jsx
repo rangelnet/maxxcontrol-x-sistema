@@ -156,7 +156,7 @@ export default function Active() {
       {/* NAVBAR */}
       <nav className="relative z-10 w-full bg-black/30 backdrop-blur-md border-b border-white/5 py-4">
         <div className="max-w-[1500px] mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-3">
               <img src="/logo-maxx.svg" alt="Logo" className="w-10 h-10 object-contain drop-shadow-[0_0_15px_rgba(252,95,22,0.5)]" />
               <span className="text-xl font-black tracking-tight text-white hidden sm:block">
@@ -172,7 +172,7 @@ export default function Active() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5">
+            <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/5">
               <ChevronLeft size={16} /> Voltar ao Site
             </Link>
           </div>
@@ -183,13 +183,13 @@ export default function Active() {
       <main className="flex-grow w-full max-w-[1500px] mx-auto mt-4 md:mt-[20px] px-2 md:px-[40px] relative z-10">
         
         {/* Hero Section */}
-        <section className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 px-4 py-8 lg:py-16">
+        <section className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 px-4 py-8 lg:py-8">
           <div className="flex flex-col items-center md:items-start md:w-[55%] text-center md:text-left">
-            <h1 className="text-white text-[32px] md:text-[44px] font-medium leading-[100%] tracking-[-1.6px] mb-8">
+            <h1 className="text-white text-[32px] md:text-[44px] font-medium leading-[100%] tracking-[-1.6px] mb-6">
               Ative seu aplicativo<br className="hidden md:block"/> <span className="text-brand-500 font-black relative inline-block">MAXX PLAYERS</span> já!
             </h1>
             
-            <p className="text-zinc-300 max-w-md text-[14px] leading-[24px] tracking-[0.15px] mb-8">
+            <p className="text-zinc-300 max-w-md text-[14px] leading-[24px] tracking-[0.15px] mb-6">
               Selecione o plano desejado e digite abaixo o número MAC do seu dispositivo. Você pode encontrar seu endereço MAC na página inicial do aplicativo MAXX PLAYERS no canto inferior direito da tela.
             </p>
 
@@ -202,7 +202,7 @@ export default function Active() {
                         key={pkg.id}
                         type="button"
                         onClick={() => setSelectedPlan(pkg)}
-                        className={`py-4 rounded-2xl border-2 transition-all transform active:scale-95 flex flex-col items-center justify-center gap-2 ${selectedPlan?.id === pkg.id ? 'border-brand-500 bg-brand-500/20 shadow-[0_0_20px_rgba(252,95,22,0.15)]' : 'border-white/10 hover:border-white/20 bg-[#111111]/80'}`}
+                        className={`py-4 rounded-xl border-2 transition-all transform active:scale-95 flex flex-col items-center justify-center gap-2 ${selectedPlan?.id === pkg.id ? 'border-brand-500 bg-brand-500/20 shadow-[0_0_20px_rgba(252,95,22,0.15)]' : 'border-white/10 hover:border-white/20 bg-[#111111]/80'}`}
                       >
                          <span className="text-[11px] font-black uppercase text-zinc-400 tracking-widest">{pkg.name}</span>
                          <span className="text-xl font-black text-white">R$ {Number(pkg.price).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
@@ -210,7 +210,7 @@ export default function Active() {
                       </button>
                     ))
                  ) : (
-                    <div className="col-span-full py-4 px-6 bg-white/5 border border-white/10 rounded-2xl text-zinc-500 text-sm flex items-center justify-center gap-2">
+                    <div className="col-span-full py-4 px-6 bg-white/5 border border-white/10 rounded-xl text-zinc-500 text-sm flex items-center justify-center gap-2">
                       <Loader2 className="animate-spin" size={16} /> Carregando planos...
                     </div>
                  )}
@@ -220,7 +220,7 @@ export default function Active() {
                 <button 
                   type="button"
                   onClick={() => { setCheckoutMethod('pix'); setPaymentError(''); }}
-                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
                     checkoutMethod === 'pix' 
                     ? 'bg-green-500/10 border-green-500/50 text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
                     : 'bg-white/5 border-white/10 text-zinc-500 hover:text-zinc-300'
@@ -231,7 +231,7 @@ export default function Active() {
                 <button 
                   type="button"
                   onClick={() => { setCheckoutMethod('card'); setPaymentError(''); }}
-                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
                     checkoutMethod === 'card' 
                     ? 'bg-blue-500/10 border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)]' 
                     : 'bg-white/5 border-white/10 text-zinc-500 hover:text-zinc-300'
@@ -250,7 +250,7 @@ export default function Active() {
                     maxLength="17" 
                     value={macAddress}
                     onChange={(e) => setMacAddress(e.target.value.toUpperCase())}
-                    className="w-full px-5 border border-white/10 rounded-xl text-white placeholder-zinc-500 uppercase font-mono pr-[140px] focus:border-brand-500 outline-none transition-colors"
+                    className="w-full px-5 border border-white/10 rounded-lg text-white placeholder-zinc-500 uppercase font-mono pr-[140px] focus:border-brand-500 outline-none transition-colors"
                     style={{ height: '60px', backgroundColor: 'rgba(20, 20, 20, 0.8)', lineHeight: '60px' }}
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -267,7 +267,7 @@ export default function Active() {
               )}
 
               {paymentError && (
-                 <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 font-bold text-sm text-center">
+                 <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 font-bold text-sm text-center">
                     {paymentError}
                  </div>
               )}
@@ -282,7 +282,7 @@ export default function Active() {
                    maxLength="17" 
                    value={macAddress}
                    onChange={(e) => setMacAddress(e.target.value.toUpperCase())}
-                   className="w-full px-5 border border-white/10 rounded-xl text-white placeholder-zinc-500 uppercase font-mono focus:border-brand-500 outline-none transition-colors"
+                   className="w-full px-5 border border-white/10 rounded-lg text-white placeholder-zinc-500 uppercase font-mono focus:border-brand-500 outline-none transition-colors"
                    style={{ height: '60px', backgroundColor: 'rgba(20, 20, 20, 0.8)', lineHeight: '60px' }}
                  />
                  <div>
@@ -343,7 +343,7 @@ export default function Active() {
                     />
                  </div>
                  
-                 <button type="submit" disabled={paymentLoading || !selectedPlan || !macAddress} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 mt-4 flex items-center justify-center gap-2">
+                 <button type="submit" disabled={paymentLoading || !selectedPlan || !macAddress} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 mt-4 flex items-center justify-center gap-2">
                     {paymentLoading ? <Loader2 className="animate-spin" size={20} /> : 'Finalizar Pagamento com Cartão'}
                  </button>
               </form>
@@ -352,7 +352,7 @@ export default function Active() {
 
           <div className="md:w-[45%] flex justify-center w-full mt-12 md:mt-0 relative">
              {qrCode ? (
-                <div className="bg-[#111] border border-brand-500/30 p-8 md:p-10 rounded-[3rem] flex flex-col items-center text-center animate-slide-up shadow-[0_0_50px_rgba(252,95,22,0.15)] w-full max-w-sm relative z-10">
+                <div className="bg-[#111] border border-brand-500/30 p-6 md:p-10 rounded-[3rem] flex flex-col items-center text-center animate-slide-up shadow-[0_0_50px_rgba(252,95,22,0.15)] w-full max-w-sm relative z-10">
                    <h3 className="text-brand-500 font-black text-xl mb-2 uppercase tracking-wider">
                       {paymentStatus === 'approved' ? 'Pagamento Aprovado!' : 'Escaneie o PIX'}
                    </h3>
@@ -369,7 +369,7 @@ export default function Active() {
                       <>
                          <p className="text-zinc-400 text-xs mb-6 font-medium">A liberação da licença será automática.</p>
                          
-                         <div className="p-4 bg-white rounded-2xl mb-6 shadow-xl">
+                         <div className="p-4 bg-white rounded-xl mb-6 shadow-xl">
                             <img src={`data:image/png;base64,${qrCode.qr_code_base64}`} alt="QR Code PIX" className="w-48 h-48 md:w-56 md:h-56" />
                          </div>
 
@@ -377,7 +377,7 @@ export default function Active() {
                             <button 
                               type="button"
                               onClick={() => navigator.clipboard.writeText(qrCode.qr_code)}
-                              className="w-full py-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+                              className="w-full py-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
                             >
                                Copiar Código Copia e Cola
                             </button>
@@ -391,7 +391,7 @@ export default function Active() {
                    )}
                 </div>
              ) : (
-                <div className="relative w-[300px] md:w-[450px] aspect-video bg-black border-2 border-brand-500/20 rounded-2xl shadow-[0_0_50px_rgba(252,95,22,0.25)] flex flex-col items-center justify-center overflow-hidden transition-all duration-700 group cursor-pointer hover:border-brand-500/50">
+                <div className="relative w-[300px] md:w-[450px] aspect-video bg-black border-2 border-brand-500/20 rounded-xl shadow-[0_0_50px_rgba(252,95,22,0.25)] flex flex-col items-center justify-center overflow-hidden transition-all duration-700 group cursor-pointer hover:border-brand-500/50">
                    {/* Background Image of the actual APP */}
                    <img src="/app-login.png" alt="MAXX PLAYERS Login Screen" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" />
                    
@@ -418,7 +418,7 @@ export default function Active() {
         </section>
 
         {/* Banner Section */}
-        <div className="relative mt-2 md:mt-8 mb-16">
+        <div className="relative mt-2 md:mt-6 mb-16">
           <div className="absolute inset-0 bg-[#0a0a0a]/80 border-y border-white/5" style={{ width: '100vw', left: '50%', transform: 'translateX(-50%)' }}></div>
           <div className="relative py-6 max-w-[980px] mx-auto px-4 text-center">
             <p className="text-xs md:text-sm max-w-[949px] mx-auto text-zinc-300 font-medium leading-relaxed tracking-wide">
@@ -429,14 +429,14 @@ export default function Active() {
 
         {/* FAQ Section */}
         <section className="max-w-[980px] mx-auto px-4 pb-24">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-center text-white">Perguntas Frequentes</h2>
+          <h2 className="text-2xl md:text-2xl font-bold mb-6 md:mb-12 text-center text-white">Perguntas Frequentes</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 gap-x-12">
              {faqs.map((faq, index) => (
-                <div key={index} className="border border-white/10 rounded-2xl overflow-hidden cursor-pointer bg-[#141414]/50 hover:bg-[#141414] hover:border-brand-500/50 transition-all">
-                  <div className="p-6">
+                <div key={index} className="border border-white/10 rounded-xl overflow-hidden cursor-pointer bg-[#141414]/50 hover:bg-[#141414] hover:border-brand-500/50 transition-all">
+                  <div className="p-5">
                     <div className="flex items-center gap-6">
-                      <div className="w-[60px] md:w-[80px] h-[60px] md:h-[80px] flex items-center justify-center rounded-xl bg-white/5 flex-shrink-0">
+                      <div className="w-[60px] md:w-[80px] h-[60px] md:h-[80px] flex items-center justify-center rounded-lg bg-white/5 flex-shrink-0">
                         {faq.icon}
                       </div>
                       <h3 className="text-white font-semibold text-lg whitespace-pre-line leading-tight">

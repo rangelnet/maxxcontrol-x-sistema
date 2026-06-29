@@ -520,7 +520,7 @@ const TvManager = () => {
     const isEditing = editingChannel === channel.id;
     
     return (
-      <div className={`flex items-center gap-3 p-3 border rounded-xl transition-colors group ${selectedChannels.includes(channel.id) ? 'bg-brand-500/10 border-brand-500/50' : 'bg-dark-900 border-dark-600 hover:border-brand-500/30'}`}>
+      <div className={`flex items-center gap-3 p-3 border rounded-lg transition-colors group ${selectedChannels.includes(channel.id) ? 'bg-brand-500/10 border-brand-500/50' : 'bg-dark-900 border-dark-600 hover:border-brand-500/30'}`}>
         <input 
           type="checkbox" 
           checked={selectedChannels.includes(channel.id)} 
@@ -573,7 +573,7 @@ const TvManager = () => {
   }
 
   if (loading) return (
-    <div className="flex items-center justify-center py-20">
+    <div className="flex items-center justify-center py-10">
       <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
@@ -582,7 +582,7 @@ const TvManager = () => {
     <div className="space-y-6 relative">
       {/* Toast Notification Premium */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border backdrop-blur-md animate-[slideIn_0.3s_ease-out] ${
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-2.5 rounded-xl shadow-2xl border backdrop-blur-md animate-[slideIn_0.3s_ease-out] ${
           toast.type === 'success' ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400' :
           toast.type === 'error' ? 'bg-red-500/15 border-red-500/40 text-red-400' :
           'bg-brand-500/15 border-brand-500/40 text-brand-400'
@@ -601,19 +601,19 @@ const TvManager = () => {
       {/* Confirm Modal Premium */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={handleConfirmNo}>
-          <div className="bg-[#1a1a1a] border border-dark-600 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()} style={{animation: 'fadeIn 0.2s ease-out'}}>
+          <div className="bg-[#1a1a1a] border border-dark-600 rounded-xl p-5 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()} style={{animation: 'fadeIn 0.2s ease-out'}}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center flex-shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-brand-500/20 border border-brand-500/30 flex items-center justify-center flex-shrink-0">
                 <AlertCircle className="w-5 h-5 text-brand-500" />
               </div>
               <h3 className="text-white font-bold text-sm">Confirmação</h3>
             </div>
             <p className="text-zinc-300 text-sm mb-6 leading-relaxed">{confirmModal}</p>
             <div className="flex items-center gap-3 justify-end">
-              <button onClick={handleConfirmNo} className="px-5 py-2.5 rounded-xl text-sm font-bold text-zinc-400 bg-dark-800 border border-dark-600 hover:border-zinc-500 hover:text-white transition-all">
+              <button onClick={handleConfirmNo} className="px-5 py-2.5 rounded-lg text-sm font-bold text-zinc-400 bg-dark-800 border border-dark-600 hover:border-zinc-500 hover:text-white transition-all">
                 Cancelar
               </button>
-              <button onClick={handleConfirmYes} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20">
+              <button onClick={handleConfirmYes} className="px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/20">
                 Confirmar
               </button>
             </div>
@@ -622,7 +622,7 @@ const TvManager = () => {
       )}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
             <Tv className="w-5 h-5 text-orange-500" />
           </div>
           <div>
@@ -632,7 +632,7 @@ const TvManager = () => {
         </div>
         <button 
           onClick={handleSync}
-          className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors shadow-lg shadow-brand-500/20"
+          className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-lg shadow-brand-500/20"
         >
           <RefreshCw className="w-4 h-4" /> Sincronizar TVs (Push)
         </button>
@@ -649,7 +649,7 @@ const TvManager = () => {
         {/* Lado Esquerdo: Importação e Staging */}
         <div className="space-y-6 lg:col-span-1">
           {/* Box Importação */}
-          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5">
+          <div className="bg-dark-800 border border-dark-700 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-4">
               <Download className="w-4 h-4 text-brand-400" />
               <h3 className="text-sm font-bold text-white">Importar Lista Xtream</h3>
@@ -658,26 +658,26 @@ const TvManager = () => {
             <form onSubmit={handleImport} className="space-y-3">
               <div>
                 <label className="text-[10px] text-zinc-500 font-bold uppercase ml-1">URL (Painel)</label>
-                <input type="text" value={importData.url} onChange={e => setImportData({...importData, url: e.target.value})} placeholder="http://dominio:porta" className="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" required />
+                <input type="text" value={importData.url} onChange={e => setImportData({...importData, url: e.target.value})} placeholder="http://dominio:porta" className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" required />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] text-zinc-500 font-bold uppercase ml-1">Usuário</label>
-                  <input type="text" value={importData.username} onChange={e => setImportData({...importData, username: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" required />
+                  <input type="text" value={importData.username} onChange={e => setImportData({...importData, username: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" required />
                 </div>
                 <div>
                   <label className="text-[10px] text-zinc-500 font-bold uppercase ml-1">Senha</label>
-                  <input type="text" value={importData.password} onChange={e => setImportData({...importData, password: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" required />
+                  <input type="text" value={importData.password} onChange={e => setImportData({...importData, password: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-sm text-white focus:border-brand-500 outline-none" required />
                 </div>
               </div>
-              <button type="submit" disabled={importing} className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50 mt-2">
+              <button type="submit" disabled={importing} className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50 mt-2">
                 {importing ? 'Importando Canais...' : 'Iniciar Importação'}
               </button>
             </form>
           </div>
 
           {/* Box Agrupamento de Qualidades */}
-          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5">
+          <div className="bg-dark-800 border border-dark-700 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-1">
               <Folders className="w-4 h-4 text-purple-400" />
               <h3 className="text-sm font-bold text-white">Qualidades & Servidores</h3>
@@ -689,7 +689,7 @@ const TvManager = () => {
               <button 
                 onClick={handleDetectDuplicates}
                 disabled={isDetectingDupes}
-                className="w-full flex items-center justify-center gap-2 bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white px-3 py-2.5 rounded-xl text-xs font-bold transition-all border border-purple-500/20 hover:border-purple-500"
+                className="w-full flex items-center justify-center gap-2 bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white px-3 py-2.5 rounded-lg text-xs font-bold transition-all border border-purple-500/20 hover:border-purple-500"
               >
                 <Folders className={`w-3.5 h-3.5 ${isDetectingDupes ? 'animate-spin' : ''}`} />
                 {isDetectingDupes ? 'Escaneando...' : 'Escanear Qualidades'}
@@ -697,7 +697,7 @@ const TvManager = () => {
 
               {/* Resultados do Scan */}
               {duplicateGroups.length > 0 && (
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3 space-y-2">
+                <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5 text-purple-400">
                       <CheckCircle2 className="w-4 h-4" />
@@ -731,10 +731,10 @@ const TvManager = () => {
                   <span>Zona de Perigo (excluir canais por qualidade)</span>
                 </summary>
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <button onClick={() => handleBulkDelete('SD')} className="flex items-center justify-center gap-1.5 bg-dark-900 border border-dark-600 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 hover:text-red-300 text-[10px] font-bold px-2 py-2 rounded-xl transition-all">
+                  <button onClick={() => handleBulkDelete('SD')} className="flex items-center justify-center gap-1.5 bg-dark-900 border border-dark-600 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 hover:text-red-300 text-[10px] font-bold px-2 py-2 rounded-lg transition-all">
                     <Trash className="w-3 h-3"/> Excluir SD
                   </button>
-                  <button onClick={() => handleBulkDelete('HD')} className="flex items-center justify-center gap-1.5 bg-dark-900 border border-dark-600 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 hover:text-red-300 text-[10px] font-bold px-2 py-2 rounded-xl transition-all">
+                  <button onClick={() => handleBulkDelete('HD')} className="flex items-center justify-center gap-1.5 bg-dark-900 border border-dark-600 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 hover:text-red-300 text-[10px] font-bold px-2 py-2 rounded-lg transition-all">
                     <Trash className="w-3 h-3"/> Excluir HD
                   </button>
                 </div>
@@ -743,7 +743,7 @@ const TvManager = () => {
           </div>
 
           {/* Box Staging (Canais não categorizados) */}
-          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 flex flex-col max-h-[600px]">
+          <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 flex flex-col max-h-[600px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <input 
@@ -766,7 +766,7 @@ const TvManager = () => {
                 <button 
                   onClick={handleAuditStaging}
                   disabled={isStagingAuditing}
-                  className="w-full flex items-center justify-center gap-2 bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                  className="w-full flex items-center justify-center gap-2 bg-brand-500/10 text-brand-500 hover:bg-brand-500 hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition-all"
                 >
                   <Wand2 className={`w-3.5 h-3.5 ${isStagingAuditing ? 'animate-spin' : ''}`} />
                   {isStagingAuditing ? 'Analisando...' : 'Auditoria Inteligente'}
@@ -776,7 +776,7 @@ const TvManager = () => {
 
             {/* Painel de Sugestões da Auditoria do Staging */}
             {(stagingAuditSuggestions && stagingAuditSuggestions.length > 0) ? (
-              <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 mb-3">
+              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mb-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5 text-orange-500">
                     <Wand2 className="w-4 h-4" />
@@ -814,7 +814,7 @@ const TvManager = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Bulk Actions Bar */}
           {selectedChannels.length > 0 && (
-            <div className="bg-brand-500/10 border border-brand-500/30 rounded-2xl p-4 flex items-center justify-between sticky top-4 z-10 backdrop-blur-md">
+            <div className="bg-brand-500/10 border border-brand-500/30 rounded-xl p-4 flex items-center justify-between sticky top-4 z-10 backdrop-blur-md">
               <div className="flex items-center gap-3 text-brand-400 font-bold text-sm">
                 <Check className="w-5 h-5"/>
                 <span>{selectedChannels.length} canais selecionados</span>
@@ -828,12 +828,12 @@ const TvManager = () => {
                       e.target.value = '';
                     }
                   }}
-                  className="bg-dark-800 border border-dark-600 rounded-xl text-xs text-white px-3 py-2.5 focus:border-brand-500 outline-none"
+                  className="bg-dark-800 border border-dark-600 rounded-lg text-xs text-white px-3 py-2.5 focus:border-brand-500 outline-none"
                 >
                   <option value="">Mover selecionados para...</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.icon_type === 'image' ? c.name : `${c.icon} ${c.name}`}</option>)}
                 </select>
-                <button onClick={handleDeleteSelected} className="flex items-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/30 px-4 py-2.5 rounded-xl text-xs font-bold transition-all">
+                <button onClick={handleDeleteSelected} className="flex items-center gap-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/30 px-4 py-2.5 rounded-lg text-xs font-bold transition-all">
                   <Trash2 className="w-4 h-4"/> Apagar
                 </button>
               </div>
@@ -841,7 +841,7 @@ const TvManager = () => {
           )}
           
           {/* Topo: Categorias */}
-          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5">
+          <div className="bg-dark-800 border border-dark-700 rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Folders className="w-4 h-4 text-brand-400" />
@@ -860,7 +860,7 @@ const TvManager = () => {
                 <div 
                   key={cat.id} 
                   onClick={() => loadCategoryChannels(cat.id)}
-                  className={`group relative p-3 rounded-xl border-2 cursor-pointer transition-all ${activeCategory === cat.id ? 'border-brand-500 bg-brand-500/5' : 'border-dark-600 bg-dark-900 hover:border-dark-500'}`}
+                  className={`group relative p-3 rounded-lg border-2 cursor-pointer transition-all ${activeCategory === cat.id ? 'border-brand-500 bg-brand-500/5' : 'border-dark-600 bg-dark-900 hover:border-dark-500'}`}
                 >
                   <div className="text-2xl mb-2 flex items-center justify-start h-10 w-10">
                     {cat.icon_type === 'image' ? (
@@ -885,7 +885,7 @@ const TvManager = () => {
 
           {/* Bottom: Canais da Categoria Selecionada */}
           {activeCategory && (
-            <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 min-h-[400px]">
+            <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 min-h-[400px]">
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-dark-700">
                 <div className="flex items-center gap-3">
                   <input 
@@ -917,7 +917,7 @@ const TvManager = () => {
               </div>
 
               {(auditSuggestions && auditSuggestions.length > 0) ? (
-                <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-4">
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 mb-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2 text-orange-500">
                       <Wand2 className="w-5 h-5" />
@@ -999,12 +999,12 @@ const TvManager = () => {
       {/* Modal Nova/Editar Categoria */}
       {showCategoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 w-full max-w-sm">
+          <div className="bg-dark-800 border border-dark-600 rounded-xl p-5 w-full max-w-sm">
             <h3 className="text-lg font-black text-white mb-4">{editCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
             <form onSubmit={handleSaveCategory} className="space-y-4">
               <div>
                 <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1 ml-1">Nome da Categoria</label>
-                <input type="text" value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-2.5 text-sm text-white focus:border-brand-500 outline-none" required />
+                <input type="text" value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} className="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-sm text-white focus:border-brand-500 outline-none" required />
               </div>
               <div>
                 <label className="block text-[10px] text-zinc-500 font-bold uppercase mb-1 ml-1">Ícone</label>
@@ -1025,12 +1025,12 @@ const TvManager = () => {
                       setCatForm({...catForm, icon_type: 'image'});
                     }
                   }}
-                  className="w-full bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 text-sm text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-white hover:file:bg-brand-600 focus:outline-none"
+                  className="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-sm text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-white hover:file:bg-brand-600 focus:outline-none"
                 />
               </div>
               <div className="flex items-center gap-3 pt-4">
-                <button type="button" onClick={() => { setShowCategoryModal(false); setCatImageFile(null); }} className="flex-1 px-4 py-2.5 rounded-xl border-2 border-dark-600 text-white font-bold text-sm hover:bg-dark-700">Cancelar</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm transition-colors">Salvar</button>
+                <button type="button" onClick={() => { setShowCategoryModal(false); setCatImageFile(null); }} className="flex-1 px-4 py-2.5 rounded-lg border-2 border-dark-600 text-white font-bold text-sm hover:bg-dark-700">Cancelar</button>
+                <button type="submit" className="flex-1 px-4 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm transition-colors">Salvar</button>
               </div>
             </form>
           </div>

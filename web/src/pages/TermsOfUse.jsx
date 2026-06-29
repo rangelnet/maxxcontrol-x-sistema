@@ -18,7 +18,7 @@ export default function TermsOfUse() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5">
+            <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/5">
               <ChevronLeft size={16} /> Voltar ao Site
             </Link>
           </div>
@@ -27,9 +27,9 @@ export default function TermsOfUse() {
 
       {/* MAIN CONTENT */}
       <main className="flex-grow w-full max-w-4xl mx-auto mt-12 px-6 pb-24 relative z-10">
-         <h1 className="text-4xl font-black text-white mb-12 tracking-tight">Termos e Condições de Uso – MAXX Control</h1>
+         <h1 className="text-3xl font-black text-white mb-12 tracking-tight">Termos e Condições de Uso – MAXX Control</h1>
          
-         <div className="space-y-8 text-zinc-300 text-sm md:text-base leading-relaxed">
+         <div className="space-y-6 text-zinc-300 text-sm md:text-base leading-relaxed">
             <section>
                <h2 className="text-xl font-bold text-white mb-4 text-brand-500">1. Interpretação e Definições</h2>
                <h3 className="font-bold text-white mb-2">Interpretação</h3>

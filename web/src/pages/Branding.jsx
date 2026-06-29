@@ -87,7 +87,7 @@ const mergeCustomPlatforms = (savedPlatforms) => {
 const ColorField = ({ label, value, onChange }) => (
   <div>
     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1.5">{label}</label>
-    <div className="flex items-center gap-2 bg-dark-900 border border-dark-600 rounded-xl px-3 py-2 focus-within:border-brand-500 transition group">
+    <div className="flex items-center gap-2 bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 focus-within:border-brand-500 transition group">
       <div className="relative shrink-0">
         <input
           type="color"
@@ -119,7 +119,7 @@ const InputField = ({ label, value, onChange, placeholder, type = 'text', hint }
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-dark-900 border border-dark-600 rounded-xl px-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
+      className="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-500 outline-none transition"
     />
     {hint && <p className="text-[10px] text-zinc-600 mt-1">{hint}</p>}
   </div>
@@ -295,10 +295,12 @@ const Branding = () => {
     if (e) e.preventDefault()
     setSaving(true)
     try {
+      const dataToSave = { ...formData, platforms: formData.custom_platforms }
+      
       if (branding?.id) {
-        await api.put(`/api/branding/${branding.id}`, formData)
+        await api.put(`/api/branding/${branding.id}`, dataToSave)
       } else {
-        await api.post('/api/branding', formData)
+        await api.post('/api/branding', dataToSave)
       }
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -389,7 +391,7 @@ const Branding = () => {
   ]
 
   if (loading) return (
-    <div className="flex items-center justify-center py-20 text-zinc-500">
+    <div className="flex items-center justify-center py-10 text-zinc-500">
       <span className="animate-spin mr-2 text-xl">⏳</span> Carregando branding...
     </div>
   )
@@ -400,8 +402,8 @@ const Branding = () => {
       {/* ── HEADER ─────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
+          <h1 className="text-2xl md:text-2xl font-black text-white flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
               🎨
             </div>
             Fábrica de Temas Master
@@ -414,14 +416,14 @@ const Branding = () => {
           <button
             type="button"
             onClick={handleCreateNew}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-zinc-800 hover:bg-zinc-700 text-white transition active:scale-95 border border-zinc-700"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-xs bg-zinc-800 hover:bg-zinc-700 text-white transition active:scale-95 border border-zinc-700"
           >
             ➕ Novo Tema
           </button>
           <button
             type="submit"
             disabled={saving}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs transition transform active:scale-95 shadow-lg shrink-0
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-xs transition transform active:scale-95 shadow-lg shrink-0
               ${saved
                 ? 'bg-green-600 text-white shadow-green-500/20'
                 : 'bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white shadow-brand-500/25'
@@ -436,7 +438,7 @@ const Branding = () => {
         
         {/* ── BARRA LATERAL: MEUS TEMAS ──────────────────────── */}
         <div className="xl:w-80 shrink-0 space-y-4">
-          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4 shadow-xl">
+          <div className="bg-dark-800 border border-dark-700 rounded-xl p-4 shadow-xl">
             <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Meus Temas Salvos</h3>
             <div className="space-y-2">
               {allBrandings.map(b => (
@@ -444,7 +446,7 @@ const Branding = () => {
                   key={b.id}
                   type="button"
                   onClick={() => selectBranding(b)}
-                  className={`w-full group relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left
+                  className={`w-full group relative flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left
                     ${branding?.id === b.id 
                       ? 'bg-brand-500/10 border-brand-500' 
                       : 'bg-dark-900 border-transparent hover:border-zinc-700'}`}
@@ -480,7 +482,7 @@ const Branding = () => {
           </div>
 
           {/* Banner Ajuda */}
-          <div className="bg-brand-500/5 border border-brand-500/10 rounded-2xl p-4">
+          <div className="bg-brand-500/5 border border-brand-500/10 rounded-xl p-4">
             <p className="text-[10px] text-brand-400/80 leading-relaxed font-medium">
               DICA: Após criar seu tema, clique em <b>ATIVAR</b> para que seu App Android TV mude instantaneamente de cor.
             </p>
@@ -491,7 +493,7 @@ const Branding = () => {
         <div className="flex-1 space-y-5">
 
           {/* Abas de seção */}
-          <div className="flex flex-wrap gap-1 bg-dark-800 border border-dark-700 rounded-xl p-1">
+          <div className="flex flex-wrap gap-1 bg-dark-800 border border-dark-700 rounded-lg p-1">
             {SECTIONS.map(s => (
               <button
                 key={s.id}
@@ -511,7 +513,7 @@ const Branding = () => {
 
           {/* ── SEÇÃO: IDENTIDADE ────────────────────────────── */}
           {activeSection === 'identidade' && (
-            <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 space-y-5 shadow-xl">
+            <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 space-y-5 shadow-xl">
               <h2 className="font-bold text-white flex items-center gap-2">🏷️ Identidade do App</h2>
 
               <InputField
@@ -548,11 +550,11 @@ const Branding = () => {
                     hint="Recomendado: PNG transparente 512×512px"
                   />
                   {formData.logo_url && formData.logo_url.length > 5 && (
-                    <div className="rounded-xl overflow-hidden border border-dark-600 bg-dark-800 flex justify-center p-4">
+                    <div className="rounded-lg overflow-hidden border border-dark-600 bg-dark-800 flex justify-center p-4">
                       <img 
                         src={getFullUrl(formData.logo_url)} 
                         alt="Logo Preview" 
-                        className="h-16 w-auto object-contain drop-shadow-xl" 
+                        className="h-14 w-auto object-contain drop-shadow-xl" 
                       />
                     </div>
                   )}
@@ -567,11 +569,11 @@ const Branding = () => {
                     hint="Versão para fundos claros"
                   />
                   {formData.logo_dark_url && formData.logo_dark_url.length > 5 && (
-                    <div className="rounded-xl overflow-hidden border border-dark-600 bg-zinc-300 flex justify-center p-4">
+                    <div className="rounded-lg overflow-hidden border border-dark-600 bg-zinc-300 flex justify-center p-4">
                       <img 
                         src={getFullUrl(formData.logo_dark_url)} 
                         alt="Logo Dark Preview" 
-                        className="h-16 w-auto object-contain drop-shadow-md" 
+                        className="h-14 w-auto object-contain drop-shadow-md" 
                       />
                     </div>
                   )}
@@ -584,7 +586,7 @@ const Branding = () => {
           {activeSection === 'cores' && (
             <div className="space-y-5">
               {/* Paletas rápidas */}
-              <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 shadow-xl">
+              <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-xl">
                 <h2 className="font-bold text-white flex items-center gap-2 mb-4">⚡ Paletas Rápidas</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {PALETTES.map(p => (
@@ -592,7 +594,7 @@ const Branding = () => {
                       key={p.name}
                       type="button"
                       onClick={() => applyPalette(p)}
-                      className="group relative rounded-xl overflow-hidden border border-dark-600 hover:border-brand-500/50 transition-all hover:scale-[1.04] active:scale-[0.97]"
+                      className="group relative rounded-lg overflow-hidden border border-dark-600 hover:border-brand-500/50 transition-all hover:scale-[1.04] active:scale-[0.97]"
                     >
                       {/* Mini-preview */}
                       <div className="h-14 relative" style={{ backgroundColor: p.bg }}>
@@ -615,11 +617,11 @@ const Branding = () => {
               </div>
 
               {/* Campos de cor */}
-              <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 shadow-xl">
+              <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-xl">
                 <h2 className="font-bold text-white flex items-center gap-2 mb-4">🎨 Cores Personalizadas</h2>
                 
                 {/* Seletor de Tema Base */}
-                <div className="mb-6 p-4 bg-dark-900 border border-dark-600 rounded-xl">
+                <div className="mb-6 p-4 bg-dark-900 border border-dark-600 rounded-lg">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-3">Tema Base (Sincronizado com Android)</label>
                   <div className="flex gap-2">
                     {['Neon', 'Clássico', 'Azul', 'Custom'].map(t => (
@@ -647,7 +649,7 @@ const Branding = () => {
                   <ColorField label="Cor de Destaque" value={formData.accent_color}     onChange={set('accent_color')} />
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-dark-700">
+                <div className="mt-6 pt-6 border-t border-dark-700">
                   <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4">🕹️ Interação e Botões</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <ColorField label="Botão Principal"  value={formData.button_primary_color}   onChange={set('button_primary_color')} />
@@ -659,7 +661,7 @@ const Branding = () => {
 
               {/* Templates do backend */}
               {templates.length > 0 && (
-                <div className="bg-dark-800 border border-dark-700 rounded-2xl p-5 shadow-xl">
+                <div className="bg-dark-800 border border-dark-700 rounded-xl p-5 shadow-xl">
                   <h2 className="font-bold text-white flex items-center gap-2 mb-4">📋 Templates Salvos</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {templates.map(t => (
@@ -670,7 +672,7 @@ const Branding = () => {
                           primary: t.primary_color, secondary: t.secondary_color || t.primary_color,
                           bg: t.background_color, text: t.text_color, accent: t.accent_color || t.primary_color
                         })}
-                        className="flex items-center gap-3 bg-dark-900 hover:bg-dark-700 border border-dark-600 hover:border-brand-500/40 rounded-xl px-4 py-3 transition text-left group"
+                        className="flex items-center gap-3 bg-dark-900 hover:bg-dark-700 border border-dark-600 hover:border-brand-500/40 rounded-lg px-4 py-3 transition text-left group"
                       >
                         <div className="w-10 h-10 rounded-lg border border-white/10 shrink-0"
                           style={{ backgroundColor: t.background_color, borderColor: t.primary_color }} />
@@ -688,10 +690,10 @@ const Branding = () => {
 
           {/* ── SEÇÃO: IMAGENS & ASSETS ───────────────────────── */}
           {activeSection === 'midias' && (
-            <div className="space-y-8">
+            <div className="space-y-6">
 
               {/* 📦 ASSETS DO PROJETO TV MAXX ANDROID */}
-              <div className="bg-dark-800 border border-dark-700 rounded-3xl p-8 shadow-2xl space-y-10">
+              <div className="bg-dark-800 border border-dark-700 rounded-3xl p-6 shadow-2xl space-y-10">
                 <div className="border-b border-dark-700 pb-6">
                   <h2 className="text-2xl font-black text-white flex items-center gap-3">
                     <span className="text-brand-500">📦</span> MAXX PLAYERS
@@ -708,43 +710,43 @@ const Branding = () => {
                       </h3>
                       <p className="text-xs text-zinc-500">Faça o upload dos logotipos que aparecerão no App e Web Player.</p>
                     </div>
-                    <div className="bg-brand-500/10 border border-brand-500/20 px-4 py-2 rounded-xl">
+                    <div className="bg-brand-500/10 border border-brand-500/20 px-4 py-2 rounded-lg">
                       <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest">Recomendado: 512x512px (PNG)</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Upload Logo Principal */}
-                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden">
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-6 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden">
                       <input 
                         type="file" 
                         accept="image/*" 
                         className="absolute inset-0 opacity-0 cursor-pointer z-20"
                         onChange={(e) => handleUpload(e, 'logo_url')}
                       />
-                      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🖼️</div>
+                      <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">🖼️</div>
                       <p className="text-sm font-bold text-white">Logo Principal (Clara)</p>
                       <p className="text-[10px] text-zinc-500 mt-1">Arraste ou clique para enviar</p>
                       {formData.logo_url && (
-                        <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/10 w-full flex justify-center">
+                        <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10 w-full flex justify-center">
                           <img src={getFullUrl(formData.logo_url)} className="max-h-20 object-contain" />
                         </div>
                       )}
                     </div>
 
                     {/* Upload Logo Escura */}
-                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden">
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-6 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden">
                       <input 
                         type="file" 
                         accept="image/*" 
                         className="absolute inset-0 opacity-0 cursor-pointer z-20"
                         onChange={(e) => handleUpload(e, 'logo_dark_url')}
                       />
-                      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🌑</div>
+                      <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">🌑</div>
                       <p className="text-sm font-bold text-white">Logo para Fundos Claros</p>
                       <p className="text-[10px] text-zinc-500 mt-1">Arraste ou clique para enviar</p>
                       {formData.logo_dark_url && (
-                        <div className="mt-4 p-4 bg-zinc-900 rounded-2xl border border-dark-600 w-full flex justify-center">
+                        <div className="mt-4 p-4 bg-zinc-900 rounded-xl border border-dark-600 w-full flex justify-center">
                           <img src={getFullUrl(formData.logo_dark_url)} className="max-h-20 object-contain" />
                         </div>
                       )}
@@ -770,7 +772,7 @@ const Branding = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Upload Hero Banner */}
-                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden min-h-[200px]">
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-6 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden min-h-[200px]">
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -780,14 +782,14 @@ const Branding = () => {
                       {formData.hero_banner_url ? (
                         <div className="absolute inset-0">
                           <img src={formData.hero_banner_url} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
-                          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/40">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center p-5 bg-black/40">
                              <p className="text-sm font-bold text-white">Alterar Hero Banner</p>
                              <p className="text-[10px] text-zinc-300">Resolução atual: 1920x720px</p>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🎬</div>
+                          <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">🎬</div>
                           <p className="text-sm font-bold text-white">Banner Principal (Hero)</p>
                           <p className="text-[10px] text-zinc-500 mt-1">Este banner aparece no topo da Home</p>
                         </>
@@ -795,7 +797,7 @@ const Branding = () => {
                     </div>
 
                     {/* Upload Splash Screen */}
-                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-8 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden min-h-[200px]">
+                    <div className="group relative flex flex-col bg-dark-900 border-2 border-dashed border-dark-600 rounded-3xl p-6 items-center justify-center hover:border-brand-500 transition-all cursor-pointer overflow-hidden min-h-[200px]">
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -805,14 +807,14 @@ const Branding = () => {
                       {formData.splash_screen_url ? (
                         <div className="absolute inset-0">
                           <img src={formData.splash_screen_url} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
-                          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black/40">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center p-5 bg-black/40">
                              <p className="text-sm font-bold text-white">Alterar Splash Screen</p>
                              <p className="text-[10px] text-zinc-300">Resolução recomendada: 1920x1080px</p>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">📺</div>
+                          <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">📺</div>
                           <p className="text-sm font-bold text-white">Splash Screen (Carregamento)</p>
                           <p className="text-[10px] text-zinc-500 mt-1">Aparece ao abrir o App</p>
                         </>
@@ -822,24 +824,24 @@ const Branding = () => {
                 </div>
 
                 {/* 🌐 SPLASH SCREEN EXTERNA (LEGACY) */}
-                <div className="bg-dark-900/50 border border-dark-600 border-dashed rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6">
-                  <div className="h-12 w-12 rounded-xl bg-zinc-800 flex items-center justify-center text-xl">🌐</div>
+                <div className="bg-dark-900/50 border border-dark-600 border-dashed rounded-xl p-5 flex flex-col sm:flex-row items-center gap-6">
+                  <div className="h-12 w-12 rounded-lg bg-zinc-800 flex items-center justify-center text-xl">🌐</div>
                   <div className="flex-1 text-center sm:text-left">
                     <h3 className="text-sm font-bold text-white">Usar URL Externa (PostImg/Imgur)</h3>
                     <p className="text-[10px] text-zinc-500">Caso prefira não fazer upload e usar um link direto.</p>
                   </div>
-                  <button type="button" onClick={() => set('splash_screen_url')('https://i.postimg.cc/BQwXmzTj/TVMAXX_MOVE.png')} className="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-2 rounded-xl text-xs font-bold transition">✓ Usar Padrão</button>
+                  <button type="button" onClick={() => set('splash_screen_url')('https://i.postimg.cc/BQwXmzTj/TVMAXX_MOVE.png')} className="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-2 rounded-lg text-xs font-bold transition">✓ Usar Padrão</button>
                 </div>
               </div>
 
               {/* ✏️ EDITAR MANUALMENTE */}
-              <div className="bg-dark-800 border border-dark-700 rounded-3xl p-8 shadow-2xl space-y-8">
+              <div className="bg-dark-800 border border-dark-700 rounded-3xl p-6 shadow-2xl space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-zinc-700 flex items-center justify-center text-xl">✏️</div>
+                  <div className="h-10 w-10 rounded-lg bg-zinc-700 flex items-center justify-center text-xl">✏️</div>
                   <h2 className="text-xl font-bold text-white">Editar Manualmente</h2>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <InputField
                       label="Splash Screen (Tela de Carregamento)"
@@ -849,7 +851,7 @@ const Branding = () => {
                       hint="Resolução recomendada: 1920×1080px ou 2560×1440px"
                     />
                     {formData.splash_screen_url && (
-                      <div className="relative rounded-2xl overflow-hidden border border-dark-600 h-48 bg-black">
+                      <div className="relative rounded-xl overflow-hidden border border-dark-600 h-48 bg-black">
                         <img src={formData.splash_screen_url} className="w-full h-full object-contain" />
                         <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded-full text-[10px] font-bold text-white">Preview Splash</div>
                       </div>
@@ -865,7 +867,7 @@ const Branding = () => {
                       hint="Banner exibido na tela inicial. Resolução: 1920×720px"
                     />
                     {formData.hero_banner_url && (
-                      <div className="relative rounded-2xl overflow-hidden border border-dark-600 h-48 bg-black">
+                      <div className="relative rounded-xl overflow-hidden border border-dark-600 h-48 bg-black">
                         <img src={formData.hero_banner_url} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
                           <span className="text-[10px] font-bold text-white uppercase tracking-widest">Hero Banner Preview</span>
@@ -883,9 +885,9 @@ const Branding = () => {
           {/* 📍 MENU SUPERIOR */}
           {activeSection === 'menu-superior' && (
             <div className="space-y-6 animate-fadeIn">
-              <div className="bg-dark-900/50 border border-dark-600 rounded-2xl p-6">
+              <div className="bg-dark-900/50 border border-dark-600 rounded-xl p-5">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="h-12 w-12 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-2xl">
+                  <div className="h-12 w-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-2xl">
                     📍
                   </div>
                   <div>
@@ -896,7 +898,7 @@ const Branding = () => {
 
                 <div className="grid grid-cols-1 gap-4">
                   {(formData.top_menu || DEFAULT_TOP_MENU).map((menuItem) => (
-                    <div key={menuItem.id} className={`flex items-center gap-4 p-4 rounded-xl border ${menuItem.ativo ? 'bg-dark-800 border-brand-500/30' : 'bg-dark-900/50 border-dark-700 opacity-70'} transition-all`}>
+                    <div key={menuItem.id} className={`flex items-center gap-4 p-4 rounded-lg border ${menuItem.ativo ? 'bg-dark-800 border-brand-500/30' : 'bg-dark-900/50 border-dark-700 opacity-70'} transition-all`}>
                       
                       {/* Ativar/Desativar */}
                       <button
@@ -944,7 +946,7 @@ const Branding = () => {
 
                       {/* Upload de Ícone */}
                       <div className="shrink-0 flex flex-col items-center gap-2">
-                        <div className="relative group w-12 h-12 bg-dark-900 border border-dark-600 rounded-xl overflow-hidden hover:border-brand-500 flex items-center justify-center">
+                        <div className="relative group w-12 h-12 bg-dark-900 border border-dark-600 rounded-lg overflow-hidden hover:border-brand-500 flex items-center justify-center">
                           <input
                             type="file"
                             accept="image/webp,image/png,image/svg+xml"
@@ -975,12 +977,12 @@ const Branding = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4 shadow-xl">
+          <div className="bg-dark-800 border border-dark-700 rounded-xl p-4 shadow-xl">
             <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
               <span>📺</span> Preview — Android TV
             </h3>
             <div className="relative">
-              <div className="rounded-xl overflow-hidden border-4 border-zinc-700 shadow-2xl" style={{ aspectRatio: '16/9' }}>
+              <div className="rounded-lg overflow-hidden border-4 border-zinc-700 shadow-2xl" style={{ aspectRatio: '16/9' }}>
                 <div
                   className="w-full h-full relative flex flex-col"
                   style={{ backgroundColor: formData.background_color }}
@@ -1095,7 +1097,7 @@ const Branding = () => {
           </div>
 
           {/* Info do Branding Selecionado */}
-          <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4 shadow-xl space-y-3">
+          <div className="bg-dark-800 border border-dark-700 rounded-xl p-4 shadow-xl space-y-3">
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-bold text-white text-sm flex items-center gap-2">
                 <span>ℹ️</span> Editor de Tema
@@ -1148,7 +1150,7 @@ const Branding = () => {
                 <button
                   type="button"
                   onClick={handleActivate}
-                  className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-green-500/20 text-[11px] active:scale-95"
+                  className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-green-500/20 text-[11px] active:scale-95"
                 >
                   🚀 ATIVAR ESTE TEMA
                 </button>
@@ -1156,7 +1158,7 @@ const Branding = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-brand-500/20 text-[11px] active:scale-95"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-400 hover:to-orange-400 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-brand-500/20 text-[11px] active:scale-95"
               >
                 {saving ? '⏳ SALVANDO...' : saved ? '✅ SALVO!' : '💾 SALVAR AS ALTERAÇÕES'}
               </button>

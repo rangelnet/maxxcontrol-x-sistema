@@ -82,7 +82,7 @@ const HomeManager = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-10">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
       </div>
     );
@@ -103,14 +103,14 @@ const HomeManager = () => {
           <h2 className="text-xl font-bold text-white">Layout da Tela Inicial (Home)</h2>
           <p className="text-sm text-zinc-400">Controle o banner de destaque e as fileiras que aparecem no aplicativo.</p>
         </div>
-        <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all">
+        <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-lg transition-all">
           {saving ? 'Salvando...' : 'Salvar Alterações'}
         </button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 space-y-4">
+          <div className="bg-dark-800 border border-dark-600 rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-dark-600 pb-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">📸 Banner Destaque (Hero)</h3>
           <button onClick={() => updateHero('active', !config.heroBanner.active)} className={`w-11 h-6 rounded-full transition-colors ${config.heroBanner.active ? 'bg-brand-500' : 'bg-dark-600'} relative`}>
@@ -140,7 +140,7 @@ const HomeManager = () => {
         )}
       </div>
 
-      <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6 space-y-4">
+      <div className="bg-dark-800 border border-dark-600 rounded-xl p-5 space-y-4">
         <div className="flex items-center justify-between border-b border-dark-600 pb-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">📑 Fileiras de Conteúdo (Rows)</h3>
           <button onClick={addRow} className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white text-sm font-bold rounded-lg transition-colors">
@@ -150,7 +150,7 @@ const HomeManager = () => {
 
         <div className="space-y-3">
           {config.rows.map((row, index) => (
-            <div key={row.id || index} className="flex flex-col md:flex-row gap-3 bg-dark-900 p-4 rounded-xl border border-dark-600 items-start md:items-end">
+            <div key={row.id || index} className="flex flex-col md:flex-row gap-3 bg-dark-900 p-4 rounded-lg border border-dark-600 items-start md:items-end">
               <div className="flex-1 w-full">
                 <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">Nome da Fileira</label>
                 <input type="text" value={row.name} onChange={(e) => updateRow(index, 'name', e.target.value)} className="w-full bg-dark-800 border border-dark-700 rounded-lg px-4 py-2 text-white" />

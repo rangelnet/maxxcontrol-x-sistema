@@ -54,13 +54,13 @@ const AiAgentTab = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
       {/* HEADER MASTER AGENT */}
-      <div className="bg-gradient-to-r from-orange-500/20 to-transparent p-8 rounded-[2rem] border-l-4 border-orange-500 backdrop-blur-md">
+      <div className="bg-gradient-to-r from-orange-500/20 to-transparent p-6 rounded-[2rem] border-l-4 border-orange-500 backdrop-blur-md">
         <div className="flex items-center gap-4">
-          <div className="p-4 bg-orange-500 text-black rounded-2xl shadow-[0_0_30px_rgba(252, 95, 22,0.3)] animate-pulse">
+          <div className="p-4 bg-orange-500 text-black rounded-xl shadow-[0_0_30px_rgba(252, 95, 22,0.3)] animate-pulse">
             <Cpu size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tighter">AGENTE ANTIGRAVITY <span className="text-orange-500">v4.0</span></h1>
+            <h1 className="text-2xl font-black text-white tracking-tighter">AGENTE ANTIGRAVITY <span className="text-orange-500">v4.0</span></h1>
             <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest mt-1 italic">Conexão MCP Ativa 🟢 Sincronização em Tempo Real</p>
           </div>
         </div>
@@ -70,13 +70,13 @@ const AiAgentTab = () => {
         
         {/* COLUNA 1: STATUS DO SISTEMA */}
         <div className="space-y-6">
-          <div className="bg-[#111] p-6 rounded-[2rem] border border-white/5 shadow-2xl">
+          <div className="bg-[#111] p-5 rounded-[2rem] border border-white/5 shadow-2xl">
             <h3 className="text-white font-black mb-6 flex items-center gap-2 uppercase text-xs tracking-widest text-zinc-400">
               <Activity size={16} className="text-orange-500" /> Saúde do Ecossistema
             </h3>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5">
                 <div className="flex items-center gap-3">
                   <Database size={18} className="text-orange-500" />
                   <span className="text-sm font-bold text-zinc-300">Banco Supabase</span>
@@ -84,7 +84,7 @@ const AiAgentTab = () => {
                 <span className="text-[10px] font-black bg-green-500/10 text-green-500 px-3 py-1 rounded-full">{status?.database || 'ONLINE'}</span>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5">
                 <div className="flex items-center gap-3">
                   <Github size={18} className="text-orange-500" />
                   <span className="text-sm font-bold text-zinc-300">GitHub Sinc</span>
@@ -92,7 +92,7 @@ const AiAgentTab = () => {
                 <span className="text-[10px] font-black bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full">ATIVO</span>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5">
                 <div className="flex items-center gap-3">
                   <ShieldCheck size={18} className="text-orange-500" />
                   <span className="text-sm font-bold text-zinc-300">Escudo 500</span>
@@ -102,7 +102,7 @@ const AiAgentTab = () => {
             </div>
           </div>
 
-          <div className="bg-[#111] p-6 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden">
+          <div className="bg-[#111] p-5 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden">
              <div className="absolute top-0 right-0 p-4 opacity-10">
                 <Zap size={100} className="text-orange-500" />
              </div>
@@ -121,14 +121,14 @@ const AiAgentTab = () => {
 
         {/* COLUNA 2 & 3: HISTÓRICO DE INTERVENÇÕES (GITHUB) */}
         <div className="lg:col-span-2">
-          <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl min-h-full">
-            <h3 className="text-white font-black mb-8 flex items-center justify-between uppercase text-xs tracking-widest text-zinc-400">
+          <div className="bg-[#111] p-6 rounded-[2rem] border border-white/5 shadow-2xl min-h-full">
+            <h3 className="text-white font-black mb-6 flex items-center justify-between uppercase text-xs tracking-widest text-zinc-400">
               <span className="flex items-center gap-2"><Clock size={16} className="text-orange-500" /> Registro de Atividades do Agente</span>
               <Share2 size={16} className="opacity-30" />
             </h3>
 
             {loading ? (
-               <div className="py-20 flex flex-col items-center justify-center gap-4 text-orange-500">
+               <div className="py-10 flex flex-col items-center justify-center gap-4 text-orange-500">
                   <Activity className="animate-spin" size={32} />
                   <span className="text-[10px] font-black uppercase tracking-widest">Sincronizando com GitHub...</span>
                </div>

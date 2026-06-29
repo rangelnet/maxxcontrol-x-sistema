@@ -4,7 +4,7 @@ import './previews.css';
 export default function AndroidTvLayout({ children, hideTopNav = false }) {
   const { branding, loading } = useActiveBranding();
 
-  if (loading) return <div className="animate-pulse bg-dark-800 rounded-xl w-full aspect-[16/9]" />;
+  if (loading) return <div className="animate-pulse bg-dark-800 rounded-lg w-full aspect-[16/9]" />;
 
   const getFullUrl = (path) => {
     if (!path) return '';
@@ -14,7 +14,7 @@ export default function AndroidTvLayout({ children, hideTopNav = false }) {
   };
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden shadow-2xl" style={{ aspectRatio: '16/9' }}>
+    <div className="relative w-full rounded-lg overflow-hidden shadow-2xl" style={{ aspectRatio: '16/9' }}>
       <div 
         className="maxx-preview-root"
         style={{ 

@@ -282,29 +282,29 @@ export default function LiveChat() {
   // ─── WhatsApp Desconectado — tela de aviso ─────────────────────────────────
   if (waStatus !== 'connected') {
     return (
-      <div className="fixed inset-0 z-50 bg-[#050505] flex flex-col items-center justify-center p-6 animate-fadeIn">
+      <div className="fixed inset-0 z-50 bg-[#050505] flex flex-col items-center justify-center p-5 animate-fadeIn">
         <div className="max-w-md w-full text-center">
           <div className="h-24 w-24 bg-green-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-green-500/20 shadow-2xl shadow-green-500/5">
             <MessageSquare className="h-12 w-12 text-green-500/60" />
           </div>
           <h1 className="text-2xl font-black text-white mb-2">MaxxChat — Chat ao Vivo</h1>
-          <p className="text-zinc-500 text-sm mb-8 leading-relaxed">
+          <p className="text-zinc-500 text-sm mb-6 leading-relaxed">
             Para usar o atendimento ao vivo, você precisa conectar o WhatsApp primeiro.
           </p>
 
           {waStatus === 'disconnected' && !waQrCode && (
             <button
               onClick={() => connectWhatsApp()}
-              className="w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl shadow-green-600/20 text-sm tracking-widest uppercase active:scale-95"
+              className="w-full bg-green-600 hover:bg-green-500 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-xl shadow-green-600/20 text-sm tracking-widest uppercase active:scale-95"
             >
               <QrCode className="h-5 w-5" /> Gerar QR Code
             </button>
           )}
 
           {waStatus === 'disconnected' && waQrCode && (
-            <div className="animate-fadeIn bg-dark-800 border border-dark-700 rounded-3xl p-6">
+            <div className="animate-fadeIn bg-dark-800 border border-dark-700 rounded-3xl p-5">
               <p className="text-green-400 text-[11px] font-black tracking-widest uppercase mb-4 animate-pulse">Escaneie com seu WhatsApp</p>
-              <div className="bg-white p-3 rounded-2xl inline-block mb-4 shadow-2xl">
+              <div className="bg-white p-3 rounded-xl inline-block mb-4 shadow-2xl">
                 <img src={`data:image/png;base64,${waQrCode}`} alt="QR Code" className="w-44 h-44" />
               </div>
               <p className="text-zinc-600 text-xs">Atualizando automaticamente...</p>
@@ -335,7 +335,7 @@ export default function LiveChat() {
 
       {/* ── Feedback ── */}
       {feedback && (
-        <div className={`fixed top-4 right-4 z-[10000] p-4 rounded-xl text-sm font-medium flex items-center justify-between shadow-lg border animate-fadeIn min-w-[280px] ${
+        <div className={`fixed top-4 right-4 z-[10000] p-4 rounded-lg text-sm font-medium flex items-center justify-between shadow-lg border animate-fadeIn min-w-[280px] ${
           feedback.type === 'success' ? 'bg-green-500/10 text-green-400 border-green-500/30' :
           feedback.type === 'error'   ? 'bg-red-500/10 text-red-400 border-red-500/30' :
                                         'bg-dark-800 text-yellow-400 border-yellow-500/30'
@@ -350,12 +350,12 @@ export default function LiveChat() {
         <div className="flex items-center gap-3 md:gap-4">
           <button
             onClick={() => navigate('/dashboard')}
-            className="h-10 w-10 flex items-center justify-center rounded-xl bg-dark-800 border border-dark-700 text-zinc-400 hover:text-white transition-all active:scale-95 shadow-inner"
+            className="h-10 w-10 flex items-center justify-center rounded-lg bg-dark-800 border border-dark-700 text-zinc-400 hover:text-white transition-all active:scale-95 shadow-inner"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/30">
+            <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center border border-green-500/30">
               <MessageSquare className="h-5 w-5 text-green-500" />
             </div>
             <div>
@@ -371,13 +371,13 @@ export default function LiveChat() {
         </div>
         <div className="flex items-center gap-3">
           {/* Status WhatsApp */}
-          <div className="hidden md:flex items-center gap-2 bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-xl text-xs">
+          <div className="hidden md:flex items-center gap-2 bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg text-xs">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-green-400 font-black uppercase tracking-widest">Online</span>
           </div>
           <button
             onClick={loadConversations}
-            className="flex items-center gap-2 px-3 py-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-xl text-xs font-bold text-zinc-300 transition-all"
+            className="flex items-center gap-2 px-3 py-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-lg text-xs font-bold text-zinc-300 transition-all"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin text-green-400' : ''}`} />
             <span className="hidden md:block">Atualizar</span>
@@ -399,7 +399,7 @@ export default function LiveChat() {
                 value={chatSearch}
                 onChange={e => setChatSearch(e.target.value)}
                 placeholder="Buscar contato..."
-                className="w-full bg-dark-900 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-xs text-white outline-none focus:border-green-500/50 placeholder-zinc-600 transition-all shadow-inner"
+                className="w-full bg-dark-900 border border-dark-700 rounded-lg pl-10 pr-4 py-3 text-xs text-white outline-none focus:border-green-500/50 placeholder-zinc-600 transition-all shadow-inner"
               />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
@@ -425,10 +425,10 @@ export default function LiveChat() {
           {/* Lista */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {loading && conversations.length === 0 ? (
-              <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-zinc-600" /></div>
+              <div className="flex items-center justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-zinc-600" /></div>
             ) : conversations.length === 0 ? (
-              <div className="text-center py-20 px-6">
-                <div className="h-16 w-16 bg-dark-900 rounded-full flex items-center justify-center mx-auto mb-4 border border-dark-700">
+              <div className="text-center py-10 px-6">
+                <div className="h-14 w-16 bg-dark-900 rounded-full flex items-center justify-center mx-auto mb-4 border border-dark-700">
                   <MessageCircle className="h-6 w-6 text-zinc-600" />
                 </div>
                 <p className="text-white font-bold text-sm">Nenhuma conversa</p>
@@ -438,7 +438,7 @@ export default function LiveChat() {
               <div
                 key={conv.jid}
                 onClick={() => selectConv(conv)}
-                className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-dark-700/30 hover:bg-dark-700/50 ${
+                className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all border-b border-dark-700/30 hover:bg-dark-700/50 ${
                   activeJid === conv.jid ? 'bg-dark-800/80 border-l-4 border-l-green-500' : 'border-l-4 border-l-transparent'
                 }`}
               >
@@ -476,7 +476,7 @@ export default function LiveChat() {
         {/* ─── PAINEL 2: ÁREA DO CHAT ─── */}
         <div className={`flex-1 flex flex-col min-w-0 bg-[#050505] relative ${!activeJid ? 'hidden lg:flex' : 'flex'}`}>
           {!activeJid ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-[radial-gradient(ellipse_at_center,_#111111_0%,_#050505_80%)]">
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-[radial-gradient(ellipse_at_center,_#111111_0%,_#050505_80%)]">
               <div className="h-28 w-28 bg-dark-900/50 rounded-full flex items-center justify-center mb-6 border border-dark-700/50 shadow-2xl">
                 <MessageSquare className="h-10 w-10 text-zinc-700" />
               </div>
@@ -506,11 +506,11 @@ export default function LiveChat() {
                 <div className="flex items-center gap-2 lg:gap-3">
                   <button
                     onClick={() => updateStatus(activeJid, 'resolved')}
-                    className="px-3 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hidden sm:flex items-center gap-2"
+                    className="px-3 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hidden sm:flex items-center gap-2"
                   ><Check className="h-3.5 w-3.5" /> Resolver</button>
                   <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all ${sidebarOpen ? 'bg-brand-500/10 text-brand-400 border-brand-500/30' : 'bg-dark-800 text-zinc-400 border-dark-700 hover:text-white'}`}
+                    className={`h-10 w-10 flex items-center justify-center rounded-lg border transition-all ${sidebarOpen ? 'bg-brand-500/10 text-brand-400 border-brand-500/30' : 'bg-dark-800 text-zinc-400 border-dark-700 hover:text-white'}`}
                   ><Menu className="h-5 w-5" /></button>
                 </div>
               </div>
@@ -519,7 +519,7 @@ export default function LiveChat() {
               <div
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-4 bg-[#0a0a0a]"
+                className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-5 space-y-4 bg-[#0a0a0a]"
                 style={{ backgroundImage: 'radial-gradient(#1a1a1a 1px, transparent 1px)', backgroundSize: '20px 20px' }}
               >
                 {loadingMore && (
@@ -551,7 +551,7 @@ export default function LiveChat() {
                             </div>
                           )}
                           <div className={`flex ${msg.from_me ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-5 py-3 shadow-md relative group ${
+                            <div className={`max-w-[85%] md:max-w-[70%] rounded-xl px-5 py-3 shadow-md relative group ${
                               msg.from_me
                                 ? msg.is_bot_reply
                                   ? 'bg-dark-800 border border-brand-500/30 text-zinc-200 rounded-tr-sm'
@@ -568,8 +568,8 @@ export default function LiveChat() {
                               )}
                               {msg.content?.startsWith('/media/') ? (
                                 msg.content.endsWith('.mp4')
-                                  ? <video src={msg.content} controls className="max-w-full rounded-xl mb-2" style={{ maxHeight: '250px' }} />
-                                  : <img src={msg.content} alt="Media" className="max-w-full rounded-xl mb-2" style={{ maxHeight: '250px', objectFit: 'cover' }} />
+                                  ? <video src={msg.content} controls className="max-w-full rounded-lg mb-2" style={{ maxHeight: '250px' }} />
+                                  : <img src={msg.content} alt="Media" className="max-w-full rounded-lg mb-2" style={{ maxHeight: '250px', objectFit: 'cover' }} />
                               ) : msg.content === '[IMAGE]' || msg.content === '[VIDEO]' ? (
                                 <div className="flex items-center gap-2 text-zinc-500 bg-dark-900/50 px-3 py-2 rounded-lg text-[10px] font-bold border border-dark-700 mb-1">
                                   📸 Mídia criptografada (Histórico antigo).
@@ -595,13 +595,13 @@ export default function LiveChat() {
 
               {/* Quick Replies */}
               {filteredQR.length > 0 && (
-                <div className="absolute bottom-[80px] left-4 right-4 border border-dark-600 bg-dark-800/95 backdrop-blur-xl max-h-[220px] overflow-y-auto rounded-2xl shadow-2xl z-50 p-2">
+                <div className="absolute bottom-[80px] left-4 right-4 border border-dark-600 bg-dark-800/95 backdrop-blur-xl max-h-[220px] overflow-y-auto rounded-xl shadow-2xl z-50 p-2">
                   <p className="text-[9px] font-black text-brand-400 uppercase tracking-widest px-3 py-2 border-b border-dark-700">Respostas Rápidas</p>
                   {filteredQR.map(qr => (
                     <button
                       key={qr.id}
                       onClick={() => { setChatInput(qr.content) }}
-                      className="w-full text-left px-3 py-2.5 hover:bg-dark-700/50 rounded-xl transition-colors flex items-center gap-3 mt-1"
+                      className="w-full text-left px-3 py-2.5 hover:bg-dark-700/50 rounded-lg transition-colors flex items-center gap-3 mt-1"
                     >
                       <span className="text-zinc-900 bg-brand-400 px-2 py-0.5 rounded text-[10px] font-black uppercase">{qr.shortcut}</span>
                       <span className="text-zinc-300 text-[13px] truncate flex-1">{qr.content}</span>
@@ -613,7 +613,7 @@ export default function LiveChat() {
               {/* Compose */}
               <div className="p-3 md:p-4 border-t border-dark-700/80 bg-[#0a0a0a]/90 backdrop-blur-lg shrink-0 z-20">
                 <div className="flex items-end gap-2 md:gap-3 max-w-5xl mx-auto">
-                  <div className="flex-1 relative bg-dark-900 border border-dark-700 rounded-2xl flex items-center shadow-inner overflow-hidden transition-all focus-within:border-green-500/50">
+                  <div className="flex-1 relative bg-dark-900 border border-dark-700 rounded-xl flex items-center shadow-inner overflow-hidden transition-all focus-within:border-green-500/50">
                     <textarea
                       ref={chatInputRef}
                       value={chatInput}
@@ -628,7 +628,7 @@ export default function LiveChat() {
                   <button
                     onClick={sendMessage}
                     disabled={!chatInput.trim() || sending}
-                    className="h-[56px] w-[56px] flex items-center justify-center bg-green-600 hover:bg-green-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-2xl shadow-lg shadow-green-600/20 active:scale-95 transition-all flex-shrink-0"
+                    className="h-[56px] w-[56px] flex items-center justify-center bg-green-600 hover:bg-green-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl shadow-lg shadow-green-600/20 active:scale-95 transition-all flex-shrink-0"
                   >
                     {sending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-5 w-5 ml-1" />}
                   </button>
@@ -647,8 +647,8 @@ export default function LiveChat() {
             </div>
 
             {/* Contact Info */}
-            <div className="p-6 border-b border-dark-700/50 text-center bg-dark-900/20">
-              <div className={`h-20 w-20 rounded-2xl flex items-center justify-center mx-auto mb-4 font-black text-2xl shadow-xl ${
+            <div className="p-5 border-b border-dark-700/50 text-center bg-dark-900/20">
+              <div className={`h-20 w-20 rounded-xl flex items-center justify-center mx-auto mb-4 font-black text-2xl shadow-xl ${
                 activeConv.is_group ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'
               }`}>
                 {activeConv.is_group ? <Users className="h-10 w-10" /> : (activeConv.name || '?').charAt(0).toUpperCase()}
@@ -663,7 +663,7 @@ export default function LiveChat() {
 
             {/* Bot Toggle */}
             <div className="p-5 border-b border-dark-700/50">
-              <div className="bg-dark-800 border border-dark-700 rounded-2xl p-4">
+              <div className="bg-dark-800 border border-dark-700 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[11px] font-black text-white flex items-center gap-2">
                     <div className="bg-brand-500/20 p-1.5 rounded-lg"><Bot className="h-4 w-4 text-brand-400" /></div> Chatbot Auto
@@ -720,7 +720,7 @@ export default function LiveChat() {
                     <button
                       key={s.v}
                       onClick={() => updateStatus(activeJid, s.v)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold border transition-all ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-bold border transition-all ${
                         activeConv.status === s.v
                           ? `bg-${s.color}-500/10 text-${s.color}-400 border-${s.color}-500/30`
                           : 'bg-dark-900 text-zinc-400 border-dark-700 hover:bg-dark-800 hover:text-white'
@@ -740,7 +740,7 @@ export default function LiveChat() {
                 value={notesInput}
                 onChange={e => saveNotes(activeJid, e.target.value)}
                 placeholder="Observações privadas sobre este cliente..."
-                className="flex-1 w-full bg-dark-900 border border-dark-700 rounded-2xl p-4 text-[13px] text-zinc-300 outline-none focus:border-brand-500/50 placeholder-zinc-700 resize-none transition-all shadow-inner"
+                className="flex-1 w-full bg-dark-900 border border-dark-700 rounded-xl p-4 text-[13px] text-zinc-300 outline-none focus:border-brand-500/50 placeholder-zinc-700 resize-none transition-all shadow-inner"
               />
               <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest mt-2 flex items-center justify-end gap-1">
                 <CloudLightning className="h-3 w-3" /> Salvo automaticamente

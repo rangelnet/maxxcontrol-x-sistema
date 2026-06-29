@@ -88,7 +88,7 @@ const TestApiModal = ({ device, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg p-6 max-w-lg w-full mx-4 border border-gray-800">
+      <div className="bg-card rounded-lg p-5 max-w-lg w-full mx-4 border border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <TestTube className="text-primary" size={24} />

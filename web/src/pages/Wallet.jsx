@@ -119,7 +119,7 @@ export default function Wallet() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -141,7 +141,7 @@ export default function Wallet() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500">
           {error}
         </div>
       )}
@@ -149,12 +149,12 @@ export default function Wallet() {
       {/* Cards de Resumo aparecem em qualquer aba */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Card Saldo Atual */}
-        <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-dark-800 border border-dark-700 rounded-lg p-5 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
           <div className="z-10">
             <p className="text-sm font-medium text-zinc-400 mb-1">Saldo Atual</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black text-white">
+              <span className="text-3xl font-black text-white">
                 {loading ? '...' : saldo}
               </span>
               <span className="text-brand-500 font-bold text-sm">créditos</span>
@@ -167,12 +167,12 @@ export default function Wallet() {
         </div>
 
         {/* Card Total Entradas */}
-        <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-dark-800 border border-dark-700 rounded-lg p-5 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
           <div className="z-10">
             <p className="text-sm font-medium text-zinc-400 mb-1">Total Entradas</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black text-white">
+              <span className="text-3xl font-black text-white">
                 {loading ? '...' : (transactions || []).reduce((acc, tx) => acc + (tx.credits > 0 ? Number(tx.credits) : 0), 0)}
               </span>
               <span className="text-emerald-500 font-bold text-sm">adquiridos</span>
@@ -185,12 +185,12 @@ export default function Wallet() {
         </div>
 
         {/* Card Total Saídas */}
-        <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-dark-800 border border-dark-700 rounded-lg p-5 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-red-500/10 rounded-full blur-2xl pointer-events-none"></div>
           <div className="z-10">
             <p className="text-sm font-medium text-zinc-400 mb-1">Total Saídas</p>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black text-white">
+              <span className="text-3xl font-black text-white">
                 {loading ? '...' : (transactions || []).reduce((acc, tx) => acc + (tx.credits < 0 ? Math.abs(Number(tx.credits)) : 0), 0)}
               </span>
               <span className="text-red-500 font-bold text-sm">gastos</span>
@@ -204,7 +204,7 @@ export default function Wallet() {
       </div>
 
       {activeTab === 'extrato' && (
-        <div className="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden animate-in fade-in">
+        <div className="bg-dark-800 border border-dark-700 rounded-lg overflow-hidden animate-in fade-in">
           <div className="p-4 border-b border-dark-700 bg-dark-900/50 flex items-center justify-between">
             <h3 className="font-semibold text-white flex items-center gap-2">
               <Clock size={18} className="text-brand-500" /> Histórico de Transações
@@ -212,12 +212,12 @@ export default function Wallet() {
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-zinc-500 flex flex-col items-center">
+            <div className="p-6 text-center text-zinc-500 flex flex-col items-center">
               <div className="w-8 h-8 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin mb-4"></div>
               Carregando extrato...
             </div>
           ) : !(transactions && transactions.length > 0) ? (
-            <div className="p-8 text-center text-zinc-500 flex flex-col items-center">
+            <div className="p-6 text-center text-zinc-500 flex flex-col items-center">
               <WalletIcon size={48} className="text-dark-600 mb-3" />
               <p className="font-medium text-zinc-400">Nenhuma transação encontrada</p>
               <p className="text-sm mt-1">Seu histórico de créditos aparecerá aqui.</p>
@@ -285,7 +285,7 @@ export default function Wallet() {
       )}
 
       {activeTab === 'revendas' && isMasterOrUnlimited && (
-        <div className="bg-dark-800 border border-dark-700 rounded-xl overflow-hidden animate-in fade-in">
+        <div className="bg-dark-800 border border-dark-700 rounded-lg overflow-hidden animate-in fade-in">
           <div className="p-4 border-b border-dark-700 bg-dark-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h3 className="font-semibold text-white flex items-center gap-2">
               <Shield className="text-brand-500 w-5 h-5" /> CRM de Revendas
@@ -335,7 +335,7 @@ export default function Wallet() {
                 ))}
                 {resellers.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="p-8 text-center text-zinc-500">Nenhum revendedor encontrado.</td>
+                    <td colSpan="4" className="p-6 text-center text-zinc-500">Nenhum revendedor encontrado.</td>
                   </tr>
                 )}
               </tbody>
@@ -346,7 +346,7 @@ export default function Wallet() {
 
       {showTransferModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-dark-900 border border-dark-700 rounded-2xl p-6 w-full max-w-sm relative overflow-hidden">
+          <div className="bg-dark-900 border border-dark-700 rounded-xl p-5 w-full max-w-sm relative overflow-hidden">
             {transferSuccessMessage ? (
               <div className="text-center py-6 animate-in zoom-in-95 duration-300">
                 <div className="absolute top-0 left-0 w-full h-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
@@ -354,10 +354,10 @@ export default function Wallet() {
                   <CheckCircle size={40} />
                 </div>
                 <h3 className="text-xl font-black text-white mb-2">Sucesso!</h3>
-                <p className="text-zinc-400 mb-8">{transferSuccessMessage}</p>
+                <p className="text-zinc-400 mb-6">{transferSuccessMessage}</p>
                 <button 
                   onClick={() => { setShowTransferModal(false); setTransferSuccessMessage(''); }} 
-                  className="w-full bg-dark-800 hover:bg-dark-700 active:scale-95 text-white font-bold py-3 rounded-xl transition-all border border-dark-600">
+                  className="w-full bg-dark-800 hover:bg-dark-700 active:scale-95 text-white font-bold py-3 rounded-lg transition-all border border-dark-600">
                   Concluído
                 </button>
               </div>
@@ -388,7 +388,7 @@ export default function Wallet() {
                    </div>
                 )}
 
-                <button onClick={handleSendCredits} disabled={transferLoading} className="w-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                <button onClick={handleSendCredits} disabled={transferLoading} className="w-full bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold py-3 rounded-lg transition-all flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
                   {transferLoading ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : (tfaMode ? 'Confirmar 2FA' : 'Enviar Agora')}
                 </button>
               </>

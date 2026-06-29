@@ -70,7 +70,7 @@ const APIPanel = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">APIs</h1>
+        <h1 className="text-2xl font-bold">APIs</h1>
         {activeTab === 'config' && (
           <button onClick={openNewModal} className="btn-primary flex items-center gap-2"><Plus size={20} />Nova API</button>
         )}
@@ -85,7 +85,7 @@ const APIPanel = () => {
         )}
       </div>
 
-      <div className="flex gap-1 mb-6 bg-gray-900 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 mb-6 bg-gray-900 p-1 rounded-lg w-fit">
         {canConfig && (
           <button onClick={() => setActiveTab('config')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'config' ? 'bg-[#FF4D33] text-white' : 'text-gray-400 hover:text-white'}`}>Configuracao</button>
         )}
@@ -128,15 +128,15 @@ const APIPanel = () => {
           {monitorLoading ? <div className="text-center py-8">Carregando...</div> : (
             <>
               {monitorData?.summary && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Total de APIs</p><p className="text-3xl font-bold">{monitorData.summary.total}</p></div><Activity className="text-blue-500" size={40} /></div></div>
-                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Online</p><p className="text-3xl font-bold text-green-500">{monitorData.summary.online}</p></div><CheckCircle className="text-green-500" size={40} /></div></div>
-                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Offline</p><p className="text-3xl font-bold text-red-500">{monitorData.summary.offline}</p></div><XCircle className="text-red-500" size={40} /></div></div>
-                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Latencia Media</p><p className="text-3xl font-bold">{monitorData.summary.avg_latency}ms</p></div><Clock className="text-primary" size={40} /></div></div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Total de APIs</p><p className="text-2xl font-bold">{monitorData.summary.total}</p></div><Activity className="text-blue-500" size={40} /></div></div>
+                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Online</p><p className="text-2xl font-bold text-green-500">{monitorData.summary.online}</p></div><CheckCircle className="text-green-500" size={40} /></div></div>
+                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Offline</p><p className="text-2xl font-bold text-red-500">{monitorData.summary.offline}</p></div><XCircle className="text-red-500" size={40} /></div></div>
+                  <div className="card"><div className="flex items-center justify-between"><div><p className="text-gray-400 text-sm mb-1">Latencia Media</p><p className="text-2xl font-bold">{monitorData.summary.avg_latency}ms</p></div><Clock className="text-primary" size={40} /></div></div>
                 </div>
               )}
               {monitorData?.summary?.critical_offline > 0 && (
-                <div className="card bg-red-500/10 border-red-500 mb-8">
+                <div className="card bg-red-500/10 border-red-500 mb-6">
                   <div className="flex items-center gap-3"><AlertTriangle className="text-red-500" size={24} /><div><p className="font-bold text-red-500">Atencao!</p><p className="text-sm text-gray-300">{monitorData.summary.critical_offline} API(s) critica(s) estao offline</p></div></div>
                 </div>
               )}

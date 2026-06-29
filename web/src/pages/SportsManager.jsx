@@ -99,7 +99,7 @@ const SportsManager = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-10">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
       </div>
     );
@@ -132,7 +132,7 @@ const SportsManager = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all disabled:opacity-50"
+          className="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-lg transition-all disabled:opacity-50"
         >
           {saving ? 'Salvando...' : 'Salvar Alterações'}
         </button>
@@ -140,7 +140,7 @@ const SportsManager = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, index) => (
-          <div key={card.id || index} className="bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden shadow-lg flex flex-col">
+          <div key={card.id || index} className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden shadow-lg flex flex-col">
             
             {/* Preview da Imagem */}
             <div 

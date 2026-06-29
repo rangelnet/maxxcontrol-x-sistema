@@ -76,7 +76,7 @@ const BannerGallery = () => {
     }
     return (
       <div className={`w-full h-full bg-gradient-to-b ${colors[type] || 'from-dark-700 to-dark-900'} flex flex-col items-center justify-center gap-2`}>
-        <span className="text-4xl">{icons[type] || '🖼️'}</span>
+        <span className="text-3xl">{icons[type] || '🖼️'}</span>
         <span className="text-xs text-zinc-500 font-mono text-center px-2 truncate w-full text-center">{name}</span>
       </div>
     )
@@ -108,7 +108,7 @@ const BannerGallery = () => {
 
           <Link
             to="/branding-banners"
-            className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl transition shadow-lg shadow-brand-500/20"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-lg transition shadow-lg shadow-brand-500/20"
           >
             <PlusCircle size={16} />
             Criar Novo
@@ -126,12 +126,12 @@ const BannerGallery = () => {
             placeholder="Buscar por nome ou tipo..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full bg-dark-800 border border-dark-700 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 focus:border-brand-500 focus:outline-none transition-colors"
+            className="w-full bg-dark-800 border border-dark-700 rounded-lg py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 focus:border-brand-500 focus:outline-none transition-colors"
           />
         </div>
 
         {/* View toggle */}
-        <div className="flex items-center bg-dark-800 border border-dark-700 rounded-xl p-1">
+        <div className="flex items-center bg-dark-800 border border-dark-700 rounded-lg p-1">
           <button
             onClick={() => setViewMode('grid')}
             className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-brand-500 text-white' : 'text-zinc-500 hover:text-white'}`}
@@ -149,7 +149,7 @@ const BannerGallery = () => {
 
       {/* ══════ LOADING ══════ */}
       {loading && (
-        <div className="flex items-center justify-center py-20 text-zinc-500">
+        <div className="flex items-center justify-center py-10 text-zinc-500">
           <RefreshCw size={24} className="animate-spin mr-3" />
           Carregando galeria...
         </div>
@@ -159,7 +159,7 @@ const BannerGallery = () => {
       {!loading && viewMode === 'grid' && (
         <>
           {filteredBanners.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
               <Image size={40} className="mb-3 opacity-30" />
               <p className="text-sm">Nenhum banner encontrado.</p>
               <Link to="/branding-banners" className="mt-3 text-brand-400 text-sm hover:underline">
@@ -171,7 +171,7 @@ const BannerGallery = () => {
               {filteredBanners.map((banner) => (
                 <div
                   key={banner.id}
-                  className="bg-dark-800 rounded-xl overflow-hidden border border-dark-700 hover:border-brand-500/50 transition-all duration-300 group relative"
+                  className="bg-dark-800 rounded-lg overflow-hidden border border-dark-700 hover:border-brand-500/50 transition-all duration-300 group relative"
                 >
                   {/* Thumbnail */}
                   <div className="aspect-[9/16] bg-black relative overflow-hidden group-hover:scale-[1.01] transition duration-300">
@@ -244,7 +244,7 @@ const BannerGallery = () => {
       {!loading && viewMode === 'list' && (
         <div className="space-y-2">
           {filteredBanners.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
               <Image size={40} className="mb-3 opacity-30" />
               <p className="text-sm">Nenhum banner encontrado.</p>
             </div>
@@ -252,10 +252,10 @@ const BannerGallery = () => {
             filteredBanners.map((banner) => (
               <div
                 key={banner.id}
-                className="flex items-center gap-4 bg-dark-800 border border-dark-700 hover:border-dark-600 rounded-xl p-4 group transition-all"
+                className="flex items-center gap-4 bg-dark-800 border border-dark-700 hover:border-dark-600 rounded-lg p-4 group transition-all"
               >
                 {/* Mini thumb */}
-                <div className="w-12 h-16 rounded-lg overflow-hidden bg-dark-900 border border-dark-700 shrink-0">
+                <div className="w-12 h-14 rounded-lg overflow-hidden bg-dark-900 border border-dark-700 shrink-0">
                   {banner.url ? (
                     <img src={banner.url} alt={banner.name} className="w-full h-full object-cover" />
                   ) : (

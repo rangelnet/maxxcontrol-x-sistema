@@ -38,10 +38,10 @@ export default function LegalDisclaimerModal() {
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-brand-600/20 to-transparent pointer-events-none"></div>
 
         {/* Content */}
-        <div className="relative z-10 p-6 md:p-10 overflow-y-auto custom-scrollbar">
+        <div className="relative z-10 p-5 md:p-10 overflow-y-auto custom-scrollbar">
           
           <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/10">
-            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20">
+            <div className="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20">
               <AlertTriangle className="text-red-500" size={24} />
             </div>
             <h2 className="text-xl md:text-2xl font-black text-white leading-tight">
@@ -56,10 +56,10 @@ export default function LegalDisclaimerModal() {
             <p>
               Ao instalar o aplicativo, você recebe 7 dias gratuitos para testar a plataforma.
             </p>
-            <p className="font-bold text-white bg-white/5 p-4 rounded-xl border border-white/10">
+            <p className="font-bold text-white bg-white/5 p-4 rounded-lg border border-white/10">
               É importante reforçar que o funcionamento do aplicativo depende da playlists, linha ou servidor inserido pelo próprio usuário.
             </p>
-            <div className="flex items-start gap-3 bg-brand-500/10 p-4 rounded-xl border border-brand-500/20">
+            <div className="flex items-start gap-3 bg-brand-500/10 p-4 rounded-lg border border-brand-500/20">
               <span className="text-xl">📌</span>
               <p className="text-brand-50 font-medium">
                 Nós não vendemos, não fornecemos e não indicamos conteúdo de playlist. Nosso serviço se limita exclusivamente à ativação do aplicativo (player).
@@ -96,17 +96,17 @@ export default function LegalDisclaimerModal() {
         </div>
 
         {/* Action Buttons */}
-        <div className="relative z-10 bg-[#050505] p-6 border-t border-white/5 flex flex-col sm:flex-row items-center gap-4 justify-end">
+        <div className="relative z-10 bg-[#050505] p-5 border-t border-white/5 flex flex-col sm:flex-row items-center gap-4 justify-end">
           <button 
             onClick={handleDisagree}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl border border-white/10 text-zinc-400 font-bold hover:bg-white/5 hover:text-white transition-colors"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg border border-white/10 text-zinc-400 font-bold hover:bg-white/5 hover:text-white transition-colors"
           >
             Discordar
           </button>
           
           <button 
             onClick={handleAgree}
-            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-orange-500 text-white font-black hover:from-brand-500 hover:to-orange-400 shadow-[0_0_20px_rgba(252,95,22,0.4)] transition-all active:scale-95"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg bg-gradient-to-r from-brand-600 to-orange-500 text-white font-black hover:from-brand-500 hover:to-orange-400 shadow-[0_0_20px_rgba(252,95,22,0.4)] transition-all active:scale-95"
           >
             Concordar
           </button>

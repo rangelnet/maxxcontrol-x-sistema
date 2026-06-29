@@ -58,16 +58,16 @@ const MovieBannerElite = ({ movie, contact, theme, config = {} }) => {
        {/* ── CAMADA 1: HEADER & LOGO DINÂMICO ───────────────────────────── */}
        {!isFireSeries ? (
          <div className="relative z-10 w-full pt-20 px-12 flex flex-col items-center gap-6">
-           <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md px-8 py-4 rounded-3xl border border-white/10 shadow-2xl">
-             <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-lg shadow-brand-500/20" style={{ backgroundColor: text_color }}>
+           <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/10 shadow-2xl">
+             <div className="h-14 w-14 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-brand-500/20" style={{ backgroundColor: text_color }}>
                X
              </div>
              <div className="flex flex-col">
-               <span className="text-3xl font-black text-white tracking-widest uppercase">{brand_name}</span>
+               <span className="text-2xl font-black text-white tracking-widest uppercase">{brand_name}</span>
                <span className="text-sm font-black tracking-[0.3em] uppercase" style={{ color: text_color }}>Gerador Premium</span>
              </div>
            </div>
-           <div className="bg-red-600 text-white text-xl font-black px-8 py-2 rounded-full shadow-lg shadow-red-600/30 uppercase tracking-widest border-2 border-white/20">
+           <div className="bg-red-600 text-white text-xl font-black px-6 py-2 rounded-full shadow-lg shadow-red-600/30 uppercase tracking-widest border-2 border-white/20">
              Disponível Agora
            </div>
          </div>
@@ -78,7 +78,7 @@ const MovieBannerElite = ({ movie, contact, theme, config = {} }) => {
                <img src={brand_logo_url} className="h-24 object-contain filter drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]" alt="Logo" />
             ) : (
                <div className="flex flex-col items-end">
-                  <span className="text-6xl font-black text-white tracking-tighter uppercase leading-none drop-shadow-[0_0_30px_rgba(225,29,72,0.6)]">{brand_name}</span>
+                  <span className="text-5xl font-black text-white tracking-tighter uppercase leading-none drop-shadow-[0_0_30px_rgba(225,29,72,0.6)]">{brand_name}</span>
                   <span className="text-xs font-bold text-white/40 tracking-[0.5em] uppercase mt-1">Premium Streaming</span>
                </div>
             )}
@@ -110,7 +110,7 @@ const MovieBannerElite = ({ movie, contact, theme, config = {} }) => {
                  Final
                </span>
                <div className="bg-red-700 px-12 py-5 rounded-md flex items-center justify-center transform skew-x-[-12deg] mb-6 border-2 border-white/20 shadow-[0_0_50px_rgba(225,29,72,0.6)]">
-                  <span className="text-6xl font-black text-white uppercase italic tracking-widest transform skew-x-[12deg]">Adicionada</span>
+                  <span className="text-5xl font-black text-white uppercase italic tracking-widest transform skew-x-[12deg]">Adicionada</span>
                </div>
             </div>
 
@@ -149,7 +149,7 @@ const MovieBannerElite = ({ movie, contact, theme, config = {} }) => {
              {movie.titulo}
            </h1>
 
-           <div className="flex items-center gap-4 mt-8">
+           <div className="flex items-center gap-4 mt-6">
              <div className="px-6 py-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full text-zinc-300 text-xl font-bold">{year}</div>
              <div className="px-6 py-2 backdrop-blur-xl border rounded-full text-xl font-black flex items-center gap-2" style={{ borderColor: `${text_color}4d`, backgroundColor: `${text_color}33` }}>
                <Star className="w-6 h-6" style={{ color: text_color, fill: text_color }} />
@@ -169,14 +169,14 @@ const MovieBannerElite = ({ movie, contact, theme, config = {} }) => {
        {/* ── CAMADA 4: RODAPÉ ────────────────────────── */}
        <div className="relative z-20 w-full px-12 pb-24 mt-auto">
          {!isFireSeries ? (
-           <div className="p-12 rounded-[3.5rem] shadow-3xl flex flex-col items-center gap-8 border-t-2 border-white/20" style={{ background: `linear-gradient(to right, ${text_color}, #000000)` }}>
+           <div className="p-12 rounded-[3.5rem] shadow-3xl flex flex-col items-center gap-6 border-t-2 border-white/20" style={{ background: `linear-gradient(to right, ${text_color}, #000000)` }}>
              <div className="flex items-center gap-4 text-white">
                <PlayCircle className="w-12 h-12" />
-               <span className="text-4xl font-black uppercase tracking-widest">Solicite seu Teste agora</span>
+               <span className="text-3xl font-black uppercase tracking-widest">Solicite seu Teste agora</span>
              </div>
              <div className="flex items-center gap-6 bg-black/30 backdrop-blur-md px-10 py-6 rounded-3xl border border-white/10">
                <Phone className="w-10 h-10 text-white fill-white" />
-               <span className="text-5xl font-black text-white tracking-tight">{contact || '(00) 00000-0000'}</span>
+               <span className="text-4xl font-black text-white tracking-tight">{contact || '(00) 00000-0000'}</span>
              </div>
            </div>
          ) : (
@@ -202,23 +202,23 @@ const MovieBannerElite = ({ movie, contact, theme, config = {} }) => {
               <div className="absolute -right-40 -bottom-20 w-[800px] h-[600px] bg-gradient-radial from-red-900/40 via-transparent to-transparent blur-[120px] pointer-events-none z-30 opacity-60" />
               
               {/* BARRA DE DISPOSITIVOS PREMIUM (FRAMEADO) */}
-              <div className="w-[90%] bg-zinc-950/95 backdrop-blur-3xl border-2 border-white/10 rounded-[2.5rem] p-8 px-16 flex flex-col items-center gap-6 shadow-[0_40px_100px_rgba(0,0,0,1)] relative overflow-hidden z-40">
+              <div className="w-[90%] bg-zinc-950/95 backdrop-blur-3xl border-2 border-white/10 rounded-[2.5rem] p-6 px-16 flex flex-col items-center gap-6 shadow-[0_40px_100px_rgba(0,0,0,1)] relative overflow-hidden z-40">
                 <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 via-transparent to-orange-600/5" />
                 
                 <span className="relative z-10 text-zinc-500 font-extrabold text-sm uppercase tracking-[0.6em]">Assista em qualquer dispositivo agora</span>
                 
                 <div className="relative z-10 flex items-center justify-between w-full opacity-80 mix-blend-screen px-4">
-                   <span className="text-white text-3xl font-black italic tracking-tighter">SAMSUNG</span>
-                   <span className="text-white text-4xl font-black tracking-[-0.05em]">LG</span>
-                   <span className="text-white text-3xl font-black flex items-center gap-3"><div className="w-5 h-5 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.6)]" /> androidtv</span>
-                   <span className="text-[#662D91] text-3xl font-black">ROKU</span>
-                   <span className="text-white text-3xl font-black">TCL</span>
-                   <span className="text-[#FF8C00] text-3xl font-black flex items-center gap-2">firetv</span>
+                   <span className="text-white text-2xl font-black italic tracking-tighter">SAMSUNG</span>
+                   <span className="text-white text-3xl font-black tracking-[-0.05em]">LG</span>
+                   <span className="text-white text-2xl font-black flex items-center gap-3"><div className="w-5 h-5 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.6)]" /> androidtv</span>
+                   <span className="text-[#662D91] text-2xl font-black">ROKU</span>
+                   <span className="text-white text-2xl font-black">TCL</span>
+                   <span className="text-[#FF8C00] text-2xl font-black flex items-center gap-2">firetv</span>
                 </div>
 
                 {/* Whatsapp Contato Flutuante (Se existir) */}
                 {contact && (
-                  <div className="absolute right-8 -top-8 bg-gradient-to-r from-green-500 to-green-600 text-white px-10 py-4 rounded-2xl font-black text-4xl shadow-[0_20px_40px_rgba(34,197,94,0.3)] border-2 border-white/20 transform hover:scale-105 transition-transform">
+                  <div className="absolute right-8 -top-8 bg-gradient-to-r from-green-500 to-green-600 text-white px-10 py-4 rounded-xl font-black text-3xl shadow-[0_20px_40px_rgba(34,197,94,0.3)] border-2 border-white/20 transform hover:scale-105 transition-transform">
                     {contact}
                   </div>
                 )}

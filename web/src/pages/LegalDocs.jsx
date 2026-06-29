@@ -45,7 +45,7 @@ export default function LegalDocs() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5">
+            <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/5">
               <ChevronLeft size={16} /> Voltar ao Site
             </Link>
           </div>
@@ -54,7 +54,7 @@ export default function LegalDocs() {
 
       {/* Conteúdo */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-3xl md:text-5xl font-black text-white mb-10 pb-6 border-b border-white/10">{content.title}</h1>
+        <h1 className="text-2xl md:text-4xl font-black text-white mb-10 pb-6 border-b border-white/10">{content.title}</h1>
         
         <div className="space-y-6 text-zinc-400 leading-relaxed">
           {content.body.map((block, index) => {
