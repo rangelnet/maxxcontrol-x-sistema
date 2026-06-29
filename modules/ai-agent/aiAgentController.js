@@ -24,7 +24,7 @@ exports.getConfig = async (req, res) => {
     let result = await pool.query('SELECT * FROM ai_agent_configs LIMIT 1');
     if (result.rows.length === 0) {
       // Cria config padrão se não existir
-      result = await pool.query(`INSERT INTO ai_agent_configs (dns_list, is_active) VALUES ($1, $2) RETURNING *`, ['', false]);
+      result = await pool.query(`INSERT INTO ai_agent_configs (dns_list, is_active, auto_approve_words) VALUES ($1, $2, $3) RETURNING *`, ['', false, false]);
     }
     res.json({ success: true, config: result.rows[0] });
   } catch (error) {
@@ -33,11 +33,14 @@ exports.getConfig = async (req, res) => {
 };
 
 exports.updateConfig = async (req, res) => {
-  const { dns_list, cron_schedule, is_active } = req.body;
+  const { dns_list, cron_schedule, is_active, auto_approve_words } = req.body;
   try {
+    // Adiciona a coluna auto_approve_words se não existir
+    try { await pool.query("ALTER TABLE ai_agent_configs ADD COLUMN auto_approve_words BOOLEAN DEFAULT false"); } catch(e){}
+
     const result = await pool.query(
-      `UPDATE ai_agent_configs SET dns_list = $1, cron_schedule = $2, is_active = $3, updated_at = NOW() WHERE id = (SELECT id FROM ai_agent_configs LIMIT 1) RETURNING *`,
-      [dns_list, cron_schedule, is_active]
+      `UPDATE ai_agent_configs SET dns_list = $1, cron_schedule = $2, is_active = $3, auto_approve_words = $4, updated_at = NOW() WHERE id = (SELECT id FROM ai_agent_configs LIMIT 1) RETURNING *`,
+      [dns_list, cron_schedule, is_active, auto_approve_words || false]
     );
     
     res.json({ success: true, config: result.rows[0] });
@@ -99,6 +102,29 @@ exports.getSearchVod = async (req, res) => {
 // ==========================================
 // NÚCLEO DO AGENTE (INTELIGÊNCIA E VARREDURA)
 // ==========================================
+
+const detectDirtyWords = (title) => {
+  let found = [];
+  
+  // 1. Tags in brackets or parentheses (excluding pure years like 2024)
+  const bracketRegex = /\[([^\]]+)\]|\(([a-zA-Z]+[^)]*)\)/g; 
+  let match;
+  while ((match = bracketRegex.exec(title)) !== null) {
+     let word = (match[1] || match[2]).trim().toLowerCase();
+     if (word.length > 1 && word.length < 20 && !/^\d{4}$/.test(word)) {
+        found.push(word);
+     }
+  }
+
+  // 2. Known technical/quality/platform patterns
+  const patterns = /\b(1080p|720p|2160p|4k|8k|fhd|hd|sd|dual|dublado|legendado|leg|dub|nacional|netflix|nfx|amazon|amaz|prime|disney|globo|hbo|apple|paramount|starz|youtube|ts|cam|lancamento|web-dl|webrip|hdtv|bluray|remux|s\d+e\d+|s\d+|vol\.\d+|ch\d+)\b/gi;
+  
+  while ((match = patterns.exec(title)) !== null) {
+     found.push(match[1].toLowerCase());
+  }
+
+  return [...new Set(found)];
+};
 
 const parseApiToExtractVod = async (url) => {
   try {
@@ -197,8 +223,36 @@ const parseApiToExtractVod = async (url) => {
        await logAgent('success', `Catálogo mapeado: ${allContent.length} itens encontrados (Filmes & Séries). Processando deduplicação em background...`, baseUrl);
        setTimeout(async () => {
          try {
+           // Obter config para saber se auto_aprova
+           let autoApprove = false;
+           try {
+              const cfg = await pool.query('SELECT auto_approve_words FROM ai_agent_configs LIMIT 1');
+              if (cfg.rows.length > 0 && cfg.rows[0].auto_approve_words) {
+                 autoApprove = true;
+              }
+           } catch(e) {}
+
            for (const item of allContent) {
              if (!item.name) continue;
+             
+             // Detectar e salvar palavras sujas encontradas no título
+             const dirtyWords = detectDirtyWords(item.name);
+             for (const word of dirtyWords) {
+               const statusToSet = autoApprove ? 'approved' : 'new';
+               const insertRes = await pool.query(
+                 `INSERT INTO ai_tmdb_dirty_words (word, example_title, source_dns, status) 
+                  VALUES ($1, $2, $3, $4) 
+                  ON CONFLICT (word) DO UPDATE 
+                  SET occurrences = ai_tmdb_dirty_words.occurrences + 1 RETURNING *`,
+                 [word, item.name.trim(), baseUrl, statusToSet]
+               );
+               
+               // Se foi auto_aprovado e era a primeira vez (ou se preferirmos sempre mandar para o global para garantir)
+               if (autoApprove && insertRes.rows.length > 0) {
+                  await _addWordToGlobalTmdb(insertRes.rows[0].word);
+               }
+             }
+
              await pool.query(
                `INSERT INTO ai_vod_library (name, type, category_name) 
                 VALUES ($1, $2, $3) 
@@ -294,6 +348,7 @@ exports.initAI = async () => {
         dns_list TEXT,
         cron_schedule VARCHAR(50) DEFAULT '0 3 * * *',
         is_active BOOLEAN DEFAULT false,
+        auto_approve_words BOOLEAN DEFAULT false,
         extra_settings JSONB DEFAULT '{}',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -315,6 +370,15 @@ exports.initAI = async () => {
         backdrop_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await pool.query(`CREATE TABLE IF NOT EXISTS ai_tmdb_dirty_words (
+        id SERIAL PRIMARY KEY,
+        word VARCHAR(255) UNIQUE NOT NULL,
+        occurrences INTEGER DEFAULT 1,
+        example_title VARCHAR(255),
+        source_dns VARCHAR(255),
+        status VARCHAR(20) DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
   } catch (e) {
       console.error(e);
@@ -405,6 +469,73 @@ exports.getCategories = async (req, res) => {
     const type = req.query.type || 'movie';
     const { rows } = await pool.query('SELECT DISTINCT category_name FROM ai_vod_library WHERE type = $1 AND category_name IS NOT NULL ORDER BY category_name ASC', [type]);
     res.json({ success: true, categories: rows.map(r => r.category_name) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==========================================
+// DIRTY WORDS (FILTRO TMDB)
+// ==========================================
+
+exports.getDirtyWords = async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM ai_tmdb_dirty_words ORDER BY status = \'new\' DESC, occurrences DESC LIMIT 100');
+    res.json({ success: true, words: rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const _addWordToGlobalTmdb = async (word) => {
+  try {
+    const res = await pool.query("SELECT value FROM global_settings WHERE key = 'tmdb_filters'");
+    let data = res.rows.length > 0 ? JSON.parse(res.rows[0].value) : { words: "4k, 1080p, 720p, fhd, hd, sd, dual, dublado, legendado, leg, dub, nacional, netflix, nfx, amaz, disney, globo, hbo, apple, paramount, starz, youtube, ts, cam, lancamento" };
+    
+    let wordsArray = data.words.split(',').map(w => w.trim().toLowerCase());
+    if (!wordsArray.includes(word.toLowerCase())) {
+      wordsArray.push(word.toLowerCase());
+      data.words = wordsArray.join(', ');
+      
+      await pool.query(
+        `INSERT INTO global_settings (key, value, updated_at) 
+         VALUES ($1, $2, NOW()) 
+         ON CONFLICT (key) DO UPDATE 
+         SET value = $2, updated_at = NOW()`,
+        ['tmdb_filters', JSON.stringify(data)]
+      );
+    }
+  } catch (e) {
+    console.error('Erro ao salvar palavra global', e);
+  }
+};
+
+exports.updateDirtyWordStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const result = await pool.query('UPDATE ai_tmdb_dirty_words SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+    
+    if (result.rows.length > 0 && status === 'approved') {
+      await _addWordToGlobalTmdb(result.rows[0].word);
+    }
+    
+    res.json({ success: true, word: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.approveAllDirtyWords = async (req, res) => {
+  try {
+    const result = await pool.query("UPDATE ai_tmdb_dirty_words SET status = 'approved' WHERE status = 'new' RETURNING *");
+    
+    for (const row of result.rows) {
+      await _addWordToGlobalTmdb(row.word);
+    }
+    
+    res.json({ success: true, count: result.rows.length });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

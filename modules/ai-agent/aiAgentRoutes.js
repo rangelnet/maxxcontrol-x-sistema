@@ -18,4 +18,10 @@ router.get('/vod/top', aiAgentController.getTopVod);
 router.get('/vod/search', aiAgentController.getSearchVod);
 router.get('/vod/categories', aiAgentController.getCategories);
 
+// TMDB Dirty Words Scanner
+router.get('/dirty-words', aiAgentController.getDirtyWords);
+router.post('/dirty-words/approve-all', aiAgentController.approveAllDirtyWords);
+router.post('/dirty-words/:id/status', aiAgentController.updateDirtyWordStatus);
+
 module.exports = router;
+
