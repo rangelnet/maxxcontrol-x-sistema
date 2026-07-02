@@ -352,8 +352,28 @@ exports.createPublicPixPayment = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro ao gerar PIX Publico:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Falha ao processar pagamento.' });
+    // Log detalhado no servidor
+    const errorDetail = error.response?.data || error.message || error;
+    console.error('╔══════════════════════════════════════════╗');
+    console.error('║  ERRO REAL - createPublicPixPayment     ║');
+    console.error('╠══════════════════════════════════════════╣');
+    console.error('║ Mensagem:', JSON.stringify(errorDetail));
+    console.error('║ Status:', error.response?.status || 'N/A');
+    console.error('║ Token config:', config?.mpAccessToken ? 'PRESENTE (='+config.mpAccessToken.length+' chars)' : 'VAZIO/NULO');
+    console.error('║ Amount:', amount, '| Plan:', plan_id);
+    console.error('╚══════════════════════════════════════════╝');
+    
+    // Retornar erro detalhado para o frontend (remover em produção)
+    const errorMessage = errorDetail?.message || errorDetail?.error?.message || errorDetail?.status?.message || 'Falha ao processar pagamento';
+    res.status(500).json({ 
+      error: 'Falha ao processar pagamento.',
+      debug: {
+        mercadoPagoError: errorDetail,
+        status: error.response?.status,
+        hasToken: !!config?.mpAccessToken,
+        tokenLength: config?.mpAccessToken?.length || 0
+      }
+    });
   }
 };
 
