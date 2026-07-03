@@ -139,9 +139,12 @@ const Badge = ({ online, blocked }) => {
 }
 
 const StatusBadge = ({ status, isTrial }) => {
+  const normalizedStatus = String(status || '').toLowerCase()
   if (isTrial) return <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(217,119,6,0.15)', border:'1px solid rgba(217,119,6,0.25)', color:'#fbbf24', fontSize:11, fontWeight:800 }}><TestTube size={11} /> TESTE</span>
-  
-  return status === 'ativo' || status === 'active'
+  if (normalizedStatus === 'pendente' || normalizedStatus === 'pending')
+    return <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(251,191,36,0.14)', border:'1px solid rgba(251,191,36,0.24)', color:'#fbbf24', fontSize:11, fontWeight:800 }}><AlertCircle size={11} /> PENDENTE</span>
+    
+  return normalizedStatus === 'ativo' || normalizedStatus === 'active'
     ? <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(59,130,246,0.15)', border:'1px solid rgba(59,130,246,0.25)', color:'#60a5fa', fontSize:11, fontWeight:700 }}><ShieldCheck size={11} /> ATIVO</span>
     : <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(239,68,68,0.12)', border:'1px solid rgba(239,68,68,0.25)', color:'#f87171', fontSize:11, fontWeight:700 }}><Ban size={11} /> INATIVO</span>
 }
@@ -333,17 +336,17 @@ const Devices = () => {
     basePassword = rawPass;
     setShowPasswordModal(false);
 
-    setEditForm({
-      username: baseUsername, 
-      password: basePassword, 
-      expire_date: acc?.expire_date || '',
-      max_connections: acc?.max_connections || 1, 
-      package_name: acc?.package_name || '',
-      nome: acc?.nome || '', 
-      email: acc?.email || '', 
-      telefone: acc?.telefone || '', 
-      servidor_id: acc?.servidor_id || dev?.server_id || '', 
-      mac: acc?.mac || dev?.mac_address || '',
+      setEditForm({
+        username: baseUsername, 
+        password: basePassword, 
+        expire_date: acc?.expire_date || '',
+        max_connections: acc?.max_connections || 1, 
+        package_name: acc?.finance_plan_name || acc?.package_name || '',
+        nome: acc?.nome || '', 
+        email: acc?.email || '', 
+        telefone: acc?.telefone || '', 
+        servidor_id: acc?.servidor_id || dev?.server_id || '', 
+        mac: acc?.mac || dev?.mac_address || '',
       notificacao_whatsapp: acc?.notificacao_whatsapp || '1', 
       notas: acc?.notas || '', 
       finance_plan_id: acc?.finance_plan_id || ''
@@ -577,18 +580,24 @@ const Devices = () => {
       setFilteredDevices(list); 
       return 
     }
-    const t = searchTerm.toLowerCase();
-    setFilteredDevices(list.filter(item => {
-      const dev = item.device;
-      const acc = item.account;
-      return dev?.mac_address?.toLowerCase().includes(t) ||
-             dev?.modelo?.toLowerCase().includes(t) ||
-             dev?.ip?.toLowerCase().includes(t) ||
-             acc?.username?.toLowerCase().includes(t) ||
-             acc?.server_name?.toLowerCase().includes(t) ||
-             acc?.package_name?.toLowerCase().includes(t) ||
-             acc?.device_mac?.toLowerCase().includes(t);
-    }));
+      const t = searchTerm.toLowerCase();
+      setFilteredDevices(list.filter(item => {
+        const dev = item.device;
+        const acc = item.account;
+        return dev?.mac_address?.toLowerCase().includes(t) ||
+               dev?.modelo?.toLowerCase().includes(t) ||
+               dev?.ip?.toLowerCase().includes(t) ||
+               acc?.username?.toLowerCase().includes(t) ||
+               acc?.nome?.toLowerCase().includes(t) ||
+               acc?.email?.toLowerCase().includes(t) ||
+               acc?.telefone?.toLowerCase().includes(t) ||
+               acc?.server_name?.toLowerCase().includes(t) ||
+               acc?.package_name?.toLowerCase().includes(t) ||
+               acc?.finance_plan_name?.toLowerCase().includes(t) ||
+               acc?.app_user_id?.toLowerCase().includes(t) ||
+               acc?.last_payment_id?.toLowerCase().includes(t) ||
+               acc?.device_mac?.toLowerCase().includes(t);
+      }));
   }, [searchTerm, unifiedList, viewMode, statusFilter]);
 
   useEffect(() => setCurrentPage(1), [searchTerm]);
@@ -1023,7 +1032,7 @@ const Devices = () => {
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
                           <div style={{ background:'rgba(5,5,5,0.3)', borderRadius:8, padding:'8px 10px' }}>
                             <p style={{ fontSize:8.5, color:'#52525b', textTransform:'uppercase', fontWeight:700 }}>Plano</p>
-                            <p style={{ fontSize:10, color:'#a78bfa', fontWeight:700, marginTop:2 }}>{acc.package_name || 'Standard'}</p>
+                            <p style={{ fontSize:10, color:'#a78bfa', fontWeight:700, marginTop:2 }}>{acc.finance_plan_name || acc.package_name || 'Standard'}</p>
                           </div>
                           <div style={{ background:'rgba(5,5,5,0.3)', borderRadius:8, padding:'8px 10px' }}>
                             <p style={{ fontSize:8.5, color:'#52525b', textTransform:'uppercase', fontWeight:700 }}>Conexões</p>
@@ -1211,7 +1220,7 @@ const Devices = () => {
                           <div>
                             {acc && (
                               <>
-                                <div style={{ fontSize:11, fontWeight:700, color:'#a78bfa' }}>{acc.package_name || 'Standard'}</div>
+                                <div style={{ fontSize:11, fontWeight:700, color:'#a78bfa' }}>{acc.finance_plan_name || acc.package_name || 'Standard'}</div>
                                 <div style={{ fontSize:9, color:'#71717a', fontWeight:700, textTransform:'uppercase', marginTop:2 }}>
                                   {acc.max_connections || 1} {(acc.max_connections || 1) === 1 ? 'Tela' : 'Telas'}
                                 </div>
@@ -1349,7 +1358,7 @@ const Devices = () => {
                    <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:12, padding:16, border:'1px solid rgba(255,255,255,0.06)' }}>
                      <h4 style={{ margin:'0 0 12px 0', fontSize:11, color:'#FC5F16', textTransform:'uppercase', letterSpacing:'0.1em' }}>📦 Plano & Assinatura</h4>
                      <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Plano:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.package_name || '—'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Plano:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.finance_plan_name || selectedAccount?.package_name || '—'}</span></div>
                        <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Vencimento:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.expire_date || '—'}</span></div>
                        <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Conexões:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.max_connections || 1} Tela(s)</span></div>
                      </div>

@@ -257,9 +257,24 @@ async function runPendingMigrations() {
       { name: 'remote_id', type: 'VARCHAR(255)' },
       { name: 'panel_url', type: 'TEXT' },
       { name: 'package_name', type: 'VARCHAR(255)' },
-      { name: 'server_name', type: 'VARCHAR(255)' },
       { name: 'max_connections', type: 'INTEGER DEFAULT 1' },
-      { name: 'm3u_url', type: 'TEXT' }
+      { name: 'nome', type: 'VARCHAR(255)' },
+      { name: 'email', type: 'VARCHAR(255)' },
+      { name: 'telefone', type: 'VARCHAR(50)' },
+      { name: 'notas', type: 'TEXT' },
+      { name: 'finance_plan_id', type: 'INTEGER' },
+      { name: 'finance_plan_name', type: 'VARCHAR(255)' },
+      { name: 'finance_plan_price', type: 'NUMERIC(10,2)' },
+      { name: 'plan_duration_days', type: 'INTEGER' },
+      { name: 'server_name', type: 'VARCHAR(255)' },
+      { name: 'm3u_url', type: 'TEXT' },
+      { name: 'app_user_id', type: 'VARCHAR(255)' },
+      { name: 'app_user_status', type: 'VARCHAR(50)' },
+      { name: 'last_payment_id', type: 'VARCHAR(255)' },
+      { name: 'last_payment_amount', type: 'NUMERIC(10,2)' },
+      { name: 'last_payment_method', type: 'VARCHAR(50)' },
+      { name: 'last_payment_status', type: 'VARCHAR(50)' },
+      { name: 'last_payment_at', type: 'TIMESTAMP' }
     ];
 
     for (const col of columnsToSync) {

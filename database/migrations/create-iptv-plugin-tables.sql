@@ -85,6 +85,26 @@ CREATE TABLE IF NOT EXISTS qpanel_accounts (
   device_mac VARCHAR(17) NOT NULL, -- MAC do dispositivo TV MAXX PRO
   m3u_url VARCHAR(500),
   status VARCHAR(50) DEFAULT 'active', -- 'active', 'expired', 'suspended'
+  expire_date VARCHAR(100),
+  remote_id VARCHAR(255),
+  panel_url TEXT,
+  package_name VARCHAR(255),
+  max_connections INTEGER DEFAULT 1,
+  nome VARCHAR(255),
+  email VARCHAR(255),
+  telefone VARCHAR(50),
+  notas TEXT,
+  finance_plan_id INTEGER,
+  finance_plan_name VARCHAR(255),
+  finance_plan_price NUMERIC(10,2),
+  plan_duration_days INTEGER,
+  app_user_id VARCHAR(255),
+  app_user_status VARCHAR(50),
+  last_payment_id VARCHAR(255),
+  last_payment_amount NUMERIC(10,2),
+  last_payment_method VARCHAR(50),
+  last_payment_status VARCHAR(50),
+  last_payment_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

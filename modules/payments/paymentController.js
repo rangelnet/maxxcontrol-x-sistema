@@ -26,7 +26,305 @@ const ensurePublicPaymentColumns = async () => {
   await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS client_email VARCHAR(255)`);
   await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_id VARCHAR(255)`);
   await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_status VARCHAR(50)`);
+  await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_mac_address VARCHAR(50)`);
+  await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_username VARCHAR(255)`);
+  await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_password VARCHAR(255)`);
   publicPaymentColumnsReady = true;
+};
+
+let checkoutCustomerColumnsReady = false;
+const ensureCheckoutCustomerColumns = async () => {
+  if (checkoutCustomerColumnsReady) return;
+
+  const statements = [
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS nome VARCHAR(255)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS email VARCHAR(255)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS telefone VARCHAR(50)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS notas TEXT`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS package_name VARCHAR(255)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS max_connections INTEGER`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS finance_plan_id INTEGER`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS finance_plan_name VARCHAR(255)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS finance_plan_price NUMERIC(10,2)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS plan_duration_days INTEGER`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS panel_url TEXT`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS server_name VARCHAR(255)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS app_user_id VARCHAR(255)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS app_user_status VARCHAR(50)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS last_payment_id VARCHAR(255)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS last_payment_amount NUMERIC(10,2)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS last_payment_method VARCHAR(50)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS last_payment_status VARCHAR(50)`,
+    `ALTER TABLE qpanel_accounts ADD COLUMN IF NOT EXISTS last_payment_at TIMESTAMP`
+  ];
+
+  for (const statement of statements) {
+    await pool.query(statement);
+  }
+
+  checkoutCustomerColumnsReady = true;
+};
+
+const normalizeMacKey = (value = '') => String(value || '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+const normalizePhoneKey = (value = '') => String(value || '').replace(/\D/g, '');
+const formatExpireDateBR = (days = 0) => {
+  const totalDays = Number(days) || 0;
+  const expireDate = new Date();
+  if (totalDays > 0) {
+    expireDate.setDate(expireDate.getDate() + totalDays);
+  }
+  return expireDate.toLocaleDateString('pt-BR');
+};
+const toNullableNumber = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+const getFinancePlanById = async (planId) => {
+  if (planId === undefined || planId === null || planId === '') return null;
+  const result = await pool.query(
+    `SELECT id, name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active
+       FROM finance_plans
+      WHERE id = $1
+      LIMIT 1`,
+    [planId]
+  );
+  return result.rows[0] || null;
+};
+
+const getPrimaryQpanelPanel = async (preferredPanelId) => {
+  if (preferredPanelId) {
+    const preferred = await pool.query(
+      'SELECT id, panel_name, panel_url, status FROM qpanel_panels WHERE id = $1 LIMIT 1',
+      [preferredPanelId]
+    );
+    if (preferred.rows[0]) return preferred.rows[0];
+  }
+
+  const fallback = await pool.query(
+    `SELECT id, panel_name, panel_url, status
+       FROM qpanel_panels
+      ORDER BY CASE WHEN status = 'active' THEN 0 ELSE 1 END, updated_at DESC, id ASC
+      LIMIT 1`
+  );
+  return fallback.rows[0] || null;
+};
+
+const findCheckoutAccount = async ({ appUsername, appMacAddress, clientEmail, clientPhone, appUserId }) => {
+  if (appUsername) {
+    const result = await pool.query(
+      'SELECT * FROM qpanel_accounts WHERE LOWER(username) = LOWER($1) LIMIT 1',
+      [String(appUsername).trim()]
+    );
+    if (result.rows[0]) return result.rows[0];
+  }
+
+  const normalizedMac = normalizeMacKey(appMacAddress);
+  if (normalizedMac) {
+    const result = await pool.query(
+      `SELECT *
+         FROM qpanel_accounts
+        WHERE UPPER(REGEXP_REPLACE(device_mac, '[^a-zA-Z0-9]', '', 'g')) = $1
+        LIMIT 1`,
+      [normalizedMac]
+    );
+    if (result.rows[0]) return result.rows[0];
+  }
+
+  if (clientEmail) {
+    const result = await pool.query(
+      'SELECT * FROM qpanel_accounts WHERE LOWER(email) = LOWER($1) LIMIT 1',
+      [String(clientEmail).trim()]
+    );
+    if (result.rows[0]) return result.rows[0];
+  }
+
+  const normalizedPhone = normalizePhoneKey(clientPhone);
+  if (normalizedPhone) {
+    const result = await pool.query(
+      `SELECT *
+         FROM qpanel_accounts
+        WHERE REGEXP_REPLACE(COALESCE(telefone, ''), '[^0-9]', '', 'g') = $1
+        LIMIT 1`,
+      [normalizedPhone]
+    );
+    if (result.rows[0]) return result.rows[0];
+  }
+
+  if (appUserId) {
+    const result = await pool.query(
+      'SELECT * FROM qpanel_accounts WHERE app_user_id = $1 LIMIT 1',
+      [String(appUserId).trim()]
+    );
+    if (result.rows[0]) return result.rows[0];
+  }
+
+  return null;
+};
+
+const syncCheckoutCustomer = async (payload) => {
+  await ensureCheckoutCustomerColumns();
+
+  const plan = await getFinancePlanById(payload.plan_id);
+  const planId = plan?.id ?? toNullableNumber(payload.plan_id);
+  const planName = plan?.name || payload.plan_name || 'Plano';
+  const planPrice = Number(plan?.price ?? payload.amount ?? 0) || 0;
+  const durationDays = Number(plan?.duration_days ?? payload.plan_duration_days ?? 0) || 0;
+  const maxConnections = Number(plan?.max_connections ?? payload.max_connections ?? 1) || 1;
+  const packageName = plan?.sigma_package || planName;
+  const panel = await getPrimaryQpanelPanel(plan?.qpanel_id);
+  const accountStatus = String(payload.payment_status || '').toLowerCase() === 'approved' ? 'active' : 'pending';
+  const expireDate = formatExpireDateBR(durationDays);
+
+  let existing = await findCheckoutAccount({
+    appUsername: payload.app_username,
+    appMacAddress: payload.app_mac_address,
+    clientEmail: payload.client_email,
+    clientPhone: payload.client_phone,
+    appUserId: payload.user_id
+  });
+
+  const basePanelId = existing?.panel_id || panel?.id || plan?.qpanel_id || null;
+  if (!basePanelId) {
+    console.warn('[CHECKOUT SYNC] Nenhum painel qPanel ativo encontrado para vincular o cliente.');
+    return { skipped: true, reason: 'no_qpanel' };
+  }
+
+  const baseServerId = existing?.server_id || 1;
+  const basePackageId = existing?.package_id || 0;
+  const baseUsername = String(payload.app_username || existing?.username || payload.user_id || payload.client_email || '').trim();
+  const basePassword = String(payload.app_password || existing?.password || '123456').trim();
+  const baseDeviceMac = String(payload.app_mac_address || existing?.device_mac || '').trim();
+  const baseName = payload.client_name || existing?.nome || null;
+  const baseEmail = payload.client_email || existing?.email || null;
+  const basePhone = payload.client_phone || existing?.telefone || null;
+  const baseNotes = existing?.notas || null;
+  const basePackageName = packageName || existing?.package_name || null;
+  const baseMaxConnections = maxConnections || existing?.max_connections || 1;
+  const basePanelUrl = panel?.panel_url || existing?.panel_url || null;
+  const baseServerName = panel?.panel_name || existing?.server_name || basePackageName || null;
+  const baseAppUserId = payload.user_id || existing?.app_user_id || null;
+  const baseAppUserStatus = payload.user_status || existing?.app_user_status || null;
+  const basePaymentId = payload.payment_id || existing?.last_payment_id || null;
+  const basePaymentMethod = payload.payment_method || existing?.last_payment_method || 'PIX';
+  const basePaymentStatus = payload.payment_status || existing?.last_payment_status || 'pending';
+
+  if (!existing && !baseDeviceMac) {
+    console.warn('[CHECKOUT SYNC] Checkout sem MAC e sem cadastro existente. Sincronização de Central ignorada.');
+    return { skipped: true, reason: 'missing_mac' };
+  }
+
+  if (existing) {
+    const result = await pool.query(
+      `UPDATE qpanel_accounts
+          SET panel_id = COALESCE($1, panel_id),
+              server_id = COALESCE($2, server_id),
+              package_id = COALESCE($3, package_id),
+              username = COALESCE(NULLIF($4, ''), username),
+              password = COALESCE(NULLIF($5, ''), password),
+              device_mac = COALESCE(NULLIF($6, ''), device_mac),
+              m3u_url = COALESCE(m3u_url, NULL),
+              status = $7,
+              expire_date = $8,
+              nome = COALESCE(NULLIF($9, ''), nome),
+              email = COALESCE(NULLIF($10, ''), email),
+              telefone = COALESCE(NULLIF($11, ''), telefone),
+              notas = COALESCE(NULLIF($12, ''), notas),
+              package_name = COALESCE(NULLIF($13, ''), package_name),
+              max_connections = COALESCE($14, max_connections),
+              finance_plan_id = $15,
+              finance_plan_name = $16,
+              finance_plan_price = $17,
+              plan_duration_days = $18,
+              panel_url = COALESCE(NULLIF($19, ''), panel_url),
+              server_name = COALESCE(NULLIF($20, ''), server_name),
+              app_user_id = COALESCE(NULLIF($21, ''), app_user_id),
+              app_user_status = COALESCE(NULLIF($22, ''), app_user_status),
+              last_payment_id = COALESCE(NULLIF($23, ''), last_payment_id),
+              last_payment_amount = $24,
+              last_payment_method = $25,
+              last_payment_status = $26,
+              last_payment_at = CURRENT_TIMESTAMP,
+              updated_at = CURRENT_TIMESTAMP
+        WHERE id = $27
+        RETURNING *`,
+      [
+        basePanelId,
+        baseServerId,
+        basePackageId,
+        baseUsername,
+        basePassword,
+        baseDeviceMac,
+        accountStatus,
+        expireDate,
+        baseName,
+        baseEmail,
+        basePhone,
+        baseNotes,
+        basePackageName,
+        baseMaxConnections,
+        planId,
+        planName,
+        planPrice,
+        durationDays || null,
+        basePanelUrl,
+        baseServerName,
+        baseAppUserId,
+        baseAppUserStatus,
+        basePaymentId,
+        planPrice,
+        basePaymentMethod,
+        basePaymentStatus,
+        existing.id
+      ]
+    );
+    return { account: result.rows[0], plan, panel, existed: true };
+  }
+
+  const result = await pool.query(
+    `INSERT INTO qpanel_accounts (
+      panel_id, server_id, package_id, username, password, device_mac, m3u_url, status,
+      expire_date, nome, email, telefone, notas, package_name, max_connections,
+      finance_plan_id, finance_plan_name, finance_plan_price, plan_duration_days,
+      panel_url, server_name, app_user_id, app_user_status, last_payment_id,
+      last_payment_amount, last_payment_method, last_payment_status, last_payment_at, created_at, updated_at
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6, NULL, $7,
+      $8, $9, $10, $11, $12, $13, $14,
+      $15, $16, $17, $18, $19, $20,
+      $21, $22, $23, $24, $25, $26, CURRENT_TIMESTAMP, NOW(), NOW()
+    ) RETURNING *`,
+    [
+      basePanelId,
+      baseServerId,
+      basePackageId,
+      baseUsername || `checkout_${Date.now()}`,
+      basePassword,
+      baseDeviceMac,
+      accountStatus,
+      expireDate,
+      baseName,
+      baseEmail,
+      basePhone,
+      baseNotes,
+      basePackageName,
+      baseMaxConnections,
+      planId,
+      planName,
+      planPrice,
+      durationDays || null,
+      basePanelUrl,
+      baseServerName,
+      baseAppUserId,
+      baseAppUserStatus,
+      basePaymentId,
+      planPrice,
+      basePaymentMethod,
+      basePaymentStatus
+    ]
+  );
+
+  return { account: result.rows[0], plan, panel, existed: false };
 };
 
 // Obter os tokens do MP a partir do global_settings
@@ -287,29 +585,54 @@ exports.checkPaymentStatus = async (req, res) => {
 
        // 2. Tenta atualizar transações de clientes finais (CRM)
        // Usamos o campo mac_address para guardar o payment_id do MP nessas rotas públicas
-       const resultCrm = await pool.query(
-         "UPDATE crm_clients SET status = 'aprovado' WHERE mac_address = $1 AND status != 'aprovado' RETURNING *",
-         [payment_id]
-       );
-
-       if (resultCrm.rows.length > 0) {
-         console.log(`✅ Pagamento ${payment_id} aprovado (Cliente Final CRM).`);
-         // Aqui você pode adicionar lógica para liberar o MAC automaticamente no painel se desejar
-       }
-
        try {
-         await ensurePublicPaymentColumns();
-         const resultRevenue = await pool.query(
-           "UPDATE revenue_logs SET status = 'pago' WHERE mp_payment_id = $1 AND status != 'pago' RETURNING *",
+         const resultCrm = await pool.query(
+           "UPDATE crm_clients SET status = 'aprovado' WHERE mac_address = $1 AND status != 'aprovado' RETURNING *",
            [payment_id]
          );
-         if (resultRevenue.rows.length > 0) {
-           console.log(`✅ Pagamento ${payment_id} aprovado (Cliente Final Revenue).`);
+
+         if (resultCrm.rows.length > 0) {
+           console.log(`✅ Pagamento ${payment_id} aprovado (Cliente Final CRM).`);
+           // Aqui você pode adicionar lógica para liberar o MAC automaticamente no painel se desejar
          }
-       } catch (revenueError) {
-         console.warn('Aviso ao atualizar revenue_logs do pagamento público:', revenueError.message);
+       } catch (crmError) {
+         console.warn(`ℹ️ Pagamento ${payment_id}: atualização de crm_clients ignorada`, crmError.message);
        }
-    }
+
+         try {
+           await ensurePublicPaymentColumns();
+           const resultRevenue = await pool.query(
+             "UPDATE revenue_logs SET status = 'pago' WHERE mp_payment_id = $1 AND status != 'pago' RETURNING *",
+             [payment_id]
+           );
+           if (resultRevenue.rows.length > 0) {
+             console.log(`✅ Pagamento ${payment_id} aprovado (Cliente Final Revenue).`);
+             try {
+               const row = resultRevenue.rows[0];
+               await syncCheckoutCustomer({
+                 plan_id: row.plan_id,
+                 amount: row.amount,
+                 client_name: row.client_name,
+                 client_email: row.client_email,
+                 client_phone: row.whatsapp,
+                 user_id: row.app_user_id,
+                 user_status: row.app_user_status,
+                 app_mac_address: row.app_mac_address,
+                 app_username: row.app_username,
+                 app_password: row.app_password,
+                 payment_id: row.mp_payment_id || payment_id,
+                 payment_status: currentStatus,
+                 payment_method: row.payment_method || 'PIX'
+               });
+               console.log(`🔄 Pagamento ${payment_id}: Central de Gerenciamento sincronizada como aprovado.`);
+             } catch (syncError) {
+               console.warn(`ℹ️ Pagamento ${payment_id}: sincronização da Central ignorada`, syncError.message);
+             }
+           }
+         } catch (revenueError) {
+          console.warn('Aviso ao atualizar revenue_logs do pagamento público:', revenueError.message);
+         }
+      }
 
     res.json({ status: currentStatus });
 
@@ -343,7 +666,7 @@ exports.getPaymentHistory = async (req, res) => {
 
 // --- ROTAS PÚBLICAS PARA O WEB PLAYER (CLIENTE FINAL) ---
 exports.createPublicPixPayment = async (req, res) => {
-  const { plan_id, plan_name, amount, client_name, client_email, client_phone, user_id, user_status } = req.body;
+    const { plan_id, plan_name, plan_duration_days, amount, client_name, client_email, client_phone, user_id, user_status, app_mac_address, app_username, app_password } = req.body;
   const requestId = crypto.randomUUID();
   let config = null;
   let paymentPayload = null;
@@ -358,6 +681,7 @@ exports.createPublicPixPayment = async (req, res) => {
       has_phone: !!client_phone,
       user_id,
       user_status,
+      app_mac_address,
     });
 
     config = await getMpConfig();
@@ -416,19 +740,58 @@ exports.createPublicPixPayment = async (req, res) => {
     await ensurePublicPaymentColumns();
 
     // Registrar no financeiro para histórico e liberação. A tabela CRM real desta tela é revenue_logs.
-    await pool.query(
-      `INSERT INTO revenue_logs (
-        plan_id, amount, client_name, whatsapp, payment_method, status,
-        mp_payment_id, client_email, app_user_id, app_user_status
-       )
-       VALUES ($1, $2, $3, $4, 'PIX', 'pendente', $5, $6, $7, $8)`,
-      [plan_id || null, amount, client_name, client_phone || null, paymentData.id, client_email || null, user_id || null, user_status || null]
-    );
+      await pool.query(
+        `INSERT INTO revenue_logs (
+          plan_id, amount, client_name, whatsapp, payment_method, status,
+          mp_payment_id, client_email, app_user_id, app_user_status, app_mac_address, app_username, app_password
+         )
+       VALUES ($1, $2, $3, $4, 'PIX', 'pendente', $5, $6, $7, $8, $9, $10, $11)`,
+      [
+        plan_id || null,
+        amount,
+        client_name,
+        client_phone || null,
+        paymentData.id,
+        client_email || null,
+        user_id || null,
+        user_status || null,
+        app_mac_address || null,
+          app_username || null,
+          app_password || null
+        ]
+      );
 
-    res.json({
-      payment_id: paymentData.id,
-      status: paymentData.status,
-      status_detail: paymentData.status_detail,
+      try {
+        const syncResult = await syncCheckoutCustomer({
+          plan_id,
+          plan_name,
+          plan_duration_days,
+          amount,
+          client_name,
+          client_email,
+          client_phone,
+          user_id,
+          user_status,
+          app_mac_address,
+          app_username,
+          app_password,
+          payment_id: paymentData.id,
+          payment_status: paymentData.status,
+          payment_method: 'PIX'
+        });
+        console.log(`[PIX PUBLIC ${requestId}] Sync Central`, {
+          skipped: !!syncResult?.skipped,
+          existed: !!syncResult?.existed,
+          reason: syncResult?.reason || null
+        });
+      } catch (syncError) {
+        console.warn(`[PIX PUBLIC ${requestId}] Falha ao sincronizar Central:`, syncError.message);
+      }
+
+      res.json({
+        payment_id: paymentData.id,
+        status: paymentData.status,
+        status_detail: paymentData.status_detail,
       qr_code: qr_code,
       qr_code_base64: qr_code_base64,
       copy_paste: qr_code
@@ -464,9 +827,10 @@ exports.createPublicPixPayment = async (req, res) => {
 };
 
 exports.createPublicCardPayment = async (req, res) => {
-  const { plan_id, plan_name, amount, client_name, client_email, client_phone, user_id, user_status, token, payment_method_id, installments, issuer_id } = req.body;
+    const { plan_id, plan_name, plan_duration_days, amount, client_name, client_email, client_phone, user_id, user_status, app_mac_address, app_username, app_password, token, payment_method_id, installments, issuer_id } = req.body;
 
   try {
+    const requestId = crypto.randomUUID();
     const config = await getMpConfig();
     if (!config || !config.mpAccessToken) {
       return res.status(400).json({ error: 'Mercado Pago não configurado.' });
@@ -489,6 +853,18 @@ exports.createPublicCardPayment = async (req, res) => {
       }
     };
 
+    console.log(`[CARD PUBLIC ${requestId}] Iniciando pagamento`, {
+      plan_id,
+      plan_name,
+      amount,
+      client_name,
+      client_email: maskEmail(client_email),
+      has_phone: !!client_phone,
+      user_id,
+      user_status,
+      app_mac_address,
+    });
+
     const response = await axios.post('https://api.mercadopago.com/v1/payments', paymentPayload, {
       headers: {
         'Authorization': `Bearer ${config.mpAccessToken}`,
@@ -502,19 +878,59 @@ exports.createPublicCardPayment = async (req, res) => {
     await ensurePublicPaymentColumns();
 
     // Registrar no financeiro para histórico e liberação. A tabela CRM real desta tela é revenue_logs.
-    await pool.query(
-      `INSERT INTO revenue_logs (
-        plan_id, amount, client_name, whatsapp, payment_method, status,
-        mp_payment_id, client_email, app_user_id, app_user_status
-       )
-       VALUES ($1, $2, $3, $4, 'Cartão de Crédito', $5, $6, $7, $8, $9)`,
-      [plan_id || null, amount, client_name, client_phone || null, paymentData.status === 'approved' ? 'pago' : 'pendente', paymentData.id, client_email || null, user_id || null, user_status || null]
-    );
+      await pool.query(
+        `INSERT INTO revenue_logs (
+          plan_id, amount, client_name, whatsapp, payment_method, status,
+          mp_payment_id, client_email, app_user_id, app_user_status, app_mac_address, app_username, app_password
+         )
+       VALUES ($1, $2, $3, $4, 'Cartão de Crédito', $5, $6, $7, $8, $9, $10, $11)`,
+      [
+        plan_id || null,
+        amount,
+        client_name,
+        client_phone || null,
+        paymentData.status === 'approved' ? 'pago' : 'pendente',
+        paymentData.id,
+        client_email || null,
+        user_id || null,
+        user_status || null,
+        app_mac_address || null,
+          app_username || null,
+          app_password || null
+        ]
+      );
 
-    res.json({
-      payment_id: paymentData.id,
-      status: paymentData.status,
-      status_detail: paymentData.status_detail
+      try {
+        const syncResult = await syncCheckoutCustomer({
+          plan_id,
+          plan_name,
+          plan_duration_days,
+          amount,
+          client_name,
+          client_email,
+          client_phone,
+          user_id,
+          user_status,
+          app_mac_address,
+          app_username,
+          app_password,
+          payment_id: paymentData.id,
+          payment_status: paymentData.status,
+          payment_method: 'Cartão de Crédito'
+        });
+        console.log(`[CARD PUBLIC ${requestId}] Sync Central`, {
+          skipped: !!syncResult?.skipped,
+          existed: !!syncResult?.existed,
+          reason: syncResult?.reason || null
+        });
+      } catch (syncError) {
+        console.warn(`[CARD PUBLIC ${requestId}] Falha ao sincronizar Central:`, syncError.message);
+      }
+
+      res.json({
+        payment_id: paymentData.id,
+        status: paymentData.status,
+        status_detail: paymentData.status_detail
     });
 
   } catch (error) {

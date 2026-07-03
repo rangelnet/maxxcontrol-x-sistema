@@ -1875,23 +1875,40 @@ router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
           a.username,
           a.password,
           json_agg(
-            json_build_object(
-              'id', a.id,
-              'username', a.username,
-              'password', a.password,
-              'panel_id', a.panel_id,
-              'panel_url', p.panel_url,
-              'server_id', a.server_id,
-              'panel_name', p.panel_name,
-              'expire_date', a.expire_date,
-              'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
-              'm3u_url', a.m3u_url,
-              'device_mac', a.device_mac,
-              'status', a.status,
-              'created_at', a.created_at,
-              'remote_id', a.id
-            )
-          ) as accounts
+              json_build_object(
+                'id', a.id,
+                'username', a.username,
+                'password', a.password,
+                'panel_id', a.panel_id,
+                'panel_url', p.panel_url,
+                'server_id', a.server_id,
+                'panel_name', p.panel_name,
+                'expire_date', a.expire_date,
+                'remote_id', COALESCE(a.remote_id, a.id::text),
+                'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
+                'm3u_url', a.m3u_url,
+                'device_mac', a.device_mac,
+                'status', a.status,
+                'package_name', a.package_name,
+                'max_connections', a.max_connections,
+                'nome', a.nome,
+                'email', a.email,
+                'telefone', a.telefone,
+                'notas', a.notas,
+                'finance_plan_id', a.finance_plan_id,
+                'finance_plan_name', a.finance_plan_name,
+                'finance_plan_price', a.finance_plan_price,
+                'plan_duration_days', a.plan_duration_days,
+                'app_user_id', a.app_user_id,
+                'app_user_status', a.app_user_status,
+                'last_payment_id', a.last_payment_id,
+                'last_payment_amount', a.last_payment_amount,
+                'last_payment_method', a.last_payment_method,
+                'last_payment_status', a.last_payment_status,
+                'last_payment_at', a.last_payment_at,
+                'created_at', a.created_at
+              )
+            ) as accounts
         FROM qpanel_accounts a
         LEFT JOIN qpanel_panels p ON a.panel_id = p.id
         LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name
@@ -1906,22 +1923,39 @@ router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
           a.username,
           a.password,
           json_agg(
-            json_build_object(
-              'id', a.id,
-              'username', a.username,
-              'password', a.password,
-              'panel_id', a.panel_id,
-              'panel_url', p.panel_url,
-              'server_id', a.server_id,
-              'panel_name', p.panel_name,
-              'expire_date', a.expire_date,
-              'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
-              'm3u_url', a.m3u_url,
-              'device_mac', a.device_mac,
-              'status', a.status,
-              'created_at', a.created_at,
-              'remote_id', a.id
-            )
+              json_build_object(
+                'id', a.id,
+                'username', a.username,
+                'password', a.password,
+                'panel_id', a.panel_id,
+                'panel_url', p.panel_url,
+                'server_id', a.server_id,
+                'panel_name', p.panel_name,
+                'expire_date', a.expire_date,
+                'remote_id', COALESCE(a.remote_id, a.id::text),
+                'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
+                'm3u_url', a.m3u_url,
+                'device_mac', a.device_mac,
+                'status', a.status,
+                'package_name', a.package_name,
+                'max_connections', a.max_connections,
+                'nome', a.nome,
+                'email', a.email,
+                'telefone', a.telefone,
+                'notas', a.notas,
+                'finance_plan_id', a.finance_plan_id,
+                'finance_plan_name', a.finance_plan_name,
+                'finance_plan_price', a.finance_plan_price,
+                'plan_duration_days', a.plan_duration_days,
+                'app_user_id', a.app_user_id,
+                'app_user_status', a.app_user_status,
+                'last_payment_id', a.last_payment_id,
+                'last_payment_amount', a.last_payment_amount,
+                'last_payment_method', a.last_payment_method,
+                'last_payment_status', a.last_payment_status,
+                'last_payment_at', a.last_payment_at,
+                'created_at', a.created_at
+              )
           ) as accounts
         FROM qpanel_accounts a
         LEFT JOIN qpanel_panels p ON a.panel_id = p.id

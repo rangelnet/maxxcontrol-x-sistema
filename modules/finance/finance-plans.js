@@ -54,6 +54,9 @@ const migrateFinance = async () => {
             whatsapp VARCHAR(50),
             payment_method VARCHAR(50) DEFAULT 'PIX',
             status VARCHAR(50) DEFAULT 'pago',
+            app_mac_address VARCHAR(50),
+            app_username VARCHAR(255),
+            app_password VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         
@@ -64,6 +67,9 @@ const migrateFinance = async () => {
         ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS client_email VARCHAR(255);
         ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_id VARCHAR(255);
         ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_status VARCHAR(50);
+        ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_mac_address VARCHAR(50);
+        ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_username VARCHAR(255);
+        ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_password VARCHAR(255);
 
         CREATE TABLE IF NOT EXISTS credit_packages (
             id SERIAL PRIMARY KEY,
@@ -317,12 +323,12 @@ router.get('/revenue/stats', async (req, res) => {
  */
 router.post('/revenue', async (req, res) => {
     try {
-        const { plan_id, amount, client_name, whatsapp, payment_method, status } = req.body;
+        const { plan_id, amount, client_name, whatsapp, payment_method, status, app_mac_address, app_username, app_password } = req.body;
 
         const result = await pool.query(
-            `INSERT INTO revenue_logs (plan_id, amount, client_name, whatsapp, payment_method, status) 
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [plan_id, amount, client_name, whatsapp || null, payment_method || 'PIX', status || 'pago']
+            `INSERT INTO revenue_logs (plan_id, amount, client_name, whatsapp, payment_method, status, app_mac_address, app_username, app_password) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+            [plan_id, amount, client_name, whatsapp || null, payment_method || 'PIX', status || 'pago', app_mac_address || null, app_username || null, app_password || null]
         );
 
         res.status(201).json(result.rows[0]);
@@ -761,10 +767,11 @@ router.post('/subscribe-panel-plan', authMiddleware, async (req, res) => {
         const updatedUser = updatedUserRes.rows[0];
 
         // Registrar a receita em revenue_logs para faturamento
+        const appMacAddress = req.body.app_mac_address || null;
         await pool.query(
-            `INSERT INTO revenue_logs (plan_id, amount, client_name, whatsapp, payment_method, status) 
-             VALUES ($1, $2, $3, $4, $5, 'pago')`,
-            [null, plan.price, user.nome, user.telefone || null, payment_method || 'PIX']
+            `INSERT INTO revenue_logs (plan_id, amount, client_name, whatsapp, payment_method, status, app_mac_address, app_username, app_password) 
+             VALUES ($1, $2, $3, $4, $5, 'pago', $6, $7, $8)`,
+            [null, plan.price, user.nome, user.telefone || null, payment_method || 'PIX', appMacAddress, null, null]
         );
 
         // Registrar também em mp_transactions (opcional, histórico)

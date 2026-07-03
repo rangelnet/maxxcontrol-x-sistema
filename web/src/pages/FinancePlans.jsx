@@ -501,7 +501,22 @@ const FinancePlans = () => {
   };
 
   const filteredCrm = crmLogs.filter(log => {
-    if (searchTerm && !log.client_name?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (searchTerm) {
+      const searchableText = [
+        log.client_name,
+        log.app_mac_address || log.mac_address,
+        log.app_username || log.username,
+        log.whatsapp,
+        log.plan_name,
+        log.payment_method,
+        log.status
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      if (!searchableText.includes(searchTerm.toLowerCase())) return false;
+    }
     if (filterStatus && log.status !== filterStatus) return false;
     if (filterMethod && log.payment_method !== filterMethod) return false;
     return true;
@@ -751,6 +766,9 @@ const FinancePlans = () => {
               <thead>
                 <tr style={{ background: '#09090b', borderBottom: '1px solid #27272a' }}>
                   <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Cliente</th>
+                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>MAC</th>
+                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Usuário</th>
+                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Senha</th>
                   <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Plano</th>
                   <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Financeiro</th>
                   <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Data / Hora</th>
@@ -760,7 +778,7 @@ const FinancePlans = () => {
               <tbody>
                 {filteredCrm.length === 0 ? (
                   <tr>
-                    <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: '#a1a1aa' }}>Nenhum registro encontrado no CRM.</td>
+                    <td colSpan="8" style={{ padding: '40px', textAlign: 'center', color: '#a1a1aa' }}>Nenhum registro encontrado no CRM.</td>
                   </tr>
                 ) : (
                   filteredCrm.map(log => (
@@ -774,6 +792,21 @@ const FinancePlans = () => {
                         ) : (
                            <span style={{ fontSize: '11px', color: '#71717a' }}>Sem contato</span>
                         )}
+                      </td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <div style={{ fontWeight: '800', color: '#fff', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                          {log.app_mac_address || log.mac_address || 'Sem MAC'}
+                        </div>
+                      </td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <div style={{ fontWeight: '800', color: '#fff', fontSize: '13px', wordBreak: 'break-word' }}>
+                          {log.app_username || log.username || 'Sem usuário'}
+                        </div>
+                      </td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <div style={{ fontWeight: '800', color: '#FC5F16', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                          {log.app_password || log.password || 'Sem senha'}
+                        </div>
                       </td>
                       <td style={{ padding: '15px 20px' }}>
                         <div style={{ fontSize: '13px', color: '#e4e4e7', fontWeight: '600' }}>{log.plan_name || 'Avulso/Excluído'}</div>
