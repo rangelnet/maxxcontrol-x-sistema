@@ -86,7 +86,15 @@ const FinancePlans = () => {
     max_connections: '1',
     qpanel_id: '',
     sigma_package: '',
-    is_active: true
+    is_active: true,
+    highlight_type: 'none',
+    badge_text: '',
+    badge_color: '#FC5F16',
+    border_color: '#FC5F16',
+    button_color: '#FC5F16',
+    glow_color: '#FC5F16',
+    is_carousel_highlight: false,
+    display_order: 0
   });
 
   const [creditFormData, setCreditFormData] = useState({
@@ -194,7 +202,15 @@ const FinancePlans = () => {
         max_connections: parseInt(formData.max_connections),
         qpanel_id: formData.qpanel_id ? parseInt(formData.qpanel_id) : null,
         sigma_package: Array.isArray(formData.sigma_packages) ? formData.sigma_packages.join(', ') : formData.sigma_package,
-        is_active: formData.is_active
+        is_active: formData.is_active,
+        highlight_type: formData.highlight_type,
+        badge_text: formData.badge_text,
+        badge_color: formData.badge_color,
+        border_color: formData.border_color,
+        button_color: formData.button_color,
+        glow_color: formData.glow_color,
+        is_carousel_highlight: formData.is_carousel_highlight,
+        display_order: parseInt(formData.display_order) || 0
       };
       
       if (editPlanId) {
@@ -207,7 +223,7 @@ const FinancePlans = () => {
       
       setShowModal(false);
       setEditPlanId(null);
-      setFormData({ name: '', price: '', duration_days: '30', max_connections: '1', qpanel_id: '', sigma_package: '', sigma_packages: [], is_active: true });
+      setFormData({ name: '', price: '', duration_days: '30', max_connections: '1', qpanel_id: '', sigma_package: '', sigma_packages: [], is_active: true, highlight_type: 'none', badge_text: '', badge_color: '#FC5F16', border_color: '#FC5F16', button_color: '#FC5F16', glow_color: '#FC5F16', is_carousel_highlight: false, display_order: 0 });
       fetchData();
     } catch (error) {
       console.error('Erro ao salvar plano:', error);
@@ -226,7 +242,15 @@ const FinancePlans = () => {
       qpanel_id: plan.qpanel_id || '',
       sigma_package: plan.sigma_package || '',
       sigma_packages: selectedPackages,
-      is_active: plan.is_active
+      is_active: plan.is_active,
+      highlight_type: plan.highlight_type || 'none',
+      badge_text: plan.badge_text || '',
+      badge_color: plan.badge_color || '#FC5F16',
+      border_color: plan.border_color || '#FC5F16',
+      button_color: plan.button_color || '#FC5F16',
+      glow_color: plan.glow_color || '#FC5F16',
+      is_carousel_highlight: plan.is_carousel_highlight || false,
+      display_order: plan.display_order || 0
     });
     setShowModal(true);
   };
@@ -1006,124 +1030,314 @@ const FinancePlans = () => {
       {/* MODAL NOVO PLANO COMERCIAL */}
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
-          <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ margin: '0 0 25px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {editPlanId ? <Edit3 size={24} color="#FC5F16" /> : <Plus size={24} color="#FC5F16" />} 
-              {editPlanId ? 'Editar Plano' : 'Criar Novo Plano'}
-            </h2>
+          <div style={{ background: '#111111', border: '1px solid rgba(252,95,22,0.5)', borderRadius: '24px', width: '100%', maxWidth: '1100px', padding: '30px', boxShadow: '0 0 40px rgba(252,95,22,0.15)', maxHeight: '95vh', overflowY: 'auto', position: 'relative' }}>
+            
+            {/* Botão Fechar */}
+            <button onClick={() => { setShowModal(false); setEditPlanId(null); }} style={{ position: 'absolute', top: '30px', right: '30px', background: '#18181b', border: '1px solid #27272a', color: '#a1a1aa', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#3f3f46'; }} onMouseOut={e => { e.currentTarget.style.color = '#a1a1aa'; e.currentTarget.style.borderColor = '#27272a'; }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            {/* Header do Modal */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(252,95,22,0.1)', border: '1px solid rgba(252,95,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FC5F16' }}>
+                {editPlanId ? <Edit3 size={24} /> : <Plus size={24} />}
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: '#fff' }}>{editPlanId ? 'Editar Plano' : 'Criar Novo Plano'}</h2>
+                <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#a1a1aa' }}>Configure um novo plano para seus clientes</p>
+              </div>
+            </div>
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Nome do Plano</label>
-                <input required type="text" placeholder="Ex: TV Maxx Premium Mensal" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
-              </div>
-              
-              <div style={{ display: 'flex', gap: '15px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Preço (R$)</label>
-                  <input required type="number" step="0.01" placeholder="35.00" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Duração (Dias)</label>
-                  <select required value={formData.duration_days} onChange={e => setFormData({...formData, duration_days: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }}>
-                    <option value="1">1 Dia (Teste)</option>
-                    <option value="30">30 Dias (Mensal)</option>
-                    <option value="90">90 Dias (Trimestral)</option>
-                    <option value="180">180 Dias (Semestral)</option>
-                    <option value="365">365 Dias (Anual)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '15px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Conexões (Telas)</label>
-                  <input required type="number" min="1" max="10" value={formData.max_connections} onChange={e => setFormData({...formData, max_connections: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Painel Vinculado</label>
-                  <select value={formData.qpanel_id} onChange={e => setFormData({...formData, qpanel_id: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }}>
-                    <option value="">Qualquer Painel</option>
-                    {panels.map(p => (
-                      <option key={p.id} value={p.id}>{p.panel_name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '12px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>
-                  Pacotes no Painel Sigma (Selecione um ou mais)
-                </label>
-                <div style={{ 
-                  background: '#09090b', 
-                  border: '1px solid #27272a', 
-                  borderRadius: '16px', 
-                  padding: '12px', 
-                  maxHeight: '200px', 
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#FC5F16 #09090b'
-                }}>
-                  {[...new Set([...dynamicPlans, ...[
-                      "01 MÊS IPTV - COMPLETO C/ ADULTO",
-                      "01 MÊS IPTV - COMPLETO S/ ADULTO",
-                      "1 MES - COMPLETO",
-                      "1 Mês - Somente Canais",
-                      "03 MESES IPTV - COMPLETO C/ ADULTO",
-                      "03 MESES IPTV - COMPLETO S/ ADULTO",
-                      "1 ANO IPTV - COMPLETO C/ ADULTO",
-                      "1 ANO IPTV - COMPLETO S/ ADULTO",
-                      "1 Ano - Somente Canais"
-                  ]])].map(p => {
-                    const isSelected = (formData.sigma_packages || []).includes(p);
-                    return (
-                      <div 
-                        key={p} 
-                        onClick={() => toggleSigmaPackage(p)}
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '12px', 
-                          padding: '12px', 
-                          borderRadius: '10px', 
-                          background: isSelected ? 'rgba(252,95,22,0.1)' : 'transparent',
-                          border: isSelected ? '1px solid rgba(252,95,22,0.3)' : '1px solid transparent',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        <div style={{ 
-                          width: '18px', 
-                          height: '18px', 
-                          borderRadius: '4px', 
-                          border: isSelected ? 'none' : '2px solid #3f3f46',
-                          background: isSelected ? '#FC5F16' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          {isSelected && <CheckCircle size={14} color="#fff" />}
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                
+                {/* Coluna Esquerda (Formulário) */}
+                <div style={{ flex: '2 1 600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  
+                  {/* Bloco 1: Informações do Plano */}
+                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px' }}>
+                    <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>1</span>
+                      Informações do Plano
+                    </h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '2 1 200px' }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Nome do Plano</label>
+                          <div style={{ position: 'relative' }}>
+                            <Tag size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
+                            <input required type="text" placeholder="Ex: TV Maxx Premium Mensal" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                          </div>
                         </div>
-                        <span style={{ fontSize: '12px', color: isSelected ? '#fff' : '#a1a1aa', fontWeight: isSelected ? '800' : '500' }}>{p}</span>
+                        <div style={{ flex: '1 1 120px' }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Preço (R$)</label>
+                          <div style={{ position: 'relative' }}>
+                            <DollarSign size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
+                            <input required type="number" step="0.01" placeholder="35.00" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                          </div>
+                        </div>
+                        <div style={{ flex: '1 1 150px' }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Duração (Dias)</label>
+                          <div style={{ position: 'relative' }}>
+                            <Clock size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
+                            <select required value={formData.duration_days} onChange={e => setFormData({...formData, duration_days: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none' }}>
+                              <option value="1">1 Dia (Teste)</option>
+                              <option value="30">30 Dias (Mensal)</option>
+                              <option value="90">90 Dias (Trimestral)</option>
+                              <option value="180">180 Dias (Semestral)</option>
+                              <option value="365">365 Dias (Anual)</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
-                    );
-                  })}
+
+                      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Conexões (Telas)</label>
+                          <div style={{ position: 'relative' }}>
+                            <Monitor size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
+                            <input required type="number" min="1" max="10" value={formData.max_connections} onChange={e => setFormData({...formData, max_connections: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                          </div>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Painel Vinculado</label>
+                          <div style={{ position: 'relative' }}>
+                            <Settings size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
+                            <select value={formData.qpanel_id} onChange={e => setFormData({...formData, qpanel_id: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none' }}>
+                              <option value="">Qualquer Painel</option>
+                              {panels.map(p => (
+                                <option key={p.id} value={p.id}>{p.panel_name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                    {/* Bloco 2: Pacotes */}
+                    <div style={{ flex: 1, background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', minWidth: '280px' }}>
+                      <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>2</span>
+                        Pacotes no Painel Sigma
+                      </h3>
+                      <p style={{ margin: '0 0 15px', fontSize: '12px', color: '#a1a1aa' }}>Selecione um ou mais pacotes para este plano</p>
+                      
+                      <div style={{ 
+                        background: '#09090b', 
+                        border: '1px solid #27272a', 
+                        borderRadius: '12px', 
+                        padding: '12px', 
+                        height: '220px', 
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#FC5F16 #09090b'
+                      }}>
+                        {[...new Set([...dynamicPlans, ...[
+                            "01 MÊS IPTV - COMPLETO C/ ADULTO",
+                            "01 MÊS IPTV - COMPLETO S/ ADULTO",
+                            "1 MES - COMPLETO",
+                            "1 Mês - Somente Canais",
+                            "03 MESES IPTV - COMPLETO C/ ADULTO",
+                            "03 MESES IPTV - COMPLETO S/ ADULTO",
+                            "1 ANO IPTV - COMPLETO C/ ADULTO",
+                            "1 ANO IPTV - COMPLETO S/ ADULTO",
+                            "1 Ano - Somente Canais"
+                        ]])].map(p => {
+                          const isSelected = (formData.sigma_packages || []).includes(p);
+                          return (
+                            <div 
+                              key={p} 
+                              onClick={() => toggleSigmaPackage(p)}
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '12px', 
+                                padding: '12px', 
+                                borderRadius: '10px', 
+                                background: isSelected ? 'rgba(252,95,22,0.1)' : 'transparent',
+                                border: isSelected ? '1px solid rgba(252,95,22,0.3)' : '1px solid transparent',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              <div style={{ 
+                                width: '18px', 
+                                height: '18px', 
+                                borderRadius: '4px', 
+                                border: isSelected ? 'none' : '2px solid #3f3f46',
+                                background: isSelected ? '#FC5F16' : 'transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                {isSelected && <CheckCircle size={14} color="#fff" />}
+                              </div>
+                              <span style={{ fontSize: '11px', color: isSelected ? '#fff' : '#a1a1aa', fontWeight: isSelected ? '800' : '500' }}>{p}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#FC5F16', marginTop: '12px', fontWeight: '700' }}>
+                        {formData.sigma_packages?.length || 0} pacotes selecionados
+                      </p>
+                    </div>
+
+                    {/* Bloco 3: Destaque Visual */}
+                    <div style={{ flex: 1, background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', minWidth: '280px' }}>
+                      <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>3</span>
+                        Destaque Visual no App
+                      </h3>
+                      <p style={{ margin: '0 0 15px', fontSize: '12px', color: '#a1a1aa' }}>Personalize como este plano será exibido no app</p>
+                      
+                      <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: '700', color: '#a1a1aa' }}>Tipo de Destaque</label>
+                          <div style={{ position: 'relative' }}>
+                            <Image size={14} color="#FC5F16" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                            <select value={formData.highlight_type} onChange={e => setFormData({...formData, highlight_type: e.target.value})} style={{ padding: '10px 10px 10px 34px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none' }}>
+                              <option value="none">Nenhum</option>
+                              <option value="mais_popular">Mais Popular</option>
+                              <option value="promocao">Promoção</option>
+                              <option value="destaque">Destaque</option>
+                              <option value="custo_beneficio">Melhor Custo-benefício</option>
+                              <option value="recomendado">Plano Recomendado</option>
+                              <option value="plano_ativo">Plano Ativo</option>
+                              <option value="oferta_especial">Oferta Especial</option>
+                              <option value="premium">Premium</option>
+                              <option value="familia">Família</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: '700', color: '#a1a1aa' }}>Texto da Tag</label>
+                          <div style={{ position: 'relative' }}>
+                            <Tag size={14} color="#FC5F16" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                            <input type="text" placeholder="Ex: MAIS POPULAR" value={formData.badge_text} onChange={e => setFormData({...formData, badge_text: e.target.value})} style={{ padding: '10px 10px 10px 34px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '20px' }}>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: '700', color: '#a1a1aa' }}>Cor Tag</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#09090b', padding: '6px 8px', borderRadius: '8px', border: '1px solid #27272a' }}>
+                            <input type="color" value={formData.badge_color} onChange={e => setFormData({...formData, badge_color: e.target.value})} style={{ width: '16px', height: '16px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                            <span style={{ color: '#fff', fontSize: '10px', textTransform: 'uppercase' }}>HEX</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: '700', color: '#a1a1aa' }}>Cor Borda</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#09090b', padding: '6px 8px', borderRadius: '8px', border: '1px solid #27272a' }}>
+                            <input type="color" value={formData.border_color} onChange={e => setFormData({...formData, border_color: e.target.value})} style={{ width: '16px', height: '16px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                            <span style={{ color: '#fff', fontSize: '10px', textTransform: 'uppercase' }}>HEX</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: '700', color: '#a1a1aa' }}>Cor Botão</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#09090b', padding: '6px 8px', borderRadius: '8px', border: '1px solid #27272a' }}>
+                            <input type="color" value={formData.button_color} onChange={e => setFormData({...formData, button_color: e.target.value})} style={{ width: '16px', height: '16px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                            <span style={{ color: '#fff', fontSize: '10px', textTransform: 'uppercase' }}>HEX</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: '700', color: '#a1a1aa' }}>Cor Brilho</label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#09090b', padding: '6px 8px', borderRadius: '8px', border: '1px solid #27272a' }}>
+                            <input type="color" value={formData.glow_color} onChange={e => setFormData({...formData, glow_color: e.target.value})} style={{ width: '16px', height: '16px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                            <span style={{ color: '#fff', fontSize: '10px', textTransform: 'uppercase' }}>HEX</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '15px' }}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', background: '#09090b', padding: '10px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                          <input type="checkbox" id="isCarouselHighlight" checked={formData.is_carousel_highlight} onChange={e => setFormData({...formData, is_carousel_highlight: e.target.checked})} style={{ accentColor: '#FC5F16', width: '16px', height: '16px' }} />
+                          <label htmlFor="isCarouselHighlight" style={{ fontSize: '11px', fontWeight: '700', color: '#fff', cursor: 'pointer', margin: 0 }}>Destacar no Carrossel</label>
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', background: '#09090b', padding: '8px 10px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                          <label style={{ fontSize: '11px', fontWeight: '700', color: '#fff', margin: 0, flex: 1 }}>Ordem Exibição:</label>
+                          <input type="number" min="0" value={formData.display_order} onChange={e => setFormData({...formData, display_order: parseInt(e.target.value) || 0})} style={{ width: '40px', padding: '4px', background: '#18181b', border: '1px solid #3f3f46', borderRadius: '6px', color: '#fff', outline: 'none', textAlign: 'center', fontSize: '12px' }} />
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
                 </div>
-                <p style={{ fontSize: '11px', color: '#71717a', marginTop: '8px' }}>
-                  {formData.sigma_packages?.length || 0} pacotes selecionados
-                </p>
+
+                {/* Coluna Direita (Resumo e Botões) */}
+                <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  
+                  {/* Card de Resumo */}
+                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', flex: 1 }}>
+                    <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Activity size={18} color="#FC5F16" /> Resumo do Plano
+                    </h3>
+                    <p style={{ margin: '0 0 20px', fontSize: '12px', color: '#a1a1aa' }}>Prévia das principais informações</p>
+                    
+                    <div style={{ background: '#09090b', borderRadius: '12px', padding: '20px', textAlign: 'center', border: '1px solid #27272a', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '14px', color: '#FC5F16', fontWeight: '900', marginBottom: '4px' }}>R$ <span style={{ fontSize: '32px' }}>{formData.price || '0.00'}</span></div>
+                      <div style={{ fontSize: '12px', color: '#a1a1aa' }}>{formData.duration_days} Dias</div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '10px' }}>
+                        <span style={{ fontSize: '13px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px' }}><Monitor size={14} color="#FC5F16" /> Conexões (Telas)</span>
+                        <span style={{ fontSize: '14px', color: '#fff', fontWeight: '800' }}>{formData.max_connections || '1'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '10px' }}>
+                        <span style={{ fontSize: '13px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px' }}><Settings size={14} color="#FC5F16" /> Painel Vinculado</span>
+                        <span style={{ fontSize: '12px', color: '#fff', fontWeight: '600' }}>{formData.qpanel_id ? panels.find(p => p.id == formData.qpanel_id)?.panel_name : 'Qualquer Painel'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '10px' }}>
+                        <span style={{ fontSize: '13px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px' }}><ShoppingCart size={14} color="#FC5F16" /> Pacotes Selecionados</span>
+                        <span style={{ fontSize: '14px', color: '#fff', fontWeight: '800' }}>{formData.sigma_packages?.length || 0}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#09090b', borderRadius: '12px', padding: '20px', border: `1px solid ${formData.border_color || '#27272a'}`, boxShadow: `0 0 20px ${(formData.glow_color || '#FC5F16')}20`, position: 'relative' }}>
+                      <p style={{ margin: '0 0 15px', fontSize: '12px', color: '#a1a1aa', textAlign: 'center' }}>Prévia do Destaque</p>
+                      
+                      <div style={{ 
+                        background: formData.button_color || '#FC5F16', 
+                        color: '#fff', 
+                        padding: '12px', 
+                        borderRadius: '8px', 
+                        textAlign: 'center', 
+                        fontWeight: '900',
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: `0 4px 15px ${(formData.button_color || '#FC5F16')}60`
+                      }}>
+                        <Tag size={16} /> {formData.badge_text || 'MAIS POPULAR'}
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
-                <button type="button" onClick={() => { setShowModal(false); setEditPlanId(null); }} className="flex-1 py-2.5 bg-transparent border border-white/10 hover:border-white/20 active:scale-95 text-white font-black rounded-lg transition-all">Cancelar</button>
-                <button type="submit" className="flex-2 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-black rounded-lg shadow-[0_4px_15px_rgba(252,95,22,0.3)] transition-all">
+              {/* Botões de Ação na parte inferior */}
+              <div style={{ display: 'flex', gap: '15px', marginTop: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => { setShowModal(false); setEditPlanId(null); }} style={{ padding: '16px 40px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }} onMouseOver={e => e.currentTarget.style.background = '#27272a'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  Cancelar
+                </button>
+                <button type="submit" style={{ padding: '16px 40px', background: 'linear-gradient(90deg, #FC5F16 0%, #ff7a3a 100%)', border: 'none', color: '#fff', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 8px 25px rgba(252,95,22,0.4)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                   {editPlanId ? 'Salvar Alterações' : 'Salvar Plano'}
                 </button>
               </div>
+
             </form>
           </div>
         </div>

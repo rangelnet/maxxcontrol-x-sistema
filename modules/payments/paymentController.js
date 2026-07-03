@@ -2,6 +2,33 @@ const pool = require('../../config/database');
 const axios = require('axios');
 const crypto = require('crypto');
 
+const maskEmail = (email = '') => {
+  const [name, domain] = String(email).split('@');
+  if (!name || !domain) return email ? '***' : '';
+  return `${name.slice(0, 2)}***@${domain}`;
+};
+
+const sanitizeMercadoPagoError = (errorDetail) => {
+  if (!errorDetail || typeof errorDetail !== 'object') return errorDetail;
+  return {
+    message: errorDetail.message,
+    error: errorDetail.error,
+    status: errorDetail.status,
+    status_detail: errorDetail.status_detail,
+    cause: errorDetail.cause,
+  };
+};
+
+let publicPaymentColumnsReady = false;
+const ensurePublicPaymentColumns = async () => {
+  if (publicPaymentColumnsReady) return;
+  await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS mp_payment_id VARCHAR(255)`);
+  await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS client_email VARCHAR(255)`);
+  await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_id VARCHAR(255)`);
+  await pool.query(`ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_status VARCHAR(50)`);
+  publicPaymentColumnsReady = true;
+};
+
 // Obter os tokens do MP a partir do global_settings
 // Suporta tanto o formato antigo (key='mp') quanto o novo (key='mp_access_token')
 // Obter os tokens do MP a partir do global_settings
@@ -269,6 +296,19 @@ exports.checkPaymentStatus = async (req, res) => {
          console.log(`✅ Pagamento ${payment_id} aprovado (Cliente Final CRM).`);
          // Aqui você pode adicionar lógica para liberar o MAC automaticamente no painel se desejar
        }
+
+       try {
+         await ensurePublicPaymentColumns();
+         const resultRevenue = await pool.query(
+           "UPDATE revenue_logs SET status = 'pago' WHERE mp_payment_id = $1 AND status != 'pago' RETURNING *",
+           [payment_id]
+         );
+         if (resultRevenue.rows.length > 0) {
+           console.log(`✅ Pagamento ${payment_id} aprovado (Cliente Final Revenue).`);
+         }
+       } catch (revenueError) {
+         console.warn('Aviso ao atualizar revenue_logs do pagamento público:', revenueError.message);
+       }
     }
 
     res.json({ status: currentStatus });
@@ -303,18 +343,43 @@ exports.getPaymentHistory = async (req, res) => {
 
 // --- ROTAS PÚBLICAS PARA O WEB PLAYER (CLIENTE FINAL) ---
 exports.createPublicPixPayment = async (req, res) => {
-  const { plan_id, plan_name, amount, client_name, client_email, client_phone } = req.body;
+  const { plan_id, plan_name, amount, client_name, client_email, client_phone, user_id, user_status } = req.body;
+  const requestId = crypto.randomUUID();
+  let config = null;
+  let paymentPayload = null;
 
   try {
-    const config = await getMpConfig();
+    console.log(`[PIX PUBLIC ${requestId}] Iniciando pagamento`, {
+      plan_id,
+      plan_name,
+      amount,
+      client_name,
+      client_email: maskEmail(client_email),
+      has_phone: !!client_phone,
+      user_id,
+      user_status,
+    });
+
+    config = await getMpConfig();
+    console.log(`[PIX PUBLIC ${requestId}] Gateway Mercado Pago`, {
+      found: !!config,
+      hasToken: !!config?.mpAccessToken,
+      tokenLength: config?.mpAccessToken?.length || 0,
+      hasPublicKey: !!config?.mpPublicKey,
+    });
+
     if (!config || !config.mpAccessToken) {
       return res.status(400).json({ error: 'Mercado Pago não configurado no painel.' });
+    }
+
+    if (!plan_id || !amount || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({ error: 'Dados do plano inválidos para gerar PIX.' });
     }
 
     const idempotencyKey = crypto.randomUUID();
     const external_reference = `PLAN_${plan_id}_${Date.now()}`;
 
-    const paymentPayload = {
+    paymentPayload = {
       transaction_amount: Number(amount),
       description: `Assinatura: ${plan_name}`,
       payment_method_id: 'pix',
@@ -324,6 +389,8 @@ exports.createPublicPixPayment = async (req, res) => {
         first_name: client_name || "Cliente"
       }
     };
+
+    console.log(`[PIX PUBLIC ${requestId}] Payload Mercado Pago`, paymentPayload);
 
     const response = await axios.post('https://api.mercadopago.com/v1/payments', paymentPayload, {
       headers: {
@@ -337,18 +404,34 @@ exports.createPublicPixPayment = async (req, res) => {
     const qr_code_base64 = paymentData.point_of_interaction?.transaction_data?.qr_code_base64;
     const qr_code = paymentData.point_of_interaction?.transaction_data?.qr_code;
 
-    // Registrar no CRM para histórico e liberação
+    console.log(`[PIX PUBLIC ${requestId}] Resposta Mercado Pago`, {
+      httpStatus: response.status,
+      payment_id: paymentData.id,
+      status: paymentData.status,
+      status_detail: paymentData.status_detail,
+      qr_code_base64_len: qr_code_base64?.length || 0,
+      qr_code_len: qr_code?.length || 0,
+    });
+
+    await ensurePublicPaymentColumns();
+
+    // Registrar no financeiro para histórico e liberação. A tabela CRM real desta tela é revenue_logs.
     await pool.query(
-      `INSERT INTO crm_clients (client_name, whatsapp, plan_name, amount, payment_method, status, mac_address)
-       VALUES ($1, $2, $3, $4, 'PIX', 'pendente', $5)`,
-      [client_name, client_phone, plan_name, amount, paymentData.id] // Guardamos o paymentData.id no mac_address ou outro campo para check
+      `INSERT INTO revenue_logs (
+        plan_id, amount, client_name, whatsapp, payment_method, status,
+        mp_payment_id, client_email, app_user_id, app_user_status
+       )
+       VALUES ($1, $2, $3, $4, 'PIX', 'pendente', $5, $6, $7, $8)`,
+      [plan_id || null, amount, client_name, client_phone || null, paymentData.id, client_email || null, user_id || null, user_status || null]
     );
 
     res.json({
       payment_id: paymentData.id,
       status: paymentData.status,
+      status_detail: paymentData.status_detail,
       qr_code: qr_code,
-      qr_code_base64: qr_code_base64
+      qr_code_base64: qr_code_base64,
+      copy_paste: qr_code
     });
 
   } catch (error) {
@@ -357,28 +440,31 @@ exports.createPublicPixPayment = async (req, res) => {
     console.error('╔══════════════════════════════════════════╗');
     console.error('║  ERRO REAL - createPublicPixPayment     ║');
     console.error('╠══════════════════════════════════════════╣');
-    console.error('║ Mensagem:', JSON.stringify(errorDetail));
+    console.error('║ Request ID:', requestId);
+    console.error('║ Mensagem:', JSON.stringify(sanitizeMercadoPagoError(errorDetail)));
     console.error('║ Status:', error.response?.status || 'N/A');
-    console.error('║ Token config:', config?.mpAccessToken ? 'PRESENTE (='+config.mpAccessToken.length+' chars)' : 'VAZIO/NULO');
+    console.error('║ Token config:', config?.mpAccessToken ? 'PRESENTE ('+config.mpAccessToken.length+' chars)' : 'VAZIO/NULO');
     console.error('║ Amount:', amount, '| Plan:', plan_id);
+    console.error('║ Payload:', JSON.stringify(paymentPayload));
     console.error('╚══════════════════════════════════════════╝');
     
     // Retornar erro detalhado para o frontend (remover em produção)
-    const errorMessage = errorDetail?.message || errorDetail?.error?.message || errorDetail?.status?.message || 'Falha ao processar pagamento';
     res.status(500).json({ 
       error: 'Falha ao processar pagamento.',
       debug: {
-        mercadoPagoError: errorDetail,
+        requestId,
+        mercadoPagoError: sanitizeMercadoPagoError(errorDetail),
         status: error.response?.status,
         hasToken: !!config?.mpAccessToken,
-        tokenLength: config?.mpAccessToken?.length || 0
+        tokenLength: config?.mpAccessToken?.length || 0,
+        payload: paymentPayload
       }
     });
   }
 };
 
 exports.createPublicCardPayment = async (req, res) => {
-  const { plan_id, plan_name, amount, client_name, client_email, client_phone, token, payment_method_id, installments, issuer_id } = req.body;
+  const { plan_id, plan_name, amount, client_name, client_email, client_phone, user_id, user_status, token, payment_method_id, installments, issuer_id } = req.body;
 
   try {
     const config = await getMpConfig();
@@ -413,11 +499,16 @@ exports.createPublicCardPayment = async (req, res) => {
 
     const paymentData = response.data;
 
-    // Registrar no CRM
+    await ensurePublicPaymentColumns();
+
+    // Registrar no financeiro para histórico e liberação. A tabela CRM real desta tela é revenue_logs.
     await pool.query(
-      `INSERT INTO crm_clients (client_name, whatsapp, plan_name, amount, payment_method, status, mac_address)
-       VALUES ($1, $2, $3, $4, 'Cartão de Crédito', $5, $6)`,
-      [client_name, client_phone, plan_name, amount, paymentData.status === 'approved' ? 'aprovado' : 'pendente', paymentData.id]
+      `INSERT INTO revenue_logs (
+        plan_id, amount, client_name, whatsapp, payment_method, status,
+        mp_payment_id, client_email, app_user_id, app_user_status
+       )
+       VALUES ($1, $2, $3, $4, 'Cartão de Crédito', $5, $6, $7, $8, $9)`,
+      [plan_id || null, amount, client_name, client_phone || null, paymentData.status === 'approved' ? 'pago' : 'pendente', paymentData.id, client_email || null, user_id || null, user_status || null]
     );
 
     res.json({

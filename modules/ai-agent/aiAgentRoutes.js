@@ -23,5 +23,8 @@ router.get('/dirty-words', aiAgentController.getDirtyWords);
 router.post('/dirty-words/approve-all', aiAgentController.approveAllDirtyWords);
 router.post('/dirty-words/:id/status', aiAgentController.updateDirtyWordStatus);
 
-module.exports = router;
+// Auditoria de Plataformas
+router.get('/platform-audits', aiAgentController.getPlatformAudits);
+router.post('/platform-audits/:id/status', aiAgentController.updatePlatformAuditStatus);
 
+module.exports = router;

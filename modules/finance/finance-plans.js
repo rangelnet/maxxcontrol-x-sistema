@@ -37,6 +37,15 @@ const migrateFinance = async () => {
         ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS sigma_package TEXT;
         ALTER TABLE finance_plans ALTER COLUMN sigma_package TYPE TEXT;
 
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS highlight_type VARCHAR(50) DEFAULT 'none';
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS badge_text VARCHAR(50);
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS badge_color VARCHAR(50);
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS border_color VARCHAR(50);
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS button_color VARCHAR(50);
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS glow_color VARCHAR(50);
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS is_carousel_highlight BOOLEAN DEFAULT false;
+        ALTER TABLE finance_plans ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
+
         CREATE TABLE IF NOT EXISTS revenue_logs (
             id SERIAL PRIMARY KEY,
             plan_id INTEGER,
@@ -51,6 +60,10 @@ const migrateFinance = async () => {
         ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS whatsapp VARCHAR(50);
         ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'PIX';
         ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pago';
+        ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS mp_payment_id VARCHAR(255);
+        ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS client_email VARCHAR(255);
+        ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_id VARCHAR(255);
+        ALTER TABLE revenue_logs ADD COLUMN IF NOT EXISTS app_user_status VARCHAR(50);
 
         CREATE TABLE IF NOT EXISTS credit_packages (
             id SERIAL PRIMARY KEY,
@@ -168,7 +181,7 @@ const migrateFinance = async () => {
  */
 router.get('/plans', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM finance_plans ORDER BY created_at DESC');
+        const result = await pool.query('SELECT * FROM finance_plans ORDER BY display_order ASC, created_at DESC');
         res.json(result.rows);
     } catch (error) {
         console.error('Erro ao buscar planos financeiros:', error);
@@ -182,16 +195,25 @@ router.get('/plans', async (req, res) => {
  */
 router.post('/plans', async (req, res) => {
     try {
-        const { name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active } = req.body;
+        const { 
+            name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active,
+            highlight_type, badge_text, badge_color, border_color, button_color, glow_color, is_carousel_highlight, display_order 
+        } = req.body;
 
         if (!name || !price || !duration_days || !max_connections) {
             return res.status(400).json({ error: 'Preencha todos os campos obrigatórios do plano.' });
         }
 
         const result = await pool.query(
-            `INSERT INTO finance_plans (name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-            [name, price, duration_days, max_connections, qpanel_id || null, sigma_package || null, is_active !== undefined ? is_active : true]
+            `INSERT INTO finance_plans (
+                name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active,
+                highlight_type, badge_text, badge_color, border_color, button_color, glow_color, is_carousel_highlight, display_order
+             ) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+            [
+                name, price, duration_days, max_connections, qpanel_id || null, sigma_package || null, is_active !== undefined ? is_active : true,
+                highlight_type || 'none', badge_text || null, badge_color || null, border_color || null, button_color || null, glow_color || null, is_carousel_highlight || false, display_order || 0
+            ]
         );
 
         res.status(201).json(result.rows[0]);
@@ -208,7 +230,10 @@ router.post('/plans', async (req, res) => {
 router.put('/plans/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active } = req.body;
+        const { 
+            name, price, duration_days, max_connections, qpanel_id, sigma_package, is_active,
+            highlight_type, badge_text, badge_color, border_color, button_color, glow_color, is_carousel_highlight, display_order 
+        } = req.body;
 
         if (!name || !price || !duration_days || !max_connections) {
             return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
@@ -216,9 +241,14 @@ router.put('/plans/:id', async (req, res) => {
 
         const result = await pool.query(
             `UPDATE finance_plans 
-             SET name = $1, price = $2, duration_days = $3, max_connections = $4, qpanel_id = $5, sigma_package = $6, is_active = $7, updated_at = CURRENT_TIMESTAMP 
-             WHERE id = $8 RETURNING *`,
-            [name, price, duration_days, max_connections, qpanel_id || null, sigma_package || null, is_active !== undefined ? is_active : true, id]
+             SET name = $1, price = $2, duration_days = $3, max_connections = $4, qpanel_id = $5, sigma_package = $6, is_active = $7, 
+                 highlight_type = $8, badge_text = $9, badge_color = $10, border_color = $11, button_color = $12, glow_color = $13, is_carousel_highlight = $14, display_order = $15, updated_at = CURRENT_TIMESTAMP 
+             WHERE id = $16 RETURNING *`,
+            [
+                name, price, duration_days, max_connections, qpanel_id || null, sigma_package || null, is_active !== undefined ? is_active : true,
+                highlight_type || 'none', badge_text || null, badge_color || null, border_color || null, button_color || null, glow_color || null, is_carousel_highlight || false, display_order || 0,
+                id
+            ]
         );
 
         if (result.rows.length === 0) {
@@ -874,4 +904,3 @@ router.get('/history', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-

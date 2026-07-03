@@ -275,6 +275,127 @@ const parseApiToExtractVod = async (url) => {
   }
 };
 
+// ==========================================
+// AUDITORIA DE PLATAFORMAS (TMDB + PROVIDERS)
+// ==========================================
+const runPlatformAudit = async () => {
+  try {
+    const res = await pool.query("SELECT value FROM global_settings WHERE key = 'tmdb_filters'");
+    let dirtyWordsArray = [];
+    if (res.rows.length > 0) {
+      const data = typeof res.rows[0].value === 'string' ? JSON.parse(res.rows[0].value) : res.rows[0].value;
+      dirtyWordsArray = data.words.split(',').map(w => w.trim().toLowerCase());
+    }
+
+    const { rows: vods } = await pool.query(`
+      SELECT v.* FROM ai_vod_library v 
+      LEFT JOIN ai_platform_audits a ON v.id = a.vod_id
+      WHERE a.id IS NULL
+      ORDER BY v.updated_at DESC
+      LIMIT 15
+    `);
+
+    if (vods.length === 0) return;
+    await logAgent('info', `Iniciando Auditoria de Plataformas para ${vods.length} conteúdos em background...`, 'System');
+
+    const platformKeywords = {
+      'netflix': 'Netflix', 'nfx': 'Netflix',
+      'prime': 'Prime Video', 'amazon': 'Prime Video',
+      'disney': 'Disney+',
+      'hbo': 'HBO Max', 'max': 'HBO Max',
+      'globoplay': 'Globoplay', 'globo': 'Globoplay',
+      'paramount': 'Paramount+',
+      'star': 'Star+', 'star\\+': 'Star+',
+      'apple': 'Apple TV+',
+      'youtube': 'YouTube'
+    };
+
+    for (const vod of vods) {
+      let cleanName = vod.name.replace(/\s*\(\d{4}\)\s*/g, ' ').replace(/\[.*?\]/g, ' ');
+      for (const dw of dirtyWordsArray) {
+        if (dw.length > 1) {
+          const reg = new RegExp(`\\b${dw}\\b`, 'gi');
+          cleanName = cleanName.replace(reg, '');
+        }
+      }
+      cleanName = cleanName.trim().replace(/\s{2,}/g, ' ');
+
+      let detectedNamePlatform = null;
+      const lowerName = vod.name.toLowerCase();
+      for (const [kw, plat] of Object.entries(platformKeywords)) {
+        if (new RegExp(`\\b${kw}\\b`, 'i').test(lowerName)) {
+          detectedNamePlatform = plat;
+          break;
+        }
+      }
+
+      await new Promise(res => setTimeout(res, 400));
+      const tmdbSearch = await tmdbService.pesquisarConteudo(cleanName, vod.type === 'series' ? 'tv' : 'movie');
+      let detectedTmdbPlatform = null;
+      let tmdbId = null;
+      let confidence = 'Baixa';
+
+      if (tmdbSearch.results && tmdbSearch.results.length > 0) {
+        const bestMatch = tmdbSearch.results[0];
+        tmdbId = bestMatch.id;
+        
+        await new Promise(res => setTimeout(res, 400));
+        let providersData;
+        if (vod.type === 'series') {
+          providersData = await tmdbService.buscarProvidersSerie(tmdbId);
+        } else {
+          providersData = await tmdbService.buscarProvidersFilme(tmdbId);
+        }
+
+        if (providersData && providersData.results && providersData.results.BR) {
+          const brProviders = providersData.results.BR.flatrate || [];
+          if (brProviders.length > 0) {
+            detectedTmdbPlatform = brProviders[0].provider_name;
+            confidence = 'Alta';
+          }
+        }
+      }
+
+      let shouldAudit = false;
+      const currentCatLower = (vod.category_name || '').toLowerCase();
+      let finalDetected = detectedTmdbPlatform || detectedNamePlatform;
+
+      if (finalDetected) {
+        const platformBaseName = finalDetected.toLowerCase().split(' ')[0].replace('+', '');
+        const isMatch = currentCatLower.includes(platformBaseName);
+        
+        if (!isMatch) {
+          shouldAudit = true;
+          if (detectedNamePlatform && detectedTmdbPlatform && detectedNamePlatform.includes(detectedTmdbPlatform.split(' ')[0])) {
+            confidence = 'Muito Alta';
+          } else if (!detectedTmdbPlatform && detectedNamePlatform) {
+            confidence = 'Média';
+          }
+        }
+      }
+
+      if (shouldAudit) {
+        await pool.query(
+          `INSERT INTO ai_platform_audits 
+           (vod_id, original_name, clean_name, content_type, current_platform, detected_name_platform, detected_tmdb_platform, confidence, tmdb_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [vod.id, vod.name, cleanName, vod.type, vod.category_name || 'Desconhecida', detectedNamePlatform, detectedTmdbPlatform, confidence, tmdbId]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO ai_platform_audits 
+           (vod_id, original_name, clean_name, content_type, current_platform, status)
+           VALUES ($1, $2, $3, $4, $5, 'ignored')`,
+          [vod.id, vod.name, cleanName, vod.type, vod.category_name || 'Desconhecida']
+        );
+      }
+    }
+    await logAgent('success', `Auditoria de Plataformas TMDB concluída para este ciclo.`, 'System');
+  } catch(e) {
+    console.error('Erro na auditoria de plataforma', e);
+  }
+};
+
 const runAgentScan = async () => {
   try {
     const configRes = await pool.query('SELECT * FROM ai_agent_configs LIMIT 1');
@@ -300,6 +421,9 @@ const runAgentScan = async () => {
     }
 
     await logAgent('success', 'Varredura Global VOD finalizada com êxito em todos os Endpoints.', 'Global_Scan');
+    
+    // Roda a auditoria de plataformas no fim do ciclo
+    setTimeout(runPlatformAudit, 10000);
 
   } catch (err) {
     await logAgent('error', `Erro grave durante Global Scan: ${err.message}`, 'Global_Scan');
@@ -378,6 +502,20 @@ exports.initAI = async () => {
         example_title VARCHAR(255),
         source_dns VARCHAR(255),
         status VARCHAR(20) DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await pool.query(`CREATE TABLE IF NOT EXISTS ai_platform_audits (
+        id SERIAL PRIMARY KEY,
+        vod_id INTEGER,
+        original_name VARCHAR(255),
+        clean_name VARCHAR(255),
+        content_type VARCHAR(50),
+        current_platform VARCHAR(255),
+        detected_name_platform VARCHAR(100),
+        detected_tmdb_platform VARCHAR(100),
+        confidence VARCHAR(20),
+        tmdb_id VARCHAR(50),
+        status VARCHAR(20) DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
   } catch (e) {
@@ -490,7 +628,7 @@ exports.getDirtyWords = async (req, res) => {
 const _addWordToGlobalTmdb = async (word) => {
   try {
     const res = await pool.query("SELECT value FROM global_settings WHERE key = 'tmdb_filters'");
-    let data = res.rows.length > 0 ? JSON.parse(res.rows[0].value) : { words: "4k, 1080p, 720p, fhd, hd, sd, dual, dublado, legendado, leg, dub, nacional, netflix, nfx, amaz, disney, globo, hbo, apple, paramount, starz, youtube, ts, cam, lancamento" };
+    let data = res.rows.length > 0 ? (typeof res.rows[0].value === 'string' ? JSON.parse(res.rows[0].value) : res.rows[0].value) : { words: "4k, 1080p, 720p, fhd, hd, sd, dual, dublado, legendado, leg, dub, nacional, netflix, nfx, amaz, disney, globo, hbo, apple, paramount, starz, youtube, ts, cam, lancamento" };
     
     let wordsArray = data.words.split(',').map(w => w.trim().toLowerCase());
     if (!wordsArray.includes(word.toLowerCase())) {
@@ -536,6 +674,37 @@ exports.approveAllDirtyWords = async (req, res) => {
     }
     
     res.json({ success: true, count: result.rows.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==========================================
+// AUDITORIA DE PLATAFORMAS (API FRONTEND)
+// ==========================================
+
+exports.getPlatformAudits = async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM ai_platform_audits WHERE status = 'pending' ORDER BY confidence DESC, created_at DESC LIMIT 100");
+    res.json({ success: true, audits: rows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updatePlatformAuditStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, new_platform } = req.body;
+    
+    const result = await pool.query('UPDATE ai_platform_audits SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+    
+    if (result.rows.length > 0 && status === 'approved' && new_platform) {
+      const audit = result.rows[0];
+      await pool.query('UPDATE ai_vod_library SET category_name = $1 WHERE id = $2', [new_platform, audit.vod_id]);
+    }
+    
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

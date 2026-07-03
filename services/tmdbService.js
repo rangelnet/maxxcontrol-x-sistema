@@ -8,8 +8,9 @@ const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 async function getApiKey() {
   try {
     const res = await pool.query("SELECT value FROM global_settings WHERE key = 'tmdb_filters'");
-    if (res.rows.length > 0 && res.rows[0].value.apiKey) {
-      return res.rows[0].value.apiKey;
+    if (res.rows.length > 0) {
+      const val = typeof res.rows[0].value === 'string' ? JSON.parse(res.rows[0].value) : res.rows[0].value;
+      if (val.apiKey) return val.apiKey;
     }
   } catch (e) {
     console.error('Erro ao buscar TMDB API Key do banco:', e.message);
@@ -108,6 +109,34 @@ async function pesquisarConteudo(query, tipo = 'multi') {
   }
 }
 
+// Buscar watch providers de filme
+async function buscarProvidersFilme(id) {
+  try {
+    const apiKey = await getApiKey();
+    const response = await axios.get(`${BASE_URL}/movie/${id}/watch/providers`, {
+      params: { api_key: apiKey }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar providers filme:', error.message);
+    throw error;
+  }
+}
+
+// Buscar watch providers de série
+async function buscarProvidersSerie(id) {
+  try {
+    const apiKey = await getApiKey();
+    const response = await axios.get(`${BASE_URL}/tv/${id}/watch/providers`, {
+      params: { api_key: apiKey }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar providers série:', error.message);
+    throw error;
+  }
+}
+
 // Obter URL de imagem
 function getImageUrl(path, size = 'original') {
   if (!path) return null;
@@ -120,5 +149,7 @@ module.exports = {
   buscarFilmesPopulares,
   buscarSeriesPopulares,
   pesquisarConteudo,
+  buscarProvidersFilme,
+  buscarProvidersSerie,
   getImageUrl
 };

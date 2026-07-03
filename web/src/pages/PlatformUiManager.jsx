@@ -53,6 +53,7 @@ export default function PlatformUiManager() {
   const [tmdbWords, setTmdbWords] = useState('')
   const [tmdbApiKey, setTmdbApiKey] = useState('')
   const [selectedPlatId, setSelectedPlatId] = useState('')
+  const [platformAudits, setPlatformAudits] = useState([])
 
   const showFeedback = (text, type = 'success') => {
     setMessage({ text, type })
@@ -69,7 +70,7 @@ export default function PlatformUiManager() {
       // 1. Puxa as plataformas criadas no Branding atual
       const { data: brandingData } = await api.get('/api/branding/current')
       setFullBrandingData(brandingData)
-      
+
       const cps = brandingData?.custom_platforms || []
       if (cps.length === 0) {
         setCustomPlatforms(DEFAULT_CUSTOM_PLATFORMS)
@@ -81,11 +82,19 @@ export default function PlatformUiManager() {
 
       // 2. Puxa Filtros TMDB e API Key
       const { data: tmdbData } = await api.get('/api/ui/tmdb-filters')
-      
+
       // Mescla o Dicionário TMDB (se o brandingData tiver um dicionário mais recente, usa ele, senão usa do ui-config)
       const brandingWords = brandingData?.tmdb_filter_words
       setTmdbWords(brandingWords || tmdbData?.data?.words || '')
       setTmdbApiKey(tmdbData?.data?.apiKey || '')
+
+      // 3. Puxa Auditorias Pendentes
+      try {
+        const { data: auditsData } = await api.get('/api/agents/platform-audits')
+        if (auditsData && auditsData.audits) setPlatformAudits(auditsData.audits)
+      } catch (e) {
+        console.warn('Erro ao carregar auditorias de plataforma', e)
+      }
     } catch (err) {
       console.error(err)
       showFeedback('Erro ao carregar configurações', 'error')
@@ -102,11 +111,11 @@ export default function PlatformUiManager() {
 
       // 2. Salvar Dados Base no Banco de Branding
       if (fullBrandingData?.id) {
-        const newBranding = { 
-          ...fullBrandingData, 
+        const newBranding = {
+          ...fullBrandingData,
           custom_platforms: customPlatforms,
           platforms: customPlatforms,
-          tmdb_filter_words: tmdbWords 
+          tmdb_filter_words: tmdbWords
         }
         await api.put(`/api/branding/${fullBrandingData.id}`, newBranding).catch(e => console.warn(e))
         setFullBrandingData(newBranding)
@@ -125,6 +134,17 @@ export default function PlatformUiManager() {
       showFeedback('Erro ao salvar configurações', 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleUpdateAuditStatus = async (id, status, newPlatform) => {
+    try {
+      await api.post(`/api/agents/platform-audits/${id}/status`, { status, new_platform: newPlatform });
+      showFeedback(`Sugestão ${status === 'approved' ? 'Aprovada (Movida)' : 'Ignorada'} com sucesso!`);
+      const { data: auditsData } = await api.get('/api/agents/platform-audits');
+      setPlatformAudits(auditsData.audits || []);
+    } catch (e) {
+      showFeedback('Erro ao atualizar auditoria', 'error');
     }
   }
 
@@ -154,7 +174,7 @@ export default function PlatformUiManager() {
   }
 
   const deletePlatform = (id) => {
-    if(!window.confirm('Excluir plataforma?')) return
+    if (!window.confirm('Excluir plataforma?')) return
     setCustomPlatforms(prev => {
       const filtered = prev.filter(p => p.id !== id)
       if (filtered.length > 0 && selectedPlatId === id) setSelectedPlatId(filtered[0].id)
@@ -189,9 +209,8 @@ export default function PlatformUiManager() {
   return (
     <div className="space-y-6 animate-fadeIn">
       {message && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border ${
-          message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
-        } backdrop-blur-md`}>
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border ${message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
+          } backdrop-blur-md`}>
           <CheckCircle className="h-5 w-5" />
           <p className="font-medium text-sm">{message.text}</p>
         </div>
@@ -229,6 +248,63 @@ export default function PlatformUiManager() {
         </div>
       </div>
 
+      {/* 1.5 Auditoria de Plataformas (Inteligência TMDB/Watch Providers) */}
+      <div className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden shadow-lg shadow-black/20">
+        <div className="p-5 border-b border-dark-600 bg-dark-800/80 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="h-5 w-5 text-brand-500" />
+            <div>
+              <h2 className="text-lg font-bold text-white leading-tight">Auditoria de Plataformas</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Sugestões do Nexus AI cruzando TMDB Watch Providers para corrigir categorias erradas.</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-0 overflow-x-auto max-h-80 overflow-y-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-dark-900 text-[10px] uppercase text-zinc-500 font-bold sticky top-0 z-10">
+              <tr>
+                <th className="p-4 border-b border-dark-700">Nome Original</th>
+                <th className="p-4 border-b border-dark-700">Nome TMDB</th>
+                <th className="p-4 border-b border-dark-700">Plataforma Atual</th>
+                <th className="p-4 border-b border-dark-700">Plataforma Sugerida (TMDB)</th>
+                <th className="p-4 border-b border-dark-700">Confiança</th>
+                <th className="p-4 border-b border-dark-700 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm divide-y divide-dark-700">
+              {platformAudits.length === 0 ? (
+                <tr><td colSpan="6" className="p-8 text-center text-zinc-500">Nenhuma inconsistência pendente encontrada pelo Nexus AI.</td></tr>
+              ) : platformAudits.map(audit => (
+                <tr key={audit.id} className="hover:bg-dark-900/50 transition-colors">
+                  <td className="p-4 text-xs font-mono text-zinc-400 max-w-[150px] truncate" title={audit.original_name}>{audit.original_name}</td>
+                  <td className="p-4 text-white font-bold">{audit.clean_name}</td>
+                  <td className="p-4 text-red-400 line-through text-xs font-bold">{audit.current_platform}</td>
+                  <td className="p-4 text-green-400 font-bold">
+                    {audit.detected_tmdb_platform || audit.detected_name_platform}
+                  </td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${audit.confidence === 'Muito Alta' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                        audit.confidence === 'Alta' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                          'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                      }`}>
+                      {audit.confidence}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right flex justify-end gap-2">
+                    <button onClick={() => handleUpdateAuditStatus(audit.id, 'approved', audit.detected_tmdb_platform || audit.detected_name_platform)} className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-green-500/20">
+                      Mover
+                    </button>
+                    <button onClick={() => handleUpdateAuditStatus(audit.id, 'ignored', null)} className="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-zinc-300 text-xs font-bold rounded-lg transition">
+                      Ignorar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* 2. Gerenciador de Plataformas Unificado */}
       <div className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden shadow-lg shadow-black/20">
         <div className="p-5 border-b border-dark-600 bg-dark-800/80 flex items-center justify-between gap-4">
@@ -240,13 +316,13 @@ export default function PlatformUiManager() {
             </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <button 
+            <button
               onClick={addPlatform}
               className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white rounded-lg text-sm font-bold transition flex items-center gap-2"
             >
               + Adicionar Plataforma
             </button>
-            <button 
+            <button
               onClick={handleSave}
               disabled={saving}
               className="px-6 py-2 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition flex items-center gap-2"
@@ -264,21 +340,20 @@ export default function PlatformUiManager() {
           </div>
         ) : (
           <div className="flex flex-col xl:flex-row">
-            
+
             {/* Menu Lateral de Plataformas */}
             <div className="w-full xl:w-72 border-b xl:border-b-0 xl:border-r border-dark-600 bg-dark-850 p-3 space-y-1 overflow-x-auto xl:overflow-x-hidden flex xl:flex-col items-center xl:items-stretch">
               {customPlatforms.map(p => (
                 <button
                   key={p.id}
                   onClick={() => setSelectedPlatId(p.id)}
-                  className={`shrink-0 xl:shrink w-40 xl:w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    selectedPlatId === p.id 
-                      ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20' 
+                  className={`shrink-0 xl:shrink w-40 xl:w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${selectedPlatId === p.id
+                      ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20'
                       : 'text-zinc-400 hover:bg-dark-700 hover:text-white border border-transparent'
-                  }`}
+                    }`}
                 >
                   <div className={`w-2 h-2 rounded-full ${p.active ? 'bg-green-500' : 'bg-red-500'} shrink-0`} />
-                  <img src={getFullUrl(p.logo)} alt="" className="w-6 h-6 object-contain rounded" onError={e => e.target.style.display='none'} />
+                  <img src={getFullUrl(p.logo)} alt="" className="w-6 h-6 object-contain rounded" onError={e => e.target.style.display = 'none'} />
                   <span className="truncate">{p.label}</span>
                 </button>
               ))}
@@ -286,7 +361,7 @@ export default function PlatformUiManager() {
 
             {/* Painel Central de Edição */}
             <div className="flex-1 p-5 space-y-6 bg-dark-900/50 overflow-y-auto max-h-[800px]">
-              
+
               {selectedPlat ? (
                 <>
                   {/* Header e Dados Base */}
@@ -295,12 +370,12 @@ export default function PlatformUiManager() {
                       <button type="button" onClick={() => updatePlatform(selectedPlat.id, 'active', !selectedPlat.active)} className={`w-12 h-6 rounded-full relative shrink-0 transition-colors ${selectedPlat.active ? 'bg-brand-500' : 'bg-dark-700'}`}>
                         <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${selectedPlat.active ? 'left-7' : 'left-1'}`} />
                       </button>
-                      <input 
-                        type="text" 
-                        value={selectedPlat.label} 
-                        onChange={e => updatePlatform(selectedPlat.id, 'label', e.target.value)} 
-                        className="bg-transparent border-b border-dark-600 focus:border-brand-500 text-white font-bold text-xl outline-none px-1 py-0.5 flex-1 max-w-sm" 
-                        placeholder="Nome da Plataforma" 
+                      <input
+                        type="text"
+                        value={selectedPlat.label}
+                        onChange={e => updatePlatform(selectedPlat.id, 'label', e.target.value)}
+                        className="bg-transparent border-b border-dark-600 focus:border-brand-500 text-white font-bold text-xl outline-none px-1 py-0.5 flex-1 max-w-sm"
+                        placeholder="Nome da Plataforma"
                       />
                       <button onClick={() => deletePlatform(selectedPlat.id)} className="ml-auto text-red-500 hover:text-red-400 p-2 shrink-0 transition" title="Excluir Plataforma">
                         <Trash2 className="w-5 h-5" />
@@ -364,7 +439,7 @@ export default function PlatformUiManager() {
 
                   {/* UI Server-Driven (Abas e Linhas) */}
                   <div className="grid grid-cols-1 gap-6 pt-4 border-t border-dark-700">
-                    
+
                     {/* Abas */}
                     <div className="bg-dark-800 border border-dark-600 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-3">
@@ -493,9 +568,9 @@ export default function PlatformUiManager() {
             <div className="hidden 2xl:flex w-[400px] border-l border-dark-600 bg-dark-900/30 p-5 flex-col space-y-4 overflow-y-auto max-h-[800px]">
               {selectedPlat && (
                 <PreviewContainer title={`Preview: ${selectedPlat.label}`}>
-                  <PlatformPreview 
-                    platform={selectedPlat} 
-                    config={{ tabs: selectedPlat.tabs, rows: selectedPlat.rows }} 
+                  <PlatformPreview
+                    platform={selectedPlat}
+                    config={{ tabs: selectedPlat.tabs, rows: selectedPlat.rows }}
                   />
                 </PreviewContainer>
               )}
