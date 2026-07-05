@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const macController = require('./macController');
+const deviceController = require('./deviceController');
 const authMiddleware = require('../../middlewares/auth');
 const deviceAuthMiddleware = require('../../middlewares/deviceAuth');
 
@@ -27,6 +28,9 @@ router.post('/:id/test-config', authMiddleware, macController.updateTestConfig);
 // Buscar URL da API de teste grátis (público - para o app)
 router.get('/test-api-url/:mac_address', macController.getTestApiUrl);
 
+// Consultar o estado comercial do MAC para o fluxo Xtream + painel (público)
+router.get('/entitlement/:mac_address', deviceController.getActivationEntitlementByMac);
+
 // Salvar credenciais de teste grátis (público - para o app)
 router.post('/test-credentials', macController.saveTestCredentials);
 
@@ -41,8 +45,6 @@ router.post('/block-by-mac', authMiddleware, macController.blockDeviceByMac);
 // Desbloquear por MAC (para o app Android)
 router.post('/unblock-by-mac', authMiddleware, macController.unblockDeviceByMac);
 
-const deviceController = require('./deviceController');
-
 // Strategic Device Services (Vizzion Style)
 router.post('/device-login', deviceController.deviceLogin);
 router.get('/playlists/:mac', deviceController.getPlaylists);
@@ -51,7 +53,6 @@ router.post('/migrate-license', deviceController.migrateLicense);
 router.post('/update-dns', deviceController.updateDNS);
 router.get('/generate-code/:mac_address', deviceController.generateCode);
 router.post('/login-by-code', deviceController.loginByCode);
-
 
 // Rota para Bulk Import de Devices
 router.post('/bulk-import', authMiddleware, macController.bulkImport);

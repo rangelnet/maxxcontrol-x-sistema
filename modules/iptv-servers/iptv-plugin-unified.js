@@ -8,6 +8,8 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../../config/database');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 const authMiddleware = require('../../middlewares/auth');
 
 // ============================================
@@ -18,6 +20,61 @@ pool.query(`
     ADD COLUMN IF NOT EXISTS reseller_email VARCHAR(255),
     ADD COLUMN IF NOT EXISTS reseller_dns_code VARCHAR(255);
 `).catch(err => console.error("Erro na migração automática de qpanel_panels:", err));
+
+const chromePluginDir = path.join(__dirname, '..', '..', 'chrome-plugin-mxx');
+const chromePluginStatusKey = 'chrome_plugin_mxx_status';
+
+const getPanelOrigin = (req) => {
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  const proto = forwardedProto || req.protocol || 'http';
+  return `${proto}://${req.get('host')}`;
+};
+
+const getRelayApiBase = (req) => `${getPanelOrigin(req)}/api/iptv-plugin`;
+
+const readChromePluginFile = (filename) => {
+  const filePath = path.join(chromePluginDir, filename);
+  return fs.readFileSync(filePath, 'utf8');
+};
+
+const buildChromePluginPackage = (req) => {
+  const apiBase = getRelayApiBase(req);
+  const manifest = JSON.parse(readChromePluginFile('manifest.json'));
+  const background = readChromePluginFile('background.js').replace(/__MXXCONTROL_API_BASE__/g, apiBase);
+  const content = readChromePluginFile('content.js');
+
+  return {
+    api_base: apiBase,
+    version: manifest.version || '1.0.0',
+    files: {
+      'manifest.json': JSON.stringify(manifest, null, 2),
+      'background.js': background,
+      'content.js': content
+    }
+  };
+};
+
+const saveChromePluginStatus = async (payload) => {
+  const value = JSON.stringify(payload);
+  await pool.query(
+    `INSERT INTO global_settings (key, value, updated_at)
+     VALUES ($1, $2, CURRENT_TIMESTAMP)
+     ON CONFLICT (key)
+     DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+    [chromePluginStatusKey, value]
+  );
+};
+
+const loadChromePluginStatus = async () => {
+  const result = await pool.query('SELECT value FROM global_settings WHERE key = $1 LIMIT 1', [chromePluginStatusKey]);
+  if (result.rows.length === 0) return null;
+
+  try {
+    return JSON.parse(result.rows[0].value);
+  } catch (error) {
+    return null;
+  }
+};
 
 // ============================================
 // GERENCIAMENTO BÁSICO DE SERVIDORES IPTV
@@ -1865,6 +1922,16 @@ router.get('/check-tables', async (req, res) => {
  * Agrupa contas criadas/sincronizadas por username e password.
  * Retorna os clientes e todos os servidores que eles possuem.
  */
+const qpanelClientKeyExpr = `
+  COALESCE(
+    NULLIF(TRIM(q.app_user_id::text), ''),
+    NULLIF(UPPER(REGEXP_REPLACE(COALESCE(q.device_mac, ''), '[^a-zA-Z0-9]', '', 'g')), ''),
+    NULLIF(LOWER(TRIM(q.email)), ''),
+    NULLIF(REGEXP_REPLACE(COALESCE(q.telefone, ''), '[^0-9]', '', 'g'), ''),
+    NULLIF(LOWER(TRIM(q.username)), '')
+  )
+`;
+
 router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
   try {
     let result;
@@ -1872,11 +1939,13 @@ router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
       // Revendedor só vê contas atreladas aos dispositivos associados a ele
       result = await pool.query(`
         SELECT 
-          a.username,
-          a.password,
+          a.client_key,
+          MIN(a.username) AS username,
+          MIN(a.password) AS password,
           json_agg(
               json_build_object(
                 'id', a.id,
+                'client_key', a.client_key,
                 'username', a.username,
                 'password', a.password,
                 'panel_id', a.panel_id,
@@ -1888,12 +1957,17 @@ router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
                 'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
                 'm3u_url', a.m3u_url,
                 'device_mac', a.device_mac,
+                'app_username', a.username,
+                'app_password', a.password,
                 'status', a.status,
                 'package_name', a.package_name,
                 'max_connections', a.max_connections,
                 'nome', a.nome,
                 'email', a.email,
                 'telefone', a.telefone,
+                'client_name', a.nome,
+                'client_email', a.email,
+                'client_phone', a.telefone,
                 'notas', a.notas,
                 'finance_plan_id', a.finance_plan_id,
                 'finance_plan_name', a.finance_plan_name,
@@ -1909,22 +1983,37 @@ router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
                 'created_at', a.created_at
               )
             ) as accounts
-        FROM qpanel_accounts a
+        FROM (
+          SELECT q.*, ${qpanelClientKeyExpr} AS client_key
+          FROM qpanel_accounts q
+        ) a
         LEFT JOIN qpanel_panels p ON a.panel_id = p.id
         LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name
-        WHERE a.device_mac IN (SELECT mac_address FROM devices WHERE user_id = $1)
-        GROUP BY a.username, a.password
+        WHERE EXISTS (
+          SELECT 1
+            FROM devices d
+           WHERE d.user_id = $1
+             AND (
+               UPPER(REGEXP_REPLACE(COALESCE(d.mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = UPPER(REGEXP_REPLACE(COALESCE(a.device_mac, ''), '[^a-zA-Z0-9]', '', 'g'))
+               OR LOWER(COALESCE(d.username, '')) = LOWER(COALESCE(a.username, ''))
+               OR LOWER(COALESCE(d.username, '')) = LOWER(COALESCE(a.app_username, ''))
+               OR COALESCE(d.user_id::text, '') = COALESCE(a.app_user_id::text, '')
+             )
+        )
+        GROUP BY a.client_key
         ORDER BY MIN(a.created_at) DESC
       `, [req.userId]);
     } else {
       // Admin/Master vê tudo
       result = await pool.query(`
         SELECT 
-          a.username,
-          a.password,
+          a.client_key,
+          MIN(a.username) AS username,
+          MIN(a.password) AS password,
           json_agg(
               json_build_object(
                 'id', a.id,
+                'client_key', a.client_key,
                 'username', a.username,
                 'password', a.password,
                 'panel_id', a.panel_id,
@@ -1936,12 +2025,17 @@ router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
                 'server_name', COALESCE(s.server_name, 'Servidor ' || a.server_id),
                 'm3u_url', a.m3u_url,
                 'device_mac', a.device_mac,
+                'app_username', a.username,
+                'app_password', a.password,
                 'status', a.status,
                 'package_name', a.package_name,
                 'max_connections', a.max_connections,
                 'nome', a.nome,
                 'email', a.email,
                 'telefone', a.telefone,
+                'client_name', a.nome,
+                'client_email', a.email,
+                'client_phone', a.telefone,
                 'notas', a.notas,
                 'finance_plan_id', a.finance_plan_id,
                 'finance_plan_name', a.finance_plan_name,
@@ -1957,10 +2051,13 @@ router.get('/qpanel-grouped-accounts', authMiddleware, async (req, res) => {
                 'created_at', a.created_at
               )
           ) as accounts
-        FROM qpanel_accounts a
+        FROM (
+          SELECT q.*, ${qpanelClientKeyExpr} AS client_key
+          FROM qpanel_accounts q
+        ) a
         LEFT JOIN qpanel_panels p ON a.panel_id = p.id
         LEFT JOIN qpanel_servers s ON a.panel_id = s.panel_id AND a.server_id::text = s.server_name
-        GROUP BY a.username, a.password
+        GROUP BY a.client_key
         ORDER BY MIN(a.created_at) DESC
       `);
     }
@@ -2058,6 +2155,103 @@ router.get('/relay-status/:ids', async (req, res) => {
   } catch (error) {
     console.error('❌ Erro no relay-status:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/extension-package
+ * Entrega os arquivos da extensão já configurados para apontar para este painel.
+ */
+router.get('/extension-package', authMiddleware, async (req, res) => {
+  try {
+    const pluginPackage = buildChromePluginPackage(req);
+    res.json({
+      success: true,
+      plugin_name: 'Mxxcontrol Relay - Master Admin',
+      version: pluginPackage.version,
+      api_base: pluginPackage.api_base,
+      files: pluginPackage.files,
+      install_steps: [
+        'Clique em "Preparar pasta da extensão" no painel.',
+        'Abra chrome://extensions no navegador.',
+        'Ative o Modo do desenvolvedor.',
+        'Clique em "Carregar sem compactação" e selecione a pasta preparada.'
+      ]
+    });
+  } catch (error) {
+    console.error('❌ Erro ao montar pacote da extensão:', error);
+    res.status(500).json({ success: false, error: 'Não foi possível preparar o pacote da extensão.' });
+  }
+});
+
+/**
+ * POST /api/iptv-plugin/extension-heartbeat
+ * A extensão avisa ao painel que está ativa e qual versão/API está usando.
+ */
+router.post('/extension-heartbeat', async (req, res) => {
+  try {
+    const statusPayload = {
+      connected: true,
+      version: req.body?.version || 'desconhecida',
+      runtime_id: req.body?.runtime_id || null,
+      api_base: req.body?.api_base || null,
+      reason: req.body?.reason || 'heartbeat',
+      user_agent: req.body?.user_agent || null,
+      last_seen: new Date().toISOString()
+    };
+
+    await saveChromePluginStatus(statusPayload);
+
+    res.json({
+      success: true,
+      message: 'Heartbeat recebido com sucesso.',
+      server_time: statusPayload.last_seen
+    });
+  } catch (error) {
+    console.error('❌ Erro no extension-heartbeat:', error);
+    res.status(500).json({ success: false, error: 'Falha ao registrar heartbeat da extensão.' });
+  }
+});
+
+/**
+ * GET /api/iptv-plugin/extension-status
+ * Retorna o status mais recente da extensão e o tamanho atual da fila do relay.
+ */
+router.get('/extension-status', authMiddleware, async (req, res) => {
+  try {
+    const [statusData, queueRes] = await Promise.all([
+      loadChromePluginStatus(),
+      pool.query(`
+        SELECT status, COUNT(*)::int AS total
+        FROM plugin_relay_commands
+        GROUP BY status
+      `)
+    ]);
+
+    const queue = { pending: 0, processing: 0, done: 0, error: 0 };
+    queueRes.rows.forEach((row) => {
+      queue[row.status] = Number(row.total) || 0;
+    });
+
+    const lastSeen = statusData?.last_seen ? new Date(statusData.last_seen) : null;
+    const isOnline = !!(lastSeen && (Date.now() - lastSeen.getTime()) <= 120000);
+
+    res.json({
+      success: true,
+      plugin_name: 'Mxxcontrol Relay - Master Admin',
+      recommended_api_base: getRelayApiBase(req),
+      connected: isOnline,
+      status: statusData
+        ? {
+            ...statusData,
+            connected: isOnline
+          }
+        : null,
+      queue
+    });
+  } catch (error) {
+    console.error('❌ Erro no extension-status:', error);
+    res.status(500).json({ success: false, error: 'Falha ao consultar status da extensão.' });
   }
 });
 

@@ -5,19 +5,33 @@ const jwt = require('jsonwebtoken');
 // Registrar dispositivo PÚBLICO (sem autenticação - para primeiro acesso)
 exports.registerDevicePublic = async (req, res) => {
   const { mac_address, modelo, android_version, app_version, ip } = req.body;
+  const normalizedMac = String(mac_address || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
   console.log('📱 Registrando dispositivo público:', { mac_address, modelo, android_version, app_version, ip });
 
   try {
-    const existing = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
+    const existing = await pool.query(
+      `SELECT *
+         FROM devices
+        WHERE UPPER(REGEXP_REPLACE(COALESCE(mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = $1
+        LIMIT 1`,
+      [normalizedMac]
+    );
 
     let device;
     if (existing.rows.length > 0) {
       // Atualizar dispositivo existente - mantém connection_status como está
       console.log('🔄 Dispositivo já existe, atualizando...');
       const result = await pool.query(
-        'UPDATE devices SET modelo = $1, android_version = $2, app_version = $3, ip = $4, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $5 RETURNING *',
-        [modelo, android_version, app_version, ip, mac_address]
+        `UPDATE devices
+            SET modelo = $1,
+                android_version = $2,
+                app_version = $3,
+                ip = $4,
+                ultimo_acesso = CURRENT_TIMESTAMP
+          WHERE UPPER(REGEXP_REPLACE(COALESCE(mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = $5
+          RETURNING *`,
+        [modelo, android_version, app_version, ip, normalizedMac]
       );
       device = result.rows[0];
       console.log('✅ Dispositivo atualizado:', device);
@@ -90,16 +104,31 @@ exports.updateConnectionStatus = async (req, res) => {
 exports.registerDevice = async (req, res) => {
   const { mac_address, modelo, android_version, app_version, ip } = req.body;
   const userId = req.userId;
+  const normalizedMac = String(mac_address || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
   try {
-    const existing = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
+    const existing = await pool.query(
+      `SELECT *
+         FROM devices
+        WHERE UPPER(REGEXP_REPLACE(COALESCE(mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = $1
+        LIMIT 1`,
+      [normalizedMac]
+    );
 
     let device;
     if (existing.rows.length > 0) {
       // Atualizar dispositivo existente
       const result = await pool.query(
-        'UPDATE devices SET user_id = $1, modelo = $2, android_version = $3, app_version = $4, ip = $5, ultimo_acesso = CURRENT_TIMESTAMP WHERE mac_address = $6 RETURNING *',
-        [userId, modelo, android_version, app_version, ip, mac_address]
+        `UPDATE devices
+            SET user_id = $1,
+                modelo = $2,
+                android_version = $3,
+                app_version = $4,
+                ip = $5,
+                ultimo_acesso = CURRENT_TIMESTAMP
+          WHERE UPPER(REGEXP_REPLACE(COALESCE(mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = $6
+          RETURNING *`,
+        [userId, modelo, android_version, app_version, ip, normalizedMac]
       );
       device = result.rows[0];
     } else {
@@ -139,9 +168,16 @@ exports.registerDevice = async (req, res) => {
 // Verificar dispositivo
 exports.checkDevice = async (req, res) => {
   const { mac_address } = req.body;
+  const normalizedMac = String(mac_address || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
   try {
-    const result = await pool.query('SELECT * FROM devices WHERE mac_address = $1', [mac_address]);
+    const result = await pool.query(
+      `SELECT *
+         FROM devices
+        WHERE UPPER(REGEXP_REPLACE(COALESCE(mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = $1
+        LIMIT 1`,
+      [normalizedMac]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Dispositivo não encontrado', allowed: false });
@@ -611,6 +647,7 @@ exports.deleteDevice = async (req, res) => {
 // Salvar credenciais de teste grátis (público - para o app)
 exports.saveTestCredentials = async (req, res) => {
   const { mac_address, server, username, password, ping, quality } = req.body;
+  const normalizedMac = String(mac_address || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
   // Validar formato do MAC address
   const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
@@ -625,19 +662,68 @@ exports.saveTestCredentials = async (req, res) => {
     console.log(`   Ping: ${ping}`);
     console.log(`   Quality: ${quality}`);
 
-    // Atualizar dispositivo com as credenciais de teste
-    const result = await pool.query(
-      `UPDATE devices 
-       SET server = $1, username = $2, password = $3, ping = $4, quality = $5, ultimo_acesso = CURRENT_TIMESTAMP
-       WHERE mac_address = $6 
-       RETURNING id, mac_address, server, username, ping, quality`,
-      [server, username, password, ping, quality, mac_address]
+    const deviceLookup = await pool.query(
+      `SELECT id, mac_address, test_duration, test_duration_custom, test_blocked, trial_started_at, trial_expires_at
+         FROM devices
+        WHERE UPPER(REGEXP_REPLACE(COALESCE(mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = $1
+        LIMIT 1`,
+      [normalizedMac]
     );
 
-    if (result.rows.length === 0) {
+    if (deviceLookup.rows.length === 0) {
       console.log('❌ Dispositivo não encontrado');
       return res.status(404).json({ error: 'Dispositivo não encontrado' });
     }
+
+    const deviceRow = deviceLookup.rows[0];
+    const trialSettingResult = await pool.query(
+      "SELECT value FROM global_settings WHERE key = 'trial_hours' LIMIT 1"
+    );
+
+    let globalTrialHours = 24;
+    try {
+      const rawTrialHours = trialSettingResult.rows[0]?.value;
+      const parsedTrialHours = typeof rawTrialHours === 'string' ? JSON.parse(rawTrialHours) : rawTrialHours;
+      const normalizedTrialHours = Number(parsedTrialHours);
+      if (Number.isFinite(normalizedTrialHours) && normalizedTrialHours > 0) {
+        globalTrialHours = normalizedTrialHours;
+      }
+    } catch (trialError) {
+      console.warn('⚠️ Não foi possível interpretar trial_hours global:', trialError.message);
+    }
+
+    const hasCustomDuration = String(deviceRow.test_duration_custom || 'false') === 'true' || deviceRow.test_duration_custom === true;
+    const durationHours = hasCustomDuration
+      ? (Number(deviceRow.test_duration || globalTrialHours) || globalTrialHours)
+      : globalTrialHours;
+    const isBlocked = String(deviceRow.test_blocked || '0') === '1';
+
+    // Atualizar dispositivo com as credenciais de teste
+    const result = await pool.query(
+      `UPDATE devices 
+         SET server = $1,
+             username = $2,
+             password = $3,
+             ping = $4,
+             quality = $5,
+             test_duration = CASE
+               WHEN COALESCE(test_duration_custom, FALSE) THEN test_duration
+               ELSE $7
+             END,
+             is_trial = $6,
+             trial_started_at = CASE
+               WHEN $6 = '1' THEN COALESCE(trial_started_at, CURRENT_TIMESTAMP)
+               ELSE trial_started_at
+             END,
+             trial_expires_at = CASE
+               WHEN $6 = '1' THEN COALESCE(trial_expires_at, CURRENT_TIMESTAMP + ($7 || ' hours')::interval)
+               ELSE trial_expires_at
+             END,
+             ultimo_acesso = CURRENT_TIMESTAMP
+         WHERE mac_address = $8 
+         RETURNING id, mac_address, server, username, ping, quality`,
+        [server, username, password, ping, quality, isBlocked ? '0' : '1', durationHours, mac_address]
+    );
 
     const device = result.rows[0];
     console.log('✅ Credenciais de teste salvas com sucesso');
@@ -679,7 +765,7 @@ exports.updateTestConfig = async (req, res) => {
 
     const result = await pool.query(
       `UPDATE devices 
-       SET test_api_urls = $1, test_duration = $2, test_blocked = $3, ultimo_acesso = CURRENT_TIMESTAMP
+       SET test_api_urls = $1, test_duration = $2, test_blocked = $3, test_duration_custom = TRUE, ultimo_acesso = CURRENT_TIMESTAMP
        WHERE id = $4 
        RETURNING *`,
       [urlsJson, test_duration || 2, test_blocked || '0', id]
@@ -728,10 +814,19 @@ exports.bulkImport = async (req, res) => {
       const macStr = c.mac ? String(c.mac).trim() : '';
       const usernameStr = c.username ? String(c.username).trim() : '';
       const passwordStr = c.password ? String(c.password).trim() : '';
+      const emailStr = String(c.email || '').trim().toLowerCase();
+      const phoneStr = String(c.telefone || '').replace(/\D/g, '');
+      const normalizedMac = macStr ? macStr.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
 
       // 1. Sincronizar DEVICES
       if (macStr !== '') {
-        const existingDevice = await pool.query('SELECT id FROM devices WHERE mac_address = $1', [macStr]);
+        const existingDevice = await pool.query(
+          `SELECT id
+             FROM devices
+            WHERE UPPER(REGEXP_REPLACE(COALESCE(mac_address, ''), '[^a-zA-Z0-9]', '', 'g')) = $1
+            LIMIT 1`,
+          [normalizedMac]
+        );
         if (existingDevice.rows.length === 0) {
           await pool.query(
             'INSERT INTO devices (user_id, mac_address, app_version, status, connection_status, server, username, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
@@ -754,21 +849,33 @@ exports.bulkImport = async (req, res) => {
 
       // 2. Sincronizar QPANEL_ACCOUNTS
       if (usernameStr !== '') {
-        const existingAccount = await pool.query('SELECT id FROM qpanel_accounts WHERE username = $1', [usernameStr]);
+        const existingAccount = await pool.query(
+          `
+            SELECT id
+              FROM qpanel_accounts
+             WHERE LOWER(username) = LOWER($1)
+                OR ($2 <> '' AND UPPER(REGEXP_REPLACE(COALESCE(device_mac, ''), '[^a-zA-Z0-9]', '', 'g')) = $2)
+                OR ($3 <> '' AND LOWER(COALESCE(email, '')) = $3)
+                OR ($4 <> '' AND REGEXP_REPLACE(COALESCE(telefone, ''), '[^0-9]', '', 'g') = $4)
+             LIMIT 1
+          `,
+          [usernameStr, normalizedMac, emailStr, phoneStr]
+        );
         if (existingAccount.rows.length > 0) {
           // Atualização Inteligente
           await pool.query(
             `UPDATE qpanel_accounts SET 
-              password = COALESCE(NULLIF($1, ''), password),
-              device_mac = COALESCE(NULLIF($2, ''), device_mac),
-              nome = COALESCE(NULLIF($3, ''), nome),
-              email = COALESCE(NULLIF($4, ''), email),
-              telefone = COALESCE(NULLIF($5, ''), telefone),
-              notas = COALESCE(NULLIF($6, ''), notas),
-              expire_date = COALESCE(NULLIF($7, ''), expire_date),
+              username = COALESCE(NULLIF($1, ''), username),
+              password = COALESCE(NULLIF($2, ''), password),
+              device_mac = COALESCE(NULLIF($3, ''), device_mac),
+              nome = COALESCE(NULLIF($4, ''), nome),
+              email = COALESCE(NULLIF($5, ''), email),
+              telefone = COALESCE(NULLIF($6, ''), telefone),
+              notas = COALESCE(NULLIF($7, ''), notas),
+              expire_date = COALESCE(NULLIF($8, ''), expire_date),
               updated_at = NOW() 
-            WHERE id = $8`,
-            [passwordStr, macStr, String(c.nome || ''), String(c.email || ''), String(c.telefone || ''), String(c.notas || ''), String(c.expire_date || ''), existingAccount.rows[0].id]
+            WHERE id = $9`,
+            [usernameStr, passwordStr, macStr, String(c.nome || ''), String(c.email || ''), String(c.telefone || ''), String(c.notas || ''), String(c.expire_date || ''), existingAccount.rows[0].id]
           );
         } else if (panelId) {
           // Inserir nova conta na central

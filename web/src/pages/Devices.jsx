@@ -90,6 +90,52 @@ const DaysLeftBadge = ({ dateStr }) => {
   } catch { return null; }
 }
 
+const normalizeIdentity = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value).trim().toLowerCase().replace(/[^a-z0-9]/gi, '');
+};
+
+const normalizePhoneIdentity = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/\D/g, '');
+};
+
+const getAccountMaxConnections = (account) => {
+  const value = Number(account?.max_connections || account?.finance_plan_max_connections || 1);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+};
+
+const getAccountMatchScore = (account, device) => {
+  if (!account || !device) return 0;
+
+  let score = 0;
+  const accountMac = normalizeIdentity(account.device_mac);
+  const deviceMac = normalizeIdentity(device.mac_address);
+  if (accountMac && deviceMac && accountMac === deviceMac) score += 1000;
+
+  const accountUserId = normalizeIdentity(account.app_user_id || account.user_id);
+  const deviceUserId = normalizeIdentity(device.user_id);
+  if (accountUserId && deviceUserId && accountUserId === deviceUserId) score += 700;
+
+  const accountUsername = normalizeIdentity(account.app_username || account.username);
+  const deviceUsername = normalizeIdentity(device.current_iptv_username || device.username);
+  if (accountUsername && deviceUsername && accountUsername === deviceUsername) score += 500;
+
+  const accountDeviceCode = normalizeIdentity(account.device_code);
+  const deviceCode = normalizeIdentity(device.device_code);
+  if (accountDeviceCode && deviceCode && accountDeviceCode === deviceCode) score += 300;
+
+  const accountEmail = normalizeIdentity(account.client_email || account.email);
+  const deviceEmail = normalizeIdentity(device.email);
+  if (accountEmail && deviceEmail && accountEmail === deviceEmail) score += 200;
+
+  const accountPhone = normalizePhoneIdentity(account.client_phone || account.telefone);
+  const devicePhone = normalizePhoneIdentity(device.phone || device.telefone);
+  if (accountPhone && devicePhone && accountPhone === devicePhone) score += 180;
+
+  return score;
+};
+
 // ══════════════════════════════════════════════════════════════════════════════
 // SUB-COMPONENTES
 // ══════════════════════════════════════════════════════════════════════════════
@@ -329,9 +375,9 @@ const Devices = () => {
     setSelectedAccount(acc);
     setSelectedDevice(dev);
 
-    const baseUsername = acc?.username || dev?.current_iptv_username || dev?.username || '';
+    const baseUsername = acc?.app_username || acc?.username || dev?.current_iptv_username || dev?.username || '';
     let basePassword = '';
-    const rawPass = acc?.password || dev?.current_iptv_password || dev?.password || '';
+    const rawPass = acc?.app_password || acc?.password || dev?.current_iptv_password || dev?.password || '';
     // No Nexus, queremos ver se a senha é mascarada (******) para saber se precisamos atualizar no Sigma
     basePassword = rawPass;
     setShowPasswordModal(false);
@@ -341,12 +387,12 @@ const Devices = () => {
         password: basePassword, 
         expire_date: acc?.expire_date || '',
         max_connections: acc?.max_connections || 1, 
-        package_name: acc?.finance_plan_name || acc?.package_name || '',
+        package_name: acc?.finance_plan_name || acc?.package_name || dev?.package_name || '',
         nome: acc?.nome || '', 
         email: acc?.email || '', 
         telefone: acc?.telefone || '', 
         servidor_id: acc?.servidor_id || dev?.server_id || '', 
-        mac: acc?.mac || dev?.mac_address || '',
+        mac: acc?.device_mac || acc?.mac || dev?.mac_address || '',
       notificacao_whatsapp: acc?.notificacao_whatsapp || '1', 
       notas: acc?.notas || '', 
       finance_plan_id: acc?.finance_plan_id || ''
@@ -523,39 +569,76 @@ const Devices = () => {
   }, [])
 
   useEffect(() => {
-    const usedDeviceIds = new Set();
-    const flat = [];
-    const normMAC = (m) => (m && typeof m === 'string') ? m.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : null;
-    const normUser = (u) => (u && typeof u === 'string') ? u.trim().toLowerCase() : null;
+    const linkedRows = [];
+    const deviceMatches = new Set();
+    const accountMatches = new Map();
+    const accounts = (allAccounts || []).filter(Boolean);
+    const deviceList = (devices || []).filter(Boolean);
 
-    allAccounts.forEach(acc => {
-      if (!acc) return;
-      const accUser = normUser(acc.username);
-      const accMac = normMAC(acc.device_mac);
-      const linkedDevice = (devices || []).find(dev => {
-        if (!dev) return false;
-        const devUser = normUser(dev.current_iptv_username);
-        const devMac = normMAC(dev.mac_address);
-        return (accUser && devUser && accUser === devUser) || (accMac && devMac && accMac === devMac);
-      });
-      flat.push({
-        id: linkedDevice ? `linked-${linkedDevice.id}-${acc.id}` : `acc-${acc.id}`,
-        linkType: linkedDevice ? 'linked' : 'account_only',
-        device: linkedDevice || null,
-        account: acc,
-      });
-      if (linkedDevice) usedDeviceIds.add(linkedDevice.id);
+    const deviceSortScore = (device) => {
+      const onlineScore = device?.connection_status === 'online' ? 1 : 0;
+      const lastSeen = new Date(device?.ultimo_acesso || device?.updated_at || device?.created_at || 0).getTime();
+      return { onlineScore, lastSeen };
+    };
+
+    const sortedDevices = [...deviceList].sort((a, b) => {
+      const scoreA = deviceSortScore(a);
+      const scoreB = deviceSortScore(b);
+      if (scoreA.onlineScore !== scoreB.onlineScore) return scoreB.onlineScore - scoreA.onlineScore;
+      return scoreB.lastSeen - scoreA.lastSeen;
     });
 
-    (devices || []).filter(d => d && !usedDeviceIds.has(d.id)).forEach(dev => {
-      flat.push({
-        id: `dev-${dev.id}`,
-        linkType: 'device_only',
-        device: dev,
-        account: null,
+    sortedDevices.forEach((device) => {
+      let bestAccount = null;
+      let bestScore = 0;
+
+      accounts.forEach((account) => {
+        const matchedCount = accountMatches.get(account.id) || 0;
+        if (matchedCount >= getAccountMaxConnections(account)) return;
+
+        const score = getAccountMatchScore(account, device);
+        if (score > bestScore) {
+          bestScore = score;
+          bestAccount = account;
+        }
       });
+
+      if (bestAccount && bestScore > 0) {
+        linkedRows.push({
+          id: `linked-${device.id}-${bestAccount.id}`,
+          linkType: 'linked',
+          device,
+          account: bestAccount,
+          matchScore: bestScore,
+        });
+        deviceMatches.add(device.id);
+        accountMatches.set(bestAccount.id, (accountMatches.get(bestAccount.id) || 0) + 1);
+      }
     });
-    setUnifiedList(flat);
+
+    accounts.forEach((account) => {
+      if ((accountMatches.get(account.id) || 0) === 0) {
+        linkedRows.push({
+          id: `acc-${account.id}`,
+          linkType: 'account_only',
+          device: null,
+          account,
+        });
+      }
+    });
+
+    deviceList.forEach((device) => {
+      if (!deviceMatches.has(device.id)) {
+        linkedRows.push({
+          id: `dev-${device.id}`,
+          linkType: 'device_only',
+          device,
+          account: null,
+        });
+      }
+    });
+
+    setUnifiedList(linkedRows);
   }, [devices, panelClients, allAccounts]);
 
 
@@ -587,10 +670,15 @@ const Devices = () => {
         return dev?.mac_address?.toLowerCase().includes(t) ||
                dev?.modelo?.toLowerCase().includes(t) ||
                dev?.ip?.toLowerCase().includes(t) ||
+               dev?.current_iptv_username?.toLowerCase().includes(t) ||
+               dev?.username?.toLowerCase().includes(t) ||
                acc?.username?.toLowerCase().includes(t) ||
+               acc?.app_username?.toLowerCase().includes(t) ||
                acc?.nome?.toLowerCase().includes(t) ||
                acc?.email?.toLowerCase().includes(t) ||
                acc?.telefone?.toLowerCase().includes(t) ||
+               acc?.client_email?.toLowerCase().includes(t) ||
+               acc?.client_phone?.toLowerCase().includes(t) ||
                acc?.server_name?.toLowerCase().includes(t) ||
                acc?.package_name?.toLowerCase().includes(t) ||
                acc?.finance_plan_name?.toLowerCase().includes(t) ||

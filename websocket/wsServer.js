@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 
 let wss;
 const clients = new Map();
+const tvConfigClients = new Map();
 
 const initWebSocket = (server) => {
   wss = new WebSocket.Server({ server });
@@ -23,6 +24,16 @@ const initWebSocket = (server) => {
           console.log(`✅ Usuário ${decoded.id} autenticado no WebSocket`);
         }
 
+        if (data.type === 'subscribe_tv_config') {
+          const macAddress = String(data.mac_address || '').trim().toUpperCase();
+          if (macAddress) {
+            ws.tvConfigMac = macAddress;
+            tvConfigClients.set(macAddress, ws);
+            ws.send(JSON.stringify({ type: 'subscribe_tv_config', status: 'success', mac_address: macAddress }));
+            console.log(`📺 TV conectada para atualização: ${macAddress}`);
+          }
+        }
+
         // Ping/Pong
         if (data.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
@@ -38,6 +49,10 @@ const initWebSocket = (server) => {
       if (ws.userId) {
         clients.delete(ws.userId);
         console.log(`🔌 Usuário ${ws.userId} desconectado`);
+      }
+      if (ws.tvConfigMac) {
+        tvConfigClients.delete(ws.tvConfigMac);
+        console.log(`📺 TV desconectada: ${ws.tvConfigMac}`);
       }
     });
 
@@ -66,4 +81,12 @@ const broadcast = (data) => {
   });
 };
 
-module.exports = { initWebSocket, sendToUser, broadcast };
+const broadcastTvConfig = (data) => {
+  tvConfigClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
+};
+
+module.exports = { initWebSocket, sendToUser, broadcast, broadcastTvConfig };

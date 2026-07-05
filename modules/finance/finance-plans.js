@@ -88,6 +88,7 @@ const migrateFinance = async () => {
             name VARCHAR(255) NOT NULL,
             price NUMERIC(10, 2) NOT NULL,
             duration_days INTEGER DEFAULT 365,
+            trial_hours INTEGER DEFAULT 24,
             description TEXT,
             is_active BOOLEAN DEFAULT true,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -112,6 +113,7 @@ const migrateFinance = async () => {
         END $$;
 
         ALTER TABLE app_activation_packages ADD COLUMN IF NOT EXISTS duration_days INTEGER DEFAULT 365;
+        ALTER TABLE app_activation_packages ADD COLUMN IF NOT EXISTS trial_hours INTEGER DEFAULT 24;
         ALTER TABLE app_activation_packages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
 
@@ -501,16 +503,23 @@ router.get('/app-packages', async (req, res) => {
  */
 router.post('/app-packages', async (req, res) => {
     try {
-        const { name, price, duration_days, description, is_active } = req.body;
+        const { name, price, duration_days, trial_hours, description, is_active } = req.body;
 
         if (!name || !price) {
             return res.status(400).json({ error: 'Preencha o nome e o preço do plano.' });
         }
 
         const result = await pool.query(
-            `INSERT INTO app_activation_packages (name, price, duration_days, description, is_active) 
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [name, price, duration_days || 365, description || null, is_active !== undefined ? is_active : true]
+            `INSERT INTO app_activation_packages (name, price, duration_days, trial_hours, description, is_active) 
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [
+                name,
+                price,
+                duration_days || 365,
+                trial_hours || 24,
+                description || null,
+                is_active !== undefined ? is_active : true
+            ]
         );
 
         res.status(201).json(result.rows[0]);
@@ -541,7 +550,7 @@ router.delete('/app-packages/:id', async (req, res) => {
 router.put('/app-packages/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, price, duration_days, description, is_active } = req.body;
+        const { name, price, duration_days, trial_hours, description, is_active } = req.body;
 
         if (!name || !price) {
             return res.status(400).json({ error: 'Preencha os campos obrigatórios.' });
@@ -549,9 +558,17 @@ router.put('/app-packages/:id', async (req, res) => {
 
         const result = await pool.query(
             `UPDATE app_activation_packages 
-             SET name = $1, price = $2, duration_days = $3, description = $4, is_active = $5, updated_at = CURRENT_TIMESTAMP 
-             WHERE id = $6 RETURNING *`,
-            [name, price, duration_days || 365, description || null, is_active !== undefined ? is_active : true, id]
+             SET name = $1, price = $2, duration_days = $3, trial_hours = $4, description = $5, is_active = $6, updated_at = CURRENT_TIMESTAMP 
+             WHERE id = $7 RETURNING *`,
+            [
+                name,
+                price,
+                duration_days || 365,
+                trial_hours || 24,
+                description || null,
+                is_active !== undefined ? is_active : true,
+                id
+            ]
         );
 
         if (result.rows.length === 0) {

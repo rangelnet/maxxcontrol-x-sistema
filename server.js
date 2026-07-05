@@ -424,16 +424,20 @@ async function runPendingMigrations() {
     }
   }
 
-  // Migração: colunas adicionais para controle de teste
-  try {
-    await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_duration INTEGER DEFAULT 2`);
-    await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_blocked VARCHAR(10) DEFAULT '0'`);
-    console.log('✅ Colunas test_duration e test_blocked verificadas/criadas');
-  } catch (err) {
-    if (!IGNORE_CODES.includes(err.code)) {
-      console.warn('⚠️ Aviso na migração de colunas de teste:', err.message);
+    // Migração: colunas adicionais para controle de teste
+    try {
+      await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_duration INTEGER DEFAULT 2`);
+      await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_blocked VARCHAR(10) DEFAULT '0'`);
+      await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS test_duration_custom BOOLEAN DEFAULT FALSE`);
+      await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS is_trial VARCHAR(10) DEFAULT '0'`);
+      await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP`);
+      await pool.query(`ALTER TABLE devices ADD COLUMN IF NOT EXISTS trial_expires_at TIMESTAMP`);
+      console.log('✅ Colunas test_duration, test_blocked, test_duration_custom e trial verificadas/criadas');
+    } catch (err) {
+      if (!IGNORE_CODES.includes(err.code)) {
+        console.warn('⚠️ Aviso na migração de colunas de teste:', err.message);
+      }
     }
-  }
 
   // Migração: Fix Logs & Bugs Tables (system_logs + colunas bugs)
   console.log('🔧 Executando migration: Fix Logs & Bugs Tables...');
@@ -809,15 +813,16 @@ async function runPendingMigrations() {
 
     // 3. Tabela de Ativação de Apps (MAXX PLAYER, etc)
     await pool.query(`CREATE TABLE IF NOT EXISTS app_activation_packages (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(100) NOT NULL UNIQUE,
-      price DECIMAL(10, 2) NOT NULL,
-      description TEXT,
-      is_active BOOLEAN DEFAULT true,
-      duration_days INTEGER DEFAULT 365,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE,
+        price DECIMAL(10, 2) NOT NULL,
+        description TEXT,
+        is_active BOOLEAN DEFAULT true,
+        duration_days INTEGER DEFAULT 365,
+        trial_hours INTEGER DEFAULT 24,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
     
     // Garantir UNIQUE em name antes do INSERT para evitar erro de ON CONFLICT
     await pool.query(`ALTER TABLE app_activation_packages ADD CONSTRAINT app_activation_packages_name_key UNIQUE (name)`).catch(() => {});

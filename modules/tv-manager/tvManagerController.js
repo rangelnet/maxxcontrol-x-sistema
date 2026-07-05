@@ -2,6 +2,18 @@ const pool = require('../../config/database');
 const smartCategorizer = require('./smartCategorizer');
 const { uploadToSupabase } = require('../../services/supabaseStorage');
 
+const notifyTvConfigReload = () => {
+    try {
+        const { broadcastTvConfig } = require('../../websocket/wsServer');
+        broadcastTvConfig({
+            type: 'FORCE_RELOAD_TV_CONFIG',
+            payload: { message: 'Atualização das categorias da TV' }
+        });
+    } catch (error) {
+        console.warn('Aviso: não foi possível enviar push da TV em tempo real.', error?.message || error);
+    }
+};
+
 /**
  * Retorna as categorias configuradas
  */
@@ -114,6 +126,7 @@ exports.createCategory = async (req, res) => {
             'INSERT INTO tv_categories (name, icon, icon_type) VALUES ($1, $2, $3) RETURNING *',
             [name, icon || '📺', icon_type || 'emoji']
         );
+        notifyTvConfigReload();
         res.status(201).json(result.rows[0]);
     } catch (error) {
         console.error('Erro ao criar categoria de TV:', error);
@@ -143,6 +156,7 @@ exports.updateCategory = async (req, res) => {
             [name, icon, icon_type, id]
         );
         if (result.rows.length === 0) return res.status(404).json({ error: 'Categoria não encontrada' });
+        notifyTvConfigReload();
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Erro ao atualizar categoria de TV:', error);
@@ -157,6 +171,7 @@ exports.deleteCategory = async (req, res) => {
     const { id } = req.params;
     try {
         await pool.query('DELETE FROM tv_categories WHERE id = $1', [id]);
+        notifyTvConfigReload();
         res.json({ message: 'Categoria excluída com sucesso' });
     } catch (error) {
         console.error('Erro ao excluir categoria de TV:', error);
@@ -177,6 +192,7 @@ exports.reorderCategories = async (req, res) => {
         }
         await client.query('COMMIT');
         client.release();
+        notifyTvConfigReload();
         res.json({ message: 'Categorias reordenadas com sucesso' });
     } catch (error) {
         console.error('Erro ao reordenar categorias de TV:', error);
@@ -205,6 +221,7 @@ exports.moveChannels = async (req, res) => {
     const { channelIds, targetCategoryId } = req.body;
     try {
         await pool.query('UPDATE tv_channels SET category_id = $1 WHERE id = ANY($2)', [targetCategoryId, channelIds]);
+        notifyTvConfigReload();
         res.json({ message: 'Canais movidos com sucesso' });
     } catch (error) {
         console.error('Erro ao mover canais:', error);
@@ -219,6 +236,7 @@ exports.removeChannel = async (req, res) => {
     const { id } = req.params;
     try {
         await pool.query('DELETE FROM tv_channels WHERE id = $1', [id]);
+        notifyTvConfigReload();
         res.json({ message: 'Canal excluído com sucesso' });
     } catch (error) {
         console.error('Erro ao excluir canal:', error);
@@ -359,6 +377,7 @@ exports.importPlaylist = async (req, res) => {
             client.release();
         }
 
+        notifyTvConfigReload();
         res.json({ message: 'Importação concluída', importedCount });
     } catch (error) {
         console.error('Erro na importação:', error);
@@ -467,6 +486,8 @@ exports.syncDevices = async (req, res) => {
             payload: { message: 'Atualização das categorias da TV' } 
         });
 
+        notifyTvConfigReload();
+
         res.json({ message: 'Sincronização enviada para todos os aparelhos.' });
     } catch (error) {
         console.error('Erro ao sincronizar aparelhos:', error);
@@ -537,6 +558,7 @@ exports.bulkDeleteQualities = async (req, res) => {
 
             const result = await client.query(deleteQuery);
             await client.query('COMMIT');
+            notifyTvConfigReload();
             res.json({ message: `Canais ${quality} excluídos com sucesso.`, deletedCount: result.rowCount });
         } catch (e) {
             await client.query('ROLLBACK');
@@ -565,6 +587,7 @@ exports.updateChannelName = async (req, res) => {
         const client = await pool.connect();
         try {
             await client.query('UPDATE tv_channels SET name = $1 WHERE id = $2', [name.trim(), id]);
+            notifyTvConfigReload();
             res.json({ message: 'Canal atualizado com sucesso!' });
         } finally {
             client.release();
@@ -591,6 +614,7 @@ exports.deleteMultipleChannels = async (req, res) => {
             // Usando ANY para excluir um array de IDs rapidamente
             const result = await client.query('DELETE FROM tv_channels WHERE id = ANY($1::int[])', [channelIds]);
             await client.query('COMMIT');
+            notifyTvConfigReload();
             res.json({ message: 'Canais excluídos com sucesso!', deletedCount: result.rowCount });
         } catch (e) {
             await client.query('ROLLBACK');

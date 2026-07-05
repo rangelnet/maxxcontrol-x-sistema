@@ -1,4 +1,10 @@
-const MXXCONTROL_API = 'http://localhost:3001/api/iptv-plugin'; 
+const CONFIGURED_MXXCONTROL_API = '__MXXCONTROL_API_BASE__';
+const MXXCONTROL_API =
+  CONFIGURED_MXXCONTROL_API && CONFIGURED_MXXCONTROL_API !== '__MXXCONTROL_API_BASE__'
+    ? CONFIGURED_MXXCONTROL_API
+    : 'http://localhost:3001/api/iptv-plugin';
+const EXTENSION_VERSION = '1.1.0';
+let heartbeatInterval = null;
 
 async function reportToMxxcontrol(endpoint, payload) {
   try {
@@ -13,6 +19,21 @@ async function reportToMxxcontrol(endpoint, payload) {
     }
   } catch (err) {
     return { success: false, error: 'Erro Rede: ' + err.message };
+  }
+}
+
+async function sendHeartbeat(reason = 'alive') {
+  try {
+    await reportToMxxcontrol('extension-heartbeat', {
+      version: EXTENSION_VERSION,
+      runtime_id: chrome.runtime?.id || null,
+      api_base: MXXCONTROL_API,
+      reason,
+      user_agent: navigator.userAgent,
+      sent_at: new Date().toISOString()
+    });
+  } catch (err) {
+    console.warn('[MXX] Heartbeat falhou:', err.message);
   }
 }
 
@@ -425,15 +446,25 @@ function startPolling() {
   pollCommands();
 }
 
+function startHeartbeat() {
+  if (heartbeatInterval) return;
+  sendHeartbeat('startup');
+  heartbeatInterval = setInterval(() => {
+    sendHeartbeat('interval');
+  }, 30000);
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log('✅ MaxxControl Injector: Service Worker instalado.');
   chrome.alarms.create('keepAlive', { periodInMinutes: 0.5 });
   startPolling();
+  startHeartbeat();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   chrome.alarms.create('keepAlive', { periodInMinutes: 0.5 });
   startPolling();
+  startHeartbeat();
 });
 
 chrome.alarms.onAlarm.addListener(alarm => {
@@ -441,9 +472,11 @@ chrome.alarms.onAlarm.addListener(alarm => {
     if (!pollingInterval) {
       startPolling();
     }
+    sendHeartbeat('alarm');
   }
 });
 
 startPolling();
+startHeartbeat();
 
 console.log('✅ [MXX] Background Service Ativado v2.2 (Fast Polling Mode)');

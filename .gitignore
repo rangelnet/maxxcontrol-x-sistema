@@ -1,6 +1,5 @@
 node_modules/
 .env
-uploads/
 *.log
 .DS_Store
 dist/
@@ -9,3 +8,4 @@ maxxcontrol.db
 web/dist/
 web/node_modules/
 .wpp-session/
+/.agent/skills/openspec-apply-change

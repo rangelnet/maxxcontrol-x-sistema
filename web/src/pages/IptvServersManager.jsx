@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Server, Tv, Play, Globe, Zap, BarChart3 } from 'lucide-react';
+import { Server, Tv, Play, Globe, Zap, BarChart3, Puzzle } from 'lucide-react';
 import ServersManagement from './ServersManagement';
 import IptvTreeViewer from './IptvTreeViewer';
 import PlaylistManager from './PlaylistManager';
 import IptvServer from './IptvServer';
+import ChromeExtensionHub from './ChromeExtensionHub';
 
 // ─── Estilos base ───────────────────────────────────────────
 const tabBtn = (active) => ({
@@ -17,6 +18,7 @@ const tabBtn = (active) => ({
 
 const tabs = [
   { key:'servers',  label:'Servidores',       Icon: Server },
+  { key:'extension',label:'Extensão Chrome',  Icon: Puzzle },
   { key:'tree',     label:'Curadoria IPTV',   Icon: Tv },
   { key:'playlist', label:'Playlist 4-em-1',  Icon: Play },
   { key:'global',   label:'Config Global',    Icon: Globe },
@@ -41,10 +43,11 @@ const IptvServersManager = () => {
       </div>
 
       {/* ══════ STATS MINI ══════ */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:24 }}>
         {[
-          { label:'Módulos Ativos', value:'4', color:'#FC5F16', icon: BarChart3 },
+          { label:'Módulos Ativos', value:'5', color:'#FC5F16', icon: BarChart3 },
           { label:'Servidores',     value:'—', color:'#3b82f6', icon: Server },
+          { label:'Extensão',      value:'—', color:'#60a5fa', icon: Puzzle },
           { label:'Curadoria',     value:'—', color:'#a855f7', icon: Tv },
           { label:'Playlists',     value:'—', color:'#22c55e', icon: Play },
         ].map((s,i) => (
@@ -72,6 +75,7 @@ const IptvServersManager = () => {
       {/* ══════ CONTEÚDO DAS ABAS ══════ */}
       <div style={{ animation:'fadeIn .3s ease-out' }}>
         {activeTab === 'servers'  && <ServersManagement />}
+        {activeTab === 'extension' && <ChromeExtensionHub />}
         {activeTab === 'tree'     && <IptvTreeViewer />}
         {activeTab === 'playlist' && <PlaylistManager />}
         {activeTab === 'global'   && <IptvServer />}

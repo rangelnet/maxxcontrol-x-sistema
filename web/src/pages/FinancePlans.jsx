@@ -27,6 +27,7 @@ const FinancePlans = () => {
   
   const [activeTab, setActiveTab] = useState(visibleTabs.length > 0 ? visibleTabs[0].id : 'planos');
   const [appUrl, setAppUrl] = useState('');
+  const [trialHours, setTrialHours] = useState('24');
   const [savingAppUrl, setSavingAppUrl] = useState(false);
   const [appPackages, setAppPackages] = useState([]);
   const [appActivations, setAppActivations] = useState([]);
@@ -36,6 +37,7 @@ const FinancePlans = () => {
     name: '',
     price: '',
     duration_days: 365,
+    trial_hours: 24,
     description: '',
     is_active: true
   });
@@ -138,6 +140,7 @@ const FinancePlans = () => {
       
       const s = settingsRes.data;
       setAppUrl(s.player_app_url || 'https://maxxplayer.app');
+      setTrialHours(String(s.trial_hours || '24'));
       setMpAccessToken(s.mp_access_token || '');
       setMpPublicKey(s.mp_public_key || '');
       if (s.mp_receive_pix !== undefined) setMpReceivePix(s.mp_receive_pix);
@@ -386,10 +389,10 @@ const FinancePlans = () => {
     e.preventDefault();
     setSavingAppUrl(true);
     try {
-      await axios.post('/api/settings/bulk', { player_app_url: appUrl });
-      alert("URL do Aplicativo atualizada com sucesso! O Web Player e QR Code já foram atualizados.");
+      await axios.post('/api/settings/bulk', { player_app_url: appUrl, trial_hours: trialHours });
+      alert("Configurações do Aplicativo atualizadas com sucesso! O Web Player, QR Code e o tempo de teste já foram atualizados.");
     } catch (error) {
-      alert("Erro ao salvar a URL do App.");
+      alert("Erro ao salvar as configurações do App.");
     } finally {
       setSavingAppUrl(false);
     }
@@ -1702,12 +1705,24 @@ const FinancePlans = () => {
                   placeholder="https://maxxplayer.app" 
                   style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', outline: 'none', marginBottom: '20px', fontSize: '15px' }} 
                 />
+                <label style={{ fontSize: '12px', fontWeight: '800', color: '#f4f4f5', marginBottom: '10px', display: 'block', textTransform: 'uppercase' }}>Tempo de Teste (Horas)</label>
+                <select
+                  value={trialHours}
+                  onChange={e => setTrialHours(e.target.value)}
+                  style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', outline: 'none', marginBottom: '20px', fontSize: '15px' }}
+                >
+                  <option value="1">01 Hora</option>
+                  <option value="2">02 Horas</option>
+                  <option value="6">06 Horas</option>
+                  <option value="12">12 Horas</option>
+                  <option value="24">24 Horas</option>
+                </select>
                 <button 
                   onClick={handleSaveAppUrl} 
                   disabled={savingAppUrl} 
                   style={{ ...btnPrimary, width: '100%', padding: '16px' }}
                 >
-                  {savingAppUrl ? 'Salvando...' : 'Salvar URL do App'}
+                  {savingAppUrl ? 'Salvando...' : 'Salvar Configurações do App'}
                 </button>
               </div>
 
@@ -1731,7 +1746,7 @@ const FinancePlans = () => {
               <button 
                 onClick={() => {
                   setEditAppId(null);
-                  setAppFormData({ name: '', price: '', duration_days: 365, description: '', is_active: true });
+                  setAppFormData({ name: '', price: '', duration_days: 365, trial_hours: 24, description: '', is_active: true });
                   setShowAppModal(true);
                 }}
                 style={{ ...btnPrimary, padding: '10px 18px', fontSize: '13px' }}
@@ -1745,8 +1760,13 @@ const FinancePlans = () => {
                 <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '20px', padding: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                     <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
-                    <div style={{ padding: '4px 10px', borderRadius: '12px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', fontSize: '12px', fontWeight: '800' }}>
-                      {pkg.duration_days} DIAS
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <div style={{ padding: '4px 10px', borderRadius: '12px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', fontSize: '12px', fontWeight: '800' }}>
+                        {pkg.duration_days} DIAS
+                      </div>
+                      <div style={{ padding: '4px 10px', borderRadius: '12px', background: 'rgba(59,130,246,0.1)', color: '#60a5fa', fontSize: '12px', fontWeight: '800' }}>
+                        TESTE {pkg.trial_hours || 24}H
+                      </div>
                     </div>
                   </div>
                   
@@ -1949,7 +1969,22 @@ const FinancePlans = () => {
                          required
                        />
                     </div>
-                 </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Tempo de Teste (Horas)</label>
+                    <select
+                      value={appFormData.trial_hours}
+                      onChange={e => setAppFormData({...appFormData, trial_hours: e.target.value})}
+                      style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }}
+                    >
+                      <option value="1">01 Hora</option>
+                      <option value="2">02 Horas</option>
+                      <option value="6">06 Horas</option>
+                      <option value="12">12 Horas</option>
+                      <option value="24">24 Horas</option>
+                    </select>
+                  </div>
 
                  <div>
                     <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Descrição (Opcional)</label>
