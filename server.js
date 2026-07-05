@@ -927,7 +927,13 @@ app.set('trust proxy', 1);
 
 // Middlewares
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      imgSrc: ["'self'", "data:", "blob:", "https://*.supabase.co"]
+    }
+  }
 }));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
