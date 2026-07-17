@@ -8,7 +8,6 @@ import VodManager from './VodManager'
 import SeriesManager from './SeriesManager'
 import PlatformUiManager from './PlatformUiManager'
 import AnimeManager from './AnimeManager'
-import AdultManager from './AdultManager'
 
 const TABS = [
   {
@@ -73,13 +72,6 @@ const TABS = [
     icon: '🍥',
     badge: 'IA',
     desc: 'Curadoria, AniList, Crunchyroll e categorias',
-  },
-  {
-    id: 'adult-manager',
-    label: 'Gerenciar Adultos',
-    icon: '🔞',
-    badge: 'HOT',
-    desc: 'Curadoria 18+, categorias, capas e icones',
   },
 ]
 
@@ -159,13 +151,9 @@ const BrandingBanners = () => {
         {activeTab === 'series-manager' && <SeriesManager />}
         {activeTab === 'platform-ui' && <PlatformUiManager />}
         {activeTab === 'anime-manager' && <AnimeManager />}
-        {activeTab === 'adult-manager' && <AdultManager />}
       </div>
     </div>
   )
 }
 
 export default BrandingBanners
-
-
-

@@ -2,7 +2,6 @@ const pool = require('../../config/database');
 const axios = require('axios');
 const tmdbService = require('../../services/tmdbService');
 const animeManager = require('../anime-manager/animeManagerController');
-const adultManager = require('../adult-manager/adultManagerController');
 const { captureMiddleFrameToSupabase } = require('../../services/videoFrameCapture');
 
 let currentTimer = null;
@@ -544,7 +543,6 @@ const runAgentScan = async () => {
     // Roda a auditoria de plataformas no fim do ciclo
     setTimeout(runPlatformAudit, 10000);
     setTimeout(() => animeManager.runAnimeScanBackground(), 14000);
-    setTimeout(() => adultManager.runAdultScanBackground(), 18000);
 
   } catch (err) {
     await logAgent('error', `Erro grave durante Global Scan: ${err.message}`, 'Global_Scan');
@@ -804,4 +802,3 @@ exports.updatePlatformAuditStatus = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-

@@ -1045,6 +1045,7 @@ app.use('/api/agents', require('./modules/ai-agent/aiAgentRoutes'));
 
 // Anime Manager (Nexus + AniList + curadoria)
 app.use('/api/anime-manager', require('./modules/anime-manager/animeManagerRoutes'));
+app.use('/api/adult-manager', require('./modules/adult-manager/adultManagerRoutes'));
 
 // ============================================
 // ============================================
@@ -1194,3 +1195,4 @@ server.listen(PORT, async () => {
   // Iniciar Sentinela de Manutenção
   if (sentinela.iniciar) sentinela.iniciar();
 });
+

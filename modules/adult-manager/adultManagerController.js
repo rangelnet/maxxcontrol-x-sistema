@@ -1,0 +1,651 @@
+const pool = require('../../config/database');
+
+const CONFIG_KEY = 'adult_screen_config';
+
+const DEFAULT_CONFIG = {
+  enabled: true,
+  autoApproveHighConfidence: true,
+  minConfidence: 45,
+  heroMode: 'auto',
+  heroItemId: null,
+  theme: {
+    title: 'MAXX HOT',
+    subtitle: 'Conteudo adulto organizado pela curadoria Nexus 18+.',
+    primaryColor: '#ff0f5f',
+    secondaryColor: '#ff4f7a',
+    backgroundColor: '#050006',
+    buttonColor: '#ff0f5f',
+    focusColor: '#ff2c6d',
+    glowColor: 'rgba(255, 15, 95, 0.5)'
+  },
+  sourceKeywords: [
+    'adulto', 'adultos', 'adult', '18+', 'xxx', 'xvideos', 'porn', 'porno', 'pornô',
+    'erotico', 'erótico', 'hot', 'onlyfans', 'privacy', 'sexo', 'sex', 'sensual',
+    'amador', 'amadora', 'lesbica', 'lésbica', 't-girl', 'tgirl', 'fetiche',
+    'fetiches', 'novinha', 'madura', 'milf', 'anal', 'oral', 'nude', 'nua'
+  ],
+  blockKeywords: [
+    'infantil', 'kids', 'crianca', 'criança', 'desenho', 'cartoon', 'disney', 'pixar',
+    'familia', 'família', 'anime kids', 'patrulha', 'peppa', 'barbie', 'lego'
+  ],
+  sections: [
+    { id: 'featured', title: 'Destaques Adultos', active: true, source: 'featured', limit: 24, style: 'landscape' },
+    { id: 'releases', title: 'Lancamentos', active: true, source: 'recent', limit: 24, style: 'landscape' },
+    { id: 'onlyfans', title: 'OnlyFans', active: true, source: 'keyword:onlyfans', limit: 24, style: 'landscape' },
+    { id: 'studios', title: 'Estudios', active: true, source: 'manual:estudios', limit: 24, style: 'landscape' }
+  ]
+};
+
+function safeJson(value, fallback) {
+  if (!value) return fallback;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function mergeConfig(config = {}) {
+  return {
+    ...DEFAULT_CONFIG,
+    ...config,
+    theme: { ...DEFAULT_CONFIG.theme, ...(config.theme || {}) },
+    sourceKeywords: Array.isArray(config.sourceKeywords) ? config.sourceKeywords : DEFAULT_CONFIG.sourceKeywords,
+    blockKeywords: Array.isArray(config.blockKeywords) ? config.blockKeywords : DEFAULT_CONFIG.blockKeywords,
+    sections: Array.isArray(config.sections) ? config.sections : DEFAULT_CONFIG.sections
+  };
+}
+
+function normalizeText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function slug(value = 'adultos') {
+  const normalized = normalizeText(value)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return normalized || 'adultos';
+}
+
+function toPublicUrl(value) {
+  if (!value) return null;
+  const text = String(value).trim();
+  return text || null;
+}
+
+function rowText(row) {
+  return normalizeText([
+    row.clean_name,
+    row.name,
+    row.title,
+    row.original_name,
+    row.category_name,
+    row.category,
+    row.group_title,
+    row.tags,
+    row.overview,
+    row.description
+  ].filter(Boolean).join(' '));
+}
+
+function detectAdult(row, config) {
+  const text = rowText(row);
+  const sourceKeywords = config.sourceKeywords || DEFAULT_CONFIG.sourceKeywords;
+  const blockKeywords = config.blockKeywords || DEFAULT_CONFIG.blockKeywords;
+  const matches = [];
+  let score = 0;
+
+  for (const keyword of sourceKeywords) {
+    const normalizedKeyword = normalizeText(keyword);
+    if (normalizedKeyword && text.includes(normalizedKeyword)) {
+      matches.push(keyword);
+      score += normalizedKeyword.length <= 3 ? 15 : 24;
+    }
+  }
+
+  const categoryText = normalizeText(row.category_name || row.category || row.group_title || '');
+  if (categoryText.includes('adult') || categoryText.includes('xxx') || categoryText.includes('18')) {
+    score += 35;
+  }
+
+  const hasBlockedSignal = blockKeywords.some((keyword) => {
+    const normalizedKeyword = normalizeText(keyword);
+    return normalizedKeyword && text.includes(normalizedKeyword);
+  });
+
+  if (hasBlockedSignal && score < 80) {
+    return null;
+  }
+
+  score = Math.min(100, score);
+  if (score < Number(config.minConfidence || DEFAULT_CONFIG.minConfidence)) {
+    return null;
+  }
+
+  const categoryName = row.category_name || row.category || row.group_title || matches[0] || 'Adultos';
+  const categoryKey = slug(categoryName);
+  const approvalStatus = config.autoApproveHighConfidence && score >= 70 ? 'approved' : 'pending';
+
+  return {
+    confidence: score,
+    tags: [...new Set(matches)],
+    categoryName,
+    categoryKey,
+    approvalStatus
+  };
+}
+
+async function ensureSchema() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ai_adult_catalog (
+      id SERIAL PRIMARY KEY,
+      vod_id INTEGER UNIQUE,
+      original_name VARCHAR(255),
+      clean_name VARCHAR(255),
+      content_type VARCHAR(50),
+      category_key VARCHAR(160),
+      category_name VARCHAR(255),
+      confidence INTEGER DEFAULT 0,
+      source_provider VARCHAR(255),
+      poster_url TEXT,
+      backdrop_url TEXT,
+      banner_url TEXT,
+      icon_url TEXT,
+      overview TEXT,
+      tags JSONB DEFAULT '[]'::jsonb,
+      manual_section VARCHAR(100),
+      manual_order INTEGER DEFAULT 0,
+      is_featured BOOLEAN DEFAULT false,
+      is_hidden BOOLEAN DEFAULT false,
+      approval_status VARCHAR(20) DEFAULT 'pending',
+      image_source VARCHAR(50) DEFAULT 'nexus',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ai_adult_categories (
+      id SERIAL PRIMARY KEY,
+      category_key VARCHAR(160) UNIQUE,
+      name VARCHAR(255),
+      icon_url TEXT,
+      cover_url TEXT,
+      color VARCHAR(30),
+      source_keywords JSONB DEFAULT '[]'::jsonb,
+      item_count INTEGER DEFAULT 0,
+      active BOOLEAN DEFAULT true,
+      sort_order INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  const catalogColumns = [
+    ['banner_url', 'TEXT'],
+    ['icon_url', 'TEXT'],
+    ['manual_section', 'VARCHAR(100)'],
+    ['manual_order', 'INTEGER DEFAULT 0'],
+    ['image_source', "VARCHAR(50) DEFAULT 'nexus'"]
+  ];
+
+  for (const [column, type] of catalogColumns) {
+    await pool.query(`ALTER TABLE ai_adult_catalog ADD COLUMN IF NOT EXISTS ${column} ${type}`);
+  }
+}
+
+async function getConfigValue() {
+  await ensureSchema();
+  const { rows } = await pool.query('SELECT value FROM global_settings WHERE key = $1 LIMIT 1', [CONFIG_KEY]);
+  return mergeConfig(safeJson(rows[0]?.value, DEFAULT_CONFIG));
+}
+
+async function saveConfigValue(config) {
+  await ensureSchema();
+  const merged = mergeConfig(config);
+  await pool.query(`
+    INSERT INTO global_settings (key, value, updated_at)
+    VALUES ($1, $2, CURRENT_TIMESTAMP)
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
+  `, [CONFIG_KEY, JSON.stringify(merged)]);
+  return merged;
+}
+
+async function upsertCategory(categoryKey, categoryName, tags = []) {
+  await pool.query(`
+    INSERT INTO ai_adult_categories (category_key, name, source_keywords, active, created_at, updated_at)
+    VALUES ($1, $2, $3::jsonb, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT (category_key) DO UPDATE SET
+      name = COALESCE(NULLIF(ai_adult_categories.name, ''), EXCLUDED.name),
+      source_keywords = CASE
+        WHEN ai_adult_categories.source_keywords IS NULL OR ai_adult_categories.source_keywords = '[]'::jsonb THEN EXCLUDED.source_keywords
+        ELSE ai_adult_categories.source_keywords
+      END,
+      updated_at = CURRENT_TIMESTAMP
+  `, [categoryKey, categoryName, JSON.stringify(tags)]);
+}
+
+async function refreshCategoryCounts() {
+  await pool.query(`
+    UPDATE ai_adult_categories c
+    SET item_count = COALESCE(q.total, 0), updated_at = CURRENT_TIMESTAMP
+    FROM (
+      SELECT category_key, COUNT(*)::INTEGER AS total
+      FROM ai_adult_catalog
+      WHERE is_hidden = false AND approval_status = 'approved'
+      GROUP BY category_key
+    ) q
+    WHERE c.category_key = q.category_key
+  `);
+
+  await pool.query(`
+    UPDATE ai_adult_categories c
+    SET item_count = 0, updated_at = CURRENT_TIMESTAMP
+    WHERE NOT EXISTS (
+      SELECT 1 FROM ai_adult_catalog a
+      WHERE a.category_key = c.category_key AND a.is_hidden = false AND a.approval_status = 'approved'
+    )
+  `);
+}
+
+async function upsertAdultFromNexus(row, config) {
+  const detection = detectAdult(row, config);
+  if (!detection) return null;
+
+  await upsertCategory(detection.categoryKey, detection.categoryName, detection.tags);
+
+  const vodId = row.vod_id || row.stream_id || row.id;
+  const originalName = row.original_name || row.name || row.title || `VOD ${vodId}`;
+  const cleanName = row.clean_name || row.name || row.title || originalName;
+  const posterUrl = toPublicUrl(row.auto_frame_url || row.poster_url || row.stream_icon || row.cover || row.image);
+  const backdropUrl = toPublicUrl(row.backdrop_url || row.auto_frame_url || row.poster_url || row.stream_icon || row.cover || row.image);
+  const overview = row.overview || row.description || row.plot || null;
+  const contentType = row.content_type || row.type || 'vod';
+  const sourceProvider = row.source_provider || row.provider || row.server_name || 'nexus';
+
+  const { rows } = await pool.query(`
+    INSERT INTO ai_adult_catalog (
+      vod_id, original_name, clean_name, content_type, category_key, category_name,
+      confidence, source_provider, poster_url, backdrop_url, overview, tags,
+      approval_status, image_source, created_at, updated_at
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,'nexus',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+    ON CONFLICT (vod_id) DO UPDATE SET
+      original_name = EXCLUDED.original_name,
+      clean_name = EXCLUDED.clean_name,
+      content_type = EXCLUDED.content_type,
+      category_key = EXCLUDED.category_key,
+      category_name = EXCLUDED.category_name,
+      confidence = GREATEST(ai_adult_catalog.confidence, EXCLUDED.confidence),
+      source_provider = EXCLUDED.source_provider,
+      poster_url = CASE WHEN ai_adult_catalog.image_source = 'manual' THEN ai_adult_catalog.poster_url ELSE COALESCE(EXCLUDED.poster_url, ai_adult_catalog.poster_url) END,
+      backdrop_url = CASE WHEN ai_adult_catalog.image_source = 'manual' THEN ai_adult_catalog.backdrop_url ELSE COALESCE(EXCLUDED.backdrop_url, ai_adult_catalog.backdrop_url) END,
+      overview = COALESCE(EXCLUDED.overview, ai_adult_catalog.overview),
+      tags = EXCLUDED.tags,
+      approval_status = CASE
+        WHEN ai_adult_catalog.approval_status = 'approved' THEN 'approved'
+        WHEN ai_adult_catalog.approval_status = 'hidden' THEN 'hidden'
+        ELSE EXCLUDED.approval_status
+      END,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING *
+  `, [
+    vodId,
+    originalName,
+    cleanName,
+    contentType,
+    detection.categoryKey,
+    detection.categoryName,
+    detection.confidence,
+    sourceProvider,
+    posterUrl,
+    backdropUrl,
+    overview,
+    JSON.stringify(detection.tags),
+    detection.approvalStatus
+  ]);
+
+  return rows[0];
+}
+
+function mapItem(row) {
+  return {
+    id: row.id,
+    vodId: row.vod_id,
+    originalName: row.original_name,
+    cleanName: row.clean_name,
+    contentType: row.content_type,
+    categoryKey: row.category_key,
+    categoryName: row.category_name,
+    confidence: row.confidence,
+    sourceProvider: row.source_provider,
+    posterUrl: row.poster_url,
+    backdropUrl: row.backdrop_url,
+    bannerUrl: row.banner_url,
+    iconUrl: row.icon_url,
+    overview: row.overview,
+    tags: safeJson(row.tags, []),
+    manualSection: row.manual_section,
+    manualOrder: row.manual_order,
+    isFeatured: row.is_featured,
+    isHidden: row.is_hidden,
+    approvalStatus: row.approval_status,
+    imageSource: row.image_source,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function mapCategory(row) {
+  return {
+    id: row.id,
+    categoryKey: row.category_key,
+    name: row.name,
+    iconUrl: row.icon_url,
+    coverUrl: row.cover_url,
+    color: row.color,
+    sourceKeywords: safeJson(row.source_keywords, []),
+    itemCount: row.item_count,
+    active: row.active,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function syncFromNexusCatalog() {
+  await ensureSchema();
+  const config = await getConfigValue();
+
+  const tableExists = await pool.query(`
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'ai_vod_library'
+    ) AS exists
+  `);
+
+  if (!tableExists.rows[0]?.exists) {
+    return { scanned: 0, imported: 0, pending: 0, approved: 0, reason: 'ai_vod_library ausente' };
+  }
+
+  const { rows } = await pool.query(`
+    SELECT *
+    FROM ai_vod_library
+    ORDER BY COALESCE(updated_at, created_at, NOW()) DESC
+    LIMIT 5000
+  `);
+
+  let imported = 0;
+  for (const row of rows) {
+    const result = await upsertAdultFromNexus(row, config);
+    if (result) imported += 1;
+  }
+
+  await refreshCategoryCounts();
+
+  const counts = await pool.query(`
+    SELECT
+      COUNT(*)::INTEGER AS total,
+      COUNT(*) FILTER (WHERE approval_status = 'approved' AND is_hidden = false)::INTEGER AS approved,
+      COUNT(*) FILTER (WHERE approval_status = 'pending' AND is_hidden = false)::INTEGER AS pending,
+      COUNT(*) FILTER (WHERE is_hidden = true)::INTEGER AS hidden
+    FROM ai_adult_catalog
+  `);
+
+  return {
+    scanned: rows.length,
+    imported,
+    total: counts.rows[0]?.total || 0,
+    approved: counts.rows[0]?.approved || 0,
+    pending: counts.rows[0]?.pending || 0,
+    hidden: counts.rows[0]?.hidden || 0
+  };
+}
+
+async function getConfig(req, res) {
+  try {
+    res.json({ success: true, config: await getConfigValue() });
+  } catch (error) {
+    console.error('[AdultManager] getConfig:', error);
+    res.status(500).json({ success: false, error: 'Falha ao carregar configuracao adulto' });
+  }
+}
+
+async function updateConfig(req, res) {
+  try {
+    const config = await saveConfigValue(req.body || {});
+    res.json({ success: true, config });
+  } catch (error) {
+    console.error('[AdultManager] updateConfig:', error);
+    res.status(500).json({ success: false, error: 'Falha ao salvar configuracao adulto' });
+  }
+}
+
+async function scanCatalog(req, res) {
+  try {
+    const result = await syncFromNexusCatalog();
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error('[AdultManager] scanCatalog:', error);
+    res.status(500).json({ success: false, error: 'Falha ao varrer catalogo adulto' });
+  }
+}
+
+async function getCatalog(req, res) {
+  try {
+    await ensureSchema();
+    const { status = 'approved', q = '', category = '' } = req.query;
+    const where = [];
+    const params = [];
+
+    if (status !== 'all') {
+      params.push(status);
+      where.push(`approval_status = $${params.length}`);
+    }
+
+    if (category) {
+      params.push(category);
+      where.push(`category_key = $${params.length}`);
+    }
+
+    if (q) {
+      params.push(`%${q}%`);
+      where.push(`(clean_name ILIKE $${params.length} OR original_name ILIKE $${params.length} OR category_name ILIKE $${params.length})`);
+    }
+
+    const sql = `
+      SELECT * FROM ai_adult_catalog
+      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ORDER BY is_featured DESC, manual_order ASC, updated_at DESC
+      LIMIT 600
+    `;
+
+    const { rows } = await pool.query(sql, params);
+    res.json({ success: true, items: rows.map(mapItem) });
+  } catch (error) {
+    console.error('[AdultManager] getCatalog:', error);
+    res.status(500).json({ success: false, error: 'Falha ao carregar catalogo adulto' });
+  }
+}
+
+async function getCategories(req, res) {
+  try {
+    await ensureSchema();
+    await refreshCategoryCounts();
+    const { rows } = await pool.query(`
+      SELECT * FROM ai_adult_categories
+      ORDER BY sort_order ASC, item_count DESC, name ASC
+    `);
+    res.json({ success: true, categories: rows.map(mapCategory) });
+  } catch (error) {
+    console.error('[AdultManager] getCategories:', error);
+    res.status(500).json({ success: false, error: 'Falha ao carregar categorias adulto' });
+  }
+}
+
+async function updateCategory(req, res) {
+  try {
+    await ensureSchema();
+    const { id } = req.params;
+    const body = req.body || {};
+    const categoryKey = body.categoryKey || slug(body.name || 'adultos');
+
+    const { rows } = await pool.query(`
+      UPDATE ai_adult_categories SET
+        category_key = $2,
+        name = $3,
+        icon_url = $4,
+        cover_url = $5,
+        color = $6,
+        source_keywords = $7::jsonb,
+        active = $8,
+        sort_order = $9,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `, [
+      id,
+      categoryKey,
+      body.name || 'Adultos',
+      body.iconUrl || null,
+      body.coverUrl || null,
+      body.color || null,
+      JSON.stringify(Array.isArray(body.sourceKeywords) ? body.sourceKeywords : []),
+      body.active !== false,
+      Number(body.sortOrder || 0)
+    ]);
+
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Categoria nao encontrada' });
+    res.json({ success: true, category: mapCategory(rows[0]) });
+  } catch (error) {
+    console.error('[AdultManager] updateCategory:', error);
+    res.status(500).json({ success: false, error: 'Falha ao atualizar categoria adulto' });
+  }
+}
+
+async function updateItemStatus(req, res) {
+  try {
+    await ensureSchema();
+    const { id } = req.params;
+    const { status = 'pending' } = req.body || {};
+    const isHidden = status === 'hidden';
+    const approvalStatus = isHidden ? 'hidden' : status;
+
+    const { rows } = await pool.query(`
+      UPDATE ai_adult_catalog SET
+        approval_status = $2,
+        is_hidden = $3,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `, [id, approvalStatus, isHidden]);
+
+    await refreshCategoryCounts();
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Item nao encontrado' });
+    res.json({ success: true, item: mapItem(rows[0]) });
+  } catch (error) {
+    console.error('[AdultManager] updateItemStatus:', error);
+    res.status(500).json({ success: false, error: 'Falha ao atualizar status adulto' });
+  }
+}
+
+async function updateItemFeature(req, res) {
+  try {
+    await ensureSchema();
+    const { id } = req.params;
+    const body = req.body || {};
+
+    const { rows } = await pool.query(`
+      UPDATE ai_adult_catalog SET
+        is_featured = COALESCE($2, is_featured),
+        manual_section = COALESCE($3, manual_section),
+        manual_order = COALESCE($4, manual_order),
+        poster_url = COALESCE($5, poster_url),
+        backdrop_url = COALESCE($6, backdrop_url),
+        banner_url = COALESCE($7, banner_url),
+        icon_url = COALESCE($8, icon_url),
+        overview = COALESCE($9, overview),
+        category_name = COALESCE($10, category_name),
+        category_key = COALESCE($11, category_key),
+        image_source = CASE WHEN $5 IS NOT NULL OR $6 IS NOT NULL OR $7 IS NOT NULL OR $8 IS NOT NULL THEN 'manual' ELSE image_source END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `, [
+      id,
+      typeof body.isFeatured === 'boolean' ? body.isFeatured : null,
+      body.manualSection || null,
+      body.manualOrder === undefined ? null : Number(body.manualOrder),
+      body.posterUrl || null,
+      body.backdropUrl || null,
+      body.bannerUrl || null,
+      body.iconUrl || null,
+      body.overview || null,
+      body.categoryName || null,
+      body.categoryName ? slug(body.categoryName) : (body.categoryKey || null)
+    ]);
+
+    await refreshCategoryCounts();
+    if (!rows[0]) return res.status(404).json({ success: false, error: 'Item nao encontrado' });
+    res.json({ success: true, item: mapItem(rows[0]) });
+  } catch (error) {
+    console.error('[AdultManager] updateItemFeature:', error);
+    res.status(500).json({ success: false, error: 'Falha ao atualizar item adulto' });
+  }
+}
+
+async function getPublicCatalog(req, res) {
+  try {
+    await ensureSchema();
+    const config = await getConfigValue();
+    const { rows: categories } = await pool.query(`
+      SELECT * FROM ai_adult_categories
+      WHERE active = true AND item_count > 0
+      ORDER BY sort_order ASC, item_count DESC, name ASC
+    `);
+
+    const { rows: items } = await pool.query(`
+      SELECT * FROM ai_adult_catalog
+      WHERE approval_status = 'approved' AND is_hidden = false
+      ORDER BY is_featured DESC, manual_order ASC, updated_at DESC
+      LIMIT 1000
+    `);
+
+    res.json({
+      success: true,
+      source: 'maxxcontrol-adult-manager',
+      config,
+      categories: categories.map(mapCategory),
+      items: items.map(mapItem)
+    });
+  } catch (error) {
+    console.error('[AdultManager] getPublicCatalog:', error);
+    res.status(500).json({ success: false, error: 'Falha ao carregar catalogo publico adulto' });
+  }
+}
+
+function runAdultScanBackground() {
+  syncFromNexusCatalog()
+    .then((result) => console.log('[AdultManager] Varredura Nexus adulto concluida:', result))
+    .catch((error) => console.error('[AdultManager] Falha na varredura Nexus adulto:', error.message));
+}
+
+module.exports = {
+  getConfig,
+  updateConfig,
+  scanCatalog,
+  getCatalog,
+  getCategories,
+  updateCategory,
+  updateItemStatus,
+  updateItemFeature,
+  getPublicCatalog,
+  syncFromNexusCatalog,
+  runAdultScanBackground
+};
+
