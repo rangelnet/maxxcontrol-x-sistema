@@ -87,7 +87,7 @@ exports.getBugs = async (req, res) => {
   const { resolvido, severity, type } = req.query;
 
   try {
-    let query = 'SELECT b.*, u.nome, u.email FROM bugs b JOIN users u ON b.user_id = u.id WHERE 1=1';
+    let query = 'SELECT b.*, u.nome, u.email FROM bugs b LEFT JOIN users u ON b.user_id = u.id WHERE 1=1';
     const params = [];
     let paramIndex = 1;
 
@@ -180,3 +180,4 @@ exports.resolveBug = async (req, res) => {
     });
   }
 };
+

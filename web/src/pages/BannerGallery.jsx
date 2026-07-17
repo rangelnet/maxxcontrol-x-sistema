@@ -76,19 +76,19 @@ const BannerGallery = () => {
     }
     return (
       <div className={`w-full h-full bg-gradient-to-b ${colors[type] || 'from-dark-700 to-dark-900'} flex flex-col items-center justify-center gap-2`}>
-        <span className="text-3xl">{icons[type] || '🖼️'}</span>
+        <span className="text-base">{icons[type] || '🖼️'}</span>
         <span className="text-xs text-zinc-500 font-mono text-center px-2 truncate w-full text-center">{name}</span>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
 
       {/* ══════ HEADER ══════ */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-sm font-bold text-white flex items-center gap-2">
             <Image size={22} className="text-brand-500" />
             Minha Galeria
           </h1>
@@ -100,7 +100,7 @@ const BannerGallery = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={loadBanners}
-            className="p-2 hover:bg-dark-700 rounded-lg transition text-zinc-400 hover:text-white border border-dark-700"
+            className="p-2 hover:bg-dark-700 rounded-md transition text-zinc-400 hover:text-white border border-dark-700"
             title="Atualizar"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -108,7 +108,7 @@ const BannerGallery = () => {
 
           <Link
             to="/branding-banners"
-            className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-lg transition shadow-lg shadow-brand-500/20"
+            className="flex items-center gap-2 px-4 py-1.5 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-md transition shadow-lg shadow-brand-500/20"
           >
             <PlusCircle size={16} />
             Criar Novo
@@ -117,7 +117,7 @@ const BannerGallery = () => {
       </div>
 
       {/* ══════ BARRA DE FILTROS ══════ */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2">
         {/* Busca */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={15} />
@@ -126,21 +126,21 @@ const BannerGallery = () => {
             placeholder="Buscar por nome ou tipo..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full bg-dark-800 border border-dark-700 rounded-lg py-2.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 focus:border-brand-500 focus:outline-none transition-colors"
+            className="w-full bg-dark-800 border border-dark-700 rounded-md py-1.5 pl-9 pr-4 text-sm text-white placeholder-zinc-600 focus:border-brand-500 focus:outline-none transition-colors"
           />
         </div>
 
         {/* View toggle */}
-        <div className="flex items-center bg-dark-800 border border-dark-700 rounded-lg p-1">
+        <div className="flex items-center bg-dark-800 border border-dark-700 rounded-md p-1">
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-brand-500 text-white' : 'text-zinc-500 hover:text-white'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-brand-500 text-white' : 'text-zinc-500 hover:text-white'}`}
           >
             <Grid3x3 size={16} />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-brand-500 text-white' : 'text-zinc-500 hover:text-white'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-brand-500 text-white' : 'text-zinc-500 hover:text-white'}`}
           >
             <List size={16} />
           </button>
@@ -160,18 +160,18 @@ const BannerGallery = () => {
         <>
           {filteredBanners.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
-              <Image size={40} className="mb-3 opacity-30" />
+              <Image size={40} className="mb-2 opacity-30" />
               <p className="text-sm">Nenhum banner encontrado.</p>
-              <Link to="/branding-banners" className="mt-3 text-brand-400 text-sm hover:underline">
+              <Link to="/branding-banners" className="mt-2 text-brand-400 text-sm hover:underline">
                 Criar meu primeiro banner →
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
               {filteredBanners.map((banner) => (
                 <div
                   key={banner.id}
-                  className="bg-dark-800 rounded-lg overflow-hidden border border-dark-700 hover:border-brand-500/50 transition-all duration-300 group relative"
+                  className="bg-dark-800 rounded-md overflow-hidden border border-dark-700 hover:border-brand-500/50 transition-all duration-300 group relative"
                 >
                   {/* Thumbnail */}
                   <div className="aspect-[9/16] bg-black relative overflow-hidden group-hover:scale-[1.01] transition duration-300">
@@ -187,13 +187,13 @@ const BannerGallery = () => {
                     )}
 
                     {/* Overlay de Ações */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2 backdrop-blur-sm">
                       {banner.url && (
                         <a
                           href={banner.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-white text-black h-11 w-11 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg"
+                          className="bg-white text-black h-8 w-8 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg"
                           title="Visualizar"
                         >
                           <Eye size={18} />
@@ -203,7 +203,7 @@ const BannerGallery = () => {
                         <a
                           href={banner.url}
                           download={banner.name}
-                          className="bg-brand-500 text-white h-11 w-11 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg"
+                          className="bg-brand-500 text-white h-8 w-8 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg"
                           title="Baixar"
                         >
                           <Download size={18} />
@@ -211,7 +211,7 @@ const BannerGallery = () => {
                       )}
                       <button
                         onClick={() => handleDelete(banner.id)}
-                        className="bg-red-600 text-white h-11 w-11 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg"
+                        className="bg-red-600 text-white h-8 w-8 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg"
                         title="Excluir"
                       >
                         <Trash2 size={16} />
@@ -220,7 +220,7 @@ const BannerGallery = () => {
                   </div>
 
                   {/* Info */}
-                  <div className="p-3 bg-dark-800 border-t border-dark-700">
+                  <div className="p-2 bg-dark-800 border-t border-dark-700">
                     <p className="font-semibold text-xs text-white truncate mb-1" title={banner.name}>
                       {banner.name}
                     </p>
@@ -245,21 +245,21 @@ const BannerGallery = () => {
         <div className="space-y-2">
           {filteredBanners.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
-              <Image size={40} className="mb-3 opacity-30" />
+              <Image size={40} className="mb-2 opacity-30" />
               <p className="text-sm">Nenhum banner encontrado.</p>
             </div>
           ) : (
             filteredBanners.map((banner) => (
               <div
                 key={banner.id}
-                className="flex items-center gap-4 bg-dark-800 border border-dark-700 hover:border-dark-600 rounded-lg p-4 group transition-all"
+                className="flex items-center gap-2 bg-dark-800 border border-dark-700 hover:border-dark-600 rounded-md p-2 group transition-all"
               >
                 {/* Mini thumb */}
-                <div className="w-12 h-14 rounded-lg overflow-hidden bg-dark-900 border border-dark-700 shrink-0">
+                <div className="w-9 h-14 rounded-md overflow-hidden bg-dark-900 border border-dark-700 shrink-0">
                   {banner.url ? (
                     <img src={banner.url} alt={banner.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xl">🖼️</div>
+                    <div className="w-full h-full flex items-center justify-center text-base">🖼️</div>
                   )}
                 </div>
 
@@ -282,18 +282,18 @@ const BannerGallery = () => {
                   {banner.url && (
                     <>
                       <a href={banner.url} target="_blank" rel="noopener noreferrer"
-                        className="p-2 hover:bg-dark-700 rounded-lg transition text-zinc-400 hover:text-white" title="Visualizar">
+                        className="p-2 hover:bg-dark-700 rounded-md transition text-zinc-400 hover:text-white" title="Visualizar">
                         <Eye size={16} />
                       </a>
                       <a href={banner.url} download={banner.name}
-                        className="p-2 hover:bg-brand-500/20 rounded-lg transition text-brand-400 hover:text-brand-300" title="Baixar">
+                        className="p-2 hover:bg-brand-500/20 rounded-md transition text-brand-400 hover:text-brand-300" title="Baixar">
                         <Download size={16} />
                       </a>
                     </>
                   )}
                   <button
                     onClick={() => handleDelete(banner.id)}
-                    className="p-2 hover:bg-red-500/10 rounded-lg transition text-zinc-600 hover:text-red-400" title="Excluir"
+                    className="p-2 hover:bg-red-500/10 rounded-md transition text-zinc-600 hover:text-red-400" title="Excluir"
                   >
                     <Trash2 size={16} />
                   </button>

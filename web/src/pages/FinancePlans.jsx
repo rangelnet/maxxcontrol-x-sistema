@@ -602,14 +602,14 @@ const FinancePlans = () => {
   ];
 
   // Botão Primário Laranja Oficial
-  const btnPrimaryClass = "inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-black rounded-lg transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
-  const btnPrimary = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 24px', background: '#FC5F16', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)', transition: 'all 0.2s' };
+  const btnPrimaryClass = "inline-flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-black rounded-md transition-all shadow-[0_4px_15px_rgba(252,95,22,0.3)] hover:shadow-[0_6px_20px_rgba(252,95,22,0.5)] cursor-pointer border-none";
+  const btnPrimary = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '7px 12px', background: '#FC5F16', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.3)', transition: 'all 0.2s' };
 
   return (
     <div style={{ padding: 'clamp(12px, 3vw, 30px)', maxWidth: '1200px', margin: '0 auto', color: '#f4f4f5', fontFamily: 'Inter, sans-serif' }}>
       
       {/* HEADER E DASHBOARD */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '12px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
         <div style={{ minWidth: 0 }}>
           <h1 style={{ fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: '900', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <DollarSign size={28} color="#FC5F16" style={{ flexShrink: 0 }} /> Planos & Receitas
@@ -638,12 +638,12 @@ const FinancePlans = () => {
       </div>
 
       {/* ABAS */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', borderBottom: '1px solid #27272a', paddingBottom: '12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', borderBottom: '1px solid #27272a', paddingBottom: '12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {visibleTabs.map(tab => (
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-black cursor-pointer border-none transition-all transform active:scale-95 whitespace-nowrap text-xs sm:text-sm ${activeTab === tab.id ? 'bg-brand-500/10 text-brand-500' : 'bg-transparent text-zinc-500 hover:text-zinc-300'}`}
+            className={`px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-md font-black cursor-pointer border-none transition-all transform active:scale-95 whitespace-nowrap text-xs sm:text-sm ${activeTab === tab.id ? 'bg-brand-500/10 text-brand-500' : 'bg-transparent text-zinc-500 hover:text-zinc-300'}`}
           >
             {tab.label}
           </button>
@@ -651,26 +651,26 @@ const FinancePlans = () => {
       </div>
 
       {/* DASHBOARD CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '15px', marginBottom: '30px' }}>
-        <div style={{ background: 'rgba(252,95,22,0.1)', border: '1px solid rgba(252,95,22,0.3)', borderRadius: '16px', padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
-          <div style={{ width: '60px', height: '60px', borderRadius: '14px', background: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(252,95,22,0.4)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '10px', marginBottom: '10px' }}>
+        <div style={{ background: 'rgba(252,95,22,0.1)', border: '1px solid rgba(252,95,22,0.3)', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+          <div style={{ width: '60px', height: '60px', borderRadius: '10px', background: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(252,95,22,0.4)' }}>
             <Activity size={30} color="#fff" />
           </div>
           <div>
             <p style={{ margin: 0, fontSize: '13px', color: '#FC5F16', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Receita do Mês</p>
-            <h2 style={{ margin: '4px 0 0', fontSize: '32px', fontWeight: '900', color: '#fff' }}>
+            <h2 style={{ margin: '4px 0 0', fontSize: '19px', fontWeight: '900', color: '#fff' }}>
               {formatCurrency(stats.total_revenue)}
             </h2>
           </div>
         </div>
 
-        <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ width: '60px', height: '60px', borderRadius: '14px', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '60px', height: '60px', borderRadius: '10px', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CheckCircle size={30} color="#10b981" />
           </div>
           <div>
             <p style={{ margin: 0, fontSize: '13px', color: '#a1a1aa', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Vendas Realizadas</p>
-            <h2 style={{ margin: '4px 0 0', fontSize: '32px', fontWeight: '900', color: '#fff' }}>
+            <h2 style={{ margin: '4px 0 0', fontSize: '19px', fontWeight: '900', color: '#fff' }}>
               {stats.total_sales}
             </h2>
           </div>
@@ -680,31 +680,31 @@ const FinancePlans = () => {
       {activeTab === 'planos' && (
         <>
           {/* LISTA DE PLANOS */}
-          <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Settings size={20} color="#FC5F16" /> Planos Comerciais Ativos
           </h2>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '50px', color: '#71717a' }}>Carregando planos...</div>
       ) : plans.length === 0 ? (
-        <div style={{ background: '#18181b', borderRadius: '16px', padding: '40px', textAlign: 'center', border: '1px dashed #3f3f46' }}>
-          <DollarSign size={48} color="#3f3f46" style={{ marginBottom: '16px' }} />
-          <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: '#f4f4f5' }}>Nenhum plano cadastrado</h3>
+        <div style={{ background: '#18181b', borderRadius: '10px', padding: '40px', textAlign: 'center', border: '1px dashed #3f3f46' }}>
+          <DollarSign size={48} color="#3f3f46" style={{ marginBottom: '12px' }} />
+          <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#f4f4f5' }}>Nenhum plano cadastrado</h3>
           <p style={{ margin: 0, color: '#a1a1aa' }}>Crie o seu primeiro plano comercial para começar a vender.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '15px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '10px' }}>
           {plans.map((plan) => (
-            <div key={plan.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
+            <div key={plan.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
               {!plan.is_active && (
                 <div style={{ position: 'absolute', top: '12px', right: '12px', background: '#ef4444', color: '#fff', fontSize: '10px', padding: '4px 8px', borderRadius: '8px', fontWeight: '800' }}>INATIVO</div>
               )}
-              <h3 style={{ margin: '0 0 15px', fontSize: '20px', fontWeight: '900', color: '#fff' }}>{plan.name}</h3>
-              <div style={{ fontSize: '32px', fontWeight: '900', color: '#FC5F16', marginBottom: '20px' }}>
+              <h3 style={{ margin: '0 0 15px', fontSize: '16px', fontWeight: '900', color: '#fff' }}>{plan.name}</h3>
+              <div style={{ fontSize: '19px', fontWeight: '900', color: '#FC5F16', marginBottom: '10px' }}>
                 {formatCurrency(plan.price)}
               </div>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '25px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#a1a1aa', fontSize: '14px', fontWeight: '600' }}>
                   <Clock size={16} color="#FC5F16" /> Duração: <span style={{ color: '#fff' }}>{plan.duration_days} Dias</span>
                 </div>
@@ -719,10 +719,10 @@ const FinancePlans = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '10px', paddingTop: '20px', borderTop: '1px solid #27272a' }}>
-                <button onClick={() => openEditModal(plan)} className="flex-1 bg-dark-700 hover:bg-dark-600 active:scale-95 text-white py-2.5 rounded-lg font-bold border border-white/5 transition-all flex items-center justify-center gap-2">
+                <button onClick={() => openEditModal(plan)} className="flex-1 bg-dark-700 hover:bg-dark-600 active:scale-95 text-white py-1.5 rounded-md font-bold border border-white/5 transition-all flex items-center justify-center gap-2">
                   <Edit3 size={16} /> Editar
                 </button>
-                <button onClick={() => handleDelete(plan.id)} className="px-3 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all active:scale-95 flex items-center justify-center border border-red-500/20">
+                <button onClick={() => handleDelete(plan.id)} className="px-2 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-md transition-all active:scale-95 flex items-center justify-center border border-red-500/20">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -735,7 +735,7 @@ const FinancePlans = () => {
 
       {activeTab === 'crm' && (
         <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
             <h2 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: '800', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <User size={20} color="#FC5F16" /> Histórico de Clientes (CRM)
             </h2>
@@ -763,19 +763,19 @@ const FinancePlans = () => {
             </div>
           </div>
 
-          <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', overflow: 'hidden' }}>
+          <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: '#09090b', borderBottom: '1px solid #27272a' }}>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Cliente</th>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>MAC</th>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Usuário</th>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Senha</th>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Plano</th>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Financeiro</th>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Data / Hora</th>
-                  <th style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Ações</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Cliente</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>MAC</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Usuário</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Senha</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Plano</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Financeiro</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Data / Hora</th>
+                  <th style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px', fontWeight: '700' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -786,7 +786,7 @@ const FinancePlans = () => {
                 ) : (
                   filteredCrm.map(log => (
                     <tr key={log.id} style={{ borderBottom: '1px solid #27272a', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background='rgba(255,255,255,0.02)'} onMouseOut={e => e.currentTarget.style.background='transparent'}>
-                      <td style={{ padding: '15px 20px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{log.client_name || 'Desconhecido'}</div>
                         {log.whatsapp ? (
                            <a href={`https://wa.me/${log.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#34d399', textDecoration: 'none', fontWeight: '700' }}>
@@ -796,25 +796,25 @@ const FinancePlans = () => {
                            <span style={{ fontSize: '11px', color: '#71717a' }}>Sem contato</span>
                         )}
                       </td>
-                      <td style={{ padding: '15px 20px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontWeight: '800', color: '#fff', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                           {log.app_mac_address || log.mac_address || 'Sem MAC'}
                         </div>
                       </td>
-                      <td style={{ padding: '15px 20px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontWeight: '800', color: '#fff', fontSize: '13px', wordBreak: 'break-word' }}>
                           {log.app_username || log.username || 'Sem usuário'}
                         </div>
                       </td>
-                      <td style={{ padding: '15px 20px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontWeight: '800', color: '#FC5F16', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                           {log.app_password || log.password || 'Sem senha'}
                         </div>
                       </td>
-                      <td style={{ padding: '15px 20px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontSize: '13px', color: '#e4e4e7', fontWeight: '600' }}>{log.plan_name || 'Avulso/Excluído'}</div>
                       </td>
-                      <td style={{ padding: '15px 20px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ fontWeight: '900', color: '#FC5F16', fontSize: '14px' }}>{formatCurrency(log.amount)}</div>
                         <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
                           <span style={{ fontSize: '10px', padding: '2px 6px', background: '#27272a', borderRadius: '4px', color: '#a1a1aa', fontWeight: '700' }}>{log.payment_method}</span>
@@ -827,10 +827,10 @@ const FinancePlans = () => {
                           </span>
                         </div>
                       </td>
-                      <td style={{ padding: '15px 20px', color: '#a1a1aa', fontSize: '13px' }}>
+                      <td style={{ padding: '8px 12px', color: '#a1a1aa', fontSize: '13px' }}>
                         {formatDate(log.created_at)}
                       </td>
-                      <td style={{ padding: '15px 20px' }}>
+                      <td style={{ padding: '8px 12px' }}>
                         <div style={{ display: 'flex', gap: '8px' }}>
                            <select 
                              value={log.status} 
@@ -858,39 +858,39 @@ const FinancePlans = () => {
 
       {activeTab === 'loja' && (
         <>
-          <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShoppingCart size={20} color="#FC5F16" /> Configuração da Loja de Créditos
           </h2>
-          <p style={{ color: '#a1a1aa', marginBottom: '30px' }}>Configure aqui os pacotes de créditos que seus revendedores poderão comprar. Quanto maior a escala, maior o desconto que você pode oferecer.</p>
+          <p style={{ color: '#a1a1aa', marginBottom: '10px' }}>Configure aqui os pacotes de créditos que seus revendedores poderão comprar. Quanto maior a escala, maior o desconto que você pode oferecer.</p>
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '50px', color: '#71717a' }}>Carregando pacotes...</div>
           ) : creditPackages.length === 0 ? (
-            <div style={{ background: '#18181b', borderRadius: '16px', padding: '40px', textAlign: 'center', border: '1px dashed #3f3f46' }}>
-              <CreditCard size={48} color="#3f3f46" style={{ marginBottom: '16px' }} />
-              <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: '#f4f4f5' }}>Nenhum pacote de crédito</h3>
+            <div style={{ background: '#18181b', borderRadius: '10px', padding: '40px', textAlign: 'center', border: '1px dashed #3f3f46' }}>
+              <CreditCard size={48} color="#3f3f46" style={{ marginBottom: '12px' }} />
+              <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#f4f4f5' }}>Nenhum pacote de crédito</h3>
               <p style={{ margin: 0, color: '#a1a1aa' }}>Crie o seu primeiro pacote para a loja de revendedores.</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '15px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '10px' }}>
               {creditPackages.map((pkg) => {
                  const hasPromo = pkg.promo_price && pkg.promo_price > 0;
                  const activePrice = hasPromo ? pkg.promo_price : pkg.price;
                  const costPerCredit = (activePrice / pkg.credit_amount).toFixed(2);
                  return (
-                  <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
+                  <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
                     <div style={{ position: 'absolute', top: '-20px', right: '-20px', background: 'rgba(252, 95, 22, 0.1)', width: '100px', height: '100px', borderRadius: '50%', filter: 'blur(30px)' }}></div>
                     
                     {hasPromo && (
-                      <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(52, 211, 153, 0.2)', color: '#34d399', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(52, 211, 153, 0.2)', color: '#34d399', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Tag size={12} /> PROMOÇÃO
                       </div>
                     )}
 
-                    <h3 style={{ margin: '0 0 10px', fontSize: '18px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
+                    <h3 style={{ margin: '0 0 10px', fontSize: '16px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
                     
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '20px' }}>
-                      <div style={{ fontSize: '32px', fontWeight: '900', color: '#FC5F16' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '19px', fontWeight: '900', color: '#FC5F16' }}>
                         {formatCurrency(activePrice)}
                       </div>
                       {hasPromo && (
@@ -900,10 +900,10 @@ const FinancePlans = () => {
                       )}
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px', background: '#09090b', padding: '15px', borderRadius: '12px', border: '1px solid #27272a' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '25px', background: '#09090b', padding: '15px', borderRadius: '10px', border: '1px solid #27272a' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#a1a1aa', fontSize: '14px', fontWeight: '700' }}>
                         <span><CreditCard size={16} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#FC5F16' }} /> Créditos</span>
-                        <span style={{ color: '#fff', fontSize: '18px', fontWeight: '900' }}>{pkg.credit_amount}</span>
+                        <span style={{ color: '#fff', fontSize: '16px', fontWeight: '900' }}>{pkg.credit_amount}</span>
                       </div>
                       <div style={{ height: '1px', background: '#27272a' }}></div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#a1a1aa', fontSize: '13px', fontWeight: '600' }}>
@@ -930,39 +930,39 @@ const FinancePlans = () => {
 
       {activeTab === 'assinaturas' && (
         <>
-          <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Monitor size={20} color="#FC5F16" /> Planos de Assinatura do Painel (SaaS)
           </h2>
-          <p style={{ color: '#a1a1aa', marginBottom: '30px' }}>
+          <p style={{ color: '#a1a1aa', marginBottom: '10px' }}>
             Crie os pacotes de mensalidade que seus revendedores deverão pagar para acessar o painel. Você pode restringir quais ferramentas eles terão acesso dependendo do plano escolhido.
           </p>
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '50px', color: '#71717a' }}>Carregando pacotes de assinatura...</div>
           ) : panelPlans.length === 0 ? (
-            <div style={{ background: '#18181b', borderRadius: '16px', padding: '40px', textAlign: 'center', border: '1px dashed #3f3f46' }}>
-              <Monitor size={48} color="#3f3f46" style={{ marginBottom: '16px' }} />
-              <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: '#f4f4f5' }}>Nenhum pacote de assinatura criado</h3>
+            <div style={{ background: '#18181b', borderRadius: '10px', padding: '40px', textAlign: 'center', border: '1px dashed #3f3f46' }}>
+              <Monitor size={48} color="#3f3f46" style={{ marginBottom: '12px' }} />
+              <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#f4f4f5' }}>Nenhum pacote de assinatura criado</h3>
               <p style={{ margin: 0, color: '#a1a1aa' }}>Crie pacotes (ex: Básico, Elite) para começar a cobrar pela plataforma.</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '15px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '10px' }}>
               {panelPlans.map((pkg) => {
                  return (
-                  <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
+                  <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.borderColor='#FC5F16'} onMouseOut={e => e.currentTarget.style.borderColor='#27272a'}>
                     {!pkg.is_active && (
                       <div style={{ position: 'absolute', top: '12px', right: '12px', background: '#ef4444', color: '#fff', fontSize: '10px', padding: '4px 8px', borderRadius: '8px', fontWeight: '800' }}>INATIVO</div>
                     )}
-                    <h3 style={{ margin: '0 0 10px', fontSize: '18px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
+                    <h3 style={{ margin: '0 0 10px', fontSize: '16px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
                     
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '20px' }}>
-                      <div style={{ fontSize: '32px', fontWeight: '900', color: '#FC5F16' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '19px', fontWeight: '900', color: '#FC5F16' }}>
                         {formatCurrency(pkg.price)}
                       </div>
                       <span style={{ color: '#71717a', fontSize: '12px' }}>/ mês</span>
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '25px', background: '#09090b', padding: '15px', borderRadius: '12px', border: '1px solid #27272a' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '25px', background: '#09090b', padding: '15px', borderRadius: '10px', border: '1px solid #27272a' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#a1a1aa', fontSize: '14px', fontWeight: '700' }}>
                         <span><Clock size={16} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#FC5F16' }} /> Período Grátis</span>
                         <span style={{ color: '#fff', fontSize: '14px', fontWeight: '900' }}>{pkg.trial_days} Dias</span>
@@ -992,31 +992,31 @@ const FinancePlans = () => {
 
       {/* MODAL NOVO PLANO DE ASSINATURA */}
       {showPanelPlanModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
-          <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '20px', width: '100%', maxWidth: '700px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ margin: '0 0 25px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
+          <div style={{ background: '#18181b', border: '1px solid #FC5F16', borderRadius: '10px', width: '100%', maxWidth: '700px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ margin: '0 0 25px', fontSize: '16px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
               {editPanelPlanId ? <Edit3 size={24} color="#FC5F16" /> : <Plus size={24} color="#FC5F16" />} 
               {editPanelPlanId ? 'Editar Plano de Assinatura' : 'Criar Plano de Assinatura'}
             </h2>
             
-            <form onSubmit={handleSavePanelPlan} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', gap: '15px' }}>
+            <form onSubmit={handleSavePanelPlan} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
                 <div style={{ flex: 2 }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Nome do Pacote (SaaS)</label>
-                  <input required type="text" placeholder="Ex: PLANO ELITE" value={panelPlanFormData.name} onChange={e => setPanelPlanFormData({...panelPlanFormData, name: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                  <input required type="text" placeholder="Ex: PLANO ELITE" value={panelPlanFormData.name} onChange={e => setPanelPlanFormData({...panelPlanFormData, name: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Preço Mensal (R$)</label>
-                  <input required type="number" step="0.01" placeholder="99.90" value={panelPlanFormData.price} onChange={e => setPanelPlanFormData({...panelPlanFormData, price: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                  <input required type="number" step="0.01" placeholder="99.90" value={panelPlanFormData.price} onChange={e => setPanelPlanFormData({...panelPlanFormData, price: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Dias Grátis (Trial)</label>
-                  <input required type="number" placeholder="7" value={panelPlanFormData.trial_days} onChange={e => setPanelPlanFormData({...panelPlanFormData, trial_days: parseInt(e.target.value)})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                  <input required type="number" placeholder="7" value={panelPlanFormData.trial_days} onChange={e => setPanelPlanFormData({...panelPlanFormData, trial_days: parseInt(e.target.value)})} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                 </div>
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '15px', fontSize: '14px', fontWeight: '900', color: '#fff' }}>Ferramentas Inclusas (Checkboxes)</label>
+                <label style={{ display: 'block', marginBottom: '10px', fontSize: '14px', fontWeight: '900', color: '#fff' }}>Ferramentas Inclusas (Checkboxes)</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
                   {availableFeatures.map(feat => {
                     const isChecked = panelPlanFormData.features.includes(feat.id);
@@ -1027,7 +1027,7 @@ const FinancePlans = () => {
                         style={{ 
                           background: isChecked ? 'rgba(252, 95, 22, 0.1)' : '#09090b', 
                           border: isChecked ? '1px solid #FC5F16' : '1px solid #27272a', 
-                          padding: '12px', 
+                          padding: '10px', 
                           borderRadius: '8px', 
                           cursor: 'pointer', 
                           display: 'flex', 
@@ -1049,14 +1049,14 @@ const FinancePlans = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', background: '#09090b', padding: '15px', borderRadius: '12px', border: '1px solid #27272a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', background: '#09090b', padding: '15px', borderRadius: '10px', border: '1px solid #27272a' }}>
                 <input type="checkbox" id="panelPlanActive" checked={panelPlanFormData.is_active} onChange={e => setPanelPlanFormData({...panelPlanFormData, is_active: e.target.checked})} style={{ accentColor: '#FC5F16', width: '18px', height: '18px' }} />
                 <label htmlFor="panelPlanActive" style={{ fontSize: '14px', fontWeight: '700', color: '#fff', cursor: 'pointer' }}>Plano Ativo (Visível para compra)</label>
               </div>
 
-              <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                <button type="button" onClick={() => setShowPanelPlanModal(false)} style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}>Cancelar</button>
-                <button type="submit" style={{ flex: 2, padding: '14px', background: '#FC5F16', border: 'none', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.4)' }}>Salvar Plano</button>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button type="button" onClick={() => setShowPanelPlanModal(false)} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '10px', fontWeight: '800', cursor: 'pointer' }}>Cancelar</button>
+                <button type="submit" style={{ flex: 2, padding: '10px', background: '#FC5F16', border: 'none', color: '#fff', borderRadius: '10px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.4)' }}>Salvar Plano</button>
               </div>
             </form>
           </div>
@@ -1065,59 +1065,59 @@ const FinancePlans = () => {
 
       {/* MODAL NOVO PLANO COMERCIAL */}
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
-          <div style={{ background: '#111111', border: '1px solid rgba(252,95,22,0.5)', borderRadius: '24px', width: '100%', maxWidth: '1100px', padding: '30px', boxShadow: '0 0 40px rgba(252,95,22,0.15)', maxHeight: '95vh', overflowY: 'auto', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
+          <div style={{ background: '#111111', border: '1px solid rgba(252,95,22,0.5)', borderRadius: '10px', width: '100%', maxWidth: '1100px', padding: '10px', boxShadow: '0 0 40px rgba(252,95,22,0.15)', maxHeight: '95vh', overflowY: 'auto', position: 'relative' }}>
             
             {/* Botão Fechar */}
-            <button onClick={() => { setShowModal(false); setEditPlanId(null); }} style={{ position: 'absolute', top: '30px', right: '30px', background: '#18181b', border: '1px solid #27272a', color: '#a1a1aa', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#3f3f46'; }} onMouseOut={e => { e.currentTarget.style.color = '#a1a1aa'; e.currentTarget.style.borderColor = '#27272a'; }}>
+            <button onClick={() => { setShowModal(false); setEditPlanId(null); }} style={{ position: 'absolute', top: '30px', right: '30px', background: '#18181b', border: '1px solid #27272a', color: '#a1a1aa', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#3f3f46'; }} onMouseOut={e => { e.currentTarget.style.color = '#a1a1aa'; e.currentTarget.style.borderColor = '#27272a'; }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
             {/* Header do Modal */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(252,95,22,0.1)', border: '1px solid rgba(252,95,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FC5F16' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: 'rgba(252,95,22,0.1)', border: '1px solid rgba(252,95,22,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FC5F16' }}>
                 {editPlanId ? <Edit3 size={24} /> : <Plus size={24} />}
               </div>
               <div>
-                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', color: '#fff' }}>{editPlanId ? 'Editar Plano' : 'Criar Novo Plano'}</h2>
+                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>{editPlanId ? 'Editar Plano' : 'Criar Novo Plano'}</h2>
                 <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#a1a1aa' }}>Configure um novo plano para seus clientes</p>
               </div>
             </div>
             
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 
                 {/* Coluna Esquerda (Formulário) */}
-                <div style={{ flex: '2 1 600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ flex: '2 1 600px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   
                   {/* Bloco 1: Informações do Plano */}
-                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px' }}>
+                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px' }}>
                     <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>1</span>
                       Informações do Plano
                     </h3>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                         <div style={{ flex: '2 1 200px' }}>
                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Nome do Plano</label>
                           <div style={{ position: 'relative' }}>
                             <Tag size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
-                            <input required type="text" placeholder="Ex: TV Maxx Premium Mensal" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                            <input required type="text" placeholder="Ex: TV Maxx Premium Mensal" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                           </div>
                         </div>
                         <div style={{ flex: '1 1 120px' }}>
                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Preço (R$)</label>
                           <div style={{ position: 'relative' }}>
                             <DollarSign size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
-                            <input required type="number" step="0.01" placeholder="35.00" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                            <input required type="number" step="0.01" placeholder="35.00" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                           </div>
                         </div>
                         <div style={{ flex: '1 1 150px' }}>
                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Duração (Dias)</label>
                           <div style={{ position: 'relative' }}>
                             <Clock size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
-                            <select required value={formData.duration_days} onChange={e => setFormData({...formData, duration_days: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none' }}>
+                            <select required value={formData.duration_days} onChange={e => setFormData({...formData, duration_days: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none' }}>
                               <option value="1">1 Dia (Teste)</option>
                               <option value="30">30 Dias (Mensal)</option>
                               <option value="90">90 Dias (Trimestral)</option>
@@ -1128,19 +1128,19 @@ const FinancePlans = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                         <div style={{ flex: 1 }}>
                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Conexões (Telas)</label>
                           <div style={{ position: 'relative' }}>
                             <Monitor size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
-                            <input required type="number" min="1" max="10" value={formData.max_connections} onChange={e => setFormData({...formData, max_connections: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                            <input required type="number" min="1" max="10" value={formData.max_connections} onChange={e => setFormData({...formData, max_connections: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
                           </div>
                         </div>
                         <div style={{ flex: 1 }}>
                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Painel Vinculado</label>
                           <div style={{ position: 'relative' }}>
                             <Settings size={16} color="#FC5F16" style={{ position: 'absolute', left: '14px', top: '14px' }} />
-                            <select value={formData.qpanel_id} onChange={e => setFormData({...formData, qpanel_id: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none' }}>
+                            <select value={formData.qpanel_id} onChange={e => setFormData({...formData, qpanel_id: e.target.value})} style={{ padding: '14px 14px 14px 40px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none' }}>
                               <option value="">Qualquer Painel</option>
                               {panels.map(p => (
                                 <option key={p.id} value={p.id}>{p.panel_name}</option>
@@ -1152,9 +1152,9 @@ const FinancePlans = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     {/* Bloco 2: Pacotes */}
-                    <div style={{ flex: 1, background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', minWidth: '280px' }}>
+                    <div style={{ flex: 1, background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', minWidth: '280px' }}>
                       <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>2</span>
                         Pacotes no Painel Sigma
@@ -1164,8 +1164,8 @@ const FinancePlans = () => {
                       <div style={{ 
                         background: '#09090b', 
                         border: '1px solid #27272a', 
-                        borderRadius: '12px', 
-                        padding: '12px', 
+                        borderRadius: '10px', 
+                        padding: '10px', 
                         height: '220px', 
                         overflowY: 'auto',
                         display: 'flex',
@@ -1193,8 +1193,8 @@ const FinancePlans = () => {
                               style={{ 
                                 display: 'flex', 
                                 alignItems: 'center', 
-                                gap: '12px', 
-                                padding: '12px', 
+                                gap: '10px', 
+                                padding: '10px', 
                                 borderRadius: '10px', 
                                 background: isSelected ? 'rgba(252,95,22,0.1)' : 'transparent',
                                 border: isSelected ? '1px solid rgba(252,95,22,0.3)' : '1px solid transparent',
@@ -1225,14 +1225,14 @@ const FinancePlans = () => {
                     </div>
 
                     {/* Bloco 3: Destaque Visual */}
-                    <div style={{ flex: 1, background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', minWidth: '280px' }}>
+                    <div style={{ flex: 1, background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', minWidth: '280px' }}>
                       <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>3</span>
                         Destaque Visual no App
                       </h3>
                       <p style={{ margin: '0 0 15px', fontSize: '12px', color: '#a1a1aa' }}>Personalize como este plano será exibido no app</p>
                       
-                      <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                         <div style={{ flex: 1 }}>
                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: '700', color: '#a1a1aa' }}>Tipo de Destaque</label>
                           <div style={{ position: 'relative' }}>
@@ -1260,7 +1260,7 @@ const FinancePlans = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '20px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '10px' }}>
                         <div>
                           <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: '700', color: '#a1a1aa' }}>Cor Tag</label>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#09090b', padding: '6px 8px', borderRadius: '8px', border: '1px solid #27272a' }}>
@@ -1291,7 +1291,7 @@ const FinancePlans = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '15px' }}>
+                      <div style={{ display: 'flex', gap: '10px' }}>
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', background: '#09090b', padding: '10px', borderRadius: '10px', border: '1px solid #27272a' }}>
                           <input type="checkbox" id="isCarouselHighlight" checked={formData.is_carousel_highlight} onChange={e => setFormData({...formData, is_carousel_highlight: e.target.checked})} style={{ accentColor: '#FC5F16', width: '16px', height: '16px' }} />
                           <label htmlFor="isCarouselHighlight" style={{ fontSize: '11px', fontWeight: '700', color: '#fff', cursor: 'pointer', margin: 0 }}>Destacar no Carrossel</label>
@@ -1307,21 +1307,21 @@ const FinancePlans = () => {
                 </div>
 
                 {/* Coluna Direita (Resumo e Botões) */}
-                <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   
                   {/* Card de Resumo */}
-                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '24px', flex: 1 }}>
+                  <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', flex: 1 }}>
                     <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Activity size={18} color="#FC5F16" /> Resumo do Plano
                     </h3>
                     <p style={{ margin: '0 0 20px', fontSize: '12px', color: '#a1a1aa' }}>Prévia das principais informações</p>
                     
-                    <div style={{ background: '#09090b', borderRadius: '12px', padding: '20px', textAlign: 'center', border: '1px solid #27272a', marginBottom: '20px' }}>
-                      <div style={{ fontSize: '14px', color: '#FC5F16', fontWeight: '900', marginBottom: '4px' }}>R$ <span style={{ fontSize: '32px' }}>{formData.price || '0.00'}</span></div>
+                    <div style={{ background: '#09090b', borderRadius: '10px', padding: '10px', textAlign: 'center', border: '1px solid #27272a', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '14px', color: '#FC5F16', fontWeight: '900', marginBottom: '4px' }}>R$ <span style={{ fontSize: '19px' }}>{formData.price || '0.00'}</span></div>
                       <div style={{ fontSize: '12px', color: '#a1a1aa' }}>{formData.duration_days} Dias</div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '10px' }}>
                         <span style={{ fontSize: '13px', color: '#a1a1aa', display: 'flex', alignItems: 'center', gap: '8px' }}><Monitor size={14} color="#FC5F16" /> Conexões (Telas)</span>
                         <span style={{ fontSize: '14px', color: '#fff', fontWeight: '800' }}>{formData.max_connections || '1'}</span>
@@ -1336,13 +1336,13 @@ const FinancePlans = () => {
                       </div>
                     </div>
 
-                    <div style={{ background: '#09090b', borderRadius: '12px', padding: '20px', border: `1px solid ${formData.border_color || '#27272a'}`, boxShadow: `0 0 20px ${(formData.glow_color || '#FC5F16')}20`, position: 'relative' }}>
+                    <div style={{ background: '#09090b', borderRadius: '10px', padding: '10px', border: `1px solid ${formData.border_color || '#27272a'}`, boxShadow: `0 0 20px ${(formData.glow_color || '#FC5F16')}20`, position: 'relative' }}>
                       <p style={{ margin: '0 0 15px', fontSize: '12px', color: '#a1a1aa', textAlign: 'center' }}>Prévia do Destaque</p>
                       
                       <div style={{ 
                         background: formData.button_color || '#FC5F16', 
                         color: '#fff', 
-                        padding: '12px', 
+                        padding: '10px', 
                         borderRadius: '8px', 
                         textAlign: 'center', 
                         fontWeight: '900',
@@ -1363,12 +1363,12 @@ const FinancePlans = () => {
               </div>
 
               {/* Botões de Ação na parte inferior */}
-              <div style={{ display: 'flex', gap: '15px', marginTop: '10px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => { setShowModal(false); setEditPlanId(null); }} style={{ padding: '16px 40px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }} onMouseOver={e => e.currentTarget.style.background = '#27272a'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => { setShowModal(false); setEditPlanId(null); }} style={{ padding: '16px 40px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '10px', fontWeight: '800', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }} onMouseOver={e => e.currentTarget.style.background = '#27272a'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   Cancelar
                 </button>
-                <button type="submit" style={{ padding: '16px 40px', background: 'linear-gradient(90deg, #FC5F16 0%, #ff7a3a 100%)', border: 'none', color: '#fff', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 8px 25px rgba(252,95,22,0.4)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                <button type="submit" style={{ padding: '16px 40px', background: 'linear-gradient(90deg, #FC5F16 0%, #ff7a3a 100%)', border: 'none', color: '#fff', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 8px 25px rgba(252,95,22,0.4)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                   {editPlanId ? 'Salvar Alterações' : 'Salvar Plano'}
                 </button>
@@ -1381,41 +1381,41 @@ const FinancePlans = () => {
 
       {/* MODAL NOVO PACOTE DE CRÉDITOS */}
       {showCreditModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '12px' }}>
-          <div style={{ background: '#111111', border: '1px solid #27272a', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ margin: '0 0 20px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '10px' }}>
+          <div style={{ background: '#111111', border: '1px solid #27272a', borderRadius: '10px', width: '100%', maxWidth: '500px', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CreditCard color="#FC5F16" size={28} /> Novo Pacote
             </h2>
             
             <form onSubmit={handleSaveCreditPackage}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Nome do Pacote *</label>
-                  <input required type="text" placeholder="Ex: Pacote Básico 10 Créditos" value={creditFormData.name} onChange={e => setCreditFormData({...creditFormData, name: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                  <input required type="text" placeholder="Ex: Pacote Básico 10 Créditos" value={creditFormData.name} onChange={e => setCreditFormData({...creditFormData, name: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                 </div>
                 
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Quantidade de Créditos *</label>
-                  <input required type="number" placeholder="Ex: 10" value={creditFormData.credit_amount} onChange={e => setCreditFormData({...creditFormData, credit_amount: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                  <input required type="number" placeholder="Ex: 10" value={creditFormData.credit_amount} onChange={e => setCreditFormData({...creditFormData, credit_amount: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                 </div>
 
-                <div style={{ display: 'flex', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Preço Normal (R$) *</label>
-                    <input required type="number" step="0.01" placeholder="Ex: 150.00" value={creditFormData.price} onChange={e => setCreditFormData({...creditFormData, price: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                    <input required type="number" step="0.01" placeholder="Ex: 150.00" value={creditFormData.price} onChange={e => setCreditFormData({...creditFormData, price: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '700', color: '#a1a1aa' }}>Preço Promo (Opcional)</label>
-                    <input type="number" step="0.01" placeholder="Ex: 130.00" value={creditFormData.promo_price} onChange={e => setCreditFormData({...creditFormData, promo_price: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px dashed #FC5F16', borderRadius: '12px', color: '#FC5F16', outline: 'none', width: '100%' }} />
+                    <input type="number" step="0.01" placeholder="Ex: 130.00" value={creditFormData.promo_price} onChange={e => setCreditFormData({...creditFormData, promo_price: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px dashed #FC5F16', borderRadius: '10px', color: '#FC5F16', outline: 'none', width: '100%' }} />
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button type="button" onClick={() => { setShowCreditModal(false); setEditCreditId(null); }} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid #27272a', background: 'transparent', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>
+                <button type="button" onClick={() => { setShowCreditModal(false); setEditCreditId(null); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #27272a', background: 'transparent', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>
                   Cancelar
                 </button>
-                <button type="submit" style={{ flex: 2, padding: '14px', borderRadius: '12px', border: 'none', background: '#FC5F16', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>
+                <button type="submit" style={{ flex: 2, padding: '10px', borderRadius: '10px', border: 'none', background: '#FC5F16', color: '#fff', fontWeight: '800', cursor: 'pointer' }}>
                   Salvar Pacote
                 </button>
               </div>
@@ -1427,25 +1427,25 @@ const FinancePlans = () => {
       {/* TELA DE GATEWAYS DE PAGAMENTOS */}
       {activeTab === 'gateways' && (
         <div style={{ animation: 'fadeIn 0.3s ease' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#fff', margin: 0 }}>
+          <div style={{ marginBottom: '10px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: '800', color: '#fff', margin: 0 }}>
               Gateways de pagamentos <span style={{ fontSize: '13px', color: '#a1a1aa', fontWeight: 'normal' }}>1.1.0</span>
             </h2>
             <p style={{ color: '#a1a1aa', marginTop: '8px' }}>Integre sua conta bancária e receba pagamentos dos seus clientes via PIX ou Cartão.</p>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '10px' }}>
             <button onClick={() => setShowInvoiceModal(true)} style={{ ...btnPrimary, background: '#18181b', border: '1px solid #FC5F16', color: '#FC5F16', boxShadow: 'none' }}>
               <Settings size={18} /> Configurações da fatura
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
             {/* Card Mercado Pago Simplificado (Estilo Print) */}
             <div style={{ 
               background: '#18181b', 
               border: mpStatus === 'active' ? '1px solid #009ee3' : '1px solid #27272a', 
-              borderRadius: '16px', 
+              borderRadius: '10px', 
               overflow: 'hidden', 
               transition: 'all 0.3s ease',
               boxShadow: mpStatus === 'active' ? '0 0 20px rgba(0, 158, 227, 0.15)' : 'none'
@@ -1457,7 +1457,7 @@ const FinancePlans = () => {
                 justifyContent: 'space-between', 
                 alignItems: 'center' 
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ 
                     background: '#fff', 
                     padding: '5px 10px', 
@@ -1470,7 +1470,7 @@ const FinancePlans = () => {
                     <span style={{ color: '#009ee3', fontWeight: '900', fontSize: '14px', letterSpacing: '-1px' }}>Mercado</span>
                     <span style={{ color: '#111', fontWeight: '900', fontSize: '14px', letterSpacing: '-1px' }}>pago</span>
                   </div>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#fff' }}>Gateway Oficial</h3>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#fff' }}>Gateway Oficial</h3>
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1479,7 +1479,7 @@ const FinancePlans = () => {
                       background: '#fff', 
                       color: '#009ee3', 
                       padding: '4px 10px', 
-                      borderRadius: '20px', 
+                      borderRadius: '10px', 
                       fontSize: '10px', 
                       fontWeight: '900',
                       display: 'flex',
@@ -1513,9 +1513,9 @@ const FinancePlans = () => {
                 </div>
               )}
 
-              <div style={{ padding: '30px' }}>
+              <div style={{ padding: '10px' }}>
                 {/* Linha Principal: Access Token e Status */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginBottom: '25px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: '700', color: '#f4f4f5', marginBottom: '8px', display: 'block' }}>Informe o Access Token de sua conta *</label>
                     <input 
@@ -1523,7 +1523,7 @@ const FinancePlans = () => {
                       value={mpAccessToken} 
                       onChange={e => setMpAccessToken(e.target.value)} 
                       placeholder="APP_USR-..." 
-                      style={{ width: '100%', padding: '14px', background: 'transparent', border: mpStatus === 'active' ? '1px solid #009ee3' : '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none' }} 
+                      style={{ width: '100%', padding: '10px', background: 'transparent', border: mpStatus === 'active' ? '1px solid #009ee3' : '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none' }} 
                     />
                   </div>
                   <div>
@@ -1531,7 +1531,7 @@ const FinancePlans = () => {
                     <select 
                       value={mpStatusActive}
                       onChange={e => setMpStatusActive(e.target.value)}
-                      style={{ width: '100%', padding: '14px', background: 'transparent', border: mpStatus === 'active' ? '1px solid #009ee3' : '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none', cursor: 'pointer' }}
+                      style={{ width: '100%', padding: '10px', background: 'transparent', border: mpStatus === 'active' ? '1px solid #009ee3' : '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="Ativar" style={{background: '#18181b'}}>Ativar</option>
                       <option value="Desativar" style={{background: '#18181b'}}>Desativar</option>
@@ -1540,7 +1540,7 @@ const FinancePlans = () => {
                 </div>
 
                 {/* Métodos de Recebimento */}
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '25px', padding: '15px', background: '#09090b', borderRadius: '12px', border: mpStatus === 'active' ? '1px solid rgba(0,158,227,0.3)' : '1px solid #27272a' }}>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', padding: '15px', background: '#09090b', borderRadius: '10px', border: mpStatus === 'active' ? '1px solid rgba(0,158,227,0.3)' : '1px solid #27272a' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <input type="checkbox" checked={mpReceivePix} onChange={e => setMpReceivePix(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#009ee3' }} />
                     <span style={{ color: '#a1a1aa', fontSize: '13px', fontWeight: '600' }}>PIX</span>
@@ -1564,7 +1564,7 @@ const FinancePlans = () => {
                       value={mpPublicKey} 
                       onChange={e => setMpPublicKey(e.target.value)} 
                       placeholder="APP_USR-..." 
-                      style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid #27272a', borderRadius: '8px', color: '#fff', outline: 'none' }} 
+                      style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid #27272a', borderRadius: '8px', color: '#fff', outline: 'none' }} 
                     />
                   </details>
                 </div>
@@ -1581,14 +1581,14 @@ const FinancePlans = () => {
                   <button 
                     onClick={handleDisconnectMp}
                     disabled={savingGateways || !mpAccessToken}
-                    style={{ flex: 1, height: '50px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}
+                    style={{ flex: 1, height: '50px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '10px', fontWeight: '800', cursor: 'pointer' }}
                   >
                     Desconectar
                   </button>
                   <button 
                     onClick={() => validateMpToken(mpAccessToken)} 
                     disabled={mpStatus === 'validating' || !mpAccessToken} 
-                    style={{ width: '100px', height: '50px', background: '#27272a', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '800', cursor: 'pointer' }}
+                    style={{ width: '100px', height: '50px', background: '#27272a', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: '800', cursor: 'pointer' }}
                   >
                     {mpStatus === 'validating' ? '...' : 'Testar'}
                   </button>
@@ -1600,7 +1600,7 @@ const FinancePlans = () => {
             <div style={{ 
               background: '#18181b', 
               border: paypalStatus === 'active' ? '1px solid #003087' : '1px solid #27272a', 
-              borderRadius: '16px', 
+              borderRadius: '10px', 
               overflow: 'hidden', 
               transition: 'all 0.3s ease',
               boxShadow: paypalStatus === 'active' ? '0 0 20px rgba(0, 48, 135, 0.15)' : 'none'
@@ -1612,7 +1612,7 @@ const FinancePlans = () => {
                 justifyContent: 'space-between', 
                 alignItems: 'center' 
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ 
                     background: '#fff', 
                     padding: '5px 12px', 
@@ -1624,7 +1624,7 @@ const FinancePlans = () => {
                     <span style={{ color: '#003087', fontWeight: '900', fontSize: '14px', fontStyle: 'italic' }}>Pay</span>
                     <span style={{ color: '#009cde', fontWeight: '900', fontSize: '14px', fontStyle: 'italic' }}>Pal</span>
                   </div>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#fff' }}>Pagamentos Globais</h3>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#fff' }}>Pagamentos Globais</h3>
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1638,19 +1638,19 @@ const FinancePlans = () => {
                 </div>
               </div>
 
-              <div style={{ padding: '30px' }}>
-                <div style={{ marginBottom: '20px' }}>
+              <div style={{ padding: '10px' }}>
+                <div style={{ marginBottom: '10px' }}>
                   <label style={{ fontSize: '12px', fontWeight: '700', color: '#f4f4f5', marginBottom: '8px', display: 'block' }}>Client ID (Production) *</label>
                   <input 
                     type="text" 
                     value={paypalClientId} 
                     onChange={e => setPaypalClientId(e.target.value)} 
                     placeholder="Abc123xyz..." 
-                    style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none' }} 
+                    style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none' }} 
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '15px', marginBottom: '25px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '10px', marginBottom: '25px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: '700', color: '#f4f4f5', marginBottom: '8px', display: 'block' }}>Client Secret *</label>
                     <input 
@@ -1658,7 +1658,7 @@ const FinancePlans = () => {
                       value={paypalClientSecret} 
                       onChange={e => setPaypalClientSecret(e.target.value)} 
                       placeholder="••••••••••••" 
-                      style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none' }} 
+                      style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none' }} 
                     />
                   </div>
                   <div>
@@ -1666,7 +1666,7 @@ const FinancePlans = () => {
                     <select 
                       value={paypalStatusActive}
                       onChange={e => setPaypalStatusActive(e.target.value)}
-                      style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none', cursor: 'pointer' }}
+                      style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', outline: 'none', cursor: 'pointer' }}
                     >
                       <option value="Ativar" style={{background: '#18181b'}}>Ativar</option>
                       <option value="Desativar" style={{background: '#18181b'}}>Desativar</option>
@@ -1674,11 +1674,11 @@ const FinancePlans = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={handleSaveGateways} disabled={savingGateways} style={{ ...btnPrimary, flex: 1, height: '50px', justifyContent: 'center', background: 'transparent', border: '1px solid #003087', color: '#003087', boxShadow: 'none' }}>
                     {savingGateways ? '...' : 'Salvar'}
                   </button>
-                  <button onClick={handleDisconnectPaypal} disabled={savingGateways || !paypalClientId} style={{ flex: 1, height: '50px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}>
+                  <button onClick={handleDisconnectPaypal} disabled={savingGateways || !paypalClientId} style={{ flex: 1, height: '50px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '10px', fontWeight: '800', cursor: 'pointer' }}>
                     Desconectar
                   </button>
                 </div>
@@ -1692,24 +1692,24 @@ const FinancePlans = () => {
         <div style={{ animation: 'fadeIn 0.3s ease' }}>
           {/* Seção 1: Configuração da URL */}
           <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Smartphone size={24} color="#FC5F16" /> Configuração do Aplicativo
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
-              <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '30px' }}>
+              <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px' }}>
                 <label style={{ fontSize: '12px', fontWeight: '800', color: '#f4f4f5', marginBottom: '10px', display: 'block', textTransform: 'uppercase' }}>URL de Login do App</label>
                 <input 
                   type="url" 
                   value={appUrl} 
                   onChange={e => setAppUrl(e.target.value)} 
                   placeholder="https://maxxplayer.app" 
-                  style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', outline: 'none', marginBottom: '20px', fontSize: '15px' }} 
+                  style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff', outline: 'none', marginBottom: '10px', fontSize: '15px' }} 
                 />
                 <label style={{ fontSize: '12px', fontWeight: '800', color: '#f4f4f5', marginBottom: '10px', display: 'block', textTransform: 'uppercase' }}>Tempo de Teste (Horas)</label>
                 <select
                   value={trialHours}
                   onChange={e => setTrialHours(e.target.value)}
-                  style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', outline: 'none', marginBottom: '20px', fontSize: '15px' }}
+                  style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff', outline: 'none', marginBottom: '10px', fontSize: '15px' }}
                 >
                   <option value="1">01 Hora</option>
                   <option value="2">02 Horas</option>
@@ -1720,16 +1720,16 @@ const FinancePlans = () => {
                 <button 
                   onClick={handleSaveAppUrl} 
                   disabled={savingAppUrl} 
-                  style={{ ...btnPrimary, width: '100%', padding: '16px' }}
+                  style={{ ...btnPrimary, width: '100%', padding: '10px' }}
                 >
                   {savingAppUrl ? 'Salvando...' : 'Salvar Configurações do App'}
                 </button>
               </div>
 
-              <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <p style={{ fontSize: '13px', color: '#a1a1aa', marginBottom: '15px', fontWeight: '600' }}>Preview do QR Code</p>
+              <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ fontSize: '13px', color: '#a1a1aa', marginBottom: '10px', fontWeight: '600' }}>Preview do QR Code</p>
                 {appUrl ? (
-                  <div style={{ padding: '8px', background: '#fff', borderRadius: '12px' }}>
+                  <div style={{ padding: '8px', background: '#fff', borderRadius: '10px' }}>
                     <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(appUrl)}&size=120x120&bgcolor=FFFFFF&color=000000`} alt="QR Code" style={{ width: '120px', height: '120px' }} />
                   </div>
                 ) : <div style={{ height: '136px', display: 'flex', alignItems: 'center', color: '#71717a' }}>Insira uma URL</div>}
@@ -1739,8 +1739,8 @@ const FinancePlans = () => {
 
           {/* Seção 2: Planos de Ativação (Dispositivo/MAC) */}
           <div style={{ marginBottom: '40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Tag size={24} color="#FC5F16" /> Planos de Ativação por MAC
               </h2>
               <button 
@@ -1755,24 +1755,24 @@ const FinancePlans = () => {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px' }}>
               {appPackages.map(pkg => (
-                <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '20px', padding: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
+                <div key={pkg.id} style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>{pkg.name}</h3>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                      <div style={{ padding: '4px 10px', borderRadius: '12px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', fontSize: '12px', fontWeight: '800' }}>
+                      <div style={{ padding: '4px 10px', borderRadius: '10px', background: 'rgba(252,95,22,0.1)', color: '#FC5F16', fontSize: '12px', fontWeight: '800' }}>
                         {pkg.duration_days} DIAS
                       </div>
-                      <div style={{ padding: '4px 10px', borderRadius: '12px', background: 'rgba(59,130,246,0.1)', color: '#60a5fa', fontSize: '12px', fontWeight: '800' }}>
+                      <div style={{ padding: '4px 10px', borderRadius: '10px', background: 'rgba(59,130,246,0.1)', color: '#60a5fa', fontSize: '12px', fontWeight: '800' }}>
                         TESTE {pkg.trial_hours || 24}H
                       </div>
                     </div>
                   </div>
                   
-                  <div style={{ background: '#09090b', padding: '15px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #27272a' }}>
+                  <div style={{ background: '#09090b', padding: '15px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #27272a' }}>
                     <span style={{ fontSize: '11px', color: '#a1a1aa', fontWeight: '700', textTransform: 'uppercase' }}>Valor da Ativação</span>
-                    <div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>{formatCurrency(pkg.price)}</div>
+                    <div style={{ fontSize: '16px', fontWeight: '900', color: '#fff' }}>{formatCurrency(pkg.price)}</div>
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px' }}>
@@ -1782,13 +1782,13 @@ const FinancePlans = () => {
                         setAppFormData({ ...pkg });
                         setShowAppModal(true);
                       }}
-                      style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #27272a', color: '#fff', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}
+                      style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid #27272a', color: '#fff', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}
                     >
                       Editar Plano
                     </button>
                     <button 
                       onClick={() => handleDeleteApp(pkg.id)}
-                      style={{ padding: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', borderRadius: '12px', cursor: 'pointer' }}
+                      style={{ padding: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', borderRadius: '10px', cursor: 'pointer' }}
                     >
                       <Trash2 size={20} />
                     </button>
@@ -1800,35 +1800,35 @@ const FinancePlans = () => {
 
           {/* Seção 3: Histórico de Ativações por MAC */}
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Activity size={24} color="#FC5F16" /> Histórico de Vendas por MAC
             </h2>
-            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '16px', overflow: 'hidden' }}>
+            <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #27272a', background: 'rgba(255,255,255,0.02)' }}>
-                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Data</th>
-                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>App / Plano</th>
-                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Endereço MAC</th>
-                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Valor</th>
-                      <th style={{ padding: '15px 20px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Status</th>
+                      <th style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Data</th>
+                      <th style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>App / Plano</th>
+                      <th style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Endereço MAC</th>
+                      <th style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Valor</th>
+                      <th style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {appActivations.map(act => (
                       <tr key={act.id} style={{ borderBottom: '1px solid #27272a' }}>
-                        <td style={{ padding: '15px 20px', fontSize: '14px', color: '#f4f4f5' }}>{act.date_formatted}</td>
-                        <td style={{ padding: '15px 20px' }}>
+                        <td style={{ padding: '8px 12px', fontSize: '14px', color: '#f4f4f5' }}>{act.date_formatted}</td>
+                        <td style={{ padding: '8px 12px' }}>
                           <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{act.package_name || 'Ativação Direta'}</div>
                           <div style={{ fontSize: '12px', color: '#a1a1aa' }}>{act.type === 'pix' ? 'PIX' : 'Cartão'}</div>
                         </td>
-                        <td style={{ padding: '15px 20px' }}>
+                        <td style={{ padding: '8px 12px' }}>
                           <code style={{ background: '#09090b', padding: '4px 8px', borderRadius: '6px', color: '#FC5F16', fontSize: '13px' }}>{act.mac_address || 'N/A'}</code>
                         </td>
-                        <td style={{ padding: '15px 20px', fontSize: '14px', fontWeight: '800', color: '#fff' }}>{formatCurrency(act.amount)}</td>
-                        <td style={{ padding: '15px 20px' }}>
-                          <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', background: act.status === 'approved' ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)', color: act.status === 'approved' ? '#22c55e' : '#eab308' }}>
+                        <td style={{ padding: '8px 12px', fontSize: '14px', fontWeight: '800', color: '#fff' }}>{formatCurrency(act.amount)}</td>
+                        <td style={{ padding: '8px 12px' }}>
+                          <span style={{ padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', background: act.status === 'approved' ? 'rgba(34,197,94,0.1)' : 'rgba(234,179,8,0.1)', color: act.status === 'approved' ? '#22c55e' : '#eab308' }}>
                             {act.status === 'approved' ? 'Aprovado' : 'Pendente'}
                           </span>
                         </td>
@@ -1856,22 +1856,22 @@ const FinancePlans = () => {
 
       {/* MODAL CONFIGURAÇÕES DA FATURA */}
       {showInvoiceModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)', padding: '12px' }}>
-          <div style={{ background: '#18181b', width: '100%', maxWidth: '700px', borderRadius: '20px', border: '1px solid #27272a', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ margin: '0 0 20px', fontSize: '24px', fontWeight: '900', color: '#fff' }}>Configurar Fatura e Checkout</h2>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)', padding: '10px' }}>
+          <div style={{ background: '#18181b', width: '100%', maxWidth: '700px', borderRadius: '10px', border: '1px solid #27272a', padding: 'clamp(16px, 3vw, 30px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: '900', color: '#fff' }}>Configurar Fatura e Checkout</h2>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Nome do Negócio</label>
                 <input 
                   type="text" value={invoiceName} onChange={e => setInvoiceName(e.target.value)}
-                  style={{ width: '100%', padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', outline: 'none' }} 
+                  style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff', outline: 'none' }} 
                 />
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Tema do Checkout</label>
-                <div style={{ display: 'flex', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   {['#FC5F16', '#714eae', '#00aeff', '#66ff00', '#ff0054'].map(color => (
                     <div 
                       key={color} 
@@ -1887,14 +1887,14 @@ const FinancePlans = () => {
               </div>
 
               <div style={{ marginTop: '20px', borderTop: '1px solid #27272a', paddingTop: '20px' }}>
-                <h3 style={{ margin: '0 0 10px', fontSize: '18px', fontWeight: '800', color: '#fff' }}>Dados pré-definidos (Opcional)</h3>
-                <p style={{ color: '#a1a1aa', fontSize: '14px', marginBottom: '20px' }}>Ative para preencher os dados fiscais automaticamente no checkout, evitando que o cliente final precise digitar CEP e CPF.</p>
+                <h3 style={{ margin: '0 0 10px', fontSize: '16px', fontWeight: '800', color: '#fff' }}>Dados pré-definidos (Opcional)</h3>
+                <p style={{ color: '#a1a1aa', fontSize: '14px', marginBottom: '10px' }}>Ative para preencher os dados fiscais automaticamente no checkout, evitando que o cliente final precise digitar CEP e CPF.</p>
                 
-                <div style={{ marginBottom: '15px' }}>
+                <div style={{ marginBottom: '10px' }}>
                   <label style={{ fontSize: '12px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Ativar dados padrão</label>
                   <select 
                     value={fiscalActive} onChange={e => setFiscalActive(e.target.value)}
-                    style={{ width: '100%', padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff', outline: 'none' }}
                   >
                     <option value="no">Não</option>
                     <option value="yes">Sim</option>
@@ -1902,22 +1902,22 @@ const FinancePlans = () => {
                 </div>
 
                 {fiscalActive === 'yes' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '12px' }}>
-                    <input type="text" placeholder="Nome Completo Fictício" value={fiscalData.costumer_name} onChange={e => setFiscalData({...fiscalData, costumer_name: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
-                    <input type="text" placeholder="CPF Válido" value={fiscalData.document} onChange={e => setFiscalData({...fiscalData, document: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
-                    <input type="text" placeholder="CEP" value={fiscalData.zip_code} onChange={e => setFiscalData({...fiscalData, zip_code: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
-                    <input type="text" placeholder="Rua" value={fiscalData.street_name} onChange={e => setFiscalData({...fiscalData, street_name: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
-                    <input type="text" placeholder="Número" value={fiscalData.street_number} onChange={e => setFiscalData({...fiscalData, street_number: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
-                    <input type="text" placeholder="Bairro" value={fiscalData.neighborhood} onChange={e => setFiscalData({...fiscalData, neighborhood: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
-                    <input type="text" placeholder="Cidade" value={fiscalData.city} onChange={e => setFiscalData({...fiscalData, city: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
-                    <input type="text" placeholder="Estado (Ex: SP)" value={fiscalData.federal_unit} onChange={e => setFiscalData({...fiscalData, federal_unit: e.target.value})} style={{ padding: '14px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px', color: '#fff' }} />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '10px' }}>
+                    <input type="text" placeholder="Nome Completo Fictício" value={fiscalData.costumer_name} onChange={e => setFiscalData({...fiscalData, costumer_name: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
+                    <input type="text" placeholder="CPF Válido" value={fiscalData.document} onChange={e => setFiscalData({...fiscalData, document: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
+                    <input type="text" placeholder="CEP" value={fiscalData.zip_code} onChange={e => setFiscalData({...fiscalData, zip_code: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
+                    <input type="text" placeholder="Rua" value={fiscalData.street_name} onChange={e => setFiscalData({...fiscalData, street_name: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
+                    <input type="text" placeholder="Número" value={fiscalData.street_number} onChange={e => setFiscalData({...fiscalData, street_number: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
+                    <input type="text" placeholder="Bairro" value={fiscalData.neighborhood} onChange={e => setFiscalData({...fiscalData, neighborhood: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
+                    <input type="text" placeholder="Cidade" value={fiscalData.city} onChange={e => setFiscalData({...fiscalData, city: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
+                    <input type="text" placeholder="Estado (Ex: SP)" value={fiscalData.federal_unit} onChange={e => setFiscalData({...fiscalData, federal_unit: e.target.value})} style={{ padding: '10px', background: '#09090b', border: '1px solid #3f3f46', borderRadius: '10px', color: '#fff' }} />
                   </div>
                 )}
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', marginTop: '30px' }}>
-              <button onClick={() => setShowInvoiceModal(false)} style={{ padding: '12px 24px', background: 'transparent', color: '#a1a1aa', border: 'none', fontWeight: '800', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '30px' }}>
+              <button onClick={() => setShowInvoiceModal(false)} style={{ padding: '7px 12px', background: 'transparent', color: '#a1a1aa', border: 'none', fontWeight: '800', cursor: 'pointer' }}>
                 Cancelar
               </button>
               <button onClick={handleSaveGateways} disabled={savingGateways} style={btnPrimary}>
@@ -1930,33 +1930,33 @@ const FinancePlans = () => {
 
       {/* MODAL CADASTRO DE APP */}
       {showAppModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', padding: '12px' }}>
-           <div style={{ background: '#18181b', width: '100%', maxWidth: '500px', borderRadius: '24px', border: '1px solid #27272a', padding: 'clamp(20px, 4vw, 40px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'zoomIn 0.3s', maxHeight: '90vh', overflowY: 'auto' }}>
-              <h2 style={{ margin: '0 0 30px', fontSize: '24px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ padding: '8px', background: 'rgba(252,95,22,0.1)', borderRadius: '12px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', padding: '10px' }}>
+           <div style={{ background: '#18181b', width: '100%', maxWidth: '500px', borderRadius: '10px', border: '1px solid #27272a', padding: 'clamp(20px, 4vw, 40px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'zoomIn 0.3s', maxHeight: '90vh', overflowY: 'auto' }}>
+              <h2 style={{ margin: '0 0 30px', fontSize: '16px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ padding: '8px', background: 'rgba(252,95,22,0.1)', borderRadius: '10px' }}>
                    <Smartphone size={24} color="#FC5F16" />
                 </div>
                 {editAppId ? 'Editar Plano' : 'Novo Plano de Ativação'}
               </h2>
 
-              <form onSubmit={handleSaveApp} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <form onSubmit={handleSaveApp} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                  <div>
                     <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Nome do Plano</label>
                     <input 
                       type="text" placeholder="Ex: Pacote de ativação por 1 ano" value={appFormData.name}
                       onChange={e => setAppFormData({...appFormData, name: e.target.value})}
-                      style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
+                      style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', fontSize: '15px' }} 
                       required
                     />
                  </div>
 
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div>
                        <label style={{ fontSize: '11px', fontWeight: '800', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', display: 'block' }}>Preço Único (R$)</label>
                        <input 
                          type="number" step="0.01" value={appFormData.price}
                          onChange={e => setAppFormData({...appFormData, price: e.target.value})}
-                         style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
+                         style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', fontSize: '15px' }} 
                          required
                        />
                     </div>
@@ -1965,7 +1965,7 @@ const FinancePlans = () => {
                        <input 
                          type="number" value={appFormData.duration_days}
                          onChange={e => setAppFormData({...appFormData, duration_days: e.target.value})}
-                         style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }} 
+                         style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', fontSize: '15px' }} 
                          required
                        />
                     </div>
@@ -1976,7 +1976,7 @@ const FinancePlans = () => {
                     <select
                       value={appFormData.trial_hours}
                       onChange={e => setAppFormData({...appFormData, trial_hours: e.target.value})}
-                      style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '15px' }}
+                      style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', fontSize: '15px' }}
                     >
                       <option value="1">01 Hora</option>
                       <option value="2">02 Horas</option>
@@ -1991,13 +1991,13 @@ const FinancePlans = () => {
                     <textarea 
                       value={appFormData.description}
                       onChange={e => setAppFormData({...appFormData, description: e.target.value})}
-                      style={{ width: '100%', padding: '16px', background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', color: '#fff', outline: 'none', fontSize: '14px', minHeight: '80px', resize: 'none' }} 
+                      style={{ width: '100%', padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', fontSize: '14px', minHeight: '80px', resize: 'none' }} 
                     />
                  </div>
 
-                 <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                    <button type="button" onClick={() => setShowAppModal(false)} style={{ flex: 1, padding: '16px', borderRadius: '16px', background: 'transparent', border: '1px solid #27272a', color: '#a1a1aa', fontWeight: '800', cursor: 'pointer' }}>Cancelar</button>
-                    <button type="submit" style={{ flex: 1, padding: '16px', borderRadius: '16px', background: '#FC5F16', border: 'none', color: '#fff', fontWeight: '900', cursor: 'pointer' }}>Salvar Plano</button>
+                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <button type="button" onClick={() => setShowAppModal(false)} style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'transparent', border: '1px solid #27272a', color: '#a1a1aa', fontWeight: '800', cursor: 'pointer' }}>Cancelar</button>
+                    <button type="submit" style={{ flex: 1, padding: '10px', borderRadius: '10px', background: '#FC5F16', border: 'none', color: '#fff', fontWeight: '900', cursor: 'pointer' }}>Salvar Plano</button>
                  </div>
               </form>
            </div>

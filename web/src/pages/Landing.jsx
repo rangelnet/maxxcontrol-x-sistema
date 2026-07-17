@@ -230,7 +230,7 @@ export default function Landing() {
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-brand-600/20 rounded-full filter blur-[150px] opacity-30 pointer-events-none"></div>
 
       {/* NAVBAR */}
-      <nav className="fixed w-full z-50 top-0 transition-all duration-300 bg-black/90 backdrop-blur-xl border-b border-white/10 py-4">
+      <nav className="fixed w-full z-50 top-0 transition-all duration-300 bg-black/90 backdrop-blur-xl border-b border-white/10 py-2.5">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2 group cursor-pointer">
             <img src="/logo-maxx.svg" alt="Maxx Control" className="w-12 h-12 object-contain drop-shadow-[0_0_15px_rgba(252, 95, 22,0.5)] transition-transform group-hover:scale-110" />
@@ -243,7 +243,7 @@ export default function Landing() {
             </button>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-zinc-400">
+          <div className="hidden md:flex items-center gap-3 text-sm font-semibold text-zinc-400">
             <a href="#solucoes" className="hover:text-white transition">Soluções</a>
             <a href="#precos" className="hover:text-white transition">Painéis Revenda</a>
             <a href="#apps" className="hover:text-white transition">Dispositivos</a>
@@ -258,7 +258,7 @@ export default function Landing() {
 
         {/* MENU MOBILE EXPANDIDO */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-black/95 backdrop-blur-3xl border-b border-white/10 flex flex-col items-center py-8 gap-6 text-base font-semibold text-zinc-300 shadow-2xl animate-fade-in">
+          <div className="md:hidden absolute top-full left-0 w-full bg-black/95 backdrop-blur-3xl border-b border-white/10 flex flex-col items-center py-8 gap-3 text-base font-semibold text-zinc-300 shadow-2xl animate-fade-in">
             <a href="#solucoes" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition w-full text-center py-2">Soluções</a>
             <a href="#precos" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition w-full text-center py-2">Painéis Revenda</a>
             <a href="#apps" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition w-full text-center py-2">Dispositivos</a>
@@ -269,7 +269,7 @@ export default function Landing() {
             <Link to="/subscribe-plans" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white transition flex items-center justify-center gap-2 w-full py-2">
               <Crown size={18} className="text-brand-500 fill-current" /> Assinar Painel
             </Link>
-            <button onClick={() => { setIsMobileMenuOpen(false); setShowClientModal(true); }} className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-10 py-3.5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(252,95,22,0.4)] mt-4">
+            <button onClick={() => { setIsMobileMenuOpen(false); setShowClientModal(true); }} className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-6 py-2.5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(252,95,22,0.4)] mt-4">
               Área do Cliente
             </button>
           </div>
@@ -284,8 +284,8 @@ export default function Landing() {
             <div className="absolute bottom-20 right-10 w-32 h-32 bg-brand-600/20 rounded-full blur-[80px] animate-pulse z-0" style={{ animationDelay: '2s' }}></div>
 
             {/* BACKGROUND TMDB POSTERS - LADO ESQUERDO (MARQUEE) */}
-            <div className="absolute -left-10 md:left-0 lg:left-10 top-0 bottom-0 overflow-hidden flex flex-col z-0 pointer-events-none opacity-10 md:opacity-15 xl:opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-24 md:w-32 xl:w-40 -rotate-6 scale-110">
-                <div className="flex flex-col gap-4 md:gap-6 w-full animate-marquee-y">
+            <div className="absolute -left-10 md:left-0 lg:left-10 top-0 bottom-0 overflow-hidden flex flex-col z-0 pointer-events-none opacity-10 md:opacity-15 xl:opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-12 md:w-32 xl:w-40 -rotate-6 scale-110">
+                <div className="flex flex-col gap-3 md:gap-3 w-full animate-marquee-y">
                     {[...leftPosters, ...leftPosters].map((url, i) => (
                         <div key={i} className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 shrink-0 aspect-[2/3] bg-black/50">
                             <img src={url} alt="TMDB" className="w-full h-full object-cover" />
@@ -295,8 +295,8 @@ export default function Landing() {
             </div>
 
             {/* BACKGROUND TMDB POSTERS - LADO DIREITO (MARQUEE INVERSO) */}
-            <div className="absolute -right-10 md:right-0 lg:right-10 top-0 bottom-0 overflow-hidden flex flex-col z-0 pointer-events-none opacity-10 md:opacity-15 xl:opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-24 md:w-32 xl:w-40 rotate-6 scale-110">
-                <div className="flex flex-col gap-4 md:gap-6 w-full animate-marquee-y-reverse">
+            <div className="absolute -right-10 md:right-0 lg:right-10 top-0 bottom-0 overflow-hidden flex flex-col z-0 pointer-events-none opacity-10 md:opacity-15 xl:opacity-20 hover:opacity-80 blur-[2px] hover:blur-none transition-all duration-700 w-12 md:w-32 xl:w-40 rotate-6 scale-110">
+                <div className="flex flex-col gap-3 md:gap-3 w-full animate-marquee-y-reverse">
                     {[...rightPosters, ...rightPosters].map((url, i) => (
                         <div key={i} className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 shrink-0 aspect-[2/3] bg-black/50">
                             <img src={url} alt="TMDB" className="w-full h-full object-cover" />
@@ -306,8 +306,8 @@ export default function Landing() {
             </div>
 
             {/* CONTENT */}
-            <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-yellow-500 mb-8 backdrop-blur-md animate-fade-in shadow-xl">
+            <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-yellow-500 mb-3 backdrop-blur-md animate-fade-in shadow-xl">
                     <span className="relative flex h-3 w-3 mr-1">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
@@ -316,30 +316,30 @@ export default function Landing() {
                     A Plataforma Secreta dos Maiores Provedores
                 </div>
 
-                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mb-6 leading-tight max-w-5xl">
+                <h1 className="text-2xl md:text-3xl lg:text-5xl font-black tracking-tight text-white mb-3 leading-tight max-w-5xl">
                     Controle Completo e Banners que <br className="hidden md:block"/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-orange-400 to-yellow-500 text-glow">Vendem Sozinhos.</span>
                 </h1>
 
-                <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed font-light backdrop-blur-sm bg-black/20 p-4 rounded-2xl">
+                <p className="text-base md:text-lg text-zinc-400 max-w-2xl mx-auto mb-3 leading-relaxed font-light backdrop-blur-sm bg-black/20 p-3 rounded-xl">
                     Transmita sem esforço com o MAXX Control. A combinação perfeita entre um servidor IPTV de altíssima performance estruturado em ARMv8 e o Gerador de Banners Inteligente.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-center">
-                    <Link to="/login" className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white rounded-2xl font-black text-lg shadow-[0_0_40px_rgba(252, 95, 22,0.4)] transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden group">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-center">
+                    <Link to="/login" className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-brand-600 to-orange-600 hover:from-brand-500 hover:to-orange-500 text-white rounded-2xl font-black text-lg shadow-[0_0_40px_rgba(252, 95, 22,0.4)] transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden group">
                         <div className="absolute inset-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                         <Play size={20} className="fill-current text-yellow-300" /> ACESSAR SISTEMA
                     </Link>
-                    <a href="#apps" className="w-full sm:w-auto px-10 py-5 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white rounded-2xl font-bold text-lg transition-all backdrop-blur-md flex items-center justify-center gap-2">
+                    <a href="#apps" className="w-full sm:w-auto px-4 py-2 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white rounded-2xl font-bold text-lg transition-all backdrop-blur-md flex items-center justify-center gap-2">
                         <Play size={20} className="text-brand-400" /> Visualizar Apps
                     </a>
                 </div>
             </div>
 
             {/* MOCKUP HERO */}
-            <div className="mt-24 relative max-w-6xl mx-auto w-full group perspective-1000 z-10">
+            <div className="mt-24 relative max-w-4xl mx-auto w-full group perspective-1000 z-10">
                 <div className="absolute -inset-1 bg-gradient-to-b from-brand-500 via-orange-500 to-transparent rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-50 transition duration-1000"></div>
-                <div className="relative bg-[#050505] border border-white/10 rounded-3xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] h-[300px] md:h-[600px] flex flex-col transform transition-transform duration-700 hover:rotate-x-1 hover:scale-[1.02]">
+                <div className="relative bg-[#050505] border border-white/10 rounded-2xl overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] h-[300px] md:h-[600px] flex flex-col transform transition-transform duration-700 hover:rotate-x-1 hover:scale-[1.02]">
                      {/* Simulação de Browser Header */}
                      <div className="h-10 bg-[#0a0a0a] border-b border-white/5 flex items-center px-4 gap-2 w-full shrink-0">
                          <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
@@ -356,21 +356,21 @@ export default function Landing() {
         </section>
 
         {/* HUB DE SERVIÇOS ESTRATÉGICOS (MIGRADO DO RESALE) */}
-        <section id="hub-servicos" className="py-24 bg-black relative overflow-hidden">
+        <section id="hub-servicos" className="py-7 bg-black relative overflow-hidden">
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-500/5 blur-[150px] rounded-full pointer-events-none"></div>
              
-             <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
+             <div className="container mx-auto px-4 lg:px-5 max-w-4xl relative z-10">
                  {/* A seção Hub foi movida para /upload-playlist e /active */}
              </div>
         </section>
 
         {/* MODAL PLAYLIST (DENTRO DA LANDING) */}
         {showPlaylistForm && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-3">
              <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setShowPlaylistForm(false)}></div>
-             <div className="relative bg-[#0a0a0a] border border-white/10 w-full max-w-xl rounded-[3rem] p-10 md:p-12 animate-slide-up shadow-[0_0_100px_rgba(252,95,22,0.15)]">
-                <h3 className="text-3xl font-black text-white mb-8 uppercase tracking-tighter">Configurar Playlist</h3>
-                <form onSubmit={handleSavePlaylist} className="space-y-6">
+             <div className="relative bg-[#0a0a0a] border border-white/10 w-full max-w-xl rounded-[3rem] p-3 md:p-12 animate-slide-up shadow-[0_0_100px_rgba(252,95,22,0.15)]">
+                <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter">Configurar Playlist</h3>
+                <form onSubmit={handleSavePlaylist} className="space-y-4">
                    <div className="space-y-2">
                       <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Nome de Identificação</label>
                       <input 
@@ -379,19 +379,19 @@ export default function Landing() {
                         placeholder="Ex: Minha Lista VIP"
                         value={playlistForm.name}
                         onChange={e => setPlaylistForm({...playlistForm, name: e.target.value})}
-                        className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-bold"
+                        className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-2.5 text-white outline-none focus:border-brand-500 transition-all font-bold"
                       />
                    </div>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button 
                         type="button" 
                         onClick={() => setPlaylistForm({...playlistForm, type: 'm3u'})}
-                        className={`py-4 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${playlistForm.type === 'm3u' ? 'border-brand-500 bg-brand-500/10 text-white' : 'border-white/5 text-zinc-500'}`}
+                        className={`py-2.5 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${playlistForm.type === 'm3u' ? 'border-brand-500 bg-brand-500/10 text-white' : 'border-white/5 text-zinc-500'}`}
                       >M3U URL</button>
                       <button 
                         type="button" 
                         onClick={() => setPlaylistForm({...playlistForm, type: 'xtream'})}
-                        className={`py-4 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${playlistForm.type === 'xtream' ? 'border-brand-500 bg-brand-500/10 text-white' : 'border-white/5 text-zinc-500'}`}
+                        className={`py-2.5 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${playlistForm.type === 'xtream' ? 'border-brand-500 bg-brand-500/10 text-white' : 'border-white/5 text-zinc-500'}`}
                       >XTREAM API</button>
                    </div>
 
@@ -404,31 +404,31 @@ export default function Landing() {
                            placeholder="http://servidor.com:80/get.php?..."
                            value={playlistForm.url}
                            onChange={e => setPlaylistForm({...playlistForm, url: e.target.value})}
-                           className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-medium"
+                           className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-2.5 text-white outline-none focus:border-brand-500 transition-all font-medium"
                          />
                       </div>
                    ) : (
                       <div className="space-y-4">
                          <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Servidor (Host:Porta)</label>
-                            <input type="text" placeholder="http://host.com:80" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-medium" value={playlistForm.url} onChange={e => setPlaylistForm({...playlistForm, url: e.target.value})} />
+                            <input type="text" placeholder="http://host.com:80" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-2.5 text-white outline-none focus:border-brand-500 transition-all font-medium" value={playlistForm.url} onChange={e => setPlaylistForm({...playlistForm, url: e.target.value})} />
                          </div>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="space-y-2">
                                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Usuário</label>
-                               <input type="text" placeholder="User" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-bold" value={playlistForm.username} onChange={e => setPlaylistForm({...playlistForm, username: e.target.value})} />
+                               <input type="text" placeholder="User" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-2.5 text-white outline-none focus:border-brand-500 transition-all font-bold" value={playlistForm.username} onChange={e => setPlaylistForm({...playlistForm, username: e.target.value})} />
                             </div>
                             <div className="space-y-2">
                                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Senha</label>
-                               <input type="password" placeholder="Pass" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-4 text-white outline-none focus:border-brand-500 transition-all font-bold" value={playlistForm.password} onChange={e => setPlaylistForm({...playlistForm, password: e.target.value})} />
+                               <input type="password" placeholder="Pass" className="w-full bg-black border-2 border-white/5 rounded-2xl px-6 py-2.5 text-white outline-none focus:border-brand-500 transition-all font-bold" value={playlistForm.password} onChange={e => setPlaylistForm({...playlistForm, password: e.target.value})} />
                             </div>
                          </div>
                       </div>
                    )}
 
-                   <div className="pt-6 flex gap-4">
-                      <button type="button" onClick={() => setShowPlaylistForm(false)} className="flex-1 py-5 bg-black text-zinc-500 font-black rounded-2xl uppercase tracking-widest text-xs border border-white/5 hover:border-white/10 transition-all">Cancelar</button>
-                      <button type="submit" className="flex-1 py-5 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-brand-500/20 transition-all">Salvar Playlist</button>
+                   <div className="pt-6 flex gap-3">
+                      <button type="button" onClick={() => setShowPlaylistForm(false)} className="flex-1 py-3 bg-black text-zinc-500 font-black rounded-2xl uppercase tracking-widest text-xs border border-white/5 hover:border-white/10 transition-all">Cancelar</button>
+                      <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-brand-500/20 transition-all">Salvar Playlist</button>
                    </div>
                 </form>
              </div>
@@ -436,82 +436,82 @@ export default function Landing() {
         )}
 
         {/* PREÇOS REVENDA - INSPIRED BY VIZZION PLAY */}
-        <section id="precos" className="py-24 bg-[#0a0a0a] border-t border-white/5">
-            <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-black text-white mb-4">
+        <section id="precos" className="py-7 bg-[#0a0a0a] border-t border-white/5">
+            <div className="container mx-auto px-4 lg:px-5 max-w-4xl">
+                <div className="text-center mb-3">
+                    <h2 className="text-2xl md:text-2xl font-black text-white mb-3">
                         Pacotes para <span className="text-brand-500">Revendedor</span>
                     </h2>
                     <p className="text-zinc-500 text-lg">APLICATIVO MAIS LEVE / RÁPIDA REPRODUÇÃO DE CONTEÚDO</p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     {/* Package 1 */}
-                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-between text-center min-h-[220px] hover:-translate-y-2 transition-transform">
+                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-between text-center min-h-[130px] hover:-translate-y-2 transition-transform">
                         <span className="text-white font-bold text-xl">10 À 29</span>
                         <span className="text-brand-500 text-sm font-bold uppercase tracking-wider mb-2">Créditos</span>
                         <div className="my-4">
-                            <span className="text-3xl font-black text-white">R$10.00</span>
+                            <span className="text-2xl font-black text-white">R$10.00</span>
                         </div>
                         <span className="uppercase text-zinc-500 text-xs font-bold">Cada</span>
                     </div>
 
                     {/* Package 2 (MAIS VENDIDO) */}
-                    <div className="bg-[#1a1a1a] border border-brand-500 rounded-2xl p-6 flex flex-col items-center justify-between text-center min-h-[240px] relative transform scale-105 shadow-[0_0_30px_rgba(252, 95, 22,0.15)] z-10">
+                    <div className="bg-[#1a1a1a] border border-brand-500 rounded-2xl p-3 flex flex-col items-center justify-between text-center min-h-[140px] relative transform scale-105 shadow-[0_0_30px_rgba(252, 95, 22,0.15)] z-10">
                         <div className="absolute top-0 left-0 right-0 bg-brand-500 rounded-t-xl text-white text-[10px] font-bold py-1 uppercase tracking-widest">
                             Mais Vendido
                         </div>
                         <span className="text-white font-bold text-2xl mt-4">30 À 49</span>
                         <span className="text-brand-500 text-sm font-bold uppercase tracking-wider mb-2">Créditos</span>
                         <div className="my-4">
-                            <span className="text-4xl font-black text-white">R$8.00</span>
+                            <span className="text-2xl font-black text-white">R$8.00</span>
                         </div>
                         <span className="uppercase text-zinc-500 text-xs font-bold">Cada</span>
                     </div>
 
                     {/* Package 3 */}
-                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-between text-center min-h-[220px] hover:-translate-y-2 transition-transform">
+                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-between text-center min-h-[130px] hover:-translate-y-2 transition-transform">
                         <span className="text-white font-bold text-xl">50 À 99</span>
                         <span className="text-brand-500 text-sm font-bold uppercase tracking-wider mb-2">Créditos</span>
                         <div className="my-4">
-                            <span className="text-3xl font-black text-white">R$7.00</span>
+                            <span className="text-2xl font-black text-white">R$7.00</span>
                         </div>
                         <span className="uppercase text-zinc-500 text-xs font-bold">Cada</span>
                     </div>
 
                     {/* Package 4 */}
-                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-between text-center min-h-[220px] hover:-translate-y-2 transition-transform">
+                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-between text-center min-h-[130px] hover:-translate-y-2 transition-transform">
                         <span className="text-white font-bold text-xl">100 À 499</span>
                         <span className="text-brand-500 text-sm font-bold uppercase tracking-wider mb-2">Créditos</span>
                         <div className="my-4">
-                            <span className="text-3xl font-black text-white">R$6.50</span>
+                            <span className="text-2xl font-black text-white">R$6.50</span>
                         </div>
                         <span className="uppercase text-zinc-500 text-xs font-bold">Cada</span>
                     </div>
 
                     {/* Package 5 */}
-                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-between text-center min-h-[220px] hover:-translate-y-2 transition-transform">
+                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-between text-center min-h-[130px] hover:-translate-y-2 transition-transform">
                         <span className="text-white font-bold text-xl">500 À 999</span>
                         <span className="text-brand-500 text-sm font-bold uppercase tracking-wider mb-2">Créditos</span>
                         <div className="my-4">
-                            <span className="text-3xl font-black text-white">R$6.00</span>
+                            <span className="text-2xl font-black text-white">R$6.00</span>
                         </div>
                         <span className="uppercase text-zinc-500 text-xs font-bold">Cada</span>
                     </div>
 
                     {/* Package 6 */}
-                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-between text-center min-h-[220px] hover:-translate-y-2 transition-transform">
+                    <div className="bg-[#111111] border border-white/10 rounded-2xl p-3 flex flex-col items-center justify-between text-center min-h-[130px] hover:-translate-y-2 transition-transform">
                         <span className="text-white font-bold text-xl">+1.000</span>
                         <span className="text-brand-500 text-sm font-bold uppercase tracking-wider mb-2">Créditos</span>
                         <div className="my-4">
-                            <span className="text-3xl font-black text-white">R$5.00</span>
+                            <span className="text-2xl font-black text-white">R$5.00</span>
                         </div>
                         <span className="uppercase text-zinc-500 text-xs font-bold">Cada</span>
                     </div>
                 </div>
 
-                <div className="flex justify-center mt-12">
-                     <Link to="/login" className="bg-transparent border border-brand-500 hover:bg-brand-500/10 text-brand-400 font-bold px-8 py-3 rounded-xl transition">
+                <div className="flex justify-center mt-6">
+                     <Link to="/login" className="bg-transparent border border-brand-500 hover:bg-brand-500/10 text-brand-400 font-bold px-5 py-3 rounded-xl transition">
                          Fazer Login e Comprar
                      </Link>
                 </div>
@@ -519,80 +519,80 @@ export default function Landing() {
         </section>
 
         {/* TABELA PROVEDOR (MASTER) */}
-        <section className="py-24 bg-black">
-             <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
-                <div className="flex flex-col text-center mb-12">
-                    <h2 className="text-3xl md:text-5xl font-black text-white">
+        <section className="py-7 bg-black">
+             <div className="container mx-auto px-4 lg:px-5 max-w-4xl">
+                <div className="flex flex-col text-center mb-6">
+                    <h2 className="text-2xl md:text-2xl font-black text-white">
                         Tabela de preços <span className="text-yellow-500">Provedor Master</span>
                     </h2>
                     <p className="mt-4 text-zinc-500 max-w-2xl mx-auto">Quanto mais vendas e conexões simultâneas ativas, mais barato e escalável fica seu negócio!</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Item Master */}
-                    <div className="bg-[#111]/80 border border-white/10 rounded-xl p-6 flex items-center justify-between">
+                    <div className="bg-[#111]/80 border border-white/10 rounded-xl p-3 flex items-center justify-between">
                         <div>
                             <span className="text-xs font-bold text-zinc-500 uppercase">ATÉ</span>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-white">350</span>
+                                <span className="text-2xl font-black text-white">350</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">Conexões Ativas</span>
                             </div>
                         </div>
                         <div className="text-right">
                              <span className="text-xs font-bold text-zinc-500 uppercase">POR</span>
                             <div className="flex items-baseline gap-2 justify-end">
-                                <span className="text-3xl font-black text-white">R$1.00</span>
+                                <span className="text-2xl font-black text-white">R$1.00</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">CADA</span>
                             </div>
                         </div>
                     </div>
                     {/* Item Master */}
-                    <div className="bg-[#111]/80 border border-white/10 rounded-xl p-6 flex items-center justify-between">
+                    <div className="bg-[#111]/80 border border-white/10 rounded-xl p-3 flex items-center justify-between">
                         <div>
                             <span className="text-xs font-bold text-zinc-500 uppercase">ATÉ</span>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-white">800</span>
+                                <span className="text-2xl font-black text-white">800</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">Conexões Ativas</span>
                             </div>
                         </div>
                         <div className="text-right">
                              <span className="text-xs font-bold text-zinc-500 uppercase">POR</span>
                             <div className="flex items-baseline gap-2 justify-end">
-                                <span className="text-3xl font-black text-white">R$0.90</span>
+                                <span className="text-2xl font-black text-white">R$0.90</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">CADA</span>
                             </div>
                         </div>
                     </div>
                      {/* Item Master */}
-                     <div className="bg-[#111]/80 border border-white/10 rounded-xl p-6 flex items-center justify-between">
+                     <div className="bg-[#111]/80 border border-white/10 rounded-xl p-3 flex items-center justify-between">
                         <div>
                             <span className="text-xs font-bold text-zinc-500 uppercase">ATÉ</span>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-white">1200</span>
+                                <span className="text-2xl font-black text-white">1200</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">Conexões Ativas</span>
                             </div>
                         </div>
                         <div className="text-right">
                              <span className="text-xs font-bold text-zinc-500 uppercase">POR</span>
                             <div className="flex items-baseline gap-2 justify-end">
-                                <span className="text-3xl font-black text-white">R$0.80</span>
+                                <span className="text-2xl font-black text-white">R$0.80</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">CADA</span>
                             </div>
                         </div>
                     </div>
                      {/* Item Master */}
-                     <div className="bg-[#111]/80 border border-white/10 rounded-xl p-6 flex items-center justify-between">
+                     <div className="bg-[#111]/80 border border-white/10 rounded-xl p-3 flex items-center justify-between">
                         <div>
                             <span className="text-xs font-bold text-zinc-500 uppercase">ATÉ</span>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-white">5000</span>
+                                <span className="text-2xl font-black text-white">5000</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">Conexões Ativas</span>
                             </div>
                         </div>
                         <div className="text-right">
                              <span className="text-xs font-bold text-zinc-500 uppercase">POR</span>
                             <div className="flex items-baseline gap-2 justify-end">
-                                <span className="text-3xl font-black text-white">R$0.60</span>
+                                <span className="text-2xl font-black text-white">R$0.60</span>
                                 <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider">CADA</span>
                             </div>
                         </div>
@@ -602,16 +602,16 @@ export default function Landing() {
         </section>
 
         {/* DIFFERENTIALS (MIXED GERADOR + VIZZION) */}
-        <section id="solucoes" className="py-24 bg-[#0a0a0a] border-y border-white/5">
-            <div className="container mx-auto px-4 max-w-7xl">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-5xl font-black text-white mb-4">A Diferença Está nos Detalhes</h2>
+        <section id="solucoes" className="py-7 bg-[#0a0a0a] border-y border-white/5">
+            <div className="container mx-auto px-4 max-w-4xl">
+                <div className="text-center mb-3">
+                    <h2 className="text-2xl md:text-2xl font-black text-white mb-3">A Diferença Está nos Detalhes</h2>
                     <p className="text-zinc-500 max-w-2xl mx-auto">Streaming contínuo com desempenho incomparável em conjunto com as ferramentas de marketing e gerador de banners automatizados.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="bg-[#111] p-8 rounded-3xl border border-white/5 hover:-translate-y-2 transition-transform">
-                        <div className="h-14 w-14 bg-brand-500/10 rounded-2xl flex items-center justify-center mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="bg-[#111] p-3 rounded-2xl border border-white/5 hover:-translate-y-2 transition-transform">
+                        <div className="h-11 w-11 bg-brand-500/10 rounded-2xl flex items-center justify-center mb-6">
                             <Zap className="text-brand-500" size={28} />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-3">Transmissão Rápida Ultra HD</h3>
@@ -620,8 +620,8 @@ export default function Landing() {
                         </p>
                     </div>
 
-                    <div className="bg-[#111] p-8 rounded-3xl border border-white/5 hover:-translate-y-2 transition-transform">
-                        <div className="h-14 w-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6">
+                    <div className="bg-[#111] p-3 rounded-2xl border border-white/5 hover:-translate-y-2 transition-transform">
+                        <div className="h-11 w-11 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6">
                             <LayoutGrid className="text-purple-500" size={28} />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-3">Gerador de Banners Grátis</h3>
@@ -630,8 +630,8 @@ export default function Landing() {
                         </p>
                     </div>
 
-                    <div className="bg-[#111] p-8 rounded-3xl border border-white/5 hover:-translate-y-2 transition-transform">
-                        <div className="h-14 w-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-6">
+                    <div className="bg-[#111] p-3 rounded-2xl border border-white/5 hover:-translate-y-2 transition-transform">
+                        <div className="h-11 w-11 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-6">
                             <Play className="text-yellow-500" size={28} />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-3">Compatibilidade de Dispositivos</h3>
@@ -640,8 +640,8 @@ export default function Landing() {
                         </p>
                     </div>
 
-                    <div className="bg-[#111] p-8 rounded-3xl border border-white/5 hover:-translate-y-2 transition-transform">
-                        <div className="h-14 w-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6">
+                    <div className="bg-[#111] p-3 rounded-2xl border border-white/5 hover:-translate-y-2 transition-transform">
+                        <div className="h-11 w-11 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6">
                             <Globe className="text-blue-500" size={28} />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-3">Multi-Idiomas & DNS Privado</h3>
@@ -650,8 +650,8 @@ export default function Landing() {
                         </p>
                     </div>
 
-                    <div className="bg-[#111] p-8 rounded-3xl border border-white/5 hover:-translate-y-2 transition-transform">
-                         <div className="h-14 w-14 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6">
+                    <div className="bg-[#111] p-3 rounded-2xl border border-white/5 hover:-translate-y-2 transition-transform">
+                         <div className="h-11 w-11 bg-green-500/10 rounded-2xl flex items-center justify-center mb-6">
                             <ShieldCheck className="text-green-500" size={28} />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-3">2 Fatores de Segurança Integrado</h3>
@@ -664,31 +664,31 @@ export default function Landing() {
         </section>
 
         {/* PASSO A PASSO (VIZZION PLAY ADD) */}
-        <section className="py-24 bg-black border-y border-white/5">
-             <div className="container mx-auto px-4 max-w-6xl">
-                 <div className="flex flex-col text-center mb-16">
-                     <h2 className="text-3xl md:text-5xl font-black text-white">Como usar nosso <span className="text-brand-500">MAXX Control</span>?</h2>
+        <section className="py-7 bg-black border-y border-white/5">
+             <div className="container mx-auto px-4 max-w-4xl">
+                 <div className="flex flex-col text-center mb-3">
+                     <h2 className="text-2xl md:text-2xl font-black text-white">Como usar nosso <span className="text-brand-500">MAXX Control</span>?</h2>
                      <p className="mt-4 text-zinc-500 max-w-2xl mx-auto">Fluxo de trabalho rápido e intuitivo para ativar clientes em segundos, não em minutos.</p>
                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                     <div className="flex flex-col items-center text-center gap-4 border border-[#314969]/50 hover:border-brand-500/50 bg-[#0a0a0a] rounded-2xl p-8 transition-colors">
-                         <div className="w-16 h-16 rounded-full bg-brand-500/10 flex items-center justify-center border border-brand-500/20 text-brand-500 font-black text-2xl">1</div>
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                     <div className="flex flex-col items-center text-center gap-3 border border-[#314969]/50 hover:border-brand-500/50 bg-[#0a0a0a] rounded-2xl p-3 transition-colors">
+                         <div className="w-12 h-12 rounded-full bg-brand-500/10 flex items-center justify-center border border-brand-500/20 text-brand-500 font-black text-2xl">1</div>
                          <h3 className="text-lg font-bold text-white">Cadastre Seu Master</h3>
                          <p className="text-xs text-zinc-400">Entre na plataforma de faturamento automático e ative seus tokens com sigilo.</p>
                      </div>
-                     <div className="flex flex-col items-center text-center gap-4 border border-[#314969]/50 hover:border-orange-500/50 bg-[#0a0a0a] rounded-2xl p-8 transition-colors">
-                         <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-500 font-black text-2xl">2</div>
+                     <div className="flex flex-col items-center text-center gap-3 border border-[#314969]/50 hover:border-orange-500/50 bg-[#0a0a0a] rounded-2xl p-3 transition-colors">
+                         <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-500 font-black text-2xl">2</div>
                          <h3 className="text-lg font-bold text-white">Adicione DNS</h3>
                          <p className="text-xs text-zinc-400">Configure suas sub-revendas ou clientes diretos blindando suas IPs das operadoras.</p>
                      </div>
-                     <div className="flex flex-col items-center text-center gap-4 border border-[#314969]/50 hover:border-yellow-500/50 bg-[#0a0a0a] rounded-2xl p-8 transition-colors">
-                         <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 text-yellow-500 font-black text-2xl">3</div>
+                     <div className="flex flex-col items-center text-center gap-3 border border-[#314969]/50 hover:border-yellow-500/50 bg-[#0a0a0a] rounded-2xl p-3 transition-colors">
+                         <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 text-yellow-500 font-black text-2xl">3</div>
                          <h3 className="text-lg font-bold text-white">Gere Banners</h3>
                          <p className="text-xs text-zinc-400">Use nosso gerador de PNGs automáticos para os jogos da rodada e dispare no WhatsApp.</p>
                      </div>
-                     <div className="flex flex-col items-center text-center gap-4 border border-[#314969]/50 hover:border-green-500/50 bg-[#0a0a0a] rounded-2xl p-8 transition-colors">
-                         <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20 text-green-500 font-black text-2xl">4</div>
+                     <div className="flex flex-col items-center text-center gap-3 border border-[#314969]/50 hover:border-green-500/50 bg-[#0a0a0a] rounded-2xl p-3 transition-colors">
+                         <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20 text-green-500 font-black text-2xl">4</div>
                          <h3 className="text-lg font-bold text-white">Você Terminou!</h3>
                          <p className="text-xs text-zinc-400">Assista seus lucros escalarem enquanto as conexões assistem TV ao Vivo sem travamentos.</p>
                      </div>
@@ -697,31 +697,31 @@ export default function Landing() {
         </section>
 
         {/* ELENCO INTELIGENTE (GERADOR PREMIUM ADD) */}
-        <section className="py-24 bg-[#050505] overflow-hidden">
-            <div className="container mx-auto px-6 max-w-7xl">
+        <section className="py-7 bg-[#050505] overflow-hidden">
+            <div className="container mx-auto px-6 max-w-4xl">
                 <div className="flex flex-col lg:flex-row-reverse items-center gap-16">
                     {/* Texto sobre Elenco */}
                     <div className="w-full lg:w-1/2">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-bold uppercase tracking-wider mb-6">
                             ✨ Funcionalidade Exclusiva MAXX
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">
+                        <h2 className="text-2xl md:text-2xl font-black text-white mb-6 leading-tight">
                             Elenco Inteligente: <br/>
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-purple-400">O Fim das Fotos Genéricas</span>
                         </h2>
-                        <p className="text-lg text-zinc-400 mb-8 leading-relaxed max-w-xl">
+                        <p className="text-lg text-zinc-400 mb-3 leading-relaxed max-w-xl">
                             Nosso robô lê o jogo IPTV que você selecionou e busca automaticamente os posters em alta definição (`.PNG` sem fundo) dos maiores craques daquela partida para compor a sua arte digital instantaneamente.
                         </p>
                         
-                        <ul className="space-y-4 mb-8">
-                            <li className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 transition hover:border-brand-500/30">
+                        <ul className="space-y-4 mb-3">
+                            <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 transition hover:border-brand-500/30">
                                 <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 shrink-0"><CheckCircle size={18} /></div>
                                 <div>
                                     <span className="text-zinc-200 font-bold block">Fotos com Fundo Transparente (HD)</span>
                                     <span className="text-xs text-zinc-500">Recortes perfeitos usando estúdio de IA Nativo.</span>
                                 </div>
                             </li>
-                            <li className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 transition hover:border-brand-500/30">
+                            <li className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/5 transition hover:border-brand-500/30">
                                 <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 shrink-0"><CheckCircle size={18} /></div>
                                 <div>
                                     <span className="text-zinc-200 font-bold block">Conexão direta com API TMDB / Soccer</span>
@@ -730,77 +730,49 @@ export default function Landing() {
                             </li>
                         </ul>
 
-                        <Link to="/login" className="inline-flex items-center justify-center px-8 py-4 bg-white text-black rounded-xl font-black hover:bg-zinc-200 transition shadow-lg gap-2">
+                        <Link to="/login" className="inline-flex items-center justify-center px-4 py-2 bg-white text-black rounded-xl font-black hover:bg-zinc-200 transition shadow-lg gap-2">
                             ACESSAR PAINEL <ChevronRight size={18} />
                         </Link>
                     </div>
 
                     {/* Simulação Visual Elenco */}
                     <div className="w-full lg:w-1/2 relative">
-                        <div className="absolute -top-10 -left-10 w-64 h-64 bg-brand-600 rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
-                        <div className="relative bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+                        <div className="absolute -top-3 -left-10 w-64 h-64 bg-brand-600 rounded-full filter blur-[100px] opacity-20 pointer-events-none"></div>
+                        <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl p-3 md:p-3 shadow-2xl">
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
                                 <h4 className="font-bold text-white flex items-center gap-2">Selecione o Craque da Arte</h4>
                                 <span className="text-[10px] bg-brand-500 text-white px-2 py-1 rounded font-bold uppercase tracking-wider animate-pulse">Ao Vivo</span>
                             </div>
                             
-                            <div className="flex gap-6 overflow-x-auto pb-8 pt-2 snap-x hide-scrollbar scroll-smooth items-center">
-                                {/* CARD JOGADOR 1 */}
-                                <div className="group relative w-64 md:w-80 flex-shrink-0 aspect-[3/4] snap-center rounded-3xl border-2 border-brand-500 overflow-hidden bg-gradient-to-t from-dark-900 to-transparent cursor-pointer shadow-[0_0_30px_rgba(252,95,22,0.2)]">
-                                    <div className="absolute inset-0 bg-blue-500/20 mix-blend-overlay"></div>
-                                    <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-6 pb-5 flex flex-col items-center justify-end h-full z-10 transition-transform duration-300 group-hover:scale-110">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full border border-white/20 mb-3 flex items-center justify-center overflow-hidden">
-                                            <span className="text-xs font-bold text-zinc-400">CR7</span>
+                            <div className="grid grid-cols-2 gap-2">
+                                {[
+                                    { src: '/jogadores/cr7.png', tag: 'CR7', name: 'Cristiano R.', active: true },
+                                    { src: '/jogadores/vini.png', tag: 'VINI', name: 'Vini Jr.' },
+                                    { src: '/jogadores/mbappe.png', tag: 'MBA', name: 'K. Mbappe' },
+                                    { src: '/jogadores/haaland.png', tag: 'HAA', name: 'E. Haaland' },
+                                ].map((player, index) => (
+                                    <div
+                                        key={player.src}
+                                        className={`group relative isolate min-h-[170px] md:min-h-[210px] rounded-xl border overflow-hidden bg-black cursor-pointer shadow-[0_0_22px_rgba(252,95,22,0.14)] ${player.active ? 'border-brand-500' : 'border-white/10 hover:border-white/30'}`}
+                                    >
+                                        <img
+                                            src={player.src}
+                                            alt={player.name}
+                                            loading="lazy"
+                                            className={`absolute inset-0 z-[1] h-full w-full object-cover object-center brightness-110 contrast-110 saturate-125 transition duration-300 group-hover:scale-105 ${player.active ? 'opacity-100 drop-shadow-[0_0_28px_rgba(252,95,22,0.28)]' : 'opacity-90 grayscale group-hover:grayscale-0 group-hover:opacity-100'}`}
+                                        />
+                                        <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/60 via-transparent to-black/10"></div>
+                                        <div className="absolute bottom-0 left-0 right-0 z-10 p-1.5 text-center">
+                                            <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-full border border-white/20 bg-black/50 text-[10px] font-black text-white backdrop-blur">
+                                                {player.tag}
+                                            </div>
+                                            <p className={`text-sm font-black drop-shadow-md ${player.active ? 'text-white' : 'text-zinc-300'}`}>{player.name}</p>
                                         </div>
-                                        <p className="text-lg font-black text-white drop-shadow-md text-center">Cristiano R.</p>
-                                    </div>
-                                    <div className="absolute top-4 right-4 bg-brand-500 text-white h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shadow-md z-20">1</div>
-                                </div>
-                                {/* CARD JOGADOR 2 */}
-                                <div className="group relative w-64 md:w-80 flex-shrink-0 aspect-[3/4] snap-center rounded-3xl border border-white/10 hover:border-white/30 overflow-hidden bg-gradient-to-t from-dark-900 to-transparent cursor-pointer">
-                                    <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-6 pb-5 flex flex-col items-center justify-end h-full z-10 transition-transform duration-300 group-hover:scale-110 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full border border-white/20 mb-3 flex items-center justify-center overflow-hidden">
-                                            <span className="text-xs font-bold text-zinc-400">NEY</span>
+                                        <div className={`absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black text-white shadow-md ${player.active ? 'bg-brand-500' : 'bg-white/10'}`}>
+                                            {index + 1}
                                         </div>
-                                        <p className="text-lg font-black text-zinc-300 drop-shadow-md text-center">Neymar Jr.</p>
                                     </div>
-                                </div>
-                                {/* CARD JOGADOR 3 */}
-                                <div className="group relative w-64 md:w-80 flex-shrink-0 aspect-[3/4] snap-center rounded-3xl border border-white/10 hover:border-white/30 overflow-hidden bg-gradient-to-t from-dark-900 to-transparent cursor-pointer">
-                                    <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-6 pb-5 flex flex-col items-center justify-end h-full z-10 transition-transform duration-300 group-hover:scale-110 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full border border-white/20 mb-3 flex items-center justify-center overflow-hidden">
-                                            <span className="text-xs font-bold text-zinc-400">MES</span>
-                                        </div>
-                                        <p className="text-lg font-black text-zinc-300 drop-shadow-md text-center">Lionel M.</p>
-                                    </div>
-                                </div>
-                                {/* CARD JOGADOR 4 */}
-                                <div className="group relative w-64 md:w-80 flex-shrink-0 aspect-[3/4] snap-center rounded-3xl border border-white/10 hover:border-white/30 overflow-hidden bg-gradient-to-t from-dark-900 to-transparent cursor-pointer">
-                                    <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-6 pb-5 flex flex-col items-center justify-end h-full z-10 transition-transform duration-300 group-hover:scale-110 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full border border-white/20 mb-3 flex items-center justify-center overflow-hidden">
-                                            <span className="text-xs font-bold text-zinc-400">VINI</span>
-                                        </div>
-                                        <p className="text-lg font-black text-zinc-300 drop-shadow-md text-center">Vini Jr.</p>
-                                    </div>
-                                </div>
-                                {/* CARD JOGADOR 5 */}
-                                <div className="group relative w-64 md:w-80 flex-shrink-0 aspect-[3/4] snap-center rounded-3xl border border-white/10 hover:border-white/30 overflow-hidden bg-gradient-to-t from-dark-900 to-transparent cursor-pointer">
-                                    <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-6 pb-5 flex flex-col items-center justify-end h-full z-10 transition-transform duration-300 group-hover:scale-110 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full border border-white/20 mb-3 flex items-center justify-center overflow-hidden">
-                                            <span className="text-xs font-bold text-zinc-400">MBA</span>
-                                        </div>
-                                        <p className="text-lg font-black text-zinc-300 drop-shadow-md text-center">K. Mbappe</p>
-                                    </div>
-                                </div>
-                                {/* CARD JOGADOR 6 */}
-                                <div className="group relative w-64 md:w-80 flex-shrink-0 aspect-[3/4] snap-center rounded-3xl border border-white/10 hover:border-white/30 overflow-hidden bg-gradient-to-t from-dark-900 to-transparent cursor-pointer">
-                                    <div className="absolute bottom-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent p-6 pb-5 flex flex-col items-center justify-end h-full z-10 transition-transform duration-300 group-hover:scale-110 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full border border-white/20 mb-3 flex items-center justify-center overflow-hidden">
-                                            <span className="text-xs font-bold text-zinc-400">HAA</span>
-                                        </div>
-                                        <p className="text-lg font-black text-zinc-300 drop-shadow-md text-center">E. Haaland</p>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -809,59 +781,59 @@ export default function Landing() {
         </section>
 
         {/* APPS DOWNLOADS */}
-        <section id="apps" className="py-24 bg-[#030303] relative overflow-hidden">
+        <section id="apps" className="py-7 bg-[#030303] relative overflow-hidden">
              {/* Glow de fundo */}
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/20 rounded-full blur-[100px] pointer-events-none"></div>
              
-             <div className="container mx-auto px-4 text-center max-w-5xl relative z-10">
-                 <div className="flex flex-col items-center mb-8">
-                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(252,95,22,0.4)] mb-6 border border-white/10 hover:scale-105 transition-transform">
+             <div className="container mx-auto px-4 text-center max-w-4xl relative z-10">
+                 <div className="flex flex-col items-center mb-3">
+                     <div className="w-12 h-12 md:w-32 md:h-32 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(252,95,22,0.4)] mb-6 border border-white/10 hover:scale-105 transition-transform">
                          <img src="/logo-app.png" alt="MAXX PLAYERS Logo" className="w-full h-full object-cover" />
                      </div>
-                     <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">Conheça o <span className="text-brand-500 drop-shadow-[0_0_15px_rgba(252,95,22,0.8)]">MAXX PLAYERS</span></h2>
+                     <h2 className="text-2xl md:text-2xl font-black text-white tracking-tight">Conheça o <span className="text-brand-500 drop-shadow-[0_0_15px_rgba(252,95,22,0.8)]">MAXX PLAYERS</span></h2>
                  </div>
                  
-                 <p className="text-zinc-400 mb-12 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
+                 <p className="text-zinc-400 mb-6 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
                      O reprodutor premium mais rápido e elegante do mercado já está disponível nativamente nas lojas oficiais dos gigantes da tecnologia.
                  </p>
 
-                 <div className="flex flex-wrap justify-center gap-4 mb-16">
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
+                 <div className="flex flex-wrap justify-center gap-3 mb-3">
+                     <div className="w-32 h-11 md:w-40 md:h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          LG Smart TV
                      </div>
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
+                     <div className="w-32 h-11 md:w-40 md:h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          Samsung Tizen
                      </div>
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
+                     <div className="w-32 h-11 md:w-40 md:h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          Android TV
                      </div>
-                     <div className="w-32 h-14 md:w-40 md:h-16 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
+                     <div className="w-32 h-11 md:w-40 md:h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-bold text-zinc-300 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-lg transition-all cursor-pointer">
                          ROKU TV
                      </div>
                  </div>
 
-                 <div className="bg-[#0a0a0a] border border-white/10 p-6 md:p-8 rounded-[2rem] max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden group">
+                 <div className="bg-[#0a0a0a] border border-white/10 p-3 md:p-3 rounded-[2rem] max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 shadow-2xl relative overflow-hidden group">
                      <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                      <div className="text-center md:text-left z-10">
                          <span className="text-brand-500 font-black text-sm uppercase tracking-widest block mb-1">Android & Firestick</span>
                          <span className="text-white font-bold text-lg md:text-xl">Código Downloader Oficial</span>
                      </div>
-                     <div className="flex gap-4 items-center bg-black/50 px-8 py-4 rounded-2xl border border-white/5 z-10">
-                         <span className="text-4xl md:text-5xl font-black text-brand-500 tracking-widest drop-shadow-md">533810</span>
+                     <div className="flex gap-3 items-center bg-black/50 px-4 py-2 rounded-2xl border border-white/5 z-10">
+                         <span className="text-2xl md:text-2xl font-black text-brand-500 tracking-widest drop-shadow-md">533810</span>
                      </div>
                  </div>
              </div>
         </section>
 
         {/* FOOTER */}
-        <footer className="bg-[#050505] border-t border-white/5 py-12">
-            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+        <footer className="bg-[#050505] border-t border-white/5 py-7">
+            <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-3 text-center md:text-left">
                 <div className="flex items-center gap-3 group cursor-pointer">
                     <img src="/logo-maxx.svg" alt="Maxx Control" className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(252, 95, 22,0.3)] transition-transform group-hover:scale-110" />
                     <span className="font-black text-zinc-300 text-lg tracking-tighter">MAXX Control</span>
                 </div>
                 
-                <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 text-xs md:text-sm text-zinc-500 font-medium">
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 md:gap-3 text-xs md:text-sm text-zinc-500 font-medium">
                     <Link to="/privacy" className="hover:text-white transition">Política de Privacidade</Link>
                     <Link to="/terms" className="hover:text-white transition">Termos de Uso</Link>
                     <Link to="/cookies" className="hover:text-white transition">Política de Cookies</Link>
@@ -875,18 +847,18 @@ export default function Landing() {
 
       {/* MODAL ÁREA DO CLIENTE / CADASTRO */}
       {showClientModal && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-3">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowClientModal(false)}></div>
           
-          <div className="relative bg-[#111] border border-white/10 rounded-3xl w-full max-w-md p-8 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up">
+          <div className="relative bg-[#111] border border-white/10 rounded-2xl w-full max-w-md p-3 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up">
             {/* Glow fundo modal */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-brand-500/20 rounded-full filter blur-[60px] pointer-events-none"></div>
             
-            <button onClick={() => setShowClientModal(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white transition">
+            <button onClick={() => setShowClientModal(false)} className="absolute top-3 right-4 text-zinc-500 hover:text-white transition">
               <X size={20} />
             </button>
 
-            <div className="text-center mb-8 relative z-10">
+            <div className="text-center mb-3 relative z-10">
               <h3 className="text-2xl font-black text-white mb-2">Novo <span className="text-brand-500">Cadastro</span></h3>
               <p className="text-zinc-400 text-sm">Preencha os dados abaixo para receber sua liberação de acesso imediato.</p>
             </div>
@@ -920,7 +892,7 @@ export default function Landing() {
                 <input required type="text" placeholder="Crie uma Senha" value={clientData.senha} onChange={(e) => setClientData({...clientData, senha: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition" />
               </div>
 
-              <button type="submit" className="w-full bg-gradient-to-r from-brand-600 to-orange-500 text-white font-black py-4 rounded-xl mt-6 shadow-[0_0_20px_rgba(252, 95, 22,0.3)] hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
+              <button type="submit" className="w-full bg-gradient-to-r from-brand-600 to-orange-500 text-white font-black py-2.5 rounded-xl mt-6 shadow-[0_0_20px_rgba(252, 95, 22,0.3)] hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
                 Concluir e Liberar Sistema <ChevronRight size={18} />
               </button>
             </form>

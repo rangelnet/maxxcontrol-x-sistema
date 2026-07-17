@@ -111,7 +111,7 @@ export default function UploadExcelModal({ onClose, onImportSuccess, endpoint = 
             <div style={{ background: 'rgba(252,95,22,0.1)', padding: 6, borderRadius: 8 }}>
               <UploadCloud size={18} color="#FC5F16" />
             </div>
-            <h2 style={{ margin: 0, fontSize: 16, color: '#fff', fontWeight: 600 }}>Importação em Lote via Excel</h2>
+            <h2 style={{ margin: 0, fontSize: 13, color: '#fff', fontWeight: 600 }}>Importação em Lote via Excel</h2>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#71717a', cursor: 'pointer', padding: 4 }}>
             <X size={20} />
@@ -123,7 +123,7 @@ export default function UploadExcelModal({ onClose, onImportSuccess, endpoint = 
             <div style={{ textAlign: 'center', padding: '30px 0' }}>
               <CheckCircle size={48} color="#10b981" style={{ marginBottom: 16 }} />
               <h3 style={{ color: '#fff', fontSize: 18, marginBottom: 8 }}>Importação Concluída!</h3>
-              <p style={{ color: '#a1a1aa', fontSize: 14 }}>Os clientes foram processados com sucesso.</p>
+              <p style={{ color: '#a1a1aa', fontSize: 11 }}>Os clientes foram processados com sucesso.</p>
             </div>
           ) : (
             <>
@@ -151,7 +151,7 @@ export default function UploadExcelModal({ onClose, onImportSuccess, endpoint = 
                 onClick={() => document.getElementById('excel-upload-input').click()}
               >
                 <Database size={32} color={file ? "#FC5F16" : "#71717a"} style={{ marginBottom: 12 }} />
-                <h4 style={{ margin: 0, color: file ? '#FC5F16' : '#fff', fontSize: 14, marginBottom: 4 }}>
+                <h4 style={{ margin: 0, color: file ? '#FC5F16' : '#fff', fontSize: 11, marginBottom: 4 }}>
                   {file ? file.name : 'Clique ou arraste a planilha aqui'}
                 </h4>
                 <p style={{ margin: 0, fontSize: 12, color: '#71717a' }}>

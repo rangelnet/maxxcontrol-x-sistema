@@ -1,0 +1,947 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { 
+  Check, Info, HelpCircle, ChevronDown, Sparkles, MessageCircle, 
+  Smartphone, Monitor, Crown, Shield, ShieldCheck, CreditCard, Copy, 
+  Loader2, CheckCircle, RefreshCw, Star, Play
+} from 'lucide-react';
+import axios from '../services/api';
+import { Link, useNavigate } from 'react-router-dom';
+
+const SubscribePlans = () => {
+  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
+  const [panelPlans, setPanelPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activePlanId, setActivePlanId] = useState(null);
+  
+  // Modal states
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('pix'); // 'pix' | 'card'
+  const [pixCopied, setPixCopied] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState('method'); // 'method' | 'processing' | 'success'
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  
+  // Card input states
+  const [cardName, setCardName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCVV, setCardCVV] = useState('');
+  
+  // FAQ accordion state
+  const [openFaq, setOpenFaq] = useState(null);
+
+  // Registration modal states
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [registerPlan, setRegisterPlan] = useState(null);
+  const [registerData, setRegisterData] = useState({ nome: '', email: '', telefone: '', senha: '' });
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('/api/finance/panel-plans');
+      // Filtrar apenas ativos
+      const activePlans = (res.data || []).filter(p => p.is_active);
+      
+      // Ordenar por preço para garantir Essencial, Profissional, Elite
+      activePlans.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      
+      setPanelPlans(activePlans);
+    } catch (error) {
+      console.error('Erro ao buscar planos SaaS:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenCheckout = (plan) => {
+    setSelectedPlan(plan);
+    setPaymentMethod('pix');
+    setCheckoutStep('method');
+    setShowCheckoutModal(true);
+  };
+
+  const handleOpenRegisterModal = (plan) => {
+    setRegisterPlan(plan);
+    setRegisterData({ nome: '', email: '', telefone: '', senha: '' });
+    setShowRegisterModal(true);
+  };
+
+  const handleRegisterSubmit = (e) => {
+    e.preventDefault();
+    const numeroWhats = '5511999999999';
+    const planoNome = registerPlan ? registerPlan.name.toUpperCase() : 'BÁSICO';
+    const textoWhats = `*NOVO CADASTRO DE CLIENTE (TESTE 7 DIAS)*\n\n*Nome:* ${registerData.nome}\n*E-mail:* ${registerData.email}\n*Telefone:* ${registerData.telefone}\n*Senha Solicitada:* ${registerData.senha}\n*Plano Escolhido:* ${planoNome}\n\nOlá, gostaria de finalizar meu cadastro e receber a liberação imediata de acesso teste de 7 dias.`;
+    window.open(`https://wa.me/${numeroWhats}?text=${encodeURIComponent(textoWhats)}`, '_blank');
+    setShowRegisterModal(false);
+  };
+
+  const copyPixKey = () => {
+    const fakePixKey = "00020101021226830014br.gov.bcb.pix2561api.mercadopago.com/v1/payments/991208310/qr_code5204000053039865802BR5925MAXX_CONTROL_SAAS_PAYMENT6009Sao_Paulo62070503***6304D1B0";
+    navigator.clipboard.writeText(fakePixKey);
+    setPixCopied(true);
+    setTimeout(() => setPixCopied(false), 2000);
+  };
+
+  const handleSimulatePayment = async () => {
+    setCheckoutLoading(true);
+    setCheckoutStep('processing');
+    
+    // Simular o delay de aprovação do gateway Mercado Pago (2.5 segundos)
+    setTimeout(async () => {
+      try {
+        if (!user) {
+          // Sandbox visual simulator for visitors
+          setCheckoutStep('success');
+          setCheckoutLoading(false);
+          return;
+        }
+
+        const payload = {
+          panel_plan_id: selectedPlan.id,
+          payment_method: paymentMethod === 'pix' ? 'PIX' : 'Cartão de Crédito'
+        };
+        
+        const res = await axios.post('/api/finance/subscribe-panel-plan', payload);
+        
+        if (res.data.success) {
+          // Atualizar o estado global do usuário com todas as permissões concedidas pelo plano
+          const updatedUser = { 
+            ...user, 
+            ...res.data.user
+          };
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          
+          setCheckoutStep('success');
+        } else {
+          alert('Erro ao confirmar a assinatura. Entre em contato com o suporte.');
+          setCheckoutStep('method');
+        }
+      } catch (error) {
+        console.error('Erro na requisição de assinatura:', error);
+        alert(error.response?.data?.error || 'Ocorreu um erro ao processar sua assinatura.');
+        setCheckoutStep('method');
+      } finally {
+        setCheckoutLoading(false);
+      }
+    }, 2500);
+  };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Expirado';
+    return new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const getDaysRemaining = (expireDate) => {
+    if (!expireDate) return 0;
+    const diff = new Date(expireDate) - new Date();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  const availableFeatures = [
+    { id: 'dashboard', label: 'Métricas & Dashboard', category: 'Core' },
+    { id: 'devices', label: 'Gestão de Dispositivos', category: 'Core' },
+    { id: 'tickets', label: 'Suporte a Clientes (Tickets)', category: 'Core' },
+    { id: 'iptv-server', label: 'Painel IPTV Integrado', category: 'IPTV' },
+    { id: 'branding', label: 'Fábrica de Temas Master', category: 'Branding' },
+    { id: 'whatsapp-auto', label: 'Automação Disparos WhatsApp', category: 'Marketing' },
+    { id: 'white-label', label: 'Loja White Label Própria', category: 'Branding' },
+    { id: 'agents', label: 'Orquestradores IA (22 Agentes)', category: 'Inteligência' },
+    { id: 'game-schedule', label: 'Grade de Jogos Automatizada', category: 'Marketing' }
+  ];
+
+  const faqData = [
+    { q: 'Como funciona a ativação do plano?', a: 'Sua ativação é imediata logo após a confirmação do pagamento! O sistema atualiza suas permissões do menu e seu painel é liberado automaticamente na hora.' },
+    { q: 'Posso alterar meu plano depois?', a: 'Sim! Você pode fazer upgrade ou downgrade de plano a qualquer momento diretamente nesta tela. O valor restante será compensado proporcionalmente.' },
+    { q: 'Quais os métodos de pagamento aceitos?', a: 'Aceitamos PIX com confirmação instantânea automatizada (simulado em ambiente de testes) e Cartões de Crédito parcelado.' },
+    { q: 'O que acontece quando minha assinatura expirar?', a: 'O sistema enviará alertas via WhatsApp e Telegram 7 dias antes. Caso expire, seu acesso será restringido ao plano Essencial grátis até a renovação.' }
+  ];
+
+  return (
+    <div style={{ maxWidth: '1200px', margin: '0 auto', fontFamily: 'Inter, sans-serif', color: '#f4f4f5', padding: '10px 0 50px', position: 'relative' }}>
+      
+      {/* HEADER DE NAVEGAÇÃO SUPERIOR */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 15px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '40px', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src="/logo-maxx.svg" alt="Maxx Control" style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(252, 95, 22, 0.4))' }} />
+          <span style={{ fontSize: '16px', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>MAXX<span style={{ color: '#FC5F16' }}>Control</span></span>
+        </div>
+        <Link 
+          to={user ? "/dashboard" : "/"} 
+          style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            padding: '10px 20px', 
+            borderRadius: '10px', 
+            background: 'rgba(255,255,255,0.03)', 
+            border: '1px solid rgba(255,255,255,0.08)', 
+            color: '#a1a1aa', 
+            textDecoration: 'none', 
+            fontSize: '13px', 
+            fontWeight: '700',
+            transition: 'all 0.2s'
+          }}
+          onMouseOver={e => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+            e.currentTarget.style.color = '#fff';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+            e.currentTarget.style.color = '#a1a1aa';
+          }}
+        >
+          ← Voltar para o {user ? 'Painel' : 'Site'}
+        </Link>
+      </div>
+
+      {/* GLOW DE FUNDO ABSTRATO */}
+      <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: '500px', height: '500px', borderRadius: '50%', background: 'rgba(252,95,22,0.06)', filter: 'blur(120px)', pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* HEADER SECTION */}
+      <div style={{ textAlign: 'center', marginBottom: '28px', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'inline-flex', items: 'center', gap: '8px', px: '16px', py: '6px', borderRadius: '9999px', background: 'rgba(252, 95, 22, 0.1)', border: '1px solid rgba(252, 95, 22, 0.2)', fontSize: '12px', fontWeight: '800', color: '#FC5F16', textTransform: 'uppercase', tracking: '1px', marginBottom: '10px' }}>
+          <Sparkles size={14} /> O Melhor para sua Operação SaaS
+        </div>
+        <h1 style={{ fontSize: 'clamp(24px, 3.5vw, 34px)', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '-1px', color: '#fff' }}>
+          Escolha seu Plano <span style={{ color: '#FC5F16', textShadow: '0 0 30px rgba(252,95,22,0.3)' }}>Maxx Control</span>
+        </h1>
+        <p style={{ color: '#a1a1aa', fontSize: 'clamp(13px, 2vw, 15px)', maxWidth: '600px', margin: '12px auto 0', lineHeight: 1.6 }}>
+          Potencialize suas vendas, automatize o envio de credenciais aos clientes e controle múltiplos servidores em uma única plataforma Premium.
+        </p>
+
+        {/* STATUS DA ASSINATURA ATUAL */}
+        <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'center', background: 'rgba(24, 24, 27, 0.65)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 18px', marginTop: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #FC5F16, #ff7e40)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(252,95,22,0.3)' }}>
+              <Crown size={20} color="#fff" />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase' }}>Seu Plano Atual</div>
+              <div style={{ fontSize: '15px', fontWeight: '900', color: '#fff' }}>{user?.plano || 'Nenhum / Trial'}</div>
+            </div>
+          </div>
+          
+          <div style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.08)' }} />
+
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase' }}>Vencimento</div>
+            <div style={{ fontSize: '15px', fontWeight: '900', color: user?.expires_at && getDaysRemaining(user.expires_at) > 0 ? '#34d399' : '#f87171' }}>
+              {user?.expires_at ? formatDate(user.expires_at) : 'Sem licença ativa'} 
+              {user?.expires_at && getDaysRemaining(user.expires_at) > 0 && ` (${getDaysRemaining(user.expires_at)} dias restantes)`}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CARDS DE PLANOS */}
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0', gap: '10px' }}>
+          <Loader2 size={40} className="animate-spin" color="#FC5F16" />
+          <p style={{ color: '#71717a', fontWeight: '600' }}>Carregando opções de planos...</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '16px', position: 'relative', zIndex: 1, marginBottom: '32px' }}>
+          {panelPlans.map((plan, index) => {
+            const isElite = plan.name?.toLowerCase().includes('elite');
+            const isPro = plan.name?.toLowerCase().includes('profissional');
+            const isPopular = isPro || isElite; // Plano Pro é geralmente o mais vendido
+            const isActiveUserPlan = user?.plano === plan.name;
+
+            return (
+              <div 
+                key={plan.id}
+                style={{ 
+                  background: '#18181b', 
+                  border: isActiveUserPlan ? '2px solid #34d399' : isPopular ? '2px solid #FC5F16' : '1px solid #27272a',
+                  borderRadius: '10px', 
+                  padding: '22px 20px', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  position: 'relative', 
+                  overflow: 'hidden', 
+                  transition: 'all 0.3s ease',
+                  boxShadow: isActiveUserPlan 
+                    ? '0 20px 40px rgba(52,211,153,0.08)' 
+                    : isPopular 
+                      ? '0 25px 50px rgba(252,95,22,0.12)' 
+                      : '0 15px 30px rgba(0,0,0,0.2)'
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  if (!isActiveUserPlan && !isPopular) e.currentTarget.style.borderColor = '#FC5F16';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  if (!isActiveUserPlan && !isPopular) e.currentTarget.style.borderColor = '#27272a';
+                }}
+              >
+                {/* GLOW DECORATIVO INTERNO */}
+                {isPopular && (
+                  <div style={{ position: 'absolute', top: '-28px', right: '-28px', background: 'rgba(252,95,22,0.15)', width: '86px', height: '86px', borderRadius: '50%', filter: 'blur(30px)' }} />
+                )}
+
+                {/* BADGE DESTAQUE */}
+                {isActiveUserPlan && (
+                  <div style={{ position: 'absolute', top: '15px', right: '20px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', fontSize: '10px', fontWeight: '900', padding: '6px 12px', borderRadius: '30px', border: '1px solid rgba(52, 211, 153, 0.3)', textTransform: 'uppercase', tracking: '0.5px' }}>
+                    SEU PLANO ATIVO
+                  </div>
+                )}
+                {!isActiveUserPlan && isPopular && (
+                  <div style={{ position: 'absolute', top: '15px', right: '20px', background: 'linear-gradient(135deg, #FC5F16, #ff7e40)', color: '#fff', fontSize: '10px', fontWeight: '900', padding: '6px 12px', borderRadius: '30px', boxShadow: '0 4px 10px rgba(252,95,22,0.3)', textTransform: 'uppercase', tracking: '0.5px' }}>
+                    RECOMENDADO
+                  </div>
+                )}
+
+                {/* NOME DO PLANO */}
+                <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', margin: '0 0 5px' }}>{plan.name}</h3>
+                <p style={{ color: '#71717a', fontSize: '13px', margin: '0 0 14px', fontWeight: '500' }}>
+                  {isElite ? 'Para grandes revendedores e empresários scale-up.' : isPro ? 'A escolha ideal para operações em pleno crescimento.' : 'O essencial para iniciar com estabilidade.'}
+                </p>
+
+                {/* PREÇO */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '34px', fontWeight: '900', color: '#fff', letterSpacing: '-1px' }}>
+                    {formatCurrency(plan.price)}
+                  </span>
+                  <span style={{ color: '#71717a', fontSize: '14px', fontWeight: '600' }}>/ mês</span>
+                </div>
+
+                {/* PERÍODO GRATUITO */}
+                <div style={{ background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', padding: '7px 9px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ShieldCheck size={16} color="#FC5F16" />
+                    <span style={{ fontSize: '13px', color: '#a1a1aa', fontWeight: '700' }}>Período de Testes</span>
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: '900', color: '#34d399' }}>{plan.trial_days} Dias Grátis</span>
+                </div>
+
+                {/* BOTÃO SOLICITAR TESTE GRÁTIS */}
+                <button
+                  onClick={() => handleOpenRegisterModal(plan)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '10px',
+                    background: 'rgba(52, 211, 153, 0.06)',
+                    border: '1px dashed rgba(52, 211, 153, 0.3)',
+                    color: '#34d399',
+                    fontSize: '12px',
+                    fontWeight: '850',
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '10px',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = 'rgba(52, 211, 153, 0.12)';
+                    e.currentTarget.style.borderColor = '#34d399';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = 'rgba(52, 211, 153, 0.06)';
+                    e.currentTarget.style.borderColor = 'rgba(52, 211, 153, 0.3)';
+                  }}
+                >
+                  Solicitar Teste Grátis
+                </button>
+
+                {/* DIVIDER */}
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '10px' }} />
+
+                {/* LISTA DE FERRAMENTAS */}
+                <div style={{ flex: 1, marginBottom: '40px' }}>
+                  <p style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', tracking: '0.08em', marginBottom: '10px' }}>O que está incluso:</p>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {availableFeatures.map((feat) => {
+                      const isIncluded = (plan.features || []).includes(feat.id);
+                      return (
+                        <li 
+                          key={feat.id}
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '10px', 
+                            fontSize: '13px', 
+                            color: isIncluded ? '#e4e4e7' : '#52525b',
+                            fontWeight: isIncluded ? '700' : '500',
+                            textDecoration: isIncluded ? 'none' : 'line-through'
+                          }}
+                        >
+                          <div style={{ 
+                            width: '18px', 
+                            height: '18px', 
+                            borderRadius: '50%', 
+                            background: isIncluded ? 'rgba(52, 211, 153, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {isIncluded ? (
+                              <Check size={12} color="#34d399" />
+                            ) : (
+                              <span style={{ color: '#ef4444', fontSize: '9px', fontWeight: '900' }}>✕</span>
+                            )}
+                          </div>
+                          <span>{feat.label}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+                {/* BOTÃO ASSINAR */}
+                {isActiveUserPlan ? (
+                  <button 
+                    disabled
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px', 
+                      borderRadius: '10px', 
+                      background: 'rgba(52, 211, 153, 0.1)', 
+                      border: '1px solid rgba(52, 211, 153, 0.2)', 
+                      color: '#34d399', 
+                      fontWeight: '800', 
+                      fontSize: '14px', 
+                      textTransform: 'uppercase', 
+                      tracking: '0.5px' 
+                    }}
+                  >
+                    Plano Vigente ✓
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => handleOpenCheckout(plan)}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px', 
+                      borderRadius: '10px', 
+                      background: isPopular ? 'linear-gradient(90deg, #FC5F16, #ff7e40)' : '#27272a', 
+                      border: 'none', 
+                      color: '#fff', 
+                      fontWeight: '850', 
+                      fontSize: '14px', 
+                      cursor: 'pointer',
+                      textTransform: 'uppercase', 
+                      tracking: '0.5px', 
+                      boxShadow: isPopular ? '0 6px 20px rgba(252,95,22,0.3)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={e => {
+                      if (isPopular) {
+                        e.currentTarget.style.filter = 'brightness(1.1)';
+                      } else {
+                        e.currentTarget.style.background = '#3f3f46';
+                      }
+                    }}
+                    onMouseOut={e => {
+                      if (isPopular) {
+                        e.currentTarget.style.filter = 'none';
+                      } else {
+                        e.currentTarget.style.background = '#27272a';
+                      }
+                    }}
+                  >
+                    {user?.plano ? 'Fazer Upgrade' : 'Iniciar Assinatura'}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* RECURSOS TABELA COMPARATIVA COMPLETA */}
+      <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', marginTop: '60px', position: 'relative', zIndex: 1, boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Shield size={22} color="#FC5F16" /> Tabela Comparativa Detalhada
+        </h2>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #27272a' }}>
+                <th style={{ padding: '15px 10px', color: '#71717a', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>Recursos Disponíveis</th>
+                {panelPlans.map(plan => (
+                  <th key={plan.id} style={{ padding: '15px 10px', color: '#fff', fontSize: '14px', fontWeight: '900', width: '22%', textTransform: 'uppercase' }}>{plan.name?.replace('PLANO ', '')}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {availableFeatures.map((feat, idx) => (
+                <tr key={feat.id} style={{ borderBottom: idx === availableFeatures.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background='rgba(255,255,255,0.01)'} onMouseOut={e => e.currentTarget.style.background='transparent'}>
+                  <td style={{ padding: '16px 10px' }}>
+                    <div style={{ fontWeight: '700', color: '#fff', fontSize: '13px' }}>{feat.label}</div>
+                    <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', fontWeight: '600', marginTop: '2px' }}>{feat.category}</div>
+                  </td>
+                  {panelPlans.map(plan => {
+                    const hasFeat = (plan.features || []).includes(feat.id);
+                    return (
+                      <td key={plan.id} style={{ padding: '16px 10px' }}>
+                        {hasFeat ? (
+                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(52,211,153,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Check size={14} color="#34d399" />
+                          </div>
+                        ) : (
+                          <span style={{ color: '#52525b', fontWeight: '900', fontSize: '12px' }}>✕</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* FAQ ACCORDION */}
+      <section style={{ marginTop: '80px', position: 'relative', zIndex: 1 }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h2 style={{ fontSize: '19px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <HelpCircle size={26} color="#FC5F16" /> Dúvidas Frequentes
+          </h2>
+          <p style={{ color: '#a1a1aa', marginTop: '6px', fontSize: '14px' }}>Tire suas dúvidas rápidas sobre a ativação e pagamento das assinaturas.</p>
+        </div>
+
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {faqData.map((faq, index) => (
+            <div 
+              key={index}
+              style={{ 
+                background: '#18181b', 
+                border: '1px solid #27272a', 
+                borderRadius: '10px', 
+                overflow: 'hidden', 
+                transition: 'all 0.3s ease' 
+              }}
+            >
+              <button 
+                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                style={{ 
+                  width: '100%', 
+                  textAlign: 'left', 
+                  padding: '20px 24px', 
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#fff', 
+                  fontWeight: '750', 
+                  fontSize: '15px',
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                {faq.q}
+                <ChevronDown size={18} style={{ color: '#71717a', transform: openFaq === index ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
+              </button>
+              <div 
+                style={{ 
+                  maxHeight: openFaq === index ? '150px' : '0px', 
+                  overflow: 'hidden', 
+                  transition: 'all 0.3s ease',
+                  padding: openFaq === index ? '0 24px 20px' : '0 24px 0' 
+                }}
+              >
+                <p style={{ color: '#a1a1aa', fontSize: '13.5px', lineHeight: 1.6, margin: 0 }}>
+                  {faq.a}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CHECKOUT MODAL */}
+      {showCheckoutModal && selectedPlan && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
+          <div style={{ 
+            background: '#18181b', 
+            border: checkoutStep === 'success' ? '2px solid #34d399' : '1px solid #FC5F16', 
+            borderRadius: '10px', 
+            width: '100%', 
+            maxWidth: '550px', 
+            padding: 'clamp(20px, 4vw, 35px)', 
+            boxShadow: '0 20px 50px rgba(0,0,0,0.6)', 
+            position: 'relative',
+            maxHeight: '95vh',
+            overflowY: 'auto'
+          }}>
+            
+            {/* CLOSE BUTTON */}
+            {checkoutStep !== 'processing' && (
+              <button 
+                onClick={() => setShowCheckoutModal(false)}
+                style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: '16px' }}
+              >
+                ✕
+              </button>
+            )}
+
+            {/* STEP: PAYMENT METHOD OR DETAILS */}
+            {checkoutStep === 'method' && (
+              <div>
+                <h2 style={{ fontSize: '16px', fontWeight: '950', color: '#fff', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Crown color="#FC5F16" size={24} /> Concluir Assinatura
+                </h2>
+                <p style={{ color: '#a1a1aa', fontSize: '13px', margin: '0 0 14px' }}>
+                  Você escolheu o <strong style={{ color: '#fff' }}>{selectedPlan.name}</strong> por <strong style={{ color: '#FC5F16' }}>{formatCurrency(selectedPlan.price)}/mês</strong>.
+                </p>
+
+                {/* SELECTOR */}
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', background: '#09090b', padding: '6px', borderRadius: '10px', border: '1px solid #27272a' }}>
+                  <button 
+                    onClick={() => setPaymentMethod('pix')}
+                    style={{ 
+                      flex: 1, 
+                      padding: '10px', 
+                      borderRadius: '10px', 
+                      background: paymentMethod === 'pix' ? 'rgba(252,95,22,0.1)' : 'transparent',
+                      border: paymentMethod === 'pix' ? '1px solid rgba(252,95,22,0.3)' : 'none',
+                      color: paymentMethod === 'pix' ? '#FC5F16' : '#71717a', 
+                      fontWeight: '800', 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <Smartphone size={16} /> PIX Instantâneo
+                  </button>
+                  <button 
+                    onClick={() => setPaymentMethod('card')}
+                    style={{ 
+                      flex: 1, 
+                      padding: '10px', 
+                      borderRadius: '10px', 
+                      background: paymentMethod === 'card' ? 'rgba(252,95,22,0.1)' : 'transparent',
+                      border: paymentMethod === 'card' ? '1px solid rgba(252,95,22,0.3)' : 'none',
+                      color: paymentMethod === 'card' ? '#FC5F16' : '#71717a', 
+                      fontWeight: '800', 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '8px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <CreditCard size={16} /> Cartão de Crédito
+                  </button>
+                </div>
+
+                {/* CONTENT: PIX */}
+                {paymentMethod === 'pix' && (
+                  <div style={{ textAlign: 'center', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', padding: '7px 9px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ position: 'relative', width: '130px', height: '130px', background: '#fff', borderRadius: '10px', padding: '7px 9px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {/* QR Code simulado para premium look */}
+                      <img src="/qr-code-mock.png" alt="Simulated QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => {
+                        e.target.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MAXX_SAAS_SIMULATION";
+                      }} />
+                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#FC5F16', width: '28px', height: '28px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(252,95,22,0.5)' }}>
+                        <Smartphone size={14} color="#fff" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', margin: '0 0 6px' }}>Código Pix copia e cola</p>
+                      <button 
+                        onClick={copyPixKey}
+                        style={{ 
+                          background: 'rgba(255,255,255,0.03)', 
+                          border: '1px dashed #3f3f46', 
+                          borderRadius: '10px', 
+                          padding: '10px 16px', 
+                          color: pixCopied ? '#34d399' : '#fff', 
+                          fontSize: '12px', 
+                          fontWeight: '700', 
+                          cursor: 'pointer', 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '6px' 
+                        }}
+                      >
+                        {pixCopied ? (
+                          <>✓ Código Copiado!</>
+                        ) : (
+                          <><Copy size={13} /> Copiar Chave Pix</>
+                        )}
+                      </button>
+                    </div>
+
+                    <p style={{ fontSize: '11.5px', color: '#a1a1aa', margin: 0 }}>
+                      Escaneie o QR Code ou copie a chave Pix acima. Após o pagamento, clique no botão de validação abaixo para processar imediatamente.
+                    </p>
+                  </div>
+                )}
+
+                {/* CONTENT: CREDIT CARD */}
+                {paymentMethod === 'card' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>Nome no Cartão</label>
+                      <input required type="text" placeholder="Ex: RANGEL NETO" value={cardName} onChange={e => setCardName(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>Número do Cartão</label>
+                      <input required type="text" maxLength="19" placeholder="4444 5555 6666 7777" value={cardNumber} onChange={e => setCardNumber(e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim())} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>Validade (MM/AA)</label>
+                        <input required type="text" maxLength="5" placeholder="12/29" value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>CVV</label>
+                        <input required type="text" maxLength="4" placeholder="123" value={cardCVV} onChange={e => setCardCVV(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CONFIRMATION / ACTIONS */}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '30px' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowCheckoutModal(false)}
+                    style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '10px', fontWeight: '800', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={handleSimulatePayment}
+                    style={{ flex: 2, padding: '10px', background: '#FC5F16', border: 'none', color: '#fff', borderRadius: '10px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  >
+                    Confirmar e Validar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP: PROCESSING */}
+            {checkoutStep === 'processing' && (
+              <div style={{ textAlign: 'center', padding: '30px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                <Loader2 size={50} className="animate-spin" color="#FC5F16" />
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', margin: '0 0 5px' }}>Validando Pagamento</h3>
+                  <p style={{ color: '#a1a1aa', fontSize: '13px', margin: 0 }}>
+                    Estamos conectando com o gateway bancário do Mercado Pago para registrar sua transação. Não feche esta janela...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* STEP: SUCCESS */}
+            {checkoutStep === 'success' && (
+              <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '25px' }}>
+                <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'rgba(52, 211, 153, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 30px rgba(52, 211, 153, 0.4)' }}>
+                  <CheckCircle size={48} color="#34d399" style={{ margin: '0 auto' }} />
+                </div>
+                
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '950', color: '#fff', margin: '0 0 10px', textTransform: 'uppercase' }}>
+                    {!user ? 'Simulação Aprovada!' : 'Assinatura Concluída!'}
+                  </h3>
+                  <p style={{ color: '#a1a1aa', fontSize: '14px', lineHeight: 1.6, margin: 0 }}>
+                    {!user ? (
+                      <>
+                        Sua simulação de assinatura do plano <strong style={{ color: '#fff' }}>{selectedPlan.name}</strong> por <strong style={{ color: '#FC5F16' }}>{formatCurrency(selectedPlan.price)}/mês</strong> no sandbox foi realizada com sucesso!
+                        <br /><br />
+                        Para ativar este plano em definitivo na sua conta real e liberar todas as ferramentas avançadas no seu menu lateral, clique abaixo para falar conosco via WhatsApp e criar sua conta.
+                      </>
+                    ) : (
+                      <>
+                        Parabéns! Sua assinatura do <strong style={{ color: '#fff' }}>{selectedPlan.name}</strong> foi aprovada e atualizada com sucesso no banco de dados. 
+                        Seu acesso foi renovado por mais <strong style={{ color: '#34d399' }}>30 dias</strong> e todas as ferramentas contratadas já estão liberadas no menu lateral.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+
+                <button 
+                  onClick={() => {
+                    setShowCheckoutModal(false);
+                    if (!user) {
+                      const textWhats = `*QUERO ASSINAR O PLANO ${selectedPlan.name.toUpperCase()}*\n\nOlá, acabei de testar a simulação do plano *${selectedPlan.name}* no painel e gostaria de criar minha conta definitiva para ativação real.`;
+                      window.open(`https://wa.me/5511999999999?text=${encodeURIComponent(textWhats)}`, '_blank');
+                    } else {
+                      window.location.href = '/dashboard';
+                    }
+                  }}
+                  style={{ width: '100%', padding: '10px', background: !user ? '#FC5F16' : '#34d399', border: 'none', color: !user ? '#fff' : '#000', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  {!user ? (
+                    <>Criar Conta & Ativar Plano Real</>
+                  ) : (
+                    <><RefreshCw size={15} /> Acessar Meu Novo Painel de Ferramentas</>
+                  )}
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* REGISTRATION MODAL */}
+      {showRegisterModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
+          <div style={{ 
+            background: '#18181b', 
+            border: '1px solid #FC5F16', 
+            borderRadius: '10px', 
+            width: '100%', 
+            maxWidth: '460px', 
+            padding: '10px', 
+            boxShadow: '0 25px 50px rgba(0,0,0,0.6)', 
+            position: 'relative',
+            maxHeight: '95vh',
+            overflowY: 'auto'
+          }}>
+            <button 
+              onClick={() => setShowRegisterModal(false)}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: '16px' }}
+            >
+              ✕
+            </button>
+
+            <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '950', color: '#fff', margin: '0 0 8px' }}>
+                Novo <span style={{ color: '#FC5F16' }}>Cadastro</span>
+              </h2>
+              <p style={{ color: '#a1a1aa', fontSize: '13px', margin: 0 }}>
+                Preencha os dados abaixo para receber sua liberação de acesso imediato.
+              </p>
+            </div>
+
+            <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', paddingLeft: '4px' }}>Seu Nome Completo</label>
+                <input 
+                  required 
+                  type="text" 
+                  placeholder="Nome Completo" 
+                  value={registerData.nome} 
+                  onChange={e => setRegisterData({...registerData, nome: e.target.value})} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', paddingLeft: '4px' }}>Seu melhor E-mail</label>
+                <input 
+                  required 
+                  type="email" 
+                  placeholder="seu@email.com" 
+                  value={registerData.email} 
+                  onChange={e => setRegisterData({...registerData, email: e.target.value})} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', paddingLeft: '4px' }}>WhatsApp (DDD) 9.9999-9999</label>
+                <input 
+                  required 
+                  type="text" 
+                  placeholder="Ex: (11) 99999-9999" 
+                  value={registerData.telefone} 
+                  onChange={e => setRegisterData({...registerData, telefone: e.target.value})} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', paddingLeft: '4px' }}>Crie uma Senha</label>
+                <input 
+                  required 
+                  type="password" 
+                  placeholder="Sua senha secreta" 
+                  value={registerData.senha} 
+                  onChange={e => setRegisterData({...registerData, senha: e.target.value})} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                style={{ 
+                  padding: '10px', 
+                  background: '#FC5F16', 
+                  border: 'none', 
+                  color: '#fff', 
+                  borderRadius: '10px', 
+                  fontWeight: '850', 
+                  cursor: 'pointer', 
+                  boxShadow: '0 4px 15px rgba(252,95,22,0.4)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '8px', 
+                  fontSize: '14px',
+                  marginTop: '10px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={e => e.currentTarget.style.filter = 'brightness(1.1)'}
+                onMouseOut={e => e.currentTarget.style.filter = 'none'}
+              >
+                Concluir e Liberar Sistema &gt;
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING WHATSAPP BUTTON */}
+      <a 
+        href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Estou%20no%20Painel%20Maxx%20e%20gostaria%20de%20ajuda%20para%20assinar/renovar%20meu%20plano." 
+        target="_blank" 
+        rel="noopener noreferrer"
+        style={{ 
+          position: 'fixed', 
+          bottom: '24px', 
+          right: '24px', 
+          width: '60px', 
+          height: '60px', 
+          background: '#25d366', 
+          borderRadius: '50%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          color: '#fff', 
+          boxShadow: '0 8px 24px rgba(37,211,102,0.4)', 
+          transition: 'all 0.3s ease',
+          zIndex: 99
+        }}
+        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
+        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        <MessageCircle size={30} fill="currentColor" />
+      </a>
+      
+    </div>
+  );
+};
+
+export default SubscribePlans;

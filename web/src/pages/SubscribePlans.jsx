@@ -173,8 +173,8 @@ const SubscribePlans = () => {
       {/* HEADER DE NAVEGAÇÃO SUPERIOR */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 15px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '40px', position: 'relative', zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src="/logo-maxx.svg" alt="Maxx Control" style={{ width: '40px', height: '40px', objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(252, 95, 22, 0.4))' }} />
-          <span style={{ fontSize: '18px', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>MAXX<span style={{ color: '#FC5F16' }}>Control</span></span>
+          <img src="/logo-maxx.svg" alt="Maxx Control" style={{ width: '32px', height: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 10px rgba(252, 95, 22, 0.4))' }} />
+          <span style={{ fontSize: '16px', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px' }}>MAXX<span style={{ color: '#FC5F16' }}>Control</span></span>
         </div>
         <Link 
           to={user ? "/dashboard" : "/"} 
@@ -183,7 +183,7 @@ const SubscribePlans = () => {
             alignItems: 'center', 
             gap: '8px', 
             padding: '10px 20px', 
-            borderRadius: '12px', 
+            borderRadius: '10px', 
             background: 'rgba(255,255,255,0.03)', 
             border: '1px solid rgba(255,255,255,0.08)', 
             color: '#a1a1aa', 
@@ -209,21 +209,21 @@ const SubscribePlans = () => {
       <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: '500px', height: '500px', borderRadius: '50%', background: 'rgba(252,95,22,0.06)', filter: 'blur(120px)', pointerEvents: 'none', zIndex: 0 }} />
 
       {/* HEADER SECTION */}
-      <div style={{ textAlign: 'center', marginBottom: '50px', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'inline-flex', items: 'center', gap: '8px', px: '16px', py: '6px', borderRadius: '9999px', background: 'rgba(252, 95, 22, 0.1)', border: '1px solid rgba(252, 95, 22, 0.2)', fontSize: '12px', fontWeight: '800', color: '#FC5F16', textTransform: 'uppercase', tracking: '1px', marginBottom: '20px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '28px', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'inline-flex', items: 'center', gap: '8px', px: '16px', py: '6px', borderRadius: '9999px', background: 'rgba(252, 95, 22, 0.1)', border: '1px solid rgba(252, 95, 22, 0.2)', fontSize: '12px', fontWeight: '800', color: '#FC5F16', textTransform: 'uppercase', tracking: '1px', marginBottom: '10px' }}>
           <Sparkles size={14} /> O Melhor para sua Operação SaaS
         </div>
-        <h1 style={{ fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '-1px', color: '#fff' }}>
+        <h1 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: '900', margin: 0, textTransform: 'uppercase', letterSpacing: '-1px', color: '#fff' }}>
           Escolha seu Plano <span style={{ color: '#FC5F16', textShadow: '0 0 30px rgba(252,95,22,0.3)' }}>Maxx Control</span>
         </h1>
-        <p style={{ color: '#a1a1aa', fontSize: 'clamp(14px, 2.5vw, 17px)', maxWidth: '600px', margin: '12px auto 0', lineHeight: 1.6 }}>
+        <p style={{ color: '#a1a1aa', fontSize: 'clamp(12px, 1.6vw, 14px)', maxWidth: '600px', margin: '12px auto 0', lineHeight: 1.6 }}>
           Potencialize suas vendas, automatize o envio de credenciais aos clientes e controle múltiplos servidores em uma única plataforma Premium.
         </p>
 
         {/* STATUS DA ASSINATURA ATUAL */}
-        <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center', justifyContent: 'center', background: 'rgba(24, 24, 27, 0.65)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '16px 28px', marginTop: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
+        <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'center', background: 'rgba(24, 24, 27, 0.65)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '7px 14px', marginTop: '14px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #FC5F16, #ff7e40)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(252,95,22,0.3)' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #FC5F16, #ff7e40)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(252,95,22,0.3)' }}>
               <Crown size={20} color="#fff" />
             </div>
             <div style={{ textAlign: 'left' }}>
@@ -232,7 +232,7 @@ const SubscribePlans = () => {
             </div>
           </div>
           
-          <div style={{ width: '1px', height: '35px', background: 'rgba(255,255,255,0.08)' }} />
+          <div style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.08)' }} />
 
           <div style={{ textAlign: 'left' }}>
             <div style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase' }}>Vencimento</div>
@@ -246,12 +246,12 @@ const SubscribePlans = () => {
 
       {/* CARDS DE PLANOS */}
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 0', gap: '15px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0', gap: '10px' }}>
           <Loader2 size={40} className="animate-spin" color="#FC5F16" />
           <p style={{ color: '#71717a', fontWeight: '600' }}>Carregando opções de planos...</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '25px', position: 'relative', zIndex: 1, marginBottom: '60px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '12px', position: 'relative', zIndex: 1, marginBottom: '20px' }}>
           {panelPlans.map((plan, index) => {
             const isElite = plan.name?.toLowerCase().includes('elite');
             const isPro = plan.name?.toLowerCase().includes('profissional');
@@ -264,8 +264,8 @@ const SubscribePlans = () => {
                 style={{ 
                   background: '#18181b', 
                   border: isActiveUserPlan ? '2px solid #34d399' : isPopular ? '2px solid #FC5F16' : '1px solid #27272a',
-                  borderRadius: '24px', 
-                  padding: '35px 30px', 
+                  borderRadius: '10px', 
+                  padding: '16px 14px', 
                   display: 'flex', 
                   flexDirection: 'column', 
                   position: 'relative', 
@@ -288,7 +288,7 @@ const SubscribePlans = () => {
               >
                 {/* GLOW DECORATIVO INTERNO */}
                 {isPopular && (
-                  <div style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'rgba(252,95,22,0.15)', width: '120px', height: '120px', borderRadius: '50%', filter: 'blur(30px)' }} />
+                  <div style={{ position: 'absolute', top: '-28px', right: '-28px', background: 'rgba(252,95,22,0.15)', width: '86px', height: '86px', borderRadius: '50%', filter: 'blur(30px)' }} />
                 )}
 
                 {/* BADGE DESTAQUE */}
@@ -304,21 +304,21 @@ const SubscribePlans = () => {
                 )}
 
                 {/* NOME DO PLANO */}
-                <h3 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', margin: '0 0 5px' }}>{plan.name}</h3>
-                <p style={{ color: '#71717a', fontSize: '13px', margin: '0 0 25px', fontWeight: '500' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', margin: '0 0 5px' }}>{plan.name}</h3>
+                <p style={{ color: '#71717a', fontSize: '13px', margin: '0 0 14px', fontWeight: '500' }}>
                   {isElite ? 'Para grandes revendedores e empresários scale-up.' : isPro ? 'A escolha ideal para operações em pleno crescimento.' : 'O essencial para iniciar com estabilidade.'}
                 </p>
 
                 {/* PREÇO */}
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '30px' }}>
-                  <span style={{ fontSize: '48px', fontWeight: '950', color: '#fff', letterSpacing: '-1px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '28px', fontWeight: '900', color: '#fff', letterSpacing: '-1px' }}>
                     {formatCurrency(plan.price)}
                   </span>
                   <span style={{ color: '#71717a', fontSize: '14px', fontWeight: '600' }}>/ mês</span>
                 </div>
 
                 {/* PERÍODO GRATUITO */}
-                <div style={{ background: '#09090b', border: '1px solid #27272a', borderRadius: '16px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <div style={{ background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', padding: '7px 9px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <ShieldCheck size={16} color="#FC5F16" />
                     <span style={{ fontSize: '13px', color: '#a1a1aa', fontWeight: '700' }}>Período de Testes</span>
@@ -331,8 +331,8 @@ const SubscribePlans = () => {
                   onClick={() => handleOpenRegisterModal(plan)}
                   style={{
                     width: '100%',
-                    padding: '14px',
-                    borderRadius: '16px',
+                    padding: '10px',
+                    borderRadius: '10px',
                     background: 'rgba(52, 211, 153, 0.06)',
                     border: '1px dashed rgba(52, 211, 153, 0.3)',
                     color: '#34d399',
@@ -341,7 +341,7 @@ const SubscribePlans = () => {
                     cursor: 'pointer',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
-                    marginBottom: '20px',
+                    marginBottom: '10px',
                     transition: 'all 0.2s',
                     display: 'flex',
                     alignItems: 'center',
@@ -361,12 +361,12 @@ const SubscribePlans = () => {
                 </button>
 
                 {/* DIVIDER */}
-                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '30px' }} />
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '10px' }} />
 
                 {/* LISTA DE FERRAMENTAS */}
                 <div style={{ flex: 1, marginBottom: '40px' }}>
-                  <p style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', tracking: '0.08em', marginBottom: '15px' }}>O que está incluso:</p>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <p style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', tracking: '0.08em', marginBottom: '10px' }}>O que está incluso:</p>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {availableFeatures.map((feat) => {
                       const isIncluded = (plan.features || []).includes(feat.id);
                       return (
@@ -411,8 +411,8 @@ const SubscribePlans = () => {
                     disabled
                     style={{ 
                       width: '100%', 
-                      padding: '16px', 
-                      borderRadius: '16px', 
+                      padding: '10px', 
+                      borderRadius: '10px', 
                       background: 'rgba(52, 211, 153, 0.1)', 
                       border: '1px solid rgba(52, 211, 153, 0.2)', 
                       color: '#34d399', 
@@ -429,8 +429,8 @@ const SubscribePlans = () => {
                     onClick={() => handleOpenCheckout(plan)}
                     style={{ 
                       width: '100%', 
-                      padding: '16px', 
-                      borderRadius: '16px', 
+                      padding: '10px', 
+                      borderRadius: '10px', 
                       background: isPopular ? 'linear-gradient(90deg, #FC5F16, #ff7e40)' : '#27272a', 
                       border: 'none', 
                       color: '#fff', 
@@ -467,8 +467,8 @@ const SubscribePlans = () => {
       )}
 
       {/* RECURSOS TABELA COMPARATIVA COMPLETA */}
-      <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '24px', padding: '30px', marginTop: '60px', position: 'relative', zIndex: 1, boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '10px', padding: '10px', marginTop: '60px', position: 'relative', zIndex: 1, boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Shield size={22} color="#FC5F16" /> Tabela Comparativa Detalhada
         </h2>
         <div style={{ overflowX: 'auto' }}>
@@ -512,20 +512,20 @@ const SubscribePlans = () => {
       {/* FAQ ACCORDION */}
       <section style={{ marginTop: '80px', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h2 style={{ fontSize: '26px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <h2 style={{ fontSize: '19px', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <HelpCircle size={26} color="#FC5F16" /> Dúvidas Frequentes
           </h2>
           <p style={{ color: '#a1a1aa', marginTop: '6px', fontSize: '14px' }}>Tire suas dúvidas rápidas sobre a ativação e pagamento das assinaturas.</p>
         </div>
 
-        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {faqData.map((faq, index) => (
             <div 
               key={index}
               style={{ 
                 background: '#18181b', 
                 border: '1px solid #27272a', 
-                borderRadius: '16px', 
+                borderRadius: '10px', 
                 overflow: 'hidden', 
                 transition: 'all 0.3s ease' 
               }}
@@ -570,11 +570,11 @@ const SubscribePlans = () => {
 
       {/* CHECKOUT MODAL */}
       {showCheckoutModal && selectedPlan && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
           <div style={{ 
             background: '#18181b', 
             border: checkoutStep === 'success' ? '2px solid #34d399' : '1px solid #FC5F16', 
-            borderRadius: '24px', 
+            borderRadius: '10px', 
             width: '100%', 
             maxWidth: '550px', 
             padding: 'clamp(20px, 4vw, 35px)', 
@@ -588,7 +588,7 @@ const SubscribePlans = () => {
             {checkoutStep !== 'processing' && (
               <button 
                 onClick={() => setShowCheckoutModal(false)}
-                style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: '18px' }}
+                style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: '16px' }}
               >
                 ✕
               </button>
@@ -597,20 +597,20 @@ const SubscribePlans = () => {
             {/* STEP: PAYMENT METHOD OR DETAILS */}
             {checkoutStep === 'method' && (
               <div>
-                <h2 style={{ fontSize: '24px', fontWeight: '950', color: '#fff', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h2 style={{ fontSize: '16px', fontWeight: '950', color: '#fff', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Crown color="#FC5F16" size={24} /> Concluir Assinatura
                 </h2>
-                <p style={{ color: '#a1a1aa', fontSize: '13px', margin: '0 0 25px' }}>
+                <p style={{ color: '#a1a1aa', fontSize: '13px', margin: '0 0 14px' }}>
                   Você escolheu o <strong style={{ color: '#fff' }}>{selectedPlan.name}</strong> por <strong style={{ color: '#FC5F16' }}>{formatCurrency(selectedPlan.price)}/mês</strong>.
                 </p>
 
                 {/* SELECTOR */}
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', background: '#09090b', padding: '6px', borderRadius: '14px', border: '1px solid #27272a' }}>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', background: '#09090b', padding: '6px', borderRadius: '10px', border: '1px solid #27272a' }}>
                   <button 
                     onClick={() => setPaymentMethod('pix')}
                     style={{ 
                       flex: 1, 
-                      padding: '12px', 
+                      padding: '10px', 
                       borderRadius: '10px', 
                       background: paymentMethod === 'pix' ? 'rgba(252,95,22,0.1)' : 'transparent',
                       border: paymentMethod === 'pix' ? '1px solid rgba(252,95,22,0.3)' : 'none',
@@ -630,7 +630,7 @@ const SubscribePlans = () => {
                     onClick={() => setPaymentMethod('card')}
                     style={{ 
                       flex: 1, 
-                      padding: '12px', 
+                      padding: '10px', 
                       borderRadius: '10px', 
                       background: paymentMethod === 'card' ? 'rgba(252,95,22,0.1)' : 'transparent',
                       border: paymentMethod === 'card' ? '1px solid rgba(252,95,22,0.3)' : 'none',
@@ -650,8 +650,8 @@ const SubscribePlans = () => {
 
                 {/* CONTENT: PIX */}
                 {paymentMethod === 'pix' && (
-                  <div style={{ textAlign: 'center', background: '#09090b', border: '1px solid #27272a', borderRadius: '20px', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-                    <div style={{ position: 'relative', width: '130px', height: '130px', background: '#fff', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'center', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', padding: '7px 9px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ position: 'relative', width: '130px', height: '130px', background: '#fff', borderRadius: '10px', padding: '7px 9px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {/* QR Code simulado para premium look */}
                       <img src="/qr-code-mock.png" alt="Simulated QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => {
                         e.target.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MAXX_SAAS_SIMULATION";
@@ -695,23 +695,23 @@ const SubscribePlans = () => {
 
                 {/* CONTENT: CREDIT CARD */}
                 {paymentMethod === 'card' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>Nome no Cartão</label>
-                      <input required type="text" placeholder="Ex: RANGEL NETO" value={cardName} onChange={e => setCardName(e.target.value)} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                      <input required type="text" placeholder="Ex: RANGEL NETO" value={cardName} onChange={e => setCardName(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>Número do Cartão</label>
-                      <input required type="text" maxLength="19" placeholder="4444 5555 6666 7777" value={cardNumber} onChange={e => setCardNumber(e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim())} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                      <input required type="text" maxLength="19" placeholder="4444 5555 6666 7777" value={cardNumber} onChange={e => setCardNumber(e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim())} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                     </div>
-                    <div style={{ display: 'flex', gap: '15px' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
                       <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>Validade (MM/AA)</label>
-                        <input required type="text" maxLength="5" placeholder="12/29" value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                        <input required type="text" maxLength="5" placeholder="12/29" value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', fontSize: '12px', color: '#a1a1aa', fontWeight: '700', marginBottom: '6px' }}>CVV</label>
-                        <input required type="text" maxLength="4" placeholder="123" value={cardCVV} onChange={e => setCardCVV(e.target.value)} style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} />
+                        <input required type="text" maxLength="4" placeholder="123" value={cardCVV} onChange={e => setCardCVV(e.target.value)} style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} />
                       </div>
                     </div>
                   </div>
@@ -722,14 +722,14 @@ const SubscribePlans = () => {
                   <button 
                     type="button" 
                     onClick={() => setShowCheckoutModal(false)}
-                    style={{ flex: 1, padding: '14px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid #3f3f46', color: '#fff', borderRadius: '10px', fontWeight: '800', cursor: 'pointer' }}
                   >
                     Cancelar
                   </button>
                   <button 
                     type="button" 
                     onClick={handleSimulatePayment}
-                    style={{ flex: 2, padding: '14px', background: '#FC5F16', border: 'none', color: '#fff', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    style={{ flex: 2, padding: '10px', background: '#FC5F16', border: 'none', color: '#fff', borderRadius: '10px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 15px rgba(252,95,22,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   >
                     Confirmar e Validar
                   </button>
@@ -739,10 +739,10 @@ const SubscribePlans = () => {
 
             {/* STEP: PROCESSING */}
             {checkoutStep === 'processing' && (
-              <div style={{ textAlign: 'center', padding: '30px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+              <div style={{ textAlign: 'center', padding: '30px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                 <Loader2 size={50} className="animate-spin" color="#FC5F16" />
                 <div>
-                  <h3 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', margin: '0 0 5px' }}>Validando Pagamento</h3>
+                  <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#fff', margin: '0 0 5px' }}>Validando Pagamento</h3>
                   <p style={{ color: '#a1a1aa', fontSize: '13px', margin: 0 }}>
                     Estamos conectando com o gateway bancário do Mercado Pago para registrar sua transação. Não feche esta janela...
                   </p>
@@ -758,7 +758,7 @@ const SubscribePlans = () => {
                 </div>
                 
                 <div>
-                  <h3 style={{ fontSize: '24px', fontWeight: '950', color: '#fff', margin: '0 0 10px', textTransform: 'uppercase' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '950', color: '#fff', margin: '0 0 10px', textTransform: 'uppercase' }}>
                     {!user ? 'Simulação Aprovada!' : 'Assinatura Concluída!'}
                   </h3>
                   <p style={{ color: '#a1a1aa', fontSize: '14px', lineHeight: 1.6, margin: 0 }}>
@@ -789,7 +789,7 @@ const SubscribePlans = () => {
                       window.location.href = '/dashboard';
                     }
                   }}
-                  style={{ width: '100%', padding: '14px', background: !user ? '#FC5F16' : '#34d399', border: 'none', color: !user ? '#fff' : '#000', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  style={{ width: '100%', padding: '10px', background: !user ? '#FC5F16' : '#34d399', border: 'none', color: !user ? '#fff' : '#000', borderRadius: '10px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   {!user ? (
                     <>Criar Conta & Ativar Plano Real</>
@@ -806,14 +806,14 @@ const SubscribePlans = () => {
 
       {/* REGISTRATION MODAL */}
       {showRegisterModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '12px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '10px' }}>
           <div style={{ 
             background: '#18181b', 
             border: '1px solid #FC5F16', 
-            borderRadius: '24px', 
+            borderRadius: '10px', 
             width: '100%', 
             maxWidth: '460px', 
-            padding: '30px', 
+            padding: '10px', 
             boxShadow: '0 25px 50px rgba(0,0,0,0.6)', 
             position: 'relative',
             maxHeight: '95vh',
@@ -821,13 +821,13 @@ const SubscribePlans = () => {
           }}>
             <button 
               onClick={() => setShowRegisterModal(false)}
-              style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: '18px' }}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: '16px' }}
             >
               ✕
             </button>
 
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: '950', color: '#fff', margin: '0 0 8px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '950', color: '#fff', margin: '0 0 8px' }}>
                 Novo <span style={{ color: '#FC5F16' }}>Cadastro</span>
               </h2>
               <p style={{ color: '#a1a1aa', fontSize: '13px', margin: 0 }}>
@@ -835,7 +835,7 @@ const SubscribePlans = () => {
               </p>
             </div>
 
-            <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '11px', color: '#71717a', fontWeight: '800', textTransform: 'uppercase', paddingLeft: '4px' }}>Seu Nome Completo</label>
                 <input 
@@ -844,7 +844,7 @@ const SubscribePlans = () => {
                   placeholder="Nome Completo" 
                   value={registerData.nome} 
                   onChange={e => setRegisterData({...registerData, nome: e.target.value})} 
-                  style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
                 />
               </div>
 
@@ -856,7 +856,7 @@ const SubscribePlans = () => {
                   placeholder="seu@email.com" 
                   value={registerData.email} 
                   onChange={e => setRegisterData({...registerData, email: e.target.value})} 
-                  style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
                 />
               </div>
 
@@ -868,7 +868,7 @@ const SubscribePlans = () => {
                   placeholder="Ex: (11) 99999-9999" 
                   value={registerData.telefone} 
                   onChange={e => setRegisterData({...registerData, telefone: e.target.value})} 
-                  style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
                 />
               </div>
 
@@ -880,18 +880,18 @@ const SubscribePlans = () => {
                   placeholder="Sua senha secreta" 
                   value={registerData.senha} 
                   onChange={e => setRegisterData({...registerData, senha: e.target.value})} 
-                  style={{ padding: '14px', background: '#09090b', border: '1px solid #27272a', borderRadius: '12px', color: '#fff', outline: 'none', width: '100%' }} 
+                  style={{ padding: '10px', background: '#09090b', border: '1px solid #27272a', borderRadius: '10px', color: '#fff', outline: 'none', width: '100%' }} 
                 />
               </div>
 
               <button 
                 type="submit" 
                 style={{ 
-                  padding: '16px', 
+                  padding: '10px', 
                   background: '#FC5F16', 
                   border: 'none', 
                   color: '#fff', 
-                  borderRadius: '12px', 
+                  borderRadius: '10px', 
                   fontWeight: '850', 
                   cursor: 'pointer', 
                   boxShadow: '0 4px 15px rgba(252,95,22,0.4)', 

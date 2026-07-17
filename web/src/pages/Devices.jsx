@@ -144,7 +144,7 @@ const StatCard = ({ icon: Icon, label, value, color = '#FC5F16', sub }) => (
     background: 'rgba(17,17,17,0.7)',
     backdropFilter: 'blur(14px)',
     border: '1px solid rgba(252, 95, 22,0.12)',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: '20px 24px',
     display: 'flex', alignItems: 'center', gap: 16,
     boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
@@ -416,7 +416,7 @@ const Devices = () => {
     <button 
       onClick={(e) => { e.stopPropagation(); onClick && onClick(e); }}
       title={title}
-      className="w-8 h-8 flex items-center justify-center transition-all duration-200 transform hover:-translate-y-0.5 active:scale-90 rounded-lg text-white border-none cursor-pointer"
+      className="w-8 h-8 flex items-center justify-center transition-all duration-200 transform hover:-translate-y-0.5 active:scale-90 rounded-md text-white border-none cursor-pointer"
       style={{
         background: color,
         boxShadow: `0 4px 12px ${color}33`,
@@ -812,7 +812,7 @@ const Devices = () => {
 
   // Tab pill style reutilizável
   const TabPill = ({ label, active, onClick }) => (
-    <button onClick={onClick} className={`px-4.5 py-2 rounded-lg border font-black text-xs transition-all transform active:scale-95 ${active ? 'bg-orange-500/15 border-orange-500 text-orange-500 shadow-[0_0_15px_rgba(252,95,22,0.1)]' : 'bg-transparent border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'}`}>
+    <button onClick={onClick} className={`px-4.5 py-1.5 rounded-md border font-black text-xs transition-all transform active:scale-95 ${active ? 'bg-orange-500/15 border-orange-500 text-orange-500 shadow-[0_0_15px_rgba(252,95,22,0.1)]' : 'bg-transparent border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'}`}>
       {label}
     </button>
   );

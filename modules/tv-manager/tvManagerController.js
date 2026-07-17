@@ -2,6 +2,30 @@ const pool = require('../../config/database');
 const smartCategorizer = require('./smartCategorizer');
 const { uploadToSupabase } = require('../../services/supabaseStorage');
 
+const getPublicBaseUrl = (req) => {
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    const forwardedHost = req.headers['x-forwarded-host'];
+    const proto = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto || req.protocol || 'https';
+    const host = Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost || req.get('host');
+    return `${proto}://${host}`;
+};
+
+const resolveCategoryIconUrl = (icon, req) => {
+    const raw = String(icon || '').trim();
+    if (!raw) return `${getPublicBaseUrl(req)}/uploads/tv-categories/ic_channel.png`;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.startsWith('/')) return `${getPublicBaseUrl(req)}${raw}`;
+    return `${getPublicBaseUrl(req)}/uploads/tv-categories/${raw}`;
+};
+
+const normalizeCategoryRow = (row, req) => {
+    if (!row) return row;
+    return {
+        ...row,
+        icon: row.icon_type === 'image' ? resolveCategoryIconUrl(row.icon, req) : row.icon
+    };
+};
+
 const notifyTvConfigReload = () => {
     try {
         const { broadcastTvConfig } = require('../../websocket/wsServer');
@@ -99,7 +123,7 @@ exports.getCategories = async (req, res) => {
             result = await pool.query('SELECT * FROM tv_categories ORDER BY ordem ASC');
         }
 
-        res.json(result.rows);
+        res.json(result.rows.map(row => normalizeCategoryRow(row, req)));
     } catch (error) {
         console.error('Erro ao buscar categorias de TV:', error);
         res.status(500).json({ error: 'Erro interno no servidor' });
@@ -392,7 +416,7 @@ exports.getConfigForDevice = async (req, res) => {
     // Retornar as categorias com seus respectivos canais
     try {
         const catResult = await pool.query('SELECT * FROM tv_categories WHERE is_active = true ORDER BY ordem ASC');
-        const categories = catResult.rows;
+        const categories = catResult.rows.map(row => normalizeCategoryRow(row, req));
 
         const chanResult = await pool.query('SELECT * FROM tv_channels WHERE is_active = true AND category_id IS NOT NULL ORDER BY ordem ASC');
         const channels = chanResult.rows;

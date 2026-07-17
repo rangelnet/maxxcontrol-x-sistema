@@ -1043,6 +1043,9 @@ app.use('/api/ui', require('./modules/ui/uiRoutes'));
 // Rotas do Centro de Agentes Nexus (IA e VOD Scan)
 app.use('/api/agents', require('./modules/ai-agent/aiAgentRoutes'));
 
+// Anime Manager (Nexus + AniList + curadoria)
+app.use('/api/anime-manager', require('./modules/anime-manager/animeManagerRoutes'));
+
 // ============================================
 // ============================================
 // OUTROS SERVIÇOS E FALLBACK SPA

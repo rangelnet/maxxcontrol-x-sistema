@@ -6,6 +6,14 @@ import TvPreview from '../components/previews/TvPreview'
 const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '')
 
 const EMOJI_LIST = ['📺','⚽','🎬','🌍','🎵','🏈','📰','🧒','🍿','🥊','🏍️','🎭','🔞','✝️','🎮','🥘']
+const FALLBACK_TV_ICON = '/uploads/tv-categories/ic_channel.png'
+
+const resolveCategoryIcon = (icon) => {
+  const value = String(icon || '').trim()
+  if (!value) return FALLBACK_TV_ICON
+  if (/^https?:\/\//i.test(value)) return value
+  return `${API}/uploads/tv-categories/${value}`
+}
 
 const TvManager = () => {
   const [categories, setCategories] = useState([])
@@ -864,7 +872,7 @@ const TvManager = () => {
                 >
                   <div className="text-2xl mb-2 flex items-center justify-start h-10 w-10">
                     {cat.icon_type === 'image' ? (
-                      <img src={cat.icon.startsWith('http') ? cat.icon : `${API}/uploads/tv-categories/${cat.icon}`} alt={cat.name} className="w-full h-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }} />
+                      <img src={resolveCategoryIcon(cat.icon)} alt={cat.name} className="w-full h-full object-contain" onError={(e) => { e.target.onerror = null; e.target.src = FALLBACK_TV_ICON; }} />
                     ) : (
                       cat.icon
                     )}
@@ -896,7 +904,7 @@ const TvManager = () => {
                   />
                   <div className="text-2xl h-8 w-8 flex items-center justify-center">
                     {categories.find(c => c.id === activeCategory)?.icon_type === 'image' ? (
-                        <img src={categories.find(c => c.id === activeCategory)?.icon?.startsWith('http') ? categories.find(c => c.id === activeCategory)?.icon : `${API}/uploads/tv-categories/${categories.find(c => c.id === activeCategory)?.icon}`} alt="" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
+                        <img src={resolveCategoryIcon(categories.find(c => c.id === activeCategory)?.icon)} alt="" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
                     ) : (
                         categories.find(c => c.id === activeCategory)?.icon
                     )}

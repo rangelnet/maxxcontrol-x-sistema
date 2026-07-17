@@ -148,15 +148,15 @@ export default function Active() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-zinc-300 font-sans flex flex-col relative overflow-hidden">
+    <div className="min-h-[calc(100vh-40px)] bg-[#050505] text-zinc-300 font-sans flex flex-col relative overflow-hidden">
       {/* Background Glows (MaxxControl Brand) */}
       <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at top right, rgba(252, 95, 22, 0.15) 0%, #000 70%)' }}></div>
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-600/10 rounded-full filter blur-[150px] pointer-events-none -z-10"></div>
 
       {/* NAVBAR */}
-      <nav className="relative z-10 w-full bg-black/30 backdrop-blur-md border-b border-white/5 py-4">
+      <nav className="relative z-10 w-full bg-black/30 backdrop-blur-md border-b border-white/5 py-2.5">
         <div className="max-w-[1500px] mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-3">
               <img src="/logo-maxx.svg" alt="Logo" className="w-10 h-10 object-contain drop-shadow-[0_0_15px_rgba(252,95,22,0.5)]" />
               <span className="text-xl font-black tracking-tight text-white hidden sm:block">
@@ -171,7 +171,7 @@ export default function Active() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/5">
               <ChevronLeft size={16} /> Voltar ao Site
             </Link>
@@ -183,9 +183,9 @@ export default function Active() {
       <main className="flex-grow w-full max-w-[1500px] mx-auto mt-4 md:mt-[20px] px-2 md:px-[40px] relative z-10">
         
         {/* Hero Section */}
-        <section className="w-full max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 px-4 py-8 lg:py-8">
+        <section className="w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 px-4 py-4 lg:py-4">
           <div className="flex flex-col items-center md:items-start md:w-[55%] text-center md:text-left">
-            <h1 className="text-white text-[32px] md:text-[44px] font-medium leading-[100%] tracking-[-1.6px] mb-6">
+            <h1 className="text-white text-[26px] md:text-[32px] font-medium leading-[104%] tracking-[-1px] mb-3">
               Ative seu aplicativo<br className="hidden md:block"/> <span className="text-brand-500 font-black relative inline-block">MAXX PLAYERS</span> já!
             </h1>
             
@@ -195,14 +195,14 @@ export default function Active() {
 
             <form onSubmit={handleActivate} className="w-full">
               {/* Seleção Dinâmica de Planos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                  {appPackages.length > 0 ? (
                     appPackages.map(pkg => (
                       <button 
                         key={pkg.id}
                         type="button"
                         onClick={() => setSelectedPlan(pkg)}
-                        className={`py-4 rounded-xl border-2 transition-all transform active:scale-95 flex flex-col items-center justify-center gap-2 ${selectedPlan?.id === pkg.id ? 'border-brand-500 bg-brand-500/20 shadow-[0_0_20px_rgba(252,95,22,0.15)]' : 'border-white/10 hover:border-white/20 bg-[#111111]/80'}`}
+                        className={`py-2.5 rounded-xl border-2 transition-all transform active:scale-95 flex flex-col items-center justify-center gap-2 ${selectedPlan?.id === pkg.id ? 'border-brand-500 bg-brand-500/20 shadow-[0_0_20px_rgba(252,95,22,0.15)]' : 'border-white/10 hover:border-white/20 bg-[#111111]/80'}`}
                       >
                          <span className="text-[11px] font-black uppercase text-zinc-400 tracking-widest">{pkg.name}</span>
                          <span className="text-xl font-black text-white">R$ {Number(pkg.price).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
@@ -210,7 +210,7 @@ export default function Active() {
                       </button>
                     ))
                  ) : (
-                    <div className="col-span-full py-4 px-6 bg-white/5 border border-white/10 rounded-xl text-zinc-500 text-sm flex items-center justify-center gap-2">
+                    <div className="col-span-full py-2.5 px-6 bg-white/5 border border-white/10 rounded-xl text-zinc-500 text-sm flex items-center justify-center gap-2">
                       <Loader2 className="animate-spin" size={16} /> Carregando planos...
                     </div>
                  )}
@@ -250,14 +250,14 @@ export default function Active() {
                     maxLength="17" 
                     value={macAddress}
                     onChange={(e) => setMacAddress(e.target.value.toUpperCase())}
-                    className="w-full px-5 border border-white/10 rounded-lg text-white placeholder-zinc-500 uppercase font-mono pr-[140px] focus:border-brand-500 outline-none transition-colors"
+                    className="w-full px-5 border border-white/10 rounded-lg text-white placeholder-zinc-500 uppercase font-mono pr-[92px] focus:border-brand-500 outline-none transition-colors"
                     style={{ height: '60px', backgroundColor: 'rgba(20, 20, 20, 0.8)', lineHeight: '60px' }}
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
                     <button 
                       type="submit" 
                       disabled={paymentLoading || !selectedPlan || !macAddress}
-                      className="bg-brand-500 hover:bg-brand-600 text-white font-bold py-2 px-6 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="bg-brand-500 hover:bg-brand-600 text-white font-bold py-1 px-3 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       style={{ fontSize: '17px', height: '44px' }}
                     >
                       {paymentLoading ? <Loader2 className="animate-spin" size={20} /> : 'Ativar'}
@@ -267,7 +267,7 @@ export default function Active() {
               )}
 
               {paymentError && (
-                 <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 font-bold text-sm text-center">
+                 <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 font-bold text-sm text-center">
                     {paymentError}
                  </div>
               )}
@@ -296,7 +296,7 @@ export default function Active() {
                       required
                     />
                  </div>
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 gap-3">
                     <div>
                        <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">Validade</label>
                        <input 
@@ -343,23 +343,23 @@ export default function Active() {
                     />
                  </div>
                  
-                 <button type="submit" disabled={paymentLoading || !selectedPlan || !macAddress} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 mt-4 flex items-center justify-center gap-2">
+                 <button type="submit" disabled={paymentLoading || !selectedPlan || !macAddress} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 mt-4 flex items-center justify-center gap-2">
                     {paymentLoading ? <Loader2 className="animate-spin" size={20} /> : 'Finalizar Pagamento com Cartão'}
                  </button>
               </form>
             )}
           </div>
 
-          <div className="md:w-[45%] flex justify-center w-full mt-12 md:mt-0 relative">
+          <div className="md:w-[45%] flex justify-center w-full mt-6 md:mt-0 relative">
              {qrCode ? (
-                <div className="bg-[#111] border border-brand-500/30 p-6 md:p-10 rounded-[3rem] flex flex-col items-center text-center animate-slide-up shadow-[0_0_50px_rgba(252,95,22,0.15)] w-full max-w-sm relative z-10">
+                <div className="bg-[#111] border border-brand-500/30 p-3 md:p-3 rounded-[3rem] flex flex-col items-center text-center animate-slide-up shadow-[0_0_50px_rgba(252,95,22,0.15)] w-full max-w-sm relative z-10">
                    <h3 className="text-brand-500 font-black text-xl mb-2 uppercase tracking-wider">
                       {paymentStatus === 'approved' ? 'Pagamento Aprovado!' : 'Escaneie o PIX'}
                    </h3>
                    
                    {paymentStatus === 'approved' ? (
-                      <div className="py-8 flex flex-col items-center gap-4">
-                         <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center text-green-500 animate-pulse">
+                      <div className="py-8 flex flex-col items-center gap-3">
+                         <div className="w-11 h-11 bg-green-500/20 rounded-full flex items-center justify-center text-green-500 animate-pulse">
                             <CheckCircle size={40} />
                          </div>
                          <p className="text-white font-bold text-lg mt-4">Seu aplicativo está ativado.</p>
@@ -369,7 +369,7 @@ export default function Active() {
                       <>
                          <p className="text-zinc-400 text-xs mb-6 font-medium">A liberação da licença será automática.</p>
                          
-                         <div className="p-4 bg-white rounded-xl mb-6 shadow-xl">
+                         <div className="p-3 bg-white rounded-xl mb-6 shadow-xl">
                             <img src={`data:image/png;base64,${qrCode.qr_code_base64}`} alt="QR Code PIX" className="w-48 h-48 md:w-56 md:h-56" />
                          </div>
 
@@ -377,7 +377,7 @@ export default function Active() {
                             <button 
                               type="button"
                               onClick={() => navigator.clipboard.writeText(qrCode.qr_code)}
-                              className="w-full py-4 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+                              className="w-full py-2.5 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
                             >
                                Copiar Código Copia e Cola
                             </button>
@@ -400,10 +400,10 @@ export default function Active() {
                    <div className="absolute inset-0 bg-brand-500/10 mix-blend-overlay"></div>
                    
                    {/* Centered Logo */}
-                   <img src="/logo-app.png" alt="MAXX PLAYERS Logo" className="relative z-10 w-24 md:w-32 drop-shadow-[0_0_25px_rgba(252,95,22,0.8)] transform group-hover:-translate-y-2 transition-transform duration-500" />
+                   <img src="/logo-app.png" alt="MAXX PLAYERS Logo" className="relative z-10 w-12 md:w-32 drop-shadow-[0_0_25px_rgba(252,95,22,0.8)] transform group-hover:-translate-y-2 transition-transform duration-500" />
                    
                    {/* Status Indicator */}
-                   <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 z-10">
+                   <div className="absolute top-3 right-4 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 z-10">
                        <div className="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_10px_rgba(252,95,22,1)] animate-pulse"></div>
                        <span className="text-[9px] font-black text-white tracking-widest uppercase">Sistema Online</span>
                    </div>
@@ -418,7 +418,7 @@ export default function Active() {
         </section>
 
         {/* Banner Section */}
-        <div className="relative mt-2 md:mt-6 mb-16">
+        <div className="relative mt-2 md:mt-6 mb-3">
           <div className="absolute inset-0 bg-[#0a0a0a]/80 border-y border-white/5" style={{ width: '100vw', left: '50%', transform: 'translateX(-50%)' }}></div>
           <div className="relative py-6 max-w-[980px] mx-auto px-4 text-center">
             <p className="text-xs md:text-sm max-w-[949px] mx-auto text-zinc-300 font-medium leading-relaxed tracking-wide">
@@ -429,14 +429,14 @@ export default function Active() {
 
         {/* FAQ Section */}
         <section className="max-w-[980px] mx-auto px-4 pb-24">
-          <h2 className="text-2xl md:text-2xl font-bold mb-6 md:mb-12 text-center text-white">Perguntas Frequentes</h2>
+          <h2 className="text-2xl md:text-2xl font-bold mb-6 md:mb-6 text-center text-white">Perguntas Frequentes</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 gap-x-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 gap-x-12">
              {faqs.map((faq, index) => (
                 <div key={index} className="border border-white/10 rounded-xl overflow-hidden cursor-pointer bg-[#141414]/50 hover:bg-[#141414] hover:border-brand-500/50 transition-all">
-                  <div className="p-5">
-                    <div className="flex items-center gap-6">
-                      <div className="w-[60px] md:w-[80px] h-[60px] md:h-[80px] flex items-center justify-center rounded-lg bg-white/5 flex-shrink-0">
+                  <div className="p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-[60px] md:w-[80px] h-[60px] md:h-14 flex items-center justify-center rounded-lg bg-white/5 flex-shrink-0">
                         {faq.icon}
                       </div>
                       <h3 className="text-white font-semibold text-lg whitespace-pre-line leading-tight">
@@ -457,15 +457,15 @@ export default function Active() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-[#050505] border-t border-white/5 py-12 relative z-10 mt-auto">
-          <div className="max-w-[1500px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-              <div className="flex flex-col md:flex-row items-center gap-6">
+      <footer className="bg-[#050505] border-t border-white/5 py-7 relative z-10 mt-auto">
+          <div className="max-w-[1500px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-3 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center gap-3">
                  <div className="flex items-center gap-3 group cursor-pointer">
                      <img src="/logo-maxx.svg" alt="Maxx Control" className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(252, 95, 22,0.3)] transition-transform group-hover:scale-110" />
                      <span className="font-black text-zinc-300 text-lg tracking-tighter">MAXX Control</span>
                  </div>
                  
-                 <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 text-xs md:text-sm text-zinc-500 font-medium">
+                 <div className="flex flex-wrap justify-center md:justify-start gap-3 md:gap-3 text-xs md:text-sm text-zinc-500 font-medium">
                      <Link to="/upload-playlist" className="hover:text-white transition">Carregar Playlist</Link>
                      <a href="#" className="hover:text-white transition">Política de Privacidade</a>
                      <a href="#" className="hover:text-white transition">Termos de Uso</a>
@@ -473,7 +473,7 @@ export default function Active() {
                  </div>
               </div>
 
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-3">
                  <img alt="Apple Pay" src="/applepay.png" className="h-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition" onError={(e) => e.target.style.display='none'} />
                  <img alt="Mastercard" src="/master.png" className="h-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition" onError={(e) => e.target.style.display='none'} />
                  <img alt="Pix" src="/pix.png" className="h-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition" onError={(e) => e.target.style.display='none'} />
@@ -486,7 +486,7 @@ export default function Active() {
       </footer>
 
       {/* Floating WhatsApp Button */}
-      <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-110">
+      <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-40 w-11 h-11 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-110">
          <img alt="WhatsApp" className="w-7 h-7 filter brightness-0 invert" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" />
       </a>
     </div>

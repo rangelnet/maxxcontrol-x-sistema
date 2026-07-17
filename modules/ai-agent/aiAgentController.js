@@ -1,6 +1,8 @@
 const pool = require('../../config/database');
 const axios = require('axios');
 const tmdbService = require('../../services/tmdbService');
+const animeManager = require('../anime-manager/animeManagerController');
+const { captureMiddleFrameToSupabase } = require('../../services/videoFrameCapture');
 
 let currentTimer = null;
 
@@ -126,6 +128,66 @@ const detectDirtyWords = (title) => {
   return [...new Set(found)];
 };
 
+const normalizeXtreamBaseUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
+
+const encodeXtreamPart = (value) => encodeURIComponent(String(value || '').trim());
+
+const cleanExtension = (value) => {
+  const raw = String(value || 'mp4').trim().replace(/^\./, '').split('?')[0].split('&')[0];
+  return raw || 'mp4';
+};
+
+const pickIptvImage = (item) => {
+  return item?.stream_icon || item?.cover || item?.movie_image || item?.cover_big || item?.backdrop_path || null;
+};
+
+const buildVodPlaybackUrl = (baseUrl, username, password, streamId, extension) => {
+  if (!baseUrl || !username || !password || !streamId) return null;
+  return normalizeXtreamBaseUrl(baseUrl) + '/movie/' + encodeXtreamPart(username) + '/' + encodeXtreamPart(password) + '/' + encodeURIComponent(String(streamId)) + '.' + cleanExtension(extension);
+};
+
+const applyNexusMiddleFrame = async (libraryRow, item, sourceDns) => {
+  if (!libraryRow?.id || item.type !== 'movie' || !item.source_url) return;
+  if (libraryRow.auto_frame_url && libraryRow.image_source === 'auto_middle_frame') return;
+
+  try {
+    await pool.query(
+      `UPDATE ai_vod_library
+       SET auto_frame_status = 'processing', auto_frame_error = NULL, auto_frame_updated_at = NOW()
+       WHERE id = $1`,
+      [libraryRow.id]
+    );
+
+    const frame = await captureMiddleFrameToSupabase(item.source_url, {
+      title: item.name,
+      folder: 'nexus-middle-frames'
+    });
+
+    await pool.query(
+      `UPDATE ai_vod_library
+       SET auto_frame_url = $1,
+           poster_url = $1,
+           auto_frame_status = 'ready',
+           auto_frame_error = NULL,
+           auto_frame_updated_at = NOW(),
+           image_source = 'auto_middle_frame',
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2`,
+      [frame.publicUrl, libraryRow.id]
+    );
+
+    await logAgent('success', 'Imagem automatica gerada do meio do video: ' + item.name + ' (' + frame.seekSeconds + 's)', sourceDns);
+  } catch (error) {
+    await pool.query(
+      `UPDATE ai_vod_library
+       SET auto_frame_status = 'failed', auto_frame_error = $1, auto_frame_updated_at = NOW()
+       WHERE id = $2`,
+      [String(error.message || error).slice(0, 500), libraryRow.id]
+    ).catch(() => {});
+    await logAgent('warning', 'Falha ao gerar imagem do meio do video para ' + item.name + ': ' + error.message, sourceDns);
+  }
+};
+
 const parseApiToExtractVod = async (url) => {
   try {
     await logAgent('info', `Tentando gerar teste ou extrair catálogo na API: ${url}`, url);
@@ -213,10 +275,31 @@ const parseApiToExtractVod = async (url) => {
     // === PASSO 4: PROCESSAMENTO CONJUNTO (UPSERT) ===
     let allContent = [];
     if (vodRes && Array.isArray(vodRes.data)) {
-       vodRes.data.forEach(v => allContent.push({ name: v.name, type: 'movie', cat_name: vodCatsMap[v.category_id] || 'Outros' }));
+       vodRes.data.forEach(v => {
+         const streamId = v.stream_id || v.id;
+         const extension = cleanExtension(v.container_extension || v.container || v.extension || 'mp4');
+         const sourceUrl = buildVodPlaybackUrl(baseUrl, username, password, streamId, extension);
+         allContent.push({
+           name: v.name,
+           type: 'movie',
+           cat_name: vodCatsMap[v.category_id] || 'Outros',
+           category_id: v.category_id || null,
+           stream_id: streamId || null,
+           container_extension: extension,
+           stream_icon: pickIptvImage(v),
+           source_url: sourceUrl
+         });
+       });
     }
     if (seriesRes && Array.isArray(seriesRes.data)) {
-       seriesRes.data.forEach(s => allContent.push({ name: s.name, type: 'series', cat_name: seriesCatsMap[s.category_id] || 'Outros' }));
+       seriesRes.data.forEach(s => allContent.push({
+         name: s.name,
+         type: 'series',
+         cat_name: seriesCatsMap[s.category_id] || 'Outros',
+         category_id: s.category_id || null,
+         series_id: s.series_id || s.id || null,
+         stream_icon: pickIptvImage(s)
+       }));
     }
 
     if (allContent.length > 0) {
@@ -253,13 +336,48 @@ const parseApiToExtractVod = async (url) => {
                }
              }
 
-             await pool.query(
-               `INSERT INTO ai_vod_library (name, type, category_name) 
-                VALUES ($1, $2, $3) 
-                ON CONFLICT (name) DO UPDATE 
-                SET occurrences = ai_vod_library.occurrences + 1, updated_at = CURRENT_TIMESTAMP, category_name = COALESCE(ai_vod_library.category_name, $3)`,
-               [item.name.trim(), item.type, item.cat_name.trim()]
+             const savedContent = await pool.query(
+               `INSERT INTO ai_vod_library (
+                  name, type, category_name, source_dns, source_stream_id, source_series_id,
+                  source_category_id, container_extension, stream_icon, poster_url, image_source
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, CASE WHEN $9 IS NULL THEN NULL ELSE 'iptv' END)
+                ON CONFLICT (name) DO UPDATE
+                SET occurrences = ai_vod_library.occurrences + 1,
+                    updated_at = CURRENT_TIMESTAMP,
+                    type = COALESCE(EXCLUDED.type, ai_vod_library.type),
+                    category_name = COALESCE(EXCLUDED.category_name, ai_vod_library.category_name),
+                    source_dns = COALESCE(EXCLUDED.source_dns, ai_vod_library.source_dns),
+                    source_stream_id = COALESCE(EXCLUDED.source_stream_id, ai_vod_library.source_stream_id),
+                    source_series_id = COALESCE(EXCLUDED.source_series_id, ai_vod_library.source_series_id),
+                    source_category_id = COALESCE(EXCLUDED.source_category_id, ai_vod_library.source_category_id),
+                    container_extension = COALESCE(EXCLUDED.container_extension, ai_vod_library.container_extension),
+                    stream_icon = COALESCE(EXCLUDED.stream_icon, ai_vod_library.stream_icon),
+                    poster_url = CASE
+                      WHEN ai_vod_library.image_source = 'manual' THEN ai_vod_library.poster_url
+                      WHEN ai_vod_library.auto_frame_url IS NOT NULL THEN ai_vod_library.auto_frame_url
+                      ELSE COALESCE(ai_vod_library.poster_url, EXCLUDED.poster_url)
+                    END,
+                    image_source = CASE
+                      WHEN ai_vod_library.image_source = 'manual' THEN 'manual'
+                      WHEN ai_vod_library.auto_frame_url IS NOT NULL THEN 'auto_middle_frame'
+                      ELSE COALESCE(ai_vod_library.image_source, EXCLUDED.image_source)
+                    END
+                RETURNING *`,
+               [
+                 item.name.trim(),
+                 item.type,
+                 item.cat_name?.trim() || null,
+                 normalizeXtreamBaseUrl(baseUrl),
+                 item.stream_id ? String(item.stream_id) : null,
+                 item.series_id ? String(item.series_id) : null,
+                 item.category_id ? String(item.category_id) : null,
+                 item.container_extension || null,
+                 item.stream_icon || null
+               ]
              );
+
+             await applyNexusMiddleFrame(savedContent.rows[0], item, baseUrl);
            }
            await logAgent('info', `✅ Processamento VOD/Series concluído: ${allContent.length} itens unificados.`, baseUrl);
          } catch (e) {
@@ -424,6 +542,7 @@ const runAgentScan = async () => {
     
     // Roda a auditoria de plataformas no fim do ciclo
     setTimeout(runPlatformAudit, 10000);
+    setTimeout(() => animeManager.runAnimeScanBackground(), 14000);
 
   } catch (err) {
     await logAgent('error', `Erro grave durante Global Scan: ${err.message}`, 'Global_Scan');
@@ -526,6 +645,17 @@ exports.initAI = async () => {
   try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'movie'"); } catch(e){}
   try { await pool.query("UPDATE ai_vod_library SET type = 'movie' WHERE type IS NULL"); } catch(e){}
   try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS category_name VARCHAR(255)"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_dns TEXT"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_stream_id VARCHAR(100)"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_series_id VARCHAR(100)"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_category_id VARCHAR(100)"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS container_extension VARCHAR(50)"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS stream_icon TEXT"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS auto_frame_url TEXT"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS auto_frame_status VARCHAR(50)"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS auto_frame_error TEXT"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS auto_frame_updated_at TIMESTAMP"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS image_source VARCHAR(50)"); } catch(e){}
   
   await setupCronJob();
 };
@@ -534,74 +664,37 @@ exports.getTopVod = async (req, res) => {
   try {
     const type = req.query.type || 'movie';
     const category = req.query.category || 'all';
-    
+
     let query = 'SELECT * FROM ai_vod_library WHERE type = $1';
     let params = [type];
-    
+
     if (category !== 'all') {
        query += ' AND category_name = $2';
        params.push(category);
     }
-    
+
     query += ' ORDER BY occurrences DESC LIMIT 40';
     const { rows } = await pool.query(query, params);
-    
-    const result = [];
-    for (const row of rows) {
-      // Se não tiver capa, consulta TMDB on the fly e salva!
-      if (!row.poster_url && row.name) {
-         try {
-           const cleanTitle = row.name.replace(/\s*\(\d{4}\)\s*/g, ' ').replace(/\[.*?\]/g, ' ').trim();
-           await new Promise(res => setTimeout(res, 250)); // Throttling: 4 reqs/sec para evitar TMDB 502/429
-           const fetchRes = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=7bc56e27708a9d2069fc999d44a6be0a&language=pt-BR&query=${encodeURIComponent(cleanTitle)}`);
-           const tmdbRes = await fetchRes.json();
-           
-           if (tmdbRes.results && tmdbRes.results.length > 0) {
-             const best = tmdbRes.results.find(r => r.poster_path) || tmdbRes.results[0];
-             row.poster_url = best.poster_path;
-             row.backdrop_url = best.backdrop_path;
-             row.tmdb_id = best.id;
-             await pool.query(
-               'UPDATE ai_vod_library SET poster_url=$1, backdrop_url=$2, tmdb_id=$3 WHERE id=$4',
-               [best.poster_path, best.backdrop_path, best.id, row.id]
-             );
-           }
-         } catch(e) { /* Silencia erros de TMDB burst */ }
-      }
-      result.push({
+
+    const result = rows.map(row => {
+      const poster = row.auto_frame_url || row.poster_url || row.stream_icon || null;
+      return {
          id: row.tmdb_id || row.id,
          titulo: row.name,
-         poster_path: row.poster_url || row.stream_icon,
-         backdrop_path: row.backdrop_url,
-         overview: ''
-      });
-    }
+         poster_path: poster,
+         backdrop_path: row.backdrop_url || poster,
+         overview: '',
+         category_name: row.category_name || null,
+         image_source: row.image_source || (row.auto_frame_url ? 'auto_middle_frame' : (row.stream_icon ? 'iptv' : null)),
+         auto_frame_status: row.auto_frame_status || null
+      };
+    });
+
     res.json({ success: true, conteudos: result });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-exports.getSearchVod = async (req, res) => {
-  try {
-    const { query } = req.query;
-    if (!query || query.length < 3) return res.json({ resultados: [] });
-    
-    // Pesquisa no TMDB direto (mais rápido e rico) ou na library
-    const tmdbRes = await tmdbService.pesquisarConteudo(query);
-    const resultados = (tmdbRes.results || []).map(r => ({
-       id: r.id,
-       titulo: r.title || r.name,
-       poster_path: r.poster_path,
-       backdrop_path: r.backdrop_path,
-       overview: r.overview
-    }));
-    res.json({ success: true, resultados });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 exports.getCategories = async (req, res) => {
   try {
     const type = req.query.type || 'movie';

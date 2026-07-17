@@ -77,28 +77,28 @@ export default function MaxxPlayerShowcase() {
         <div className="absolute inset-0 z-0 overflow-hidden opacity-10">
            <div className="flex w-full h-full justify-center gap-2 rotate-12 scale-[2.0] transform-gpu">
               
-              <div className="flex flex-col gap-2 animate-marquee-y w-24 md:w-40">
+              <div className="flex flex-col gap-2 animate-marquee-y w-12 md:w-40">
                  {[...col1, ...col1, ...col1].map((url, i) => ( <img key={`c1-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
-              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-24 md:w-40">
+              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-12 md:w-40">
                  {[...col2, ...col2, ...col2].map((url, i) => ( <img key={`c2-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
-              <div className="flex flex-col gap-2 animate-marquee-y w-24 md:w-40 hidden sm:flex">
+              <div className="flex flex-col gap-2 animate-marquee-y w-12 md:w-40 hidden sm:flex">
                  {[...col3, ...col3, ...col3].map((url, i) => ( <img key={`c3-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
-              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-24 md:w-40 hidden md:flex">
+              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-12 md:w-40 hidden md:flex">
                  {[...col4, ...col4, ...col4].map((url, i) => ( <img key={`c4-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
-              <div className="flex flex-col gap-2 animate-marquee-y w-24 md:w-40 hidden lg:flex">
+              <div className="flex flex-col gap-2 animate-marquee-y w-12 md:w-40 hidden lg:flex">
                  {[...col5, ...col5, ...col5].map((url, i) => ( <img key={`c5-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
-              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-24 md:w-40 hidden lg:flex">
+              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-12 md:w-40 hidden lg:flex">
                  {[...col6, ...col6, ...col6].map((url, i) => ( <img key={`c6-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
-              <div className="flex flex-col gap-2 animate-marquee-y w-24 md:w-40 hidden xl:flex">
+              <div className="flex flex-col gap-2 animate-marquee-y w-12 md:w-40 hidden xl:flex">
                  {[...col7, ...col7, ...col7].map((url, i) => ( <img key={`c7-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
-              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-24 md:w-40 hidden xl:flex">
+              <div className="flex flex-col gap-2 animate-marquee-y-reverse w-12 md:w-40 hidden xl:flex">
                  {[...col8, ...col8, ...col8].map((url, i) => ( <img key={`c8-${i}`} src={url} alt="Poster" className="w-full h-auto rounded-lg shadow-lg" /> ))}
               </div>
            </div>
@@ -109,16 +109,16 @@ export default function MaxxPlayerShowcase() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-brand-600/30 rounded-full blur-[150px] pointer-events-none"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 mt-8">
+        <div className="relative z-10 max-w-4xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 mt-4">
           
           {/* LEFT COLUMN: Text and Brands */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1 space-y-6">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1 space-y-4">
             
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-500 font-bold tracking-widest text-xs uppercase mb-2 animate-fade-in-up animation-delay-100">
               <Zap size={16} className="fill-current" /> A Revolução do Entretenimento
             </div>
             
-            <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tight leading-none animate-fade-in-up animation-delay-200">
+            <h1 className="text-2xl md:text-2xl xl:text-2xl font-black tracking-tight leading-none animate-fade-in-up animation-delay-200">
               A SUA TV <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-orange-600">NUNCA MAIS SERÁ A MESMA</span>
             </h1>
             
@@ -128,8 +128,8 @@ export default function MaxxPlayerShowcase() {
             
             {/* TV Brands / Devices */}
             <div className="pt-6 animate-fade-in-up animation-delay-400 w-full">
-              <p className="text-xs text-zinc-500 font-bold tracking-widest uppercase mb-4 text-center lg:text-left">Compatível com os melhores dispositivos</p>
-              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-6 opacity-60">
+              <p className="text-xs text-zinc-500 font-bold tracking-widest uppercase mb-3 text-center lg:text-left">Compatível com os melhores dispositivos</p>
+              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-3 opacity-60">
                 <div className="flex items-center gap-2 font-bold text-lg"><MonitorPlay size={20}/> Samsung</div>
                 <div className="flex items-center gap-2 font-bold text-lg"><Tv size={20}/> LG Smart</div>
                 <div className="flex items-center gap-2 font-bold text-lg"><Radio size={20}/> Android TV</div>
@@ -138,7 +138,7 @@ export default function MaxxPlayerShowcase() {
               </div>
             </div>
 
-            <button onClick={scrollDown} className="mt-8 bg-white text-black hover:bg-brand-500 hover:text-white px-8 py-4 rounded-full font-black tracking-widest text-sm uppercase transition-all flex items-center gap-2 animate-fade-in-up animation-delay-500 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(252,95,22,0.6)]">
+            <button onClick={scrollDown} className="mt-4 bg-white text-black hover:bg-brand-500 hover:text-white px-4 py-2 rounded-full font-black tracking-widest text-sm uppercase transition-all flex items-center gap-2 animate-fade-in-up animation-delay-500 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(252,95,22,0.6)]">
               Ver Planos <ArrowDown size={18} />
             </button>
           </div>
@@ -150,23 +150,23 @@ export default function MaxxPlayerShowcase() {
              
              {/* Mockup Container (User Screenshot) */}
              <div className="relative transform transition-transform duration-700 hover:scale-[1.02] hover:-rotate-1">
-                <img src="/assets/app_login_mockup.png" alt="Maxx Player Tela de Login" className="w-full h-auto rounded-3xl shadow-[0_0_50px_rgba(252,95,22,0.15)] border border-white/10" />
+                <img src="/assets/app_login_mockup.png" alt="Maxx Player Tela de Login" className="w-full h-auto rounded-2xl shadow-[0_0_50px_rgba(252,95,22,0.15)] border border-white/10" />
              </div>
           </div>
         </div>
       </div>
 
       {/* 2. RECURSOS PREMIUM (GRID) */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-black mb-4">TUDO QUE VOCÊ <span className="text-brand-500">SEMPRE QUIS</span></h2>
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 py-10">
+        <div className="text-center mb-3">
+          <h2 className="text-2xl md:text-2xl font-black mb-3">TUDO QUE VOCÊ <span className="text-brand-500">SEMPRE QUIS</span></h2>
           <p className="text-zinc-500">Desenvolvido com tecnologia de ponta para entregar a melhor experiência.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {/* Feature 1: 4K */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
-            <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-3 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
               <img src="/assets/ic_uhd.webp" alt="4K UHD" className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" />
             </div>
             <h3 className="text-xl font-bold mb-3">Qualidade 4K Ultra HD</h3>
@@ -174,8 +174,8 @@ export default function MaxxPlayerShowcase() {
           </div>
 
           {/* Feature 2: VOD */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
-            <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-3 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
               <img src="/assets/ic_movies.webp" alt="Filmes e Séries" className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" />
             </div>
             <h3 className="text-xl font-bold mb-3">Organização Inteligente</h3>
@@ -183,8 +183,8 @@ export default function MaxxPlayerShowcase() {
           </div>
 
           {/* Feature 3: TV Ao Vivo */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
-            <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-3 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
               <img src="/assets/ic_globo.webp" alt="TV Ao Vivo" className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" />
             </div>
             <h3 className="text-xl font-bold mb-3">Guia de Programação (EPG)</h3>
@@ -192,8 +192,8 @@ export default function MaxxPlayerShowcase() {
           </div>
 
           {/* Feature 4: Kids */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
-            <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-3 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
               <img src="/assets/ic_kids.webp" alt="Kids Mode" className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" />
             </div>
             <h3 className="text-xl font-bold mb-3">Espaço Kids</h3>
@@ -201,8 +201,8 @@ export default function MaxxPlayerShowcase() {
           </div>
 
           {/* Feature 5: Sports */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
-            <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-3 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
               <img src="/assets/ic_sports.webp" alt="Esportes" className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" />
             </div>
             <h3 className="text-xl font-bold mb-3">O Mundo dos Esportes</h3>
@@ -210,10 +210,10 @@ export default function MaxxPlayerShowcase() {
           </div>
 
           {/* Feature 6: Multi-plataforma */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
-            <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6 text-brand-500">
+          <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-3 hover:border-brand-500/30 transition-all hover:-translate-y-2 group">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6 text-brand-500">
                <Tv size={32} />
-               <Smartphone size={24} className="ml-1 -mb-4 opacity-70" />
+               <Smartphone size={24} className="ml-1 -mb-3 opacity-70" />
             </div>
             <h3 className="text-xl font-bold mb-3">Multi-Dispositivos</h3>
             <p className="text-zinc-400 text-sm leading-relaxed">Disponível para as principais Smart TVs, TV Box, Fire Stick, Celulares e Computadores.</p>
@@ -222,16 +222,16 @@ export default function MaxxPlayerShowcase() {
       </div>
 
       {/* 3. INTEGRAÇÕES / STREAMING BANNER */}
-      <div className="w-full bg-[#050505] py-20 border-y border-white/5 relative overflow-hidden">
+      <div className="w-full bg-[#050505] py-10 border-y border-white/5 relative overflow-hidden">
         <div className="absolute top-1/2 left-0 w-full h-full bg-brand-600/5 blur-[100px] pointer-events-none -translate-y-1/2"></div>
-        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <h3 className="text-xl md:text-2xl font-light text-zinc-400 mb-10">Todo o seu conteúdo favorito centralizado em um só lugar</h3>
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+          <h3 className="text-xl md:text-2xl font-light text-zinc-400 mb-3">Todo o seu conteúdo favorito centralizado em um só lugar</h3>
           
-          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
-             <img src="/assets/netflix.png" alt="Netflix" className="h-10 md:h-14 object-contain hover:opacity-100 hover:scale-110 transition-transform" />
+          <div className="flex flex-wrap justify-center items-center gap-3 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+             <img src="/assets/netflix.png" alt="Netflix" className="h-10 md:h-11 object-contain hover:opacity-100 hover:scale-110 transition-transform" />
              <img src="/assets/hbomax.png" alt="HBO Max" className="h-8 md:h-10 object-contain hover:opacity-100 hover:scale-110 transition-transform" />
-             <img src="/assets/prime.png" alt="Prime Video" className="h-10 md:h-14 object-contain hover:opacity-100 hover:scale-110 transition-transform" />
-             <img src="/assets/disney.png" alt="Disney Plus" className="h-12 md:h-16 object-contain hover:opacity-100 hover:scale-110 transition-transform" />
+             <img src="/assets/prime.png" alt="Prime Video" className="h-10 md:h-11 object-contain hover:opacity-100 hover:scale-110 transition-transform" />
+             <img src="/assets/disney.png" alt="Disney Plus" className="h-12 md:h-12 object-contain hover:opacity-100 hover:scale-110 transition-transform" />
           </div>
         </div>
       </div>

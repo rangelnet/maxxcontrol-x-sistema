@@ -29,6 +29,7 @@ import Wallet from './pages/Wallet'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 import NexusAgent from './pages/NexusAgent'
+import AnimeManager from './pages/AnimeManager'
 import Active from './pages/Active'
 import LegalDocs from './pages/LegalDocs'
 import LegalDisclaimerModal from './components/LegalDisclaimerModal'
@@ -81,6 +82,7 @@ function App() {
             <Route path="finance-plans" element={<FinancePlans />} />
             <Route path="wallet" element={<Wallet />} />
             <Route path="agents" element={<NexusAgent />} />
+            <Route path="anime-manager" element={<AnimeManager />} />
           </Route>
         </Routes>
       </BrowserRouter>

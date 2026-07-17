@@ -263,6 +263,82 @@ exports.getActivationEntitlementByMac = async (req, res) => {
         const revenueLog = revenueResult.rows[0] || null;
         const mpTransaction = mpResult.rows[0] || null;
 
+        const normalizedHistoryMac = mac_address;
+        const normalizedHistoryUsername = String(
+            qpanelAccount?.username ||
+            qpanelAccount?.app_username ||
+            revenueLog?.app_username ||
+            device?.username ||
+            ''
+        ).trim().toUpperCase();
+        const normalizedHistoryEmail = String(
+            qpanelAccount?.email ||
+            revenueLog?.client_email ||
+            ''
+        ).trim().toUpperCase();
+        const normalizedHistoryWhatsapp = String(
+            qpanelAccount?.telefone ||
+            revenueLog?.whatsapp ||
+            ''
+        ).replace(/\D/g, '');
+        const normalizedHistoryUserId = String(
+            qpanelAccount?.app_user_id ||
+            revenueLog?.app_user_id ||
+            device?.user_id ||
+            ''
+        ).trim().toUpperCase();
+
+        const historyConditions = [
+            `UPPER(COALESCE(r.app_mac_address, '')) = $1`,
+        ];
+        const historyParams = [normalizedHistoryMac];
+        let historyParamIndex = 2;
+
+        if (normalizedHistoryUsername) {
+            historyConditions.push(`UPPER(COALESCE(r.app_username, '')) = $${historyParamIndex++}`);
+            historyParams.push(normalizedHistoryUsername);
+        }
+
+        if (normalizedHistoryEmail) {
+            historyConditions.push(`UPPER(COALESCE(r.client_email, '')) = $${historyParamIndex++}`);
+            historyParams.push(normalizedHistoryEmail);
+        }
+
+        if (normalizedHistoryWhatsapp) {
+            historyConditions.push(`REGEXP_REPLACE(COALESCE(r.whatsapp, ''), '[^0-9]', '', 'g') = $${historyParamIndex++}`);
+            historyParams.push(normalizedHistoryWhatsapp);
+        }
+
+        if (normalizedHistoryUserId) {
+            historyConditions.push(`UPPER(COALESCE(r.app_user_id::text, '')) = $${historyParamIndex++}`);
+            historyParams.push(normalizedHistoryUserId);
+        }
+
+        const revenueHistoryResult = await pool.query(`
+            SELECT
+                r.id,
+                r.plan_id,
+                COALESCE(p.name, r.plan_name) AS plan_name,
+                r.amount,
+                r.client_name,
+                r.whatsapp,
+                r.payment_method,
+                r.status,
+                r.app_mac_address,
+                r.app_username,
+                r.app_user_id,
+                r.client_email,
+                r.created_at,
+                r.mp_payment_id
+            FROM revenue_logs r
+            LEFT JOIN finance_plans p ON p.id = r.plan_id
+            WHERE ${historyConditions.join(' OR ')}
+            ORDER BY r.created_at DESC
+            LIMIT 8
+        `, historyParams);
+
+        const revenueHistory = revenueHistoryResult.rows || [];
+
         const deviceStatus = String(device?.status || '').toLowerCase();
         const deviceTrialExpiry = parseLooseDate(device?.expires_at || device?.trial_expires_at);
         const qpanelExpiry = parseLooseDate(qpanelAccount?.expire_date);
@@ -387,6 +463,22 @@ exports.getActivationEntitlementByMac = async (req, res) => {
                     created_at: revenueLog.created_at || null,
                 }
                 : null,
+            revenue_history: revenueHistory.map((row) => ({
+                id: row.id,
+                plan_id: row.plan_id || null,
+                plan_name: row.plan_name || null,
+                amount: row.amount || null,
+                client_name: row.client_name || null,
+                whatsapp: row.whatsapp || null,
+                payment_method: row.payment_method || null,
+                status: row.status || null,
+                app_mac_address: row.app_mac_address || null,
+                app_username: row.app_username || null,
+                app_user_id: row.app_user_id || null,
+                client_email: row.client_email || null,
+                created_at: row.created_at || null,
+                mp_payment_id: row.mp_payment_id || null,
+            })),
             mp_transaction: mpTransaction
                 ? {
                     id: mpTransaction.id,

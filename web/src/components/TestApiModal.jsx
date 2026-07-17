@@ -88,9 +88,9 @@ const TestApiModal = ({ device, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card rounded-lg p-5 max-w-lg w-full mx-4 border border-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+      <div className="bg-card rounded-md p-5 max-w-lg w-full mx-4 border border-gray-800">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-bold text-white flex items-center gap-2">
             <TestTube className="text-primary" size={24} />
             API de Teste Grátis
           </h2>
@@ -99,19 +99,19 @@ const TestApiModal = ({ device, onClose, onSave }) => {
           </button>
         </div>
 
-        <div className="mb-4 p-3 bg-dark rounded border border-gray-800">
-          <p className="text-sm text-gray-400">Dispositivo:</p>
+        <div className="mb-2 p-2 bg-dark rounded border border-gray-800">
+          <p className="text-xs text-gray-400">Dispositivo:</p>
           <p className="text-white font-mono">{device.mac_address}</p>
-          <p className="text-sm text-gray-400 mt-1">{device.modelo}</p>
+          <p className="text-xs text-gray-400 mt-1">{device.modelo}</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-500 text-sm">
+          <div className="mb-2 p-2 bg-red-500/20 border border-red-500 rounded text-red-500 text-sm">
             {error}
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-300">
               URLs da API de Teste
@@ -139,7 +139,7 @@ const TestApiModal = ({ device, onClose, onSave }) => {
                 value={url}
                 onChange={(e) => handleUrlChange(index, e.target.value)}
                 placeholder="https://painel.exemplo.com/api/chatbot/..."
-                className="flex-1 px-3 py-2 bg-dark border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-primary"
+                className="flex-1 px-2 py-1 bg-dark border border-gray-700 rounded-md text-white text-sm focus:outline-none focus:border-primary"
               />
               <button
                 onClick={() => removeUrl(index)}
@@ -155,7 +155,7 @@ const TestApiModal = ({ device, onClose, onSave }) => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-1.5 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors disabled:opacity-50"
             >
               <Save size={18} />
               {saving ? 'Salvando...' : 'Salvar'}
@@ -165,7 +165,7 @@ const TestApiModal = ({ device, onClose, onSave }) => {
               <button
                 onClick={handleClear}
                 disabled={saving}
-                className="px-4 py-2 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 bg-red-500/20 text-red-500 rounded-md hover:bg-red-500/30 transition-colors disabled:opacity-50"
                 title="Limpar todas as URLs"
               >
                 <Trash2 size={18} />

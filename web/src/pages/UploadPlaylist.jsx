@@ -125,15 +125,15 @@ export default function UploadPlaylist() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-zinc-300 font-sans flex flex-col relative overflow-hidden">
+    <div className="min-h-[calc(100vh-40px)] bg-[#050505] text-zinc-300 font-sans flex flex-col relative overflow-hidden">
       {/* Background Glow */}
       <div className="fixed inset-0 z-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at top right, rgba(252, 95, 22, 0.15) 0%, #000 70%)' }}></div>
       <div className="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-brand-600/10 rounded-full filter blur-[150px] pointer-events-none"></div>
 
       {/* NAVBAR */}
-      <nav className="relative z-10 w-full bg-black/30 backdrop-blur-md border-b border-white/5 py-4">
+      <nav className="relative z-10 w-full bg-black/30 backdrop-blur-md border-b border-white/5 py-2.5">
         <div className="max-w-[1500px] mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-3">
               <img src="/logo-maxx.svg" alt="Logo" className="w-10 h-10 object-contain drop-shadow-[0_0_15px_rgba(252,95,22,0.5)]" />
               <span className="text-xl font-black tracking-tight text-white hidden sm:block">
@@ -148,7 +148,7 @@ export default function UploadPlaylist() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link to="/" className="text-zinc-400 hover:text-white flex items-center gap-1 text-sm font-bold transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5">
               <ChevronLeft size={16} /> Voltar ao Site
             </Link>
@@ -165,11 +165,11 @@ export default function UploadPlaylist() {
         <main className="flex-grow w-full max-w-[1500px] mx-auto mt-4 md:mt-[20px] px-2 md:px-[40px] relative z-10">
         
         {/* CABEÇALHO DO HUB DE AUTOATENDIMENTO */}
-        <div className="text-center mb-10 pt-4">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-xs font-black text-brand-500 mb-4 uppercase tracking-widest">
+        <div className="text-center mb-3 pt-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-xs font-black text-brand-500 mb-3 uppercase tracking-widest">
                Hub de Autoatendimento
             </div>
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-4">
+            <h2 className="text-2xl md:text-2xl font-black text-white mb-3">
                Gerencie seu <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-orange-500">Dispositivo</span>
             </h2>
             <p className="text-zinc-500 max-w-2xl mx-auto text-base leading-relaxed">
@@ -178,17 +178,17 @@ export default function UploadPlaylist() {
         </div>
 
         {/* BOTÕES DE NAVEGAÇÃO PRINCIPAL DO HUB */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-            <Link to="/active" className="flex items-center justify-center gap-2 md:gap-3 px-6 py-3 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest transition-all bg-white/5 border-2 border-white/5 text-zinc-500 hover:border-white/10 hover:text-white">
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
+            <Link to="/active" className="flex items-center justify-center gap-2 md:gap-3 px-4 py-2 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest transition-all bg-white/5 border-2 border-white/5 text-zinc-500 hover:border-white/10 hover:text-white">
                 Ativar App
             </Link>
-            <button className="flex items-center justify-center gap-2 md:gap-3 px-6 py-3 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest transition-all bg-brand-500 border-2 border-brand-500 text-white shadow-[0_0_30px_rgba(252,95,22,0.4)] cursor-default">
+            <button className="flex items-center justify-center gap-2 md:gap-3 px-4 py-2 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest transition-all bg-brand-500 border-2 border-brand-500 text-white shadow-[0_0_30px_rgba(252,95,22,0.4)] cursor-default">
                 HUB Playlists
             </button>
         </div>
 
           <div className="max-w-[949px] mx-auto py-2 px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 max-w-[470px] lg:max-w-none mx-auto lg:mx-0">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-16 max-w-[470px] lg:max-w-none mx-auto lg:mx-0">
                
                {/* LEFT COLUMN: TABS */}
                <div className="space-y-4">
@@ -231,13 +231,13 @@ export default function UploadPlaylist() {
                </div>
 
                {/* RIGHT COLUMN: FORM */}
-               <div className="lg:p-6 h-fit overflow-visible lg:border-2 lg:rounded-[30px] border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm max-w-[470px] lg:max-w-none shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+               <div className="lg:p-3 h-fit overflow-visible lg:border-2 lg:rounded-[30px] border-white/10 bg-[#0a0a0a]/80 backdrop-blur-sm max-w-[470px] lg:max-w-none shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                   <h2 className="text-white mb-6 lg:block hidden font-light text-[16px] leading-[24px]">
                     Carregue sua lista de reprodução no aplicativo e desfrute dos benefícios.
                   </h2>
                   
                   {message.text && (
-                    <div className={`mb-6 p-4 rounded-xl border font-bold text-center text-sm ${message.type === 'success' ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>
+                    <div className={`mb-6 p-3 rounded-xl border font-bold text-center text-sm ${message.type === 'success' ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-red-500/10 border-red-500/50 text-red-500'}`}>
                       {message.text}
                     </div>
                   )}
@@ -254,7 +254,7 @@ export default function UploadPlaylist() {
                              <label className="block text-sm mb-1 text-white/80 font-light">KEY</label>
                              <input required type="password" placeholder="KEY" value={macKeyForm.key} onChange={e => setMacKeyForm({...macKeyForm, key: e.target.value.toUpperCase()})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none uppercase font-mono tracking-widest transition-colors" />
                           </div>
-                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
                              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login'}
                           </button>
                        </form>
@@ -279,7 +279,7 @@ export default function UploadPlaylist() {
                              <label className="block text-sm mb-1 text-white/80 font-light">Senha</label>
                              <input required type="password" placeholder="Senha" value={codeForm.password} onChange={e => setCodeForm({...codeForm, password: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
                           </div>
-                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
                              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
                           </button>
                        </form>
@@ -323,7 +323,7 @@ export default function UploadPlaylist() {
                           </div>
 
                           {/* PIN Fields (Conditional) */}
-                          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${definePin ? 'max-h-[200px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+                          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${definePin ? 'max-h-[150px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
                              <div className="space-y-4">
                                 <div>
                                    <label className="block text-sm mb-1 text-white/80 font-light">PIN</label>
@@ -336,7 +336,7 @@ export default function UploadPlaylist() {
                              </div>
                           </div>
 
-                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
                              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
                           </button>
                        </form>
@@ -357,7 +357,7 @@ export default function UploadPlaylist() {
                              <label className="block text-sm mb-1 text-white/80 font-light">URL</label>
                              <input required type="url" placeholder="URL" value={urlForm.url} onChange={e => setUrlForm({...urlForm, url: e.target.value})} className="w-full px-4 py-3 border border-white/10 rounded-xl text-white placeholder-zinc-500 bg-[#141414] focus:border-brand-500 outline-none transition-colors" />
                           </div>
-                          <button type="submit" disabled={loading} className="w-full mt-6 py-4 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
+                          <button type="submit" disabled={loading} className="w-full mt-6 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-brand-500/20">
                              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Carregar playlist'}
                           </button>
                        </form>
@@ -371,15 +371,15 @@ export default function UploadPlaylist() {
       )}
 
       {/* FOOTER */}
-      <footer className="bg-[#050505] border-t border-white/5 py-12 mt-20 relative z-10">
-          <div className="max-w-[1500px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
-              <div className="flex flex-col md:flex-row items-center gap-6">
+      <footer className="bg-[#050505] border-t border-white/5 py-7 mt-20 relative z-10">
+          <div className="max-w-[1500px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-3 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center gap-3">
                  <div className="flex items-center gap-3 group cursor-pointer">
                      <img src="/logo-maxx.svg" alt="Maxx Control" className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(252, 95, 22,0.3)] transition-transform group-hover:scale-110" />
                      <span className="font-black text-zinc-300 text-lg tracking-tighter">MAXX Control</span>
                  </div>
                  
-                 <div className="flex flex-wrap justify-center md:justify-start gap-4 md:gap-6 text-xs md:text-sm text-zinc-500 font-medium">
+                 <div className="flex flex-wrap justify-center md:justify-start gap-3 md:gap-3 text-xs md:text-sm text-zinc-500 font-medium">
                      <Link to="/active" className="hover:text-white transition">Ativação</Link>
                      <Link to="/privacy" className="hover:text-white transition">Política de Privacidade</Link>
                      <Link to="/terms" className="hover:text-white transition">Termos de Uso</Link>
@@ -387,7 +387,7 @@ export default function UploadPlaylist() {
                  </div>
               </div>
 
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-3">
                  <img alt="Apple Pay" src="/applepay.png" className="h-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition" onError={(e) => e.target.style.display='none'} />
                  <img alt="Mastercard" src="/master.png" className="h-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition" onError={(e) => e.target.style.display='none'} />
                  <img alt="Pix" src="/pix.png" className="h-6 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition" onError={(e) => e.target.style.display='none'} />
@@ -400,7 +400,7 @@ export default function UploadPlaylist() {
       </footer>
 
       {/* Floating WhatsApp Button */}
-      <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-110">
+      <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 z-40 w-11 h-11 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-110">
          <img alt="WhatsApp" className="w-7 h-7 filter brightness-0 invert" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" />
       </a>
     </div>

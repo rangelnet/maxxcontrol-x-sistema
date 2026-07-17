@@ -1,0 +1,1905 @@
+﻿import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useAuth } from '../context/AuthContext'
+import api from '../services/api'
+import {
+  Ban, CheckCircle, Server, X, Save, Trash2, Download,
+  RefreshCw, Package, AlertCircle, Unlock, TestTube, Eye,
+  EyeOff, Copy, Wifi, WifiOff, Tv2, Signal, Activity,
+  ShieldCheck, ShieldOff, ChevronLeft, ChevronRight, Search,
+  MoreVertical, Link, MessageSquare, Users, Repeat, Scissors,
+  ExternalLink, Share2, Edit2, Tablet, ChevronDown, ChevronUp,
+  Pencil, Play, Calendar, UserCheck, Monitor, Smartphone, 
+  Settings, LogIn, LayoutGrid, CalendarCheck, Power, AppWindow, Zap,
+  Wand2
+} from 'lucide-react'
+import TestApiModal from '../components/TestApiModal'
+import UploadExcelModal from '../components/UploadExcelModal'
+import footballTeams from '../data/footballTeams'
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+const formatDate = (date) => {
+  if (!date) return '—'
+  return new Date(date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+const getServerHost = (url) => {
+  if (!url) return null
+  try { return new URL(url).hostname } catch { return url.length > 25 ? url.slice(0, 25) + '...' : url }
+}
+
+const formatPing = (ping) => {
+  if (!ping) return { text: 'N/A', cls: 'text-zinc-500' }
+  const v = parseInt(ping)
+  if (v < 100) return { text: `${v}ms`, cls: 'text-emerald-400' }
+  if (v < 300) return { text: `${v}ms`, cls: 'text-yellow-400' }
+  return { text: `${v}ms`, cls: 'text-red-400' }
+}
+
+const formatQuality = (quality) => {
+  const map = {
+    excelente: { label: 'Excelente', stars: 4, cls: 'text-emerald-400' },
+    boa:       { label: 'Boa',       stars: 3, cls: 'text-blue-400'    },
+    regular:   { label: 'Regular',   stars: 2, cls: 'text-yellow-400'  },
+    ruim:      { label: 'Ruim',      stars: 1, cls: 'text-red-400'     },
+  }
+  return map[quality] || { label: 'N/A', stars: 0, cls: 'text-zinc-500' }
+}
+
+const getExpireColor = (dateStr) => {
+  if (!dateStr || dateStr === '—' || typeof dateStr !== 'string') return '#71717a'
+  
+  try {
+    const parts = dateStr.split('/')
+    if (parts.length < 3) return '#FC5F16'
+    
+    const day = parseInt(parts[0])
+    const month = parseInt(parts[1]) - 1
+    const year = parseInt(parts[2].split(' ')[0])
+    
+    const expDate = new Date(year, month, day)
+    const now = new Date()
+    const diffTime = expDate - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays < 0) return '#f87171' // Vencido (Red)
+    if (diffDays <= 7) return '#fbbf24' // Próximo (Yellow/Orange)
+    return '#34d399' // OK (Green)
+  } catch {
+    return '#FC5F16'
+  }
+}
+
+const DaysLeftBadge = ({ dateStr }) => {
+  if (!dateStr || dateStr === '—' || typeof dateStr !== 'string') return null;
+  try {
+    const parts = dateStr.split('/');
+    if (parts.length < 3) return null;
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1;
+    const year = parseInt(parts[2].split(' ')[0]);
+    const expDate = new Date(year, month, day);
+    const now = new Date();
+    const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return <span style={{ marginLeft:6, fontSize:8.5, padding:'2px 5px', borderRadius:4, background:'rgba(239,68,68,0.15)', color:'#f87171', fontWeight:800 }}>VENCIDO</span>;
+    if (diffDays === 0) return <span style={{ marginLeft:6, fontSize:8.5, padding:'2px 5px', borderRadius:4, background:'rgba(251,191,36,0.15)', color:'#fbbf24', fontWeight:800 }}>HOJE</span>;
+    if (diffDays <= 7) return <span style={{ marginLeft:6, fontSize:8.5, padding:'2px 5px', borderRadius:4, background:'rgba(251,191,36,0.15)', color:'#fbbf24', fontWeight:800 }}>{diffDays}d</span>;
+    return <span style={{ marginLeft:6, fontSize:8.5, padding:'2px 5px', borderRadius:4, background:'rgba(52,211,153,0.15)', color:'#34d399', fontWeight:800 }}>+{diffDays}d</span>;
+  } catch { return null; }
+}
+
+const normalizeIdentity = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value).trim().toLowerCase().replace(/[^a-z0-9]/gi, '');
+};
+
+const normalizePhoneIdentity = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/\D/g, '');
+};
+
+const getAccountMaxConnections = (account) => {
+  const value = Number(account?.max_connections || account?.finance_plan_max_connections || 1);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+};
+
+const getAccountMatchScore = (account, device) => {
+  if (!account || !device) return 0;
+
+  let score = 0;
+  const accountMac = normalizeIdentity(account.device_mac);
+  const deviceMac = normalizeIdentity(device.mac_address);
+  if (accountMac && deviceMac && accountMac === deviceMac) score += 1000;
+
+  const accountUserId = normalizeIdentity(account.app_user_id || account.user_id);
+  const deviceUserId = normalizeIdentity(device.user_id);
+  if (accountUserId && deviceUserId && accountUserId === deviceUserId) score += 700;
+
+  const accountUsername = normalizeIdentity(account.app_username || account.username);
+  const deviceUsername = normalizeIdentity(device.current_iptv_username || device.username);
+  if (accountUsername && deviceUsername && accountUsername === deviceUsername) score += 500;
+
+  const accountDeviceCode = normalizeIdentity(account.device_code);
+  const deviceCode = normalizeIdentity(device.device_code);
+  if (accountDeviceCode && deviceCode && accountDeviceCode === deviceCode) score += 300;
+
+  const accountEmail = normalizeIdentity(account.client_email || account.email);
+  const deviceEmail = normalizeIdentity(device.email);
+  if (accountEmail && deviceEmail && accountEmail === deviceEmail) score += 200;
+
+  const accountPhone = normalizePhoneIdentity(account.client_phone || account.telefone);
+  const devicePhone = normalizePhoneIdentity(device.phone || device.telefone);
+  if (accountPhone && devicePhone && accountPhone === devicePhone) score += 180;
+
+  return score;
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENTES
+// ══════════════════════════════════════════════════════════════════════════════
+const StatCard = ({ icon: Icon, label, value, color = '#FC5F16', sub }) => (
+  <div style={{
+    background: 'rgba(17,17,17,0.7)',
+    backdropFilter: 'blur(14px)',
+    border: '1px solid rgba(252, 95, 22,0.12)',
+    borderRadius: 16,
+    padding: '20px 24px',
+    display: 'flex', alignItems: 'center', gap: 16,
+    boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+  }}>
+    <div style={{
+      width: 48, height: 48, borderRadius: 12,
+      background: `${color}22`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+    }}>
+      <Icon size={22} color={color} />
+    </div>
+    <div>
+      <p style={{ fontSize: 11, color: '#71717a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{label}</p>
+      <p style={{ fontSize: 24, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{value}</p>
+      {sub && <p style={{ fontSize: 11, color: '#52525b', marginTop: 3 }}>{sub}</p>}
+    </div>
+  </div>
+)
+
+const Badge = ({ online, blocked }) => {
+  if (blocked) return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 8px', borderRadius:999, background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.3)', color:'#f87171', fontSize:11, fontWeight:700 }}>
+      <ShieldOff size={11} /> BLOQUEADO
+    </span>
+  )
+  if (online) return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 8px', borderRadius:999, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#34d399', fontSize:11, fontWeight:700 }}>
+      <span style={{ width:6, height:6, borderRadius:'50%', background:'#34d399', boxShadow:'0 0 6px #34d399', animation:'pulse 1.5s infinite' }} />
+      ONLINE
+    </span>
+  )
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 8px', borderRadius:999, background:'rgba(113,113,122,0.15)', border:'1px solid rgba(113,113,122,0.25)', color:'#71717a', fontSize:11, fontWeight:700 }}>
+      <WifiOff size={11} /> OFFLINE
+    </span>
+  )
+}
+
+const StatusBadge = ({ status, isTrial }) => {
+  const normalizedStatus = String(status || '').toLowerCase()
+  if (isTrial) return <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(217,119,6,0.15)', border:'1px solid rgba(217,119,6,0.25)', color:'#fbbf24', fontSize:11, fontWeight:800 }}><TestTube size={11} /> TESTE</span>
+  if (normalizedStatus === 'pendente' || normalizedStatus === 'pending')
+    return <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(251,191,36,0.14)', border:'1px solid rgba(251,191,36,0.24)', color:'#fbbf24', fontSize:11, fontWeight:800 }}><AlertCircle size={11} /> PENDENTE</span>
+    
+  return normalizedStatus === 'ativo' || normalizedStatus === 'active'
+    ? <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(59,130,246,0.15)', border:'1px solid rgba(59,130,246,0.25)', color:'#60a5fa', fontSize:11, fontWeight:700 }}><ShieldCheck size={11} /> ATIVO</span>
+    : <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, background:'rgba(239,68,68,0.12)', border:'1px solid rgba(239,68,68,0.25)', color:'#f87171', fontSize:11, fontWeight:700 }}><Ban size={11} /> INATIVO</span>
+}
+
+const ModalBase = ({ onClose, children, maxWidth = 480 }) => (
+  <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:16 }}
+    onClick={e => e.target === e.currentTarget && onClose()}
+  >
+    <div style={{
+      background: 'rgba(17,17,17,0.95)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(252, 95, 22,0.18)',
+      borderRadius: 18,
+      padding: 20,
+      width: '100%',
+      maxWidth,
+      boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+    }}>
+      {children}
+    </div>
+  </div>
+)
+
+const PlanBadge = ({ letter, color, onClick, title }) => (
+  <button 
+    onClick={(e) => {
+      e.stopPropagation();
+      onClick && onClick();
+    }}
+    style={{
+      width: 22, height: 22, borderRadius: 5, background: color, color: '#fff',
+      fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      border: 'none', cursor: 'pointer', transition: 'all 0.15s', outline: 'none',
+      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+    }}
+    onMouseOver={e => e.currentTarget.style.transform = 'scale(1.2) translateY(-2px)'}
+    onMouseOut={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
+    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+    title={title}
+  >
+    {letter}
+  </button>
+)
+
+const ModalHeader = ({ icon: Icon, title, onClose }) => (
+  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+      <div style={{ width:36, height:36, borderRadius:10, background:'rgba(252, 95, 22,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <Icon size={18} color='#FC5F16' />
+      </div>
+      <h2 style={{ fontSize:16, fontWeight:800, color:'#fff' }}>{title}</h2>
+    </div>
+    <button onClick={onClose} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}>
+      <X size={16} />
+    </button>
+  </div>
+)
+
+const DeviceInfo = ({ device }) => (
+  <div style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:'10px 14px', marginBottom:16 }}>
+    <p style={{ fontSize:10, color:'#52525b', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:4 }}>Dispositivo</p>
+    <p style={{ fontFamily:'monospace', fontSize:13, color:'#FC5F16', fontWeight:700 }}>{device?.mac_address}</p>
+    <p style={{ fontSize:12, color:'#71717a', marginTop:2 }}>{device?.modelo}</p>
+  </div>
+)
+
+const FormField = ({ label, children }) => (
+  <div>
+    <label style={{ display:'block', fontSize:10, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:4 }}>{label}</label>
+    {children}
+  </div>
+)
+
+const inputStyle = {
+  width: '100%', padding: '6px 10px', background: 'rgba(255,255,255,0.03)',
+  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, 
+  color: '#fff', fontSize: 11, outline: 'none', boxSizing: 'border-box',
+  transition: 'border-color .2s, background-color .2s',
+}
+
+// Select style — garante que as options tenham fundo escuro
+const selectStyle = {
+  ...inputStyle,
+  background: '#111111',
+  color: '#fff',
+  WebkitAppearance: 'none',
+  MozAppearance: 'none',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23FFA500' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  paddingRight: 32,
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL
+// ══════════════════════════════════════════════════════════════════════════════
+const Devices = () => {
+  const { user } = useAuth()
+  const [devices, setDevices]               = useState([])
+  const [filteredDevices, setFilteredDevices] = useState([])
+  const [searchTerm, setSearchTerm]         = useState('')
+  const [loading, setLoading]               = useState(true)
+  const [refreshing, setRefreshing]         = useState(false)
+  const [lastUpdate, setLastUpdate]         = useState(null)
+  const [selectedDevice, setSelectedDevice] = useState(null)
+  const [showIptvModal, setShowIptvModal]   = useState(false)
+  const [showTestApiModal, setShowTestApiModal] = useState(false)
+  const [showAppsModal, setShowAppsModal]   = useState(false)
+  const [showSendApkModal, setShowSendApkModal] = useState(false)
+  const [iptvConfig, setIptvConfig]         = useState({ xtream_url:'', xtream_username:'', xtream_password:'' })
+  const [apps, setApps]                     = useState([])
+  const [appsLoading, setAppsLoading]       = useState(false)
+  const [newAppUrl, setNewAppUrl]           = useState('')
+  const [newAppName, setNewAppName]         = useState('')
+  const [saving, setSaving]                 = useState(false)
+  const [itemsPerPage, setItemsPerPage]     = useState(50)
+  const [currentPage, setCurrentPage]       = useState(1)
+  const [visiblePasswords, setVisiblePasswords] = useState({})
+  const [toast, setToast]                   = useState(null)
+  
+  // ── Controle de Visão (Devices Físicos vs Clientes Painel) ──
+  const [viewMode, setViewMode]             = useState('unified') // 'unified', 'devices' ou 'clients'
+  const [panelClients, setPanelClients]     = useState([])
+  const [expandedClients, setExpandedClients] = useState({})
+  
+  const [unifiedList, setUnifiedList]       = useState([])
+  const [isMobile, setIsMobile]             = useState(window.innerWidth < 768)
+  
+  const [newConnections, setNewConnections] = useState(1);
+  const [targetServer, setTargetServer] = useState('');
+  const [relayProcessing, setRelayProcessing] = useState({});
+  const [showManageModal, setShowManageModal] = useState(false);
+  const [showUploadExcelModal, setShowUploadExcelModal] = useState(false);
+  const [manageTab, setManageTab] = useState('dados');
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [showNewClientModal, setShowNewClientModal] = useState(false);
+  const [creationLogs, setCreationLogs] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [editForm, setEditForm] = useState({ username: '', password: '', expire_date: '', max_connections: 1, package_name: '', nome: '', email: '', telefone: '', servidor_id: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', clube_id: '', events_clube: '', finance_plan_id: '' });
+  const [newClientForm, setNewClientForm] = useState({ selected_servers: [], username: '', password: '', package_name: '', months: 1, max_connections: 1, nome: '', email: '', telefone: '', vencimento: '', mac: '', notificacao_whatsapp: '1', notas: '', m3u_url: '', m3u_username: '', m3u_password: '', dns: '', is_trial: false });
+  const [newClientTab, setNewClientTab] = useState('dados');
+  const [iptvServers, setIptvServers] = useState([]);
+  const [dynamicPlans, setDynamicPlans] = useState([]);
+  const [financePlans, setFinancePlans] = useState([]);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+  const allAccounts = useMemo(() => {
+    return panelClients.reduce((acc, curr) => {
+      const accounts = curr.accounts || [];
+      return [...acc, ...accounts];
+    }, []);
+  }, [panelClients]);
+
+  const colors = {
+    gray: '#2d2e32', blue: '#1e40af', yellow: '#B18E00', purple: '#7e22ce',
+    green: '#15803d', red: '#be123c', action: '#1d4ed8', orange: '#FC5F16',
+    cyan: '#0891b2', teal: '#0d9488', indigo: '#4f46e5', pink: '#db2777'
+  };
+
+  const GridActionButton = ({ icon: Icon, color, onClick, title, label, size = 42 }) => (
+    <div className="flex flex-col items-center gap-1.5 w-full">
+      <button 
+        onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
+        title={title}
+        className="flex items-center justify-center transition-all duration-300 transform hover:-translate-y-1 active:scale-90 shadow-lg hover:brightness-110"
+        style={{
+          width: size, height: size,
+          background: color, border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer',
+          boxShadow: `0 4px 12px ${color}33`,
+        }}
+      >
+        <Icon size={size * 0.45} />
+      </button>
+      {label && <span className="text-[9px] text-zinc-500 font-bold text-center leading-tight uppercase tracking-tighter whitespace-nowrap">{label}</span>}
+    </div>
+  );
+
+  const openManageModal = (item) => {
+    const acc = item.account || null;
+    const dev = item.device || null;
+    setSelectedAccount(acc);
+    setSelectedDevice(dev);
+
+    const baseUsername = acc?.app_username || acc?.username || dev?.current_iptv_username || dev?.username || '';
+    let basePassword = '';
+    const rawPass = acc?.app_password || acc?.password || dev?.current_iptv_password || dev?.password || '';
+    // No Nexus, queremos ver se a senha é mascarada (******) para saber se precisamos atualizar no Sigma
+    basePassword = rawPass;
+    setShowPasswordModal(false);
+
+      setEditForm({
+        username: baseUsername, 
+        password: basePassword, 
+        expire_date: acc?.expire_date || '',
+        max_connections: acc?.max_connections || 1, 
+        package_name: acc?.finance_plan_name || acc?.package_name || dev?.package_name || '',
+        nome: acc?.nome || '', 
+        email: acc?.email || '', 
+        telefone: acc?.telefone || '', 
+        servidor_id: acc?.servidor_id || dev?.server_id || '', 
+        mac: acc?.device_mac || acc?.mac || dev?.mac_address || '',
+      notificacao_whatsapp: acc?.notificacao_whatsapp || '1', 
+      notas: acc?.notas || '', 
+      finance_plan_id: acc?.finance_plan_id || ''
+    });
+
+    setTargetServer('');
+    setNewConnections(acc?.max_connections || 1);
+    
+    if (dev) {
+       api.get(`/api/iptv-server/device/${dev.id}`)
+         .then(r => setIptvConfig(r.data.xtream_url ? r.data : { xtream_url:'', xtream_username:'', xtream_password:'' }))
+         .catch(() => setIptvConfig({ xtream_url:'', xtream_username:'', xtream_password:'' }));
+       loadApps(dev.id);
+    }
+    
+    setManageTab(acc ? 'dados' : 'device');
+    setShowManageModal(true);
+  }
+
+  const SigmaActionButton = ({ icon: Icon, color, onClick, title }) => (
+    <button 
+      onClick={(e) => { e.stopPropagation(); onClick && onClick(e); }}
+      title={title}
+      className="w-8 h-8 flex items-center justify-center transition-all duration-200 transform hover:-translate-y-0.5 active:scale-90 rounded-lg text-white border-none cursor-pointer"
+      style={{
+        background: color,
+        boxShadow: `0 4px 12px ${color}33`,
+      }}
+    >
+      <Icon size={16} />
+    </button>
+  );
+
+  const generateReminder = (acc) => {
+    const msg = `Olá! Passando para lembrar que seu acesso IPTV (${acc.username}) vence em ${acc.expire_date}. Gostaria de renovar? 🚀`;
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  const sendRemoteAction = async (accountId, type, remoteId, panelUrl, extraPayload = {}) => {
+    setRelayProcessing(p => ({ ...p, [accountId]: true }));
+    try {
+      let finalPanelUrl = panelUrl;
+      if (!finalPanelUrl && type === 'create_user' && extraPayload.selected_servers?.length > 0) {
+        const firstServer = iptvServers.find(s => s.name === extraPayload.selected_servers[0]);
+        finalPanelUrl = firstServer?.url || null;
+      }
+      const res = await api.post('/api/iptv-plugin/relay-command', {
+        command_type: type,
+        payload: { customer_id: remoteId, account_id: accountId, ...extraPayload },
+        panel_url: finalPanelUrl
+      });
+      if (!res.data.success) throw new Error(res.data.error);
+
+      const cmdId = res.data.command_id;
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts++;
+        if (attempts > 12) {
+          clearInterval(interval);
+          setRelayProcessing(p => ({ ...p, [accountId]: false }));
+          showToast("Timeout: A extensão demorou muito.", "error");
+          return;
+        }
+        try {
+          const pollRes = await api.get(`/api/iptv-plugin/relay-result/${cmdId}`);
+          if (pollRes.data.status === 'done') {
+            clearInterval(interval);
+            setRelayProcessing(p => ({ ...p, [accountId]: false }));
+            showToast("Ação realizada com sucesso!", "success");
+            loadClients();
+          } else if (pollRes.data.status === 'error') {
+            clearInterval(interval);
+            setRelayProcessing(p => ({ ...p, [accountId]: false }));
+            showToast("Erro na Extensão: " + pollRes.data.error_message, "error");
+          }
+        } catch (e) { }
+      }, 5000);
+    } catch (err) {
+      setRelayProcessing(p => ({ ...p, [accountId]: false }));
+      showToast("Erro ao enviar comando: " + (err.response?.data?.error || err.message), "error");
+    }
+  };
+
+  const handleGenerateTest = () => {
+    const user = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const pass = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const isoDate = new Date().toISOString().split('T')[0];
+    setNewClientForm({
+      ...newClientForm,
+      username: user, password: pass,
+      is_trial: true, months: 0, vencimento: isoDate,
+      package_name: dynamicPlans.find(p => p.toLowerCase().includes('teste')) || 'TESTE 24H (SIGMA)',
+      notas: 'Teste numérico gerado pelo Nexus.'
+    });
+    showToast("Dados numéricos gerados!", "success");
+  };
+
+  const handleQuickTrial = () => {
+    const user = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const pass = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const isoDate = new Date().toISOString().split('T')[0];
+    setNewClientForm({
+      selected_servers: iptvServers.length > 0 ? [iptvServers[0].name] : [],
+      username: user, password: pass,
+      is_trial: true, months: 0, vencimento: isoDate,
+      max_connections: 1, package_name: dynamicPlans.find(p => p.toLowerCase().includes('teste')) || 'TESTE 24H (SIGMA)',
+      nome: 'Teste Rápido', email: '', telefone: '', mac: '',
+      notificacao_whatsapp: '0', notas: 'Teste rápido 1-click gerado pelo Revendedor.'
+    });
+    setNewClientTab('dados');
+    setShowNewClientModal(true);
+    showToast("Formulário de teste preenchido!", "success");
+  };
+
+  const handleConvertTrial = async (acc) => {
+    if (!confirm(`Deseja converter o teste de ${acc.username} em Assinante Oficial?\n\nIsso deduzirá 1 crédito da sua carteira.`)) return;
+    try {
+      const planToSet = defaultPlans.find(p => p.toLowerCase().includes('mensal')) || 'PLANO MENSAL (SIGMA)';
+      await sendRemoteAction(acc.id, 'edit_user', acc.remote_id, acc.panel_url, {
+         package_name: planToSet,
+         is_trial: false,
+         notas: acc.notas + ' | Convertido para assinante',
+         _deduct_credit: true
+      });
+    } catch (e) {
+      showToast("Erro ao converter teste", "error");
+    }
+  };
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 2800)
+  }
+
+  const copyToClipboard = (text, label = "Item") => {
+    if (!text) return showToast("Nada para copiar!", "error");
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(`${label} copiado!`, "success");
+    }).catch(() => {
+      showToast("Erro ao copiar", "error");
+    });
+  };
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    const initLoad = async () => {
+      setLoading(true);
+      await Promise.all([loadDevices(), loadClients(), loadServers(), loadPackages(), loadFinancePlans()]);
+      setLoading(false);
+    };
+    initLoad();
+    const interval = setInterval(() => loadDevices(), 10000);
+    const wsHost = import.meta.env.MODE === 'production' ? 'wss://maxxcontrol-x-sistema.onrender.com' : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+    const ws = new WebSocket(wsHost)
+    ws.onopen = () => {
+      const token = localStorage.getItem('token')
+      if (token) ws.send(JSON.stringify({ type: 'auth', token }))
+    }
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'device:test-api-updated') {
+          setDevices(prev => prev.map(d => d.id === data.data.device_id ? { ...d, test_api_url: data.data.test_api_url } : d))
+        }
+      } catch {}
+    }
+    return () => { clearInterval(interval); ws.close() }
+  }, [])
+
+  useEffect(() => {
+    const linkedRows = [];
+    const deviceMatches = new Set();
+    const accountMatches = new Map();
+    const accounts = (allAccounts || []).filter(Boolean);
+    const deviceList = (devices || []).filter(Boolean);
+
+    const deviceSortScore = (device) => {
+      const onlineScore = device?.connection_status === 'online' ? 1 : 0;
+      const lastSeen = new Date(device?.ultimo_acesso || device?.updated_at || device?.created_at || 0).getTime();
+      return { onlineScore, lastSeen };
+    };
+
+    const sortedDevices = [...deviceList].sort((a, b) => {
+      const scoreA = deviceSortScore(a);
+      const scoreB = deviceSortScore(b);
+      if (scoreA.onlineScore !== scoreB.onlineScore) return scoreB.onlineScore - scoreA.onlineScore;
+      return scoreB.lastSeen - scoreA.lastSeen;
+    });
+
+    sortedDevices.forEach((device) => {
+      let bestAccount = null;
+      let bestScore = 0;
+
+      accounts.forEach((account) => {
+        const matchedCount = accountMatches.get(account.id) || 0;
+        if (matchedCount >= getAccountMaxConnections(account)) return;
+
+        const score = getAccountMatchScore(account, device);
+        if (score > bestScore) {
+          bestScore = score;
+          bestAccount = account;
+        }
+      });
+
+      if (bestAccount && bestScore > 0) {
+        linkedRows.push({
+          id: `linked-${device.id}-${bestAccount.id}`,
+          linkType: 'linked',
+          device,
+          account: bestAccount,
+          matchScore: bestScore,
+        });
+        deviceMatches.add(device.id);
+        accountMatches.set(bestAccount.id, (accountMatches.get(bestAccount.id) || 0) + 1);
+      }
+    });
+
+    accounts.forEach((account) => {
+      if ((accountMatches.get(account.id) || 0) === 0) {
+        linkedRows.push({
+          id: `acc-${account.id}`,
+          linkType: 'account_only',
+          device: null,
+          account,
+        });
+      }
+    });
+
+    deviceList.forEach((device) => {
+      if (!deviceMatches.has(device.id)) {
+        linkedRows.push({
+          id: `dev-${device.id}`,
+          linkType: 'device_only',
+          device,
+          account: null,
+        });
+      }
+    });
+
+    setUnifiedList(linkedRows);
+  }, [devices, panelClients, allAccounts]);
+
+
+
+  useEffect(() => {
+    let list = unifiedList;
+    if (viewMode === 'devices') list = list.filter(i => i.device !== null);
+    if (viewMode === 'clients') list = list.filter(i => i.account !== null);
+    if (statusFilter !== 'all') {
+      list = list.filter(item => {
+        const acc = item.account;
+        const dev = item.device;
+        if (statusFilter === 'online') return dev?.connection_status === 'online';
+        if (statusFilter === 'active') return acc?.status === 'active' || acc?.status === 'ativo' || dev?.status === 'ativo';
+        if (statusFilter === 'expired') return (acc && acc.status !== 'active' && acc.status !== 'ativo') || dev?.status === 'inativo';
+        if (statusFilter === 'trial') return acc?.is_trial || acc?.package_name?.toLowerCase().includes('teste');
+        return false;
+      });
+    }
+
+    if (!searchTerm.trim()) { 
+      setFilteredDevices(list); 
+      return 
+    }
+      const t = searchTerm.toLowerCase();
+      setFilteredDevices(list.filter(item => {
+        const dev = item.device;
+        const acc = item.account;
+        return dev?.mac_address?.toLowerCase().includes(t) ||
+               dev?.modelo?.toLowerCase().includes(t) ||
+               dev?.ip?.toLowerCase().includes(t) ||
+               dev?.current_iptv_username?.toLowerCase().includes(t) ||
+               dev?.username?.toLowerCase().includes(t) ||
+               acc?.username?.toLowerCase().includes(t) ||
+               acc?.app_username?.toLowerCase().includes(t) ||
+               acc?.nome?.toLowerCase().includes(t) ||
+               acc?.email?.toLowerCase().includes(t) ||
+               acc?.telefone?.toLowerCase().includes(t) ||
+               acc?.client_email?.toLowerCase().includes(t) ||
+               acc?.client_phone?.toLowerCase().includes(t) ||
+               acc?.server_name?.toLowerCase().includes(t) ||
+               acc?.package_name?.toLowerCase().includes(t) ||
+               acc?.finance_plan_name?.toLowerCase().includes(t) ||
+               acc?.app_user_id?.toLowerCase().includes(t) ||
+               acc?.last_payment_id?.toLowerCase().includes(t) ||
+               acc?.device_mac?.toLowerCase().includes(t);
+      }));
+  }, [searchTerm, unifiedList, viewMode, statusFilter]);
+
+  useEffect(() => setCurrentPage(1), [searchTerm]);
+
+  // ── API ───────────────────────────────────────────
+  const loadDevices = async () => {
+    try {
+      const r = await api.get('/api/device/list-all')
+      const resData = r.data;
+      const data = resData.devices || resData.data || resData.list || (Array.isArray(resData) ? resData : []);
+      setDevices(data);
+      setLastUpdate(new Date())
+    } catch (e) {
+      console.error('Erro ao carregar dispositivos:', e)
+      setDevices([])
+    }
+  }
+
+  const loadClients = async () => {
+    try {
+      const r = await api.get('/api/iptv-plugin/qpanel-grouped-accounts')
+      const resData = r.data;
+      const data = resData.data || resData.accounts || (Array.isArray(resData) ? resData : []);
+      setPanelClients(data)
+    } catch (e) {
+      console.error('Erro ao carregar clientes:', e)
+      setPanelClients([])
+    }
+  }
+
+  const loadServers = async () => {
+    try {
+      const r = await api.get('/api/iptv/servers/all')
+      setIptvServers(r.data || [])
+    } catch (e) {
+      console.error('Erro ao carregar servidores:', e)
+      setIptvServers([])
+    }
+  }
+
+  const loadPackages = async () => {
+    try {
+      const r = await api.get('/api/iptv-plugin/all-packages')
+      if (r.data.success) setDynamicPlans(r.data.packages || [])
+    } catch (e) {
+      console.error('Erro ao carregar pacotes:', e)
+      setDynamicPlans([])
+    }
+  }
+
+  const loadFinancePlans = async () => {
+    try {
+      const r = await api.get('/api/finance/plans')
+      setFinancePlans(r.data || [])
+    } catch (e) {
+      console.error('Erro ao carregar planos financeiros:', e)
+      setFinancePlans([])
+    }
+  }
+
+  const sendWhatsAppNotification = async (data) => {
+    if (data.notificacao_whatsapp !== '1' || !data.telefone) return;
+    
+    try {
+      const serverNames = Array.isArray(data.selected_servers) ? data.selected_servers.join(', ') : (data.server_name || 'Servidor');
+      const msg = `🚀 *ACESSO LIBERADO - TV MAXX PRO* 🚀\n\n` +
+                  `Olá *${data.nome || 'Cliente'}*, seu acesso foi gerado com sucesso!\n\n` +
+                  `🌐 *Servidor:* ${serverNames}\n` +
+                  `👤 *Usuário:* \`${data.username}\`\n` +
+                  `🔑 *Senha:* \`${data.password}\`\n` +
+                  `📅 *Vencimento:* ${data.vencimento || '2 Horas'}\n\n` +
+                  `📥 *Baixe nosso App:* https://bit.ly/m-player-pro\n\n` +
+                  `_Dúvidas? Estamos à disposição!_`;
+
+      await api.post('/api/whatsapp/chat/send', {
+        jid: data.telefone.includes('@') ? data.telefone : `${data.telefone}@s.whatsapp.net`,
+        text: msg
+      });
+      showToast("Credenciais enviadas via WhatsApp!", "success");
+    } catch (e) {
+      console.error('Erro ao enviar WhatsApp:', e);
+      showToast("Conta criada, mas erro ao enviar WhatsApp", "warning");
+    }
+  };
+
+  // Extrator M3U — extrai user/pass/dns de URL M3U
+  const extractM3U = (url, target = 'new') => {
+    if (!url) return;
+    try {
+      const u = new URL(url);
+      const user = u.searchParams.get('username') || '';
+      const pass = u.searchParams.get('password') || '';
+      const dns = u.origin;
+      if (target === 'new') {
+        setNewClientForm(f => ({ ...f, m3u_url: url, m3u_username: user, m3u_password: pass, dns }));
+      } else {
+        setEditForm(f => ({ ...f, m3u_url: url, m3u_username: user, m3u_password: pass, dns }));
+      }
+      showToast('M3U extraído com sucesso!');
+    } catch { showToast('URL M3U inválida', 'error'); }
+  };
+
+  // Planos padrão
+  const defaultPlans = [
+    'PLANO MENSAL (SIGMA)', 'PLANO TRIMESTRAL (SIGMA)', 'PLANO SEMESTRAL (SIGMA)', 
+    'PLANO ANUAL (SIGMA)', 'PACOTE COMPLETO + ADULTOS', 'PACOTE COMPLETO (SEM ADULTOS)',
+    'TESTE 24H (SIGMA)', 'TESTE 2H (SIGMA)', 'PACOTE LIGHT SIGMA', 'MAXX PREMIUM - SIGMA',
+    'PLAY MAXX - SIGMA', 'FIRE MAXX - SIGMA'
+  ];
+
+  const gestorLitePlans = [
+    'MAXX PREMIUM 3.5 - TELAS=2', 'MAXX PREMIUM 3.9 - TELAS=2', 'MAXX PREMIUM 4.9 - TELAS=2',
+    'MAXX ANUAL - TELAS=2', 'MAXX SEMESTRAL - TELAS=2', 'MAXX TRIMESTRAL - TELAS=2',
+    'MAXX MENSAL - TELAS=2', 'MAXX ANUAL 478 - TELAS=1', 'MAXX SEMESTRAL ULTRA 280 - TELAS=1',
+    'TRIMESTRAL MAXX 141 - TELAS=1', 'MAXX PREMIUM 8.9 - TELAS=2', 'MAXX PREMIUM 25 - TELAS=2',
+    'PLAY MAXX PREMIUM 15.0 - 3 TELAS', 'PLAY MAXX PREMIUN 8.0 - 2 TELAS',
+    'PLAY FIRE MAXX PREMIUN 4.0', 'PLAY MAXX PREMIUM ULTRA 12.4 - 4 TELAS',
+    'MAGO FIRE 12 ANUAL 5.0', 'MAXX ANUAL FIRE 478.8 - TELAS=2',
+    'MAXX SEMESTRAL ULTRA 249.9', 'Play Top Lite 7.0', 'TV BOX FIRE+PLAY MAXX 269.9',
+    'PLAY FAMÍLIA 4 MAXX 7.2', 'PLAY STORY AVANÇADO 4.4', 'MAXX PREMIER 4.9 - TELAS=1',
+    'PLAY MAXX ANUAL 12', 'TV BOX MAXX FIRE', 'VIRADA DE ANO 3.6',
+    'FIRE MAX AVANÇADO PREMIUM 3.9', 'TESTE', 'FIRE TV', 'MESHTV',
+  ];
+
+  // Tab pill style reutilizável
+  const TabPill = ({ label, active, onClick }) => (
+    <button onClick={onClick} className={`px-4.5 py-2 rounded-lg border font-black text-xs transition-all transform active:scale-95 ${active ? 'bg-orange-500/15 border-orange-500 text-orange-500 shadow-[0_0_15px_rgba(252,95,22,0.1)]' : 'bg-transparent border-white/10 text-zinc-500 hover:border-white/20 hover:text-zinc-300'}`}>
+      {label}
+    </button>
+  );
+
+  const blockDevice = async (id) => {
+    if (!confirm('Deseja bloquear este dispositivo?')) return
+    try { await api.post('/api/device/block', { device_id: id }); loadDevices(); showToast('Dispositivo bloqueado!') }
+    catch { showToast('Erro ao bloquear', 'error') }
+  }
+
+  const unblockDevice = async (id) => {
+    if (!confirm('Deseja desbloquear este dispositivo?')) return
+    try { await api.post('/api/device/unblock', { device_id: id }); loadDevices(); showToast('Dispositivo desbloqueado!') }
+    catch { showToast('Erro ao desbloquear', 'error') }
+  }
+
+  const deleteDevice = async (id, mac) => {
+    if (!confirm(`Excluir permanentemente o dispositivo ${mac}?\n\nTodos os dados serão removidos.`)) return
+    try {
+      await api.delete(`/api/device/delete/${id}`)
+      showToast('Dispositivo excluído!')
+      loadDevices()
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Erro ao excluir', 'error')
+    }
+  }
+
+  const openIptvModal = async (device) => {
+    setSelectedDevice(device); setShowIptvModal(true)
+    try {
+      const r = await api.get(`/api/iptv-server/device/${device.id}`)
+      setIptvConfig(r.data.xtream_url ? r.data : { xtream_url:'', xtream_username:'', xtream_password:'' })
+    } catch { setIptvConfig({ xtream_url:'', xtream_username:'', xtream_password:'' }) }
+  }
+
+  const saveIptvConfig = async () => {
+    setSaving(true)
+    try { await api.post(`/api/iptv-server/device/${selectedDevice.id}`, iptvConfig); showToast('Configuração salva!'); setShowIptvModal(false) }
+    catch { showToast('Erro ao salvar', 'error') }
+    finally { setSaving(false) }
+  }
+
+  const deleteIptvConfig = async () => {
+    if (!confirm('Remover configuração específica? O dispositivo usará a configuração global.')) return
+    try { await api.delete(`/api/iptv-server/device/${selectedDevice.id}`); showToast('Configuração removida!'); setShowIptvModal(false) }
+    catch { showToast('Erro ao remover', 'error') }
+  }
+
+  const openAppsModal = async (device) => {
+    setSelectedDevice(device); setShowAppsModal(true); loadApps(device.id)
+  }
+
+  const loadApps = async (deviceId) => {
+    setAppsLoading(true)
+    try { const r = await api.get(`/api/apps/device/${deviceId}`); setApps(r.data.apps) }
+    catch { setApps([]) }
+    finally { setAppsLoading(false) }
+  }
+
+  const uninstallApp = async (pkg) => {
+    if (!confirm('Desinstalar este app?')) return
+    try { await api.post('/api/apps/uninstall', { device_id: selectedDevice.id, package_name: pkg }); showToast('Comando enviado!'); loadApps(selectedDevice.id) }
+    catch { showToast('Erro ao desinstalar', 'error') }
+  }
+
+  const sendApk = async () => {
+    if (!newAppUrl.trim() || !newAppName.trim()) { showToast('Preencha URL e nome', 'error'); return }
+    setSaving(true)
+    try { await api.post('/api/apps/send-apk', { device_id: selectedDevice.id, app_name: newAppName, app_url: newAppUrl }); showToast('Comando enviado!'); setShowSendApkModal(false); setNewAppUrl(''); setNewAppName('') }
+    catch { showToast('Erro ao enviar APK', 'error') }
+    finally { setSaving(false) }
+  }
+
+  // ── Paginação ──────────────────────────────────
+  const totalPages  = Math.ceil(filteredDevices.length / itemsPerPage)
+  const startIndex  = (currentPage - 1) * itemsPerPage
+  const paginatedDevices = filteredDevices.slice(startIndex, startIndex + itemsPerPage)
+
+  const formatLastUpdate = () => {
+    if (!lastUpdate) return ''
+    const diff = Math.floor((new Date() - lastUpdate) / 1000)
+    if (diff < 10) return 'agora mesmo'
+    if (diff < 60) return `há ${diff}s`
+    if (diff < 3600) return `há ${Math.floor(diff/60)}min`
+    return lastUpdate.toLocaleTimeString('pt-BR')
+  }
+
+  // ── Separadores de Estilo ──
+  const btnPrimary = {
+    display:'flex', alignItems:'center', gap:6, padding:'8px 18px',
+    background:'linear-gradient(135deg, #fbbf24, #f59e0b)', border:'none',
+    borderRadius:9, color:'#000', fontSize:12, fontWeight:800, cursor:'pointer',
+    boxShadow:'0 4px 12px rgba(251,191,36,0.2)', whiteSpace:'nowrap',
+    transition: 'all 0.2s'
+  }
+  const btnGhost = {
+    display:'flex', alignItems:'center', gap:6, padding:'8px 16px',
+    background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)',
+    borderRadius:9, color:'#d4d4d8', fontSize:12, fontWeight:700, cursor:'pointer',
+    whiteSpace:'nowrap',
+    transition: 'all 0.2s'
+  }
+
+  const totalTvs = devices.length;
+  const onlineCount = devices.filter(d => d.connection_status === 'online').length;
+  const sigmaAssinantes = allAccounts.filter(a => a.status === 'active' || a.status === 'ativo').length;
+  const sigmaTests = allAccounts.filter(a => a.is_trial || a.package_name?.toLowerCase().includes('teste')).length;
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // RENDER PRINCIPAL
+  // ══════════════════════════════════════════════════════════════════════════════
+  return (
+    <>
+    <div style={{ position:'relative' }}>
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div style={{
+          position:'fixed', top:24, right:24, zIndex:200,
+          background: toast.type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)',
+          backdropFilter:'blur(12px)', border:`1px solid ${toast.type==='error'?'rgba(239,68,68,0.4)':'rgba(16,185,129,0.4)'}`,
+          borderRadius:12, padding:'12px 20px', color:'#fff', fontSize:13, fontWeight:700,
+          boxShadow:'0 12px 30px rgba(0,0,0,0.4)', display:'flex', alignItems:'center', gap:8,
+          animation:'fadeIn .25s ease',
+        }}>
+          {toast.type === 'error' ? <X size={16}/> : <CheckCircle size={16}/>}
+          {toast.msg}
+        </div>
+      )}
+
+      {/* ── Header ── */}
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:24, gap:16, flexWrap:'wrap' }}>
+        <div>
+          <h1 style={{ fontSize:26, fontWeight:900, color:'#fff', marginBottom:4, display:'flex', alignItems:'center', gap:10 }}>
+            <Tv2 size={26} color='#FC5F16' />
+            Gestão de Aparelhos e Clientes
+          </h1>
+          <p style={{ fontSize:12, color:'#52525b' }}>
+            {lastUpdate ? `Atualizado ${formatLastUpdate()}` : 'Carregando...'}
+            <div style={{ fontSize:9, opacity:0.4, marginTop:4, fontFamily:'monospace', color:'#fff' }}>
+              DEBUG: D:{devices?.length} C:{panelClients?.length} A:{allAccounts?.length} U:{unifiedList?.length} F:{filteredDevices?.length} T:{localStorage.getItem('token')?'S':'N'}
+            </div>
+            {' · '}
+            <span style={{ color:'#FC5F16' }}>{filteredDevices.length} registros</span>
+          </p>
+          
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginTop: 12, flexWrap:'wrap' }}>
+            <div style={{ display:'flex', background:'rgba(0,0,0,0.3)', borderRadius:10, padding:3 }}>
+              {['unified', 'devices', 'clients'].map(m => (
+                <button 
+                  key={m}
+                  onClick={() => setViewMode(m)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: 'none',
+                    background: viewMode === m ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+                    color: viewMode === m ? '#FC5F16' : '#71717a', cursor: 'pointer', transition: 'all 0.2s'
+                  }}>
+                  {m === 'unified' ? 'Tudo' : m === 'devices' ? 'Só TVs' : 'Só Painel'}
+                </button>
+              ))}
+            </div>
+            
+            <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.1)' }} />
+            
+            <div style={{ display:'flex', gap:6 }}>
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'active', label: 'Ativos' },
+                { id: 'expired', label: 'Vencidos' },
+                { id: 'trial', label: 'Testes' },
+                { id: 'online', label: 'Online' }
+              ].map(f => (
+                 <button 
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                    background: statusFilter === f.id ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${statusFilter === f.id ? '#3b82f6' : 'rgba(255,255,255,0.08)'}`,
+                    color: statusFilter === f.id ? '#60a5fa' : '#71717a', cursor: 'pointer', transition: 'all 0.2s'
+                  }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          <button onClick={handleQuickTrial} style={{ ...btnPrimary, background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}>
+            <Wand2 size={15} /> Gerar Teste Rápido
+          </button>
+          <button onClick={() => setShowNewClientModal(true)} style={btnPrimary}>
+            <Users size={15} /> + Novo Cliente
+          </button>
+          <button onClick={() => setShowUploadExcelModal(true)} style={{...btnPrimary, background: 'linear-gradient(135deg, #3b82f6, #2563eb)'}}>
+            <Package size={15} /> Importar Excel
+          </button>
+          {/* Busca */}
+          <div style={{ position:'relative', width: isMobile ? '100%' : 'auto' }}>
+            <Search size={15} color='#52525b' style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }} />
+            <input
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Buscar..."
+              style={{ ...inputStyle, paddingLeft:34, paddingRight: searchTerm ? 34 : 14, width: isMobile ? '100%' : 240 }}
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'#71717a', cursor:'pointer', display:'flex' }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          {/* Refresh */}
+          <button onClick={() => loadDevices(true)} disabled={refreshing} style={btnGhost}>
+            <RefreshCw size={15} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+            {refreshing ? 'Atualizando...' : 'Atualizar'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Stats Cards ── */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))', gap:14, marginBottom:24 }}>
+        <StatCard icon={Tv2}        label="TVs Físicas"  value={totalTvs}    color="#FC5F16" sub={`${onlineCount} Online agora`} />
+        <StatCard icon={Users}      label="Assinantes"   value={sigmaAssinantes} color="#60a5fa" sub="Contas Ativas Sigma" />
+        <StatCard icon={TestTube}   label="Testes"       value={sigmaTests}      color="#fbbf24" sub="Contas Experimentais" />
+        <StatCard icon={Activity}   label="Total Geral"  value={totalTvs + allAccounts.length} color="#34d399" sub="Ecossistema Maxx" />
+      </div>
+
+      {/* ── Tabela ── */}
+      <div style={{
+        background:'rgba(17,17,17,0.7)', backdropFilter:'blur(14px)',
+        border:'1px solid rgba(252, 95, 22,0.1)', borderRadius:16,
+        overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.35)',
+      }}>
+        {/* Barra superior da tabela */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 20px', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:12, color:'#71717a' }}>Mostrar:</span>
+            <select
+              value={itemsPerPage}
+              onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1) }}
+              style={{ ...inputStyle, width:'auto', padding:'5px 10px', fontSize:12 }}
+            >
+              {[10,20,50,100,200].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span style={{ fontSize:12, color:'#52525b' }}>por página</span>
+          </div>
+          <div style={{ fontSize:12, color:'#52525b', display: 'flex', alignItems: 'center', gap: 10 }}>
+            {Object.values(relayProcessing).some(v => v) && (
+              <span style={{ display:'flex', alignItems:'center', gap:6, color:'#fbbf24', fontSize:11, fontWeight:800, background:'rgba(251,191,36,0.15)', padding:'4px 10px', borderRadius:8 }}>
+                <RefreshCw size={12} className="rotate" /> PROCESSANDO...
+              </span>
+            )}
+            {searchTerm && <span style={{ color:'#FC5F16', marginRight:8 }}>{filteredDevices.length} resultado(s)</span>}
+            Pág. {currentPage}/{Math.max(totalPages,1)}
+          </div>
+        </div>
+
+        {/* Corpo do Painel Unificado */}
+        <div style={{ flex:1, overflow:'auto' }}>
+          {isMobile ? (
+            <div style={{ display:'flex', flexDirection:'column', gap:12, padding: '12px 0' }}>
+              {paginatedDevices.map((item) => {
+                const dev = item.device;
+                const acc = item.account;
+                const isOnline = dev?.connection_status === 'online';
+
+                return (
+                  <div key={item.id} style={{ background:'rgba(17,17,17,0.85)', border:'1px solid rgba(252, 95, 22,0.12)', borderRadius:16, overflow:'hidden', boxShadow:'0 8px 24px rgba(0,0,0,0.5)' }}>
+                               {/* Credenciais */}
+                      {acc && (
+                        <div style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(252,95,22,0.15)', borderRadius:10, padding:'10px 12px', marginBottom:12 }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                            <div>
+                              <p style={{ fontSize:9, color:'#71717a', textTransform:'uppercase', fontWeight:700, marginBottom:2 }}>Acesso Sigma</p>
+                              <p style={{ fontSize:13, color:'#60a5fa', fontWeight:800 }}>{acc.username}</p>
+                              <p style={{ fontSize:11, color:'#71717a', fontFamily:'monospace', marginTop:2 }}>
+                                {acc.password || '—'}
+                              </p>
+                            </div>
+                            <div style={{ display:'flex', gap:6 }}>
+                              <button onClick={() => copyToClipboard(`${acc.username}:${acc.password}`, 'Credenciais')} style={{ background:'rgba(255,255,255,0.05)', border:'none', borderRadius:6, width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'#71717a', cursor:'pointer' }}>
+                                <Copy size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Info: Servidor + Vencimento */}
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
+                        <div style={{ background:'rgba(5,5,5,0.3)', borderRadius:8, padding:'8px 10px' }}>
+                          <p style={{ fontSize:8.5, color:'#52525b', textTransform:'uppercase', fontWeight:700 }}>Servidor</p>
+                          <p style={{ fontSize:11, color:'#e4e4e7', fontWeight:700, marginTop:2 }}>{acc?.server_name || (dev?.ip) || '--'}</p>
+                        </div>
+                        <div style={{ background:'rgba(5,5,5,0.3)', borderRadius:8, padding:'8px 10px' }}>
+                          <p style={{ fontSize:8.5, color:'#52525b', textTransform:'uppercase', fontWeight:700 }}>Vencimento</p>
+                          <p style={{ fontSize:11, color:'#e4e4e7', fontWeight:700, marginTop:2, display:'flex', alignItems:'center' }}>{acc?.expire_date || formatDate(dev?.ultimo_acesso) || '--'} {acc && <DaysLeftBadge dateStr={acc.expire_date} />}</p>
+                        </div>
+                      </div>
+
+                      {/* Plano + Conexões */}
+                      {acc && (
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
+                          <div style={{ background:'rgba(5,5,5,0.3)', borderRadius:8, padding:'8px 10px' }}>
+                            <p style={{ fontSize:8.5, color:'#52525b', textTransform:'uppercase', fontWeight:700 }}>Plano</p>
+                            <p style={{ fontSize:10, color:'#a78bfa', fontWeight:700, marginTop:2 }}>{acc.finance_plan_name || acc.package_name || 'Standard'}</p>
+                          </div>
+                          <div style={{ background:'rgba(5,5,5,0.3)', borderRadius:8, padding:'8px 10px' }}>
+                            <p style={{ fontSize:8.5, color:'#52525b', textTransform:'uppercase', fontWeight:700 }}>Conexões</p>
+                            <p style={{ fontSize:11, color:'#e4e4e7', fontWeight:700, marginTop:2 }}>{acc.max_connections || 1} Telas</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Botões M3U */}
+                      {acc && (
+                        <div style={{ display:'flex', justifyContent:'center', gap:16, marginBottom:12, padding:'10px 0', borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ textAlign:'center' }}>
+                            <button onClick={() => copyToClipboard(acc.m3u_url, 'M3U')} style={{ width:42, height:42, background:'#B18E00', border:'none', borderRadius:10, color:'#fff', fontSize:18, fontWeight:700, cursor:'pointer' }}>M</button>
+                            <p style={{ fontSize:8, color:'#71717a', marginTop:4, fontWeight:600 }}>M3U</p>
+                          </div>
+                          <div style={{ textAlign:'center' }}>
+                            <button onClick={() => copyToClipboard(acc.m3u_url?.replace('get.php', 'siptv.php'), 'SIptv')} style={{ width:42, height:42, background:'#059669', border:'none', borderRadius:10, color:'#fff', fontSize:18, fontWeight:700, cursor:'pointer' }}>S</button>
+                            <p style={{ fontSize:8, color:'#71717a', marginTop:4, fontWeight:600 }}>SIptv</p>
+                          </div>
+                          <div style={{ textAlign:'center' }}>
+                            <button onClick={() => {
+                              const pUrl = acc.player_url || (acc.panel_url ? `${acc.panel_url.replace('/panel/', '/player/')}` : '');
+                              if (pUrl) window.open(pUrl, '_blank'); else showToast('Player indisponível', 'error');
+                            }} style={{ width:42, height:42, background:'#3b82f6', border:'none', borderRadius:10, color:'#fff', fontSize:18, fontWeight:700, cursor:'pointer' }}>P</button>
+                            <p style={{ fontSize:8, color:'#71717a', marginTop:4, fontWeight:600 }}>Player</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Botões Ação Mobile */}
+                      <div style={{ display:'flex', gap:8, paddingTop:10, borderTop:'1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                        <button onClick={() => openManageModal(item)} style={{ ...btnPrimary, flex:1, minWidth: '100px', justifyContent:'center' }}><Settings size={15}/> Gerenciar</button>
+                        {acc && !isTrial && <button onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)} style={{ ...btnGhost, flex:1, minWidth: '100px', justifyContent:'center' }}><CalendarCheck size={15}/> Renovar</button>}
+                        {acc && isTrial && <button onClick={() => handleConvertTrial(acc)} style={{ ...btnGhost, flex:1, minWidth: '100px', justifyContent:'center', color:'#10b981', borderColor:'rgba(16,185,129,0.3)' }}><UserCheck size={15}/> Converter</button>}
+                        {!acc && dev && <button onClick={() => blockDevice(dev.id)} style={{ ...btnGhost, flex:1, minWidth: '100px', justifyContent:'center', color:'#f87171', borderColor:'rgba(239,68,68,0.3)' }}><Power size={15}/> Bloquear</button>}
+                      </div>
+                    </div>
+                );
+              })}
+            </div>
+          ) : (
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+              <thead>
+                <tr style={{ background:'rgba(0,0,0,0.5)', borderBottom:'1px solid rgba(252, 95, 22,0.2)' }}>
+                  <th style={{ padding:'10px 14px', textAlign:'left', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Identificação</th>
+                  <th style={{ padding:'10px 14px', textAlign:'left', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Credenciais</th>
+                  <th style={{ padding:'10px 14px', textAlign:'left', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Servidor / Rede</th>
+                  <th style={{ padding:'10px 14px', textAlign:'left', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Vencimento / Acesso</th>
+                  <th style={{ padding:'10px 14px', textAlign:'left', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Situação</th>
+                  <th style={{ padding:'10px 14px', textAlign:'left', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Plano / Aparelho</th>
+                  <th style={{ padding:'10px 14px', textAlign:'right', fontSize:10, color:'#52525b', textTransform:'uppercase', fontWeight:900 }}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedDevices.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding:'20px', textAlign:'center', color:'#71717a' }}>
+                      Nenhum dispositivo encontrado
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedDevices.map((item, index) => {
+                    const acc = item.account;
+                    const dev = item.device;
+                    const isOnline = dev && dev.connection_status === 'online';
+                    const isTrial = acc && (acc.is_trial === 1 || acc.package_name?.toLowerCase().includes('teste'));
+
+                    return (
+                      <tr key={index} style={{ borderBottom:'1px solid rgba(255,255,255,0.03)', transition:'all 0.2s' }}>
+                        {/* COL 1: Identificação Unificada */}
+                        <td style={{ padding:'10px 14px', maxWidth: 260 }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                            <div style={{ width:38, height:38, borderRadius:10, background: item.linkType === 'linked' ? 'rgba(52,211,153,0.1)' : dev ? 'rgba(252,95,22,0.1)' : 'rgba(124,58,237,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                              {item.linkType === 'linked' ? <Link size={18} color="#34d399" /> : dev ? <Tv2 size={18} color="#FC5F16" /> : <Users size={18} color="#a78bfa" />}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              {dev && <div style={{ fontSize:12, fontWeight:800, color:'#e4e4e7', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{dev.modelo || 'Android Device'}</div>}
+                              {dev && acc && <div style={{ fontSize:10, color:'#60a5fa', fontWeight:700 }}>{acc.username}</div>}
+                              {!dev && acc && <div style={{ fontSize:12, fontWeight:800, color:'#a78bfa' }}>{acc.username}</div>}
+                              {dev && <div style={{ fontSize:8.5, color:'#52525b', fontFamily:'monospace' }}>MAC: {dev.mac_address}</div>}
+                              <div style={{ display:'flex', gap:4, marginTop:3, flexWrap:'wrap' }}>
+                                {item.linkType === 'linked' && <span style={{ fontSize:7.5, background:'rgba(52,211,153,0.15)', color:'#34d399', padding:'1px 5px', borderRadius:3, fontWeight:900 }}>VINCULADO</span>}
+                                {item.linkType === 'device_only' && <span style={{ fontSize:7.5, background:'rgba(251,191,36,0.15)', color:'#fbbf24', padding:'1px 5px', borderRadius:3, fontWeight:900 }}>SEM CONTA</span>}
+                                {item.linkType === 'account_only' && <span style={{ fontSize:7.5, background:'rgba(168,85,247,0.15)', color:'#c084fc', padding:'1px 5px', borderRadius:3, fontWeight:900 }}>SEM TV</span>}
+                                {isOnline && <span style={{ fontSize:7.5, background:'rgba(16,185,129,0.15)', color:'#34d399', padding:'1px 5px', borderRadius:3, fontWeight:900, display:'flex', alignItems:'center', gap:2 }}><span style={{ width:5, height:5, borderRadius:'50%', background:'#34d399', boxShadow:'0 0 6px #34d399' }} />ON</span>}
+                                {isTrial && <span style={{ fontSize:7.5, background:'rgba(251,191,36,0.12)', color:'#fbbf24', padding:'1px 5px', borderRadius:3, fontWeight:900 }}>TESTE</span>}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* COL 2: Credenciais (Unificada - Sem Máscara) */}
+                        <td style={{ padding:'10px 14px' }}>
+                          {acc ? (
+                            <div>
+                              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                <span style={{ fontSize:12, fontWeight:800, color:'#60a5fa' }}>{acc.username}</span>
+                                <button onClick={() => copyToClipboard(acc.username, 'Usuário')} style={{ background:'none', border:'none', cursor:'pointer', color:'#52525b', padding:2, display:'flex' }}><Copy size={11} /></button>
+                              </div>
+                              <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:2 }}>
+                                <span style={{ fontSize:11, color:'#71717a', fontFamily:'monospace', fontWeight:700 }}>
+                                  {acc.password || '—'}
+                                </span>
+                                <button onClick={() => copyToClipboard(acc.password, 'Senha')} style={{ background:'none', border:'none', cursor:'pointer', color:'#52525b', padding:2, display:'flex' }}><Copy size={11} /></button>
+                              </div>
+                            </div>
+                          ) : dev && (dev.current_iptv_username || dev.username) ? (
+                            <div>
+                              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                <span style={{ fontSize:11, fontWeight:700, color:'#a1a1aa' }}>{dev.current_iptv_username || dev.username}</span>
+                                <span style={{ fontSize:8, background:'rgba(255,255,255,0.05)', color:'#52525b', padding:'1px 3px', borderRadius:3 }}>TV</span>
+                              </div>
+                              {(dev.current_iptv_password || dev.password) && (
+                                <div style={{ fontSize:10, color:'#71717a', marginTop:2, fontFamily:'monospace', fontWeight:700 }}>
+                                  {(dev.current_iptv_password || dev.password) || '—'}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>
+                          )}
+                        </td>
+
+                        {/* COL 3: Servidor / IP / Device (Unificado) */}
+                        <td style={{ padding:'10px 14px' }}>
+                          {acc && <div style={{ fontSize:12, fontWeight:700, color:'#e4e4e7' }}>{acc.server_name || 'Sigma'}</div>}
+                          {acc && <div style={{ fontSize:8.5, color:'#52525b', fontFamily:'monospace' }}>{acc.panel_url ? new URL(acc.panel_url).hostname : ''}</div>}
+                          {dev && <div style={{ fontSize:11, color: acc ? '#52525b' : '#71717a', marginTop: acc ? 3 : 0 }}><span style={{ fontSize:8, color:'#3f3f46', marginRight:4 }}>IP:</span>{dev.ip || '—'}</div>}
+                          {dev && dev.versao_app && <div style={{ fontSize:8, color:'#3f3f46', background:'rgba(255,255,255,0.03)', padding:'1px 4px', borderRadius:3, display:'inline-block', marginTop:2 }}>v{dev.versao_app}</div>}
+                          {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>}
+                        </td>
+
+                        {/* COL 4: Vencimento + Acesso (Unificado) */}
+                        <td style={{ padding:'10px 14px' }}>
+                          <div>
+                            {acc && (
+                              <>
+                                <div style={{ fontSize:12, fontWeight:700, color:'#e4e4e7', display:'flex', alignItems:'center' }}>
+                                  {acc.expire_date || '—'} <DaysLeftBadge dateStr={acc.expire_date} />
+                                </div>
+                                <div style={{ fontSize:8.5, color:'#52525b', marginTop:2 }}>Criado: {formatDate(acc.created_at)}</div>
+                              </>
+                            )}
+                            {dev && (
+                              <div style={{ marginTop: acc ? 4 : 0, paddingTop: acc ? 4 : 0, borderTop: acc ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                                <div style={{ fontSize:10, color:'#71717a', display:'flex', alignItems:'center', gap:4 }}>
+                                  <Wifi size={10} color={isOnline ? '#34d399' : '#52525b'} />
+                                  {dev.ultimo_acesso ? formatDate(dev.ultimo_acesso) : '—'}
+                                </div>
+                                <div style={{ fontSize:7.5, color:'#3f3f46', textTransform:'uppercase' }}>Último Acesso TV</div>
+                              </div>
+                            )}
+                            {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>}
+                          </div>
+                        </td>
+
+                        {/* COL 5: Situação */}
+                        <td style={{ padding:'10px 14px' }}>
+                          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                            {acc && <StatusBadge status={acc.status} isTrial={isTrial} />}
+                            {dev && <Badge online={isOnline} blocked={dev.status === 'bloqueado'} />}
+                            {!acc && dev && <StatusBadge status={dev.status} />}
+                             
+                             {/* Indicadores de Teste Grátis */}
+                             {dev && (dev.test_api_urls || dev.test_blocked === '1') && (
+                               <div style={{ display:'flex', gap:4, marginTop:2 }}>
+                                 {dev.test_blocked === '1' && (
+                                   <div title="Teste Bloqueado" style={{ background:'rgba(239,68,68,0.2)', border:'1px solid rgba(239,68,68,0.3)', borderRadius:4, padding:'2px 4px', display:'flex', alignItems:'center' }}>
+                                     <Ban size={10} color="#f87171" />
+                                   </div>
+                                 )}
+                                 {dev.test_api_urls && (
+                                   <div title={`Teste Ativo: ${dev.test_duration}h`} style={{ background:'rgba(251,191,36,0.2)', border:'1px solid rgba(251,191,36,0.3)', borderRadius:4, padding:'2px 4px', display:'flex', alignItems:'center', gap:3 }}>
+                                     <Zap size={10} color="#fbbf24" />
+                                     <span style={{ fontSize:8, color:'#fbbf24', fontWeight:800 }}>{dev.test_duration}h</span>
+                                   </div>
+                                 )}
+                               </div>
+                             )}
+                          </div>
+                        </td>
+
+                        {/* COL 6: Plano / Device Info (Unificado) */}
+                        <td style={{ padding:'10px 14px' }}>
+                          <div>
+                            {acc && (
+                              <>
+                                <div style={{ fontSize:11, fontWeight:700, color:'#a78bfa' }}>{acc.finance_plan_name || acc.package_name || 'Standard'}</div>
+                                <div style={{ fontSize:9, color:'#71717a', fontWeight:700, textTransform:'uppercase', marginTop:2 }}>
+                                  {acc.max_connections || 1} {(acc.max_connections || 1) === 1 ? 'Tela' : 'Telas'}
+                                </div>
+                                <div style={{ display:'flex', gap:2, marginTop:4 }}>
+                                  <PlanBadge letter="M" color={colors.yellow} title="Copiar M3U" onClick={() => copyToClipboard(acc.m3u_url, 'M3U')} />
+                                  <PlanBadge letter="S" color={colors.green} title="Copiar SIptv" onClick={() => copyToClipboard(acc.m3u_url?.replace('get.php', 'siptv.php'), 'SIptv')} />
+                                  <PlanBadge letter="P" color={colors.blue} title="Abrir Player" onClick={() => {
+                                    const pUrl = acc.player_url || (acc.panel_url ? `${acc.panel_url.replace('/panel/', '/player/')}` : '');
+                                    if (pUrl) window.open(pUrl, '_blank'); else showToast('Player indisponível', 'error');
+                                  }} />
+                                </div>
+                              </>
+                            )}
+                            {dev && (
+                              <div style={{ marginTop: acc ? 5 : 0, paddingTop: acc ? 4 : 0, borderTop: acc ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                                <div style={{ fontSize:10, color:'#e4e4e7', fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
+                                  <Monitor size={10} color="#FC5F16" />
+                                  {dev.modelo || 'Android Device'}
+                                </div>
+                                {dev.versao_app && <div style={{ fontSize:8, color:'#52525b', marginTop:1 }}>App v{dev.versao_app}</div>}
+                              </div>
+                            )}
+                            {!acc && !dev && <span style={{ fontSize:11, color:'#3f3f46' }}>—</span>}
+                          </div>
+                        </td>
+
+                        {/* COL 7: Ações */}
+                        <td style={{ padding:'10px 14px', position:'relative' }}>
+                          <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'center', gap:4, flexWrap:'wrap' }}>
+                            {relayProcessing[acc?.id] ? (
+                              <div style={{ color:'#fbbf24', fontSize:10, fontWeight:900 }}>PROCESSANDO...</div>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => openManageModal(item)}
+                                  style={{ padding:'6px 12px', background: colors.action, border:'none', borderRadius:6, color:'#fff', fontSize:11, fontWeight:800, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
+                                  <Settings size={14} /> Gerenciar
+                                </button>
+                                {acc && !isTrial && (
+                                  <SigmaActionButton color={colors.yellow} icon={CalendarCheck} title="Renovar" onClick={() => sendRemoteAction(acc.id, 'renew_user', acc.remote_id, acc.panel_url)} />
+                                )}
+                                {acc && isTrial && (
+                                  <SigmaActionButton color={colors.green} icon={UserCheck} title="Converter em Assinante" onClick={() => handleConvertTrial(acc)} />
+                                )}
+                                {!acc && dev && (
+                                  <SigmaActionButton color={colors.red} icon={Power} title="Bloquear" onClick={() => blockDevice(dev.id)} />
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+        {totalPages > 1 && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 20px', borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+            <button onClick={() => setCurrentPage(p => Math.max(1,p-1))} disabled={currentPage===1}
+              style={{ ...btnGhost, opacity: currentPage===1 ? 0.4 : 1 }}>
+              <ChevronLeft size={15}/> Anterior
+            </button>
+            <div style={{ display:'flex', gap:6 }}>
+              {[...Array(totalPages)].map((_,i) => {
+                const p = i+1
+                const visible = p===1 || p===totalPages || (p>=currentPage-2 && p<=currentPage+2)
+                if (!visible) return (p===currentPage-3||p===currentPage+3) ? <span key={p} style={{ color:'#52525b', alignSelf:'center', fontSize:12 }}>...</span> : null
+                return (
+                  <button key={p} onClick={() => setCurrentPage(p)}
+                    style={{ width:32, height:32, borderRadius:8, border:'1px solid', cursor:'pointer', fontSize:12, fontWeight:700,
+                      borderColor: currentPage===p ? '#FC5F16' : 'rgba(255,255,255,0.08)',
+                      background: currentPage===p ? 'rgba(252, 95, 22,0.15)' : 'transparent',
+                      color: currentPage===p ? '#FC5F16' : '#71717a',
+                    }}>
+                    {p}
+                  </button>
+                )
+              })}
+            </div>
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages,p+1))} disabled={currentPage===totalPages}
+              style={{ ...btnGhost, opacity: currentPage===totalPages ? 0.4 : 1 }}>
+              Próxima <ChevronRight size={15}/>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ════ MODAL UNIFICADO (CENTRAL DO CLIENTE/DISPOSITIVO) ════ */}
+      {showManageModal && (
+        <ModalBase onClose={() => setShowManageModal(false)} maxWidth={700}>
+          <ModalHeader icon={Settings} title="Central de Gerenciamento" onClose={() => setShowManageModal(false)} />
+          
+          <div style={{ display:'flex', gap:8, marginBottom:16, overflowX:'auto', paddingBottom:4 }}>
+             {(user?.tipo === 'admin' || user?.perm_device_resumo !== false) && (
+               <TabPill label="🏠 Resumo" active={manageTab==='resumo'} onClick={() => setManageTab('resumo')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_assinatura !== false) && (
+               <TabPill label="📋 Assinatura" active={manageTab==='dados'} onClick={() => setManageTab('dados')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_tv !== false) && (
+               <TabPill label="📺 Dispositivo" active={manageTab==='device'} onClick={() => setManageTab('device')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_apps !== false) && (
+               <TabPill label="📦 Apps" active={manageTab==='apps'} onClick={() => setManageTab('apps')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_credenciais !== false) && (
+               <TabPill label="⚡ Credenciais" active={manageTab==='credenciais'} onClick={() => setManageTab('credenciais')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_futebol !== false) && (
+               <TabPill label="⚽ Futebol" active={manageTab==='futebol'} onClick={() => setManageTab('futebol')} />
+             )}
+             {(user?.tipo === 'admin' || user?.perm_device_acoes !== false) && (
+               <TabPill label="🚀 Ações" active={manageTab==='acoes'} onClick={() => setManageTab('acoes')} />
+             )}
+          </div>
+          
+          <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: 4 }}>
+             {manageTab === 'resumo' && (
+               <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                 <div style={{ background:'rgba(252, 95, 22,0.05)', border:'1px solid rgba(252, 95, 22,0.15)', borderRadius:12, padding:16, display:'flex', alignItems:'center', gap:16 }}>
+                   <div style={{ width:50, height:50, borderRadius:12, background:'rgba(252, 95, 22,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                     <Monitor size={24} color="#FC5F16" />
+                   </div>
+                   <div style={{ flex:1 }}>
+                     <h3 style={{ margin:0, fontSize:18, fontWeight:800, color:'#fff' }}>{selectedDevice?.modelo || 'Dispositivo Desconhecido'}</h3>
+                     <p style={{ margin:0, fontSize:12, color:'#71717a' }}>{selectedAccount ? `Conta: ${selectedAccount.username}` : 'Sem conta IPTV vinculada'}</p>
+                   </div>
+                   {selectedAccount && <StatusBadge status={selectedAccount.status} />}
+                 </div>
+
+                 <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                   <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:12, padding:16, border:'1px solid rgba(255,255,255,0.06)' }}>
+                     <h4 style={{ margin:'0 0 12px 0', fontSize:11, color:'#FC5F16', textTransform:'uppercase', letterSpacing:'0.1em' }}>📦 Plano & Assinatura</h4>
+                     <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Plano:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.finance_plan_name || selectedAccount?.package_name || '—'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Vencimento:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.expire_date || '—'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Conexões:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedAccount?.max_connections || 1} Tela(s)</span></div>
+                     </div>
+                   </div>
+
+                   <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:12, padding:16, border:'1px solid rgba(255,255,255,0.06)' }}>
+                     <h4 style={{ margin:'0 0 12px 0', fontSize:11, color:'#60a5fa', textTransform:'uppercase', letterSpacing:'0.1em' }}>📺 Dispositivo</h4>
+                     <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>IP Rede:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedDevice?.ip || '—'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>MAC Address:</span><span style={{color:'#fff',fontSize:12,fontWeight:700}}>{selectedDevice?.mac_address || '—'}</span></div>
+                       <div style={{ display:'flex', justifyContent:'space-between' }}><span style={{color:'#71717a',fontSize:12}}>Status TV:</span><span style={{color: selectedDevice?.connection_status==='online' ? '#34d399' : '#ef4444',fontSize:12,fontWeight:700}}>{selectedDevice?.connection_status === 'online' ? 'ON' : 'OFF'}</span></div>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div style={{ display:'flex', gap:10 }}>
+                    <button onClick={() => setManageTab('dados')} style={{ ...btnGhost, flex:1, justifyContent:'center' }}><Edit2 size={14}/> Editar Assinatura</button>
+                    <button onClick={() => setManageTab('device')} style={{ ...btnGhost, flex:1, justifyContent:'center' }}><Settings size={14}/> Configurações TV</button>
+                 </div>
+               </div>
+             )}
+              {manageTab === 'dados' && (
+                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  <p style={{ fontSize:12, color:'#a1a1aa' }}>
+                    {selectedAccount ? `Editando Assinatura ${selectedAccount.username}` : `Gerenciando Acesso TV: ${selectedDevice?.current_iptv_username || selectedDevice?.username || 'Novo'}`}
+                  </p>
+
+                  <FormField label="Nome Completo"><input style={inputStyle} value={editForm.nome} onChange={e => setEditForm({...editForm, nome: e.target.value})} placeholder="Nome do cliente" /></FormField>
+                  
+                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10 }}>
+                    <FormField label="Email"><input style={inputStyle} type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} placeholder="email@exemplo.com" /></FormField>
+                    <FormField label="WhatsApp"><input style={inputStyle} value={editForm.telefone} onChange={e => setEditForm({...editForm, telefone: e.target.value})} placeholder="5511999999999" /></FormField>
+                  </div>
+                  
+                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10 }}>
+                    <FormField label="Usuário"><input style={inputStyle} value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} placeholder="usuario123" /></FormField>
+                    <FormField label={<>Senha <span style={{color:'#52525b',fontSize:10}}>(branco = não alterar)</span></>}>
+                      <input 
+                        style={inputStyle} 
+                        type="text"
+                        value={editForm.password} 
+                        onChange={e => setEditForm({...editForm, password: e.target.value})} 
+                        placeholder="Digite a senha" 
+                      />
+                    </FormField>
+                  </div>
+
+                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10 }}>
+                    <FormField label="Plano Comercial (Financeiro)">
+                      <select style={selectStyle} value={editForm.finance_plan_id} onChange={(e) => setEditForm({...editForm, finance_plan_id: e.target.value})}>
+                        <option value="" style={{background:'#111',color:'#fff'}}>Sem Plano (Avulso)</option>
+                        {financePlans.map(p => <option key={p.id} value={p.id} style={{background:'#111',color:'#fff'}}>{p.name} (R$ {p.price})</option>)}
+                      </select>
+                    </FormField>
+                    <FormField label="Vencimento (DD/MM/YYYY)"><input style={inputStyle} value={editForm.expire_date} onChange={e => setEditForm({...editForm, expire_date: e.target.value})} placeholder="31/12/2025" /></FormField>
+                  </div>
+
+                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10 }}>
+                    <FormField label="Servidor"><select style={selectStyle} value={editForm.servidor_id} onChange={e => setEditForm({...editForm, servidor_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar...</option>{iptvServers.map(s => <option key={s.id} value={s.id} style={{background:'#111',color:'#fff'}}>{s.name}</option>)}</select></FormField>
+                    <FormField label="MAC (Opcional)"><input style={inputStyle} value={editForm.mac} onChange={e => setEditForm({...editForm, mac: e.target.value})} placeholder="00:1A:2B:3C:4D" maxLength={17} /></FormField>
+                  </div>
+
+                  <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:10 }}>
+                    <FormField label="Pacote / Plano Sigma"><select style={selectStyle} value={editForm.package_name} onChange={e => setEditForm({...editForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar...</option>{defaultPlans.map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
+                    <FormField label="Nº Telas"><select style={selectStyle} value={editForm.max_connections} onChange={e => setEditForm({...editForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
+                  </div>
+                  
+                  <FormField label="Notificação WhatsApp"><select style={selectStyle} value={editForm.notificacao_whatsapp} onChange={e => setEditForm({...editForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar Vencimento</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
+                  
+                  <FormField label="Notas Internas"><textarea style={{...inputStyle,minHeight:60,resize:'vertical'}} value={editForm.notas} onChange={e => setEditForm({...editForm, notas: e.target.value})} placeholder="Observações sobre este cliente..." /></FormField>
+                  
+                  <div style={{ display:'flex', gap:8, marginTop:14 }}>
+                    <button 
+                      onClick={() => { 
+                        if (selectedAccount) {
+                          sendRemoteAction(selectedAccount.id, 'edit_user', selectedAccount.remote_id, selectedAccount.panel_url, editForm); 
+                        } else {
+                          sendRemoteAction(null, 'create_user', null, null, { ...editForm, selected_servers: [iptvServers.find(s=>s.id==editForm.servidor_id)?.name].filter(Boolean) });
+                        }
+                        setShowManageModal(false); 
+                      }} 
+                      style={{ ...btnPrimary, flex:1, justifyContent:'center' }}>
+                      <Save size={15}/> {selectedAccount ? 'Salvar Alterações' : 'Salvar e Vincular ao Sigma'}
+                    </button>
+                  </div>
+                </div>
+              )}
+             
+              {manageTab === 'device' && selectedDevice && (
+                <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                  <DeviceInfo device={selectedDevice} />
+                  
+                  <div style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:16 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+                       <Zap size={18} color="#FFA500" />
+                       <h3 style={{ margin:0, fontSize:14, color:'#fff', fontWeight:700 }}>Configuração de Teste Grátis</h3>
+                    </div>
+                    
+                    <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                      <FormField label="Links de Teste Grátis (Múltiplos / Um por linha)">
+                        <textarea 
+                          style={{ ...inputStyle, minHeight:100, resize:'vertical', fontFamily:'monospace', fontSize:11, background:'rgba(0,0,0,0.3)' }} 
+                          value={selectedDevice.test_api_urls || ''} 
+                          onChange={e => setSelectedDevice({...selectedDevice, test_api_urls: e.target.value})}
+                          placeholder="http://servidor1.com:8080&#10;http://servidor2.com:8080"
+                        />
+                      </FormField>
+                      
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                        <FormField label="Tempo de Teste (Horas)">
+                          <input 
+                            type="number" 
+                            style={inputStyle} 
+                            value={selectedDevice.test_duration || 2} 
+                            onChange={e => setSelectedDevice({...selectedDevice, test_duration: e.target.value})}
+                          />
+                        </FormField>
+                        <FormField label="Bloquear Testes">
+                          <select 
+                            style={selectStyle} 
+                            value={selectedDevice.test_blocked || '0'} 
+                            onChange={e => setSelectedDevice({...selectedDevice, test_blocked: e.target.value})}
+                          >
+                            <option value="0" style={{background:'#111',color:'#fff'}}>Liberado</option>
+                            <option value="1" style={{background:'#111',color:'#fff'}}>Bloqueado</option>
+                          </select>
+                        </FormField>
+                      </div>
+                      
+                      <div style={{ marginTop:10 }}>
+                        <button 
+                          onClick={() => {
+                            api.post(`/api/devices/${selectedDevice.id}/test-config`, {
+                              test_api_urls: selectedDevice.test_api_urls,
+                              test_duration: selectedDevice.test_duration,
+                              test_blocked: selectedDevice.test_blocked
+                            }).then(() => {
+                              setDevices(prev => prev.map(d => d.id === selectedDevice.id ? { ...d, ...selectedDevice } : d));
+                              showToast('Configuração de teste atualizada!');
+                            }).catch(err => {
+                              showToast('Erro ao atualizar: ' + (err.response?.data?.error || err.message), 'error');
+                            });
+                          }} 
+                          style={{ ...btnPrimary, width:'100%', justifyContent:'center' }}
+                        >
+                          <Save size={15}/> Atualizar Configuração de Teste
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background:'rgba(5,5,5,0.3)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:10, padding:14 }}>
+                    <p style={{ fontSize:11, color:'#71717a', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}><Server size={14} color="#FC5F16" /> Configuração IPTV Fixa</p>
+                    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                      <FormField label="URL do Servidor">
+                        <input style={inputStyle} value={iptvConfig.xtream_url} onChange={e => setIptvConfig({...iptvConfig,xtream_url:e.target.value})} placeholder="http://servidor.com:8080" />
+                      </FormField>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                        <FormField label="Usuário"><input style={inputStyle} value={iptvConfig.xtream_username} onChange={e => setIptvConfig({...iptvConfig,xtream_username:e.target.value})} placeholder="usuario" /></FormField>
+                        <FormField label="Senha"><input style={inputStyle} value={iptvConfig.xtream_password} onChange={e => setIptvConfig({...iptvConfig,xtream_password:e.target.value})} placeholder="senha" /></FormField>
+                      </div>
+                      <div style={{ display:'flex', gap:8, marginTop:4 }}>
+                        <button onClick={saveIptvConfig} disabled={saving} style={{ ...btnPrimary, flex:1, justifyContent:'center', opacity:saving?0.7:1 }}><Save size={15}/> {saving ? 'Salvando...' : 'Salvar IPTV Fixo'}</button>
+                        {iptvConfig.xtream_url && (<button onClick={deleteIptvConfig} style={{ ...btnGhost, color:'#f87171', borderColor:'rgba(239,68,68,0.25)' }}><Trash2 size={15}/></button>)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+             
+             {manageTab === 'apps' && selectedDevice && (
+               <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                 <div style={{ display:'flex', gap:8, marginBottom:10 }}>
+                   <button onClick={() => loadApps(selectedDevice.id)} style={btnGhost}><RefreshCw size={14}/> Listar Apps da TV</button>
+                   <button onClick={() => setShowSendApkModal(true)} style={btnPrimary}><Download size={14}/> Instalar APK na TV</button>
+                 </div>
+                 
+                 {appsLoading ? (
+                   <div style={{ textAlign:'center', padding:32, color:'#52525b' }}>Consultando a TV...</div>
+                 ) : apps.length===0 ? (
+                   <div style={{ textAlign:'center', padding:32, color:'#52525b' }}>Nenhum app externo instalado encontrado.</div>
+                 ) : (
+                   <div>
+                     {apps.filter(a=>!a.is_system).map(app => (
+                       <div key={app.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:10, marginBottom:6 }}>
+                         <div>
+                           <p style={{ fontSize:13, fontWeight:600, color:'#e4e4e7', marginBottom:2 }}>{app.app_name}</p>
+                           <p style={{ fontFamily:'monospace', fontSize:10, color:'#52525b' }}>{app.package_name}</p>
+                         </div>
+                         <button onClick={() => uninstallApp(app.package_name)} style={{ background:'rgba(239,68,68,0.12)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:8, width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#f87171' }}><Trash2 size={14}/></button>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             )}
+             
+             {manageTab === 'credenciais' && selectedAccount && (
+               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                 <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
+                   <FormField label="Link M3U" style={{flex:1}}><input style={inputStyle} value={editForm.m3u_url} onChange={e => setEditForm({...editForm, m3u_url: e.target.value})} placeholder="http://dns:port/get.php?username=X&password=Y&..." /></FormField>
+                   <button onClick={() => extractM3U(editForm.m3u_url, 'edit')} style={{...btnPrimary, height:40, whiteSpace:'nowrap'}}><AppWindow size={14}/> Extrair</button>
+                 </div>
+                 <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                   <FormField label="Username M3U"><input style={inputStyle} value={editForm.m3u_username} onChange={e => setEditForm({...editForm, m3u_username: e.target.value})} /></FormField>
+                   <FormField label="Senha M3U"><input style={inputStyle} value={editForm.m3u_password} onChange={e => setEditForm({...editForm, m3u_password: e.target.value})} /></FormField>
+                 </div>
+                 <FormField label="DNS Interno"><input style={inputStyle} value={editForm.dns} onChange={e => setEditForm({...editForm, dns: e.target.value})} placeholder="http://dns.servidor.com:8080" /></FormField>
+                 <button onClick={() => { sendRemoteAction(selectedAccount.id, 'edit_user', selectedAccount.remote_id, selectedAccount.panel_url, editForm); }} style={{ ...btnPrimary, justifyContent:'center' }}><Save size={15}/> Salvar Credenciais M3U</button>
+               </div>
+             )}
+             
+             {manageTab === 'futebol' && selectedAccount && (
+               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                 <FormField label="Notificar Gols e Jogos"><select style={selectStyle} value={editForm.events_clube} onChange={e => setEditForm({...editForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar na TV</option></select></FormField>
+                 <FormField label="Time do Coração"><select style={selectStyle} value={editForm.clube_id} onChange={e => setEditForm({...editForm, clube_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Nenhum Time Selecionado</option>{footballTeams.map(t => <option key={t} value={t} style={{background:'#111',color:'#fff'}}>{t}</option>)}</select></FormField>
+                 <button onClick={() => { sendRemoteAction(selectedAccount.id, 'edit_user', selectedAccount.remote_id, selectedAccount.panel_url, editForm); }} style={{ ...btnPrimary, justifyContent:'center' }}><Save size={15}/> Salvar Preferências de Futebol</button>
+               </div>
+             )}
+
+             {manageTab === 'acoes' && selectedAccount && (
+               <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+                 <div style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:16 }}>
+                   <p style={{ fontSize:13, fontWeight:700, color:'#fff', marginBottom:4, display:'flex', alignItems:'center', gap:6 }}><Users size={16} color="#3b82f6" /> Modificar Telas Simultâneas</p>
+                   <p style={{ fontSize:11, color:'#71717a', marginBottom:12 }}>O limite de {selectedAccount.max_connections} será alterado em tempo real no servidor iptv.</p>
+                   <div style={{ display:'flex', gap:10, alignItems:'flex-end' }}>
+                     <FormField label="Nova Quantidade"><input style={inputStyle} type="number" min="1" max="10" value={newConnections} onChange={e => setNewConnections(e.target.value)} /></FormField>
+                     <button onClick={() => { sendRemoteAction(selectedAccount.id, 'change_connections', selectedAccount.remote_id, selectedAccount.panel_url, { connections: newConnections }); setShowManageModal(false); }} style={{ ...btnPrimary, height:35 }}><CheckCircle size={15}/> Alterar Telas</button>
+                   </div>
+                 </div>
+
+                 <div style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:16 }}>
+                   <p style={{ fontSize:13, fontWeight:700, color:'#fff', marginBottom:4, display:'flex', alignItems:'center', gap:6 }}><Repeat size={16} color="#8b5cf6" /> Migração de Servidor</p>
+                   <p style={{ fontSize:11, color:'#71717a', marginBottom:12 }}>Mover este cliente inteiro de um painel Sigma para outro.</p>
+                   <div style={{ display:'flex', gap:10, alignItems:'flex-end' }}>
+                     <FormField label="Novo Painel de Destino" style={{flex:1}}><input style={inputStyle} value={targetServer} onChange={e => setTargetServer(e.target.value)} placeholder="Ex: NOVELAS 4K" /></FormField>
+                     <button onClick={() => { sendRemoteAction(selectedAccount.id, 'migrate_server', selectedAccount.remote_id, selectedAccount.panel_url, { server_name: targetServer }); setShowManageModal(false); }} style={{ ...btnPrimary, height:35, background:'#8b5cf6', borderColor:'#7c3aed', color:'#fff' }}><CheckCircle size={15}/> Iniciar Migração</button>
+                   </div>
+                 </div>
+
+                 <div style={{ background:'rgba(5,5,5,0.5)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:16 }}>
+                   <p style={{ fontSize:13, fontWeight:700, color:'#fff', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}><Power size={16} color="#f87171" /> Ações Rápidas de Rede</p>
+                   <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
+                     <button style={{ ...btnGhost, color:'#34d399', borderColor:'rgba(52,211,153,0.3)', flex:'1 1 auto' }} onClick={() => { sendRemoteAction(selectedAccount.id, 'renew_trust', selectedAccount.remote_id, selectedAccount.panel_url); setShowManageModal(false); }}><ShieldCheck size={14}/> Renovar Confiança Sigma</button>
+                     <button style={{ ...btnGhost, color:'#f87171', borderColor:'rgba(239,68,68,0.3)', flex:'1 1 auto' }} onClick={() => { sendRemoteAction(selectedAccount.id, selectedAccount.status === 'active' ? 'disable_user' : 'enable_user', selectedAccount.remote_id, selectedAccount.panel_url); setShowManageModal(false); }}><Power size={14}/> {selectedAccount.status === 'active' ? 'Bloquear Acesso' : 'Desbloquear Acesso'}</button>
+                     <button style={{ ...btnGhost, color:'#fbbf24', borderColor:'rgba(251,191,36,0.3)', flex:'1 1 auto' }} onClick={() => generateReminder(selectedAccount)}><MessageSquare size={14}/> WhatsApp Cobrança</button>
+                   </div>
+                 </div>
+
+               </div>
+             )}
+          </div>
+        </ModalBase>
+      )}
+
+      {/* MODAL ENVIAR APK */}
+      {showSendApkModal && (
+        <ModalBase onClose={() => setShowSendApkModal(false)}>
+          <ModalHeader icon={Download} title="Enviar APK" onClose={() => setShowSendApkModal(false)} />
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <FormField label="Nome do App">
+              <input style={inputStyle} value={newAppName} onChange={e=>setNewAppName(e.target.value)} placeholder="Ex: YouTube" />
+            </FormField>
+            <FormField label="URL do APK">
+              <input style={inputStyle} value={newAppUrl} onChange={e=>setNewAppUrl(e.target.value)} placeholder="https://exemplo.com/app.apk" />
+            </FormField>
+            <div style={{ display:'flex', gap:8, marginTop:4 }}>
+              <button onClick={sendApk} disabled={saving} style={{ ...btnPrimary, flex:1, justifyContent:'center', opacity:saving?0.7:1 }}>
+                <Download size={15}/> {saving ? 'Enviando...' : 'Enviar'}
+              </button>
+              <button onClick={() => setShowSendApkModal(false)} style={{ ...btnGhost, flex:1, justifyContent:'center' }}>Cancelar</button>
+            </div>
+          </div>
+        </ModalBase>
+      )}
+
+      {/* MODAL NOVO CLIENTE */}
+      {showNewClientModal && (
+        <ModalBase onClose={() => setShowNewClientModal(false)} maxWidth={500}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <ModalHeader icon={UserCheck} title="Novo Cliente" onClose={() => setShowNewClientModal(false)} />
+              <button 
+                onClick={handleGenerateTest}
+                style={{ 
+                  background:'rgba(52,211,153,0.1)', border:'1px solid rgba(52,211,153,0.3)', 
+                  borderRadius:10, padding:'6px 12px', color:'#34d399', fontSize:11, fontWeight:800, 
+                  cursor:'pointer', display:'flex', alignItems:'center', gap:6, transition:'all 0.2s'
+                }}
+              >
+                <TestTube size={14} /> GERAR TESTE RÁPIDO
+              </button>
+            </div>
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            <TabPill label="📋 Dados" active={newClientTab==='dados'} onClick={() => setNewClientTab('dados')} />
+            <TabPill label="⚡ Extras" active={newClientTab==='extras'} onClick={() => setNewClientTab('extras')} />
+            <TabPill label="⚽ Futebol" active={newClientTab==='futebol'} onClick={() => setNewClientTab('futebol')} />
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:12, maxHeight:440, overflowY:'auto', paddingRight:4 }}>
+            {newClientTab === 'dados' && (<>
+              <FormField label="Nome Completo *"><input style={inputStyle} value={newClientForm.nome} onChange={e => setNewClientForm({...newClientForm, nome: e.target.value})} placeholder="Nome do cliente" /></FormField>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                <FormField label="Email"><input style={inputStyle} type="email" value={newClientForm.email} onChange={e => setNewClientForm({...newClientForm, email: e.target.value})} placeholder="email@exemplo.com" /></FormField>
+                <FormField label="WhatsApp *"><input style={inputStyle} value={newClientForm.telefone} onChange={e => setNewClientForm({...newClientForm, telefone: e.target.value})} placeholder="5511999999999" /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                <FormField label="Usuário"><input style={inputStyle} value={newClientForm.username} onChange={e => setNewClientForm({...newClientForm, username: e.target.value})} placeholder="usuario123" /></FormField>
+                <FormField label="Senha"><input style={inputStyle} value={newClientForm.password} onChange={e => setNewClientForm({...newClientForm, password: e.target.value})} placeholder="senha123" /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                <FormField label="Plano Comercial (Financeiro)"><select style={selectStyle} onChange={(e) => {
+                  const planId = e.target.value;
+                  if (!planId) {
+                    setNewClientForm(f => ({...f, finance_plan_id: null, finance_plan_price: null}));
+                    return;
+                  }
+                  const plan = financePlans.find(p => p.id == planId);
+                  if (plan) {
+                    const now = new Date();
+                    now.setDate(now.getDate() + plan.duration_days);
+                    const isoDate = now.toISOString().split('T')[0];
+                    setNewClientForm(f => ({
+                      ...f,
+                      finance_plan_id: plan.id,
+                      finance_plan_price: plan.price,
+                      vencimento: isoDate,
+                      max_connections: plan.max_connections,
+                      package_name: plan.sigma_package || f.package_name
+                    }));
+                  }
+                }}>
+                  <option value="" style={{background:'#111',color:'#fff'}}>Sem Plano (Avulso)</option>
+                  {financePlans.map(p => <option key={p.id} value={p.id} style={{background:'#111',color:'#fff'}}>{p.name} (R$ {p.price} - {p.duration_days} dias)</option>)}
+                </select></FormField>
+                <FormField label="Data Vencimento *"><input style={inputStyle} type="date" value={newClientForm.vencimento} onChange={e => setNewClientForm({...newClientForm, vencimento: e.target.value})} /></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:12 }}>
+                <FormField label="Selecionar Servidores *">
+                  <div style={{ display:'flex', gap:10, marginBottom:6 }}>
+                    <button onClick={() => setNewClientForm(f => ({...f, selected_servers: iptvServers.map(s => s.name)}))} style={{ background:'transparent', border:'none', color:'#FC5F16', fontSize:10, fontWeight:800, cursor:'pointer' }}>MARCAR TODOS</button>
+                    <button onClick={() => setNewClientForm(f => ({...f, selected_servers: []}))} style={{ background:'transparent', border:'none', color:'#71717a', fontSize:10, fontWeight:800, cursor:'pointer' }}>DESMARCAR TODOS</button>
+                  </div>
+                  <div style={{ 
+                    background:'rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.08)', 
+                    borderRadius:12, padding:12, maxHeight:140, overflowY:'auto', display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:8 
+                  }}>
+                    {iptvServers.map(s => {
+                      const isSelected = newClientForm.selected_servers.includes(s.name);
+                      return (
+                        <label key={s.id} style={{ 
+                          display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'6px 10px', borderRadius:8,
+                          background: isSelected ? 'rgba(252, 95, 22,0.08)' : 'transparent',
+                          border: isSelected ? '1px solid rgba(252, 95, 22,0.3)' : '1px solid transparent',
+                          transition: 'all 0.2s'
+                        }}>
+                          <input 
+                            type="checkbox" 
+                            style={{ accentColor:'#FC5F16', width:16, height:16 }}
+                            checked={isSelected}
+                            onChange={e => {
+                              const current = newClientForm.selected_servers;
+                              const next = e.target.checked ? [...current, s.name] : current.filter(name => name !== s.name);
+                              setNewClientForm({ ...newClientForm, selected_servers: next });
+                            }}
+                          />
+                          <div style={{ display:'flex', flexDirection:'column' }}>
+                            <span style={{ fontSize:11, fontWeight:800, color: isSelected ? '#FC5F16' : '#e4e4e7' }}>{s.name}</span>
+                            <span style={{ fontSize:8.5, color: s.status === 'ativo' ? '#34d399' : '#f87171' }}>{s.status === 'ativo' ? 'Online' : 'Offline'}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                <FormField label="MAC (Opcional)"><input style={inputStyle} value={newClientForm.mac} onChange={e => setNewClientForm({...newClientForm, mac: e.target.value})} placeholder="ID Externo" maxLength={17} /></FormField>
+                <FormField label="Notificação WhatsApp"><select style={selectStyle} value={newClientForm.notificacao_whatsapp} onChange={e => setNewClientForm({...newClientForm, notificacao_whatsapp: e.target.value})}><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option><option value="0" style={{background:'#111',color:'#fff'}}>Não notificar</option></select></FormField>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                <FormField label="Pacote no Painel Sigma *"><select style={selectStyle} value={newClientForm.package_name} onChange={e => setNewClientForm({...newClientForm, package_name: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecionar Pacote</option>{[...new Set([...dynamicPlans, ...defaultPlans, ...gestorLitePlans])].map(p => <option key={p} value={p} style={{background:'#111',color:'#fff'}}>{p}</option>)}</select></FormField>
+                <FormField label="Nº Telas"><select style={selectStyle} value={newClientForm.max_connections} onChange={e => setNewClientForm({...newClientForm, max_connections: Number(e.target.value)})}>{[1,2,3,4,5].map(n => <option key={n} value={n} style={{background:'#111',color:'#fff'}}>{n} Tela{n>1?'s':''}</option>)}</select></FormField>
+              </div>
+              <FormField label="Notas"><textarea style={{...inputStyle,minHeight:60,resize:'vertical'}} value={newClientForm.notas} onChange={e => setNewClientForm({...newClientForm, notas: e.target.value})} placeholder="Observações sobre o cliente..." /></FormField>
+            </>)}
+            {newClientTab === 'extras' && (<>
+              <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
+                <FormField label="Link M3U (colar para extrair dados)" style={{flex:1}}><input style={inputStyle} value={newClientForm.m3u_url} onChange={e => setNewClientForm({...newClientForm, m3u_url: e.target.value})} placeholder="http://dns:port/get.php?username=X&password=Y&..." /></FormField>
+                <button onClick={() => extractM3U(newClientForm.m3u_url, 'new')} style={{...btnPrimary, height:40, whiteSpace:'nowrap'}}><AppWindow size={14}/> Extrair</button>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12 }}>
+                <FormField label="Username M3U"><input style={inputStyle} value={newClientForm.m3u_username} onChange={e => setNewClientForm({...newClientForm, m3u_username: e.target.value})} placeholder="username" /></FormField>
+                <FormField label="Senha M3U"><input style={inputStyle} value={newClientForm.m3u_password} onChange={e => setNewClientForm({...newClientForm, m3u_password: e.target.value})} placeholder="password" /></FormField>
+              </div>
+              <FormField label="DNS"><input style={inputStyle} value={newClientForm.dns} onChange={e => setNewClientForm({...newClientForm, dns: e.target.value})} placeholder="http://dns.servidor.com:8080" /></FormField>
+            </>)}
+            {newClientTab === 'futebol' && (<>
+              <FormField label="Notificar sobre eventos do time"><select style={selectStyle} value={newClientForm.events_clube || ''} onChange={e => setNewClientForm({...newClientForm, events_clube: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Não notificar</option><option value="1" style={{background:'#111',color:'#fff'}}>Sim — Notificar</option></select></FormField>
+              <FormField label="Selecione o Time"><select style={selectStyle} value={newClientForm.clube_id || ''} onChange={e => setNewClientForm({...newClientForm, clube_id: e.target.value})}><option value="" style={{background:'#111',color:'#fff'}}>Selecione...</option>{footballTeams.map(t => <option key={t} value={t} style={{background:'#111',color:'#fff'}}>{t}</option>)}</select></FormField>
+            </>)}
+
+            <div style={{ marginTop: 20, background: '#050505', border: '1px solid rgba(252, 95, 22,0.3)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 6, minHeight: 120, maxHeight: 180, overflowY: 'auto', fontFamily: 'monospace' }}>
+               <div style={{ color: '#FC5F16', fontSize: 10, fontWeight: 900, marginBottom: 4, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={12}/> MaxxControl Injector Terminal</div>
+               {creationLogs.length === 0 ? (
+                 <div style={{ color: '#52525b', fontSize: 11 }}>Aguardando o envio do comando...</div>
+               ) : (
+                 creationLogs.map((log, i) => (
+                   <div key={i} style={{ color: log.isError ? '#f87171' : '#d4d4d8', fontSize: 11, display: 'flex', gap: 8 }}>
+                     <span style={{ color: '#52525b' }}>[{log.time}]</span>
+                     <span>{log.text}</span>
+                   </div>
+                 ))
+               )}
+            </div>
+
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:14 }}>
+            <button 
+              onClick={() => {
+                sendRemoteAction(null, 'create_user', null, null, newClientForm);
+                setShowNewClientModal(false);
+              }}
+              style={{ ...btnPrimary, flex:1, justifyContent:'center' }}
+            >
+              <Save size={15}/> Criar Acesso Sigma
+            </button>
+            <button onClick={() => setShowNewClientModal(false)} style={{ ...btnGhost, flex:1, justifyContent:'center' }}>Cancelar</button>
+          </div>
+        </ModalBase>
+      )}
+
+      {/* MODAL TEST API */}
+      {showTestApiModal && (
+        <TestApiModal device={selectedDevice} onClose={() => setShowTestApiModal(false)} onSave={() => loadDevices(true)} />
+      )}
+
+      {/* MODAL IMPORT EXCEL */}
+      {showUploadExcelModal && (
+        <UploadExcelModal
+          endpoint="/api/mac/bulk-import"
+          onClose={() => setShowUploadExcelModal(false)}
+          onImportSuccess={() => {
+            loadClients();
+            loadDevices();
+          }}
+          iptvServers={iptvServers}
+          defaultPlans={defaultPlans}
+          dynamicPlans={dynamicPlans}
+        />
+      )}
+
+    </div>
+    </>
+  )
+}
+
+export default Devices

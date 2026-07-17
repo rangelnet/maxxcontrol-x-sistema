@@ -245,22 +245,22 @@ const Dashboard = () => {
   const maxValue = Math.max(...chartData.map(d => d.value))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
 
       {/* ══════ CABEÇALHO ══════ */}
       <div className="mb-2">
-        <h1 className="text-2xl md:text-2xl font-bold text-white mb-1">Painel de Controle</h1>
+        <h1 className="text-base md:text-sm font-bold text-white mb-1">Painel de Controle</h1>
         <p className="text-zinc-400 text-sm md:text-base">Bem-vindo ao MaxxControl X. Selecione uma ferramenta para começar.</p>
       </div>
 
       {/* ══════ AVISO DE SEGURANÇA 2FA ══════ */}
       {user && !user.tfa_enabled && (
-        <div className="relative overflow-hidden bg-gradient-to-r from-orange-500/10 via-brand-500/5 to-transparent border border-brand-500/20 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-md shadow-xl animate-in slide-in-from-top-4 duration-500">
-          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+        <div className="relative overflow-hidden bg-gradient-to-r from-orange-500/10 via-brand-500/5 to-transparent border border-brand-500/20 rounded-md p-5 flex flex-col md:flex-row items-center justify-between gap-2 backdrop-blur-md shadow-xl animate-in slide-in-from-top-2 duration-500">
+          <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
             <Sparkles size={120} className="text-brand-500" />
           </div>
-          <div className="flex items-center gap-4 text-center md:text-left flex-col md:flex-row">
-            <div className="h-12 w-12 rounded-lg bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-500 shrink-0 animate-pulse">
+          <div className="flex items-center gap-2 text-center md:text-left flex-col md:flex-row">
+            <div className="h-8 w-8 rounded-md bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-500 shrink-0 animate-pulse">
               <Sparkles size={22} className="fill-current" />
             </div>
             <div>
@@ -274,7 +274,7 @@ const Dashboard = () => {
           </div>
           <Link
             to="/settings"
-            className="w-full md:w-auto px-6 py-3 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2"
+            className="w-full md:w-auto px-6 py-1.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white rounded-md text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2"
           >
             Configurar Segurança Agora
           </Link>
@@ -282,14 +282,14 @@ const Dashboard = () => {
       )}
 
       {/* ══════ CARDS DE MÉTRICAS ══════ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         {metricCards.map((card, index) => {
           const CardWrapper = card.link ? Link : 'div'
           return (
             <CardWrapper
               key={index}
               to={card.link}
-              className="relative bg-dark-800 rounded-xl p-5 overflow-hidden group hover:scale-[1.02] transition-all duration-300 border border-dark-700 hover:border-dark-600 block"
+              className="relative bg-dark-800 rounded-md p-5 overflow-hidden group hover:scale-[1.02] transition-all duration-300 border border-dark-700 hover:border-dark-600 block"
               style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
             >
               {/* Glow base */}
@@ -298,13 +298,13 @@ const Dashboard = () => {
               <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-60`} />
               {/* Conteúdo */}
               <div className="relative z-10">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 rounded-lg border ${card.iconBg}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`p-2 rounded-md border ${card.iconBg}`}>
                     <card.icon className={card.iconColor} size={22} />
                   </div>
                 </div>
                 <p className="text-zinc-400 text-sm mb-1">{card.title}</p>
-                <p className="text-2xl font-bold text-white">{card.value}</p>
+                <p className="text-sm font-bold text-white">{card.value}</p>
               </div>
             </CardWrapper>
           )
@@ -313,25 +313,25 @@ const Dashboard = () => {
 
       {/* ══════ GRID DE FERRAMENTAS (ESTILO GERADOR PREMIUM) ══════ */}
       <div>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
           <span className="w-1.5 h-5 bg-brand-500 rounded-full inline-block" />
           Ferramentas
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
           {toolCards.map((tool, index) => (
             <Link
               key={index}
               to={tool.path}
-              className={`glass-effect p-5 rounded-xl cursor-pointer group relative overflow-hidden border border-dark-700 ${tool.hoverBorder} transition-all duration-300 hover:shadow-xl ${tool.hoverShadow} hover:-translate-y-1`}
+              className={`glass-effect p-5 rounded-md cursor-pointer group relative overflow-hidden border border-dark-700 ${tool.hoverBorder} transition-all duration-300 hover:shadow-xl ${tool.hoverShadow} hover:-translate-y-1`}
             >
               {/* Ícone de fundo decorativo */}
-              <div className="absolute top-0 right-0 p-4 opacity-[0.04] group-hover:opacity-[0.08] transition transform group-hover:scale-110 duration-500">
+              <div className="absolute top-0 right-0 p-2 opacity-[0.04] group-hover:opacity-[0.08] transition transform group-hover:scale-110 duration-500">
                 <tool.icon size={80} />
               </div>
 
               {/* Header do card */}
-              <div className="flex justify-between items-start mb-3">
-                <div className={`h-11 w-11 rounded-lg border flex items-center justify-center text-lg ${tool.iconBg} group-hover:scale-110 transition-transform duration-300`}>
+              <div className="flex justify-between items-start mb-2">
+                <div className={`h-8 w-8 rounded-md border flex items-center justify-center text-base ${tool.iconBg} group-hover:scale-110 transition-transform duration-300`}>
                   <tool.icon size={20} className={tool.iconColor} />
                 </div>
                 {tool.badge && (
@@ -341,8 +341,8 @@ const Dashboard = () => {
                 )}
               </div>
 
-              <h3 className="text-base font-bold mb-1 text-zinc-100">{tool.title}</h3>
-              <p className="text-xs text-zinc-500 mb-4 leading-relaxed">{tool.description}</p>
+              <h3 className="text-sm font-bold mb-1 text-zinc-100">{tool.title}</h3>
+              <p className="text-xs text-zinc-500 mb-2 leading-relaxed">{tool.description}</p>
 
               <span className={`${tool.textColor} text-xs font-semibold flex items-center group-hover:translate-x-1 transition-transform duration-200`}>
                 {tool.cta}
@@ -353,18 +353,18 @@ const Dashboard = () => {
       </div>
 
       {/* ══════ GRÁFICO DE VENDAS ══════ */}
-      <div className="bg-dark-800 rounded-xl p-5 md:p-6 relative overflow-hidden border border-dark-700" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+      <div className="bg-dark-800 rounded-md p-2.5 md:p-2 relative overflow-hidden border border-dark-700" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
         <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 to-transparent" />
 
         <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2 sm:gap-0">
             <div>
-              <h2 className="text-xl font-bold text-white">Evolução das Vendas</h2>
+              <h2 className="text-sm font-bold text-white">Evolução das Vendas</h2>
               <p className="text-zinc-500 text-xs mt-1">Últimos 7 meses</p>
             </div>
             <Link
               to="/resale"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition-all duration-300 font-semibold text-sm shadow-lg shadow-brand-500/20 hover:scale-105"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-md transition-all duration-300 font-semibold text-sm shadow-lg shadow-brand-500/20 hover:scale-105"
             >
               <UserPlus size={16} />
               Criar Usuário
@@ -377,7 +377,7 @@ const Dashboard = () => {
             <div className="absolute inset-0 flex flex-col justify-between">
               {[500, 400, 300, 200, 100, 0].map((value) => (
                 <div key={value} className="flex items-center">
-                  <span className="text-zinc-600 text-xs w-10 font-mono">{value}</span>
+                  <span className="text-zinc-600 text-xs w-9 font-mono">{value}</span>
                   <div className="flex-1 h-px bg-dark-700/60" />
                 </div>
               ))}
@@ -429,28 +429,28 @@ const Dashboard = () => {
       {/* 🔒 MODAL DE SEGURANÇA MANDATÓRIO — NOTIFICAÇÃO DO ADMIN */}
       {/* ═══════════════════════════════════════════════════════ */}
       {securityOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-zinc-950 border-2 border-red-600 w-full max-w-lg rounded-xl shadow-[0_0_60px_rgba(220,38,38,0.4)] overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
+        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/95 backdrop-blur-md flex items-center justify-center p-2 animate-in fade-in duration-300">
+          <div className="bg-zinc-950 border-2 border-red-600 w-full max-w-lg rounded-md shadow-[0_0_60px_rgba(220,38,38,0.4)] overflow-hidden relative flex flex-col animate-in zoom-in-95 duration-500">
             {/* Faixa Vermelha Piscante no Topo */}
             <div className="h-2 w-full bg-red-600 animate-pulse" />
 
-            <div className="p-5 md:p-6 text-center">
+            <div className="p-2 md:p-2 text-center">
               {/* Ícone Escudo */}
-              <div className="mb-5 inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/10 border border-red-600/50 mx-auto">
-                <ShieldAlert className="h-10 w-10 text-red-500 animate-pulse" />
+              <div className="mb-2 inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-600/10 border border-red-600/50 mx-auto">
+                <ShieldAlert className="h-8 w-8 text-red-500 animate-pulse" />
               </div>
 
-              <h2 className="text-xl md:text-2xl font-black text-white mb-1 uppercase tracking-tight">
+              <h2 className="text-base md:text-sm font-black text-white mb-1 uppercase tracking-tight">
                 Notificação do <span className="text-red-500">Administrador</span>
               </h2>
 
-              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-5">
+              <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">
                 Leitura Obrigatória
               </p>
 
               {/* Corpo do Aviso */}
-              <div className="bg-red-950/30 border border-red-900/50 p-5 rounded-lg text-left mb-6">
-                <p className="text-zinc-300 text-sm leading-relaxed mb-4">
+              <div className="bg-red-950/30 border border-red-900/50 p-5 rounded-md text-left mb-2">
+                <p className="text-zinc-300 text-sm leading-relaxed mb-2">
                   <strong className="text-white flex items-center gap-2 mb-2">
                     <span className="text-red-500">⚠️</span> Aviso Importante:
                   </strong>
@@ -459,10 +459,10 @@ const Dashboard = () => {
                 <p className="text-zinc-300 text-sm leading-relaxed">
                   Caso qualquer atividade suspeita seja identificada, <strong>sua conta será banida permanentemente e imediatamente</strong>, sem aviso prévio e sem reembolso de créditos.
                 </p>
-                <p className="text-zinc-400 text-sm leading-relaxed mt-4 italic">
+                <p className="text-zinc-400 text-sm leading-relaxed mt-2 italic">
                   Essas medidas existem para garantir a segurança da plataforma e de todos os usuários.
                 </p>
-                <p className="text-red-400 text-xs font-bold mt-4 border-t border-red-900/50 pt-3 flex items-center gap-2">
+                <p className="text-red-400 text-xs font-bold mt-2 border-t border-red-900/50 pt-3 flex items-center gap-2">
                   <Eye className="h-4 w-4" /> O sistema possui logs de monitoramento ativos.
                 </p>
               </div>
@@ -471,7 +471,7 @@ const Dashboard = () => {
               <button
                 onClick={confirmSecurityWarning}
                 disabled={!securityCanClose}
-                className={`w-full py-4 rounded-lg font-black text-sm uppercase tracking-wide transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3 ${
+                className={`w-full py-1.5 rounded-md font-black text-sm uppercase tracking-wide transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 ${
                   securityCanClose
                     ? 'bg-white text-black hover:bg-zinc-200 cursor-pointer shadow-[0_0_20px_rgba(255,255,255,0.3)]'
                     : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700'

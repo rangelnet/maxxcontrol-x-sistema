@@ -507,9 +507,9 @@ export default function Settings() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="p-2 md:p-2 max-w-4xl mx-auto space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {message && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border ${
+        <div className={`fixed top-2 right-4 z-50 flex items-center gap-2 px-2 py-1 rounded-md shadow-2xl border ${
           message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 
           message.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
           'bg-red-500/10 border-red-500/20 text-red-400'
@@ -519,21 +519,21 @@ export default function Settings() {
         </div>
       )}
 
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <SettingsIcon className="h-7 w-7 text-white" />
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-md bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+            <SettingsIcon className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Configurações</h1>
+            <h1 className="text-sm font-black text-white tracking-tight">Configurações</h1>
             <p className="text-zinc-500 text-sm font-medium">Gerencie sua identidade visual, contatos e segurança.</p>
           </div>
         </div>
       </header>
 
       {/* ⚠️ AVISO DE LIMITE DE 24H */}
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-4 items-center shadow-sm backdrop-blur-sm animate-in slide-in-from-top-2 duration-500">
-        <div className="h-12 w-12 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0 text-amber-500 border border-amber-500/10">
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-2 flex gap-2 items-center shadow-sm backdrop-blur-sm animate-in slide-in-from-top-2 duration-500">
+        <div className="h-8 w-8 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0 text-amber-500 border border-amber-500/10">
           <Clock size={20} />
         </div>
         <div>
@@ -544,26 +544,26 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+        <div className="lg:col-span-2 space-y-2">
           
           {user?.tipo !== 'revendedor' && (
             <>
               {/* Seção trial e entrega */}
-              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-                <div className="flex items-center gap-3 mb-6">
+              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+                <div className="flex items-center gap-2 mb-2">
                   <Zap className="h-5 w-5 text-orange-500" />
-                  <h2 className="text-lg font-bold text-white">Sistema de Trial (Teste)</h2>
+                  <h2 className="text-sm font-bold text-white">Sistema de Trial (Teste)</h2>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <p className="text-xs text-zinc-500">Configure o tempo de acesso gratuito e a URL oficial.</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div>
                       <label className="text-[11px] font-bold text-zinc-500 uppercase ml-1 mb-2 block">Tempo de Teste (Horas)</label>
                       <select 
                         value={trialHours} 
                         onChange={e => setTrialHours(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
                       >
                         <option value="1">01 Hora</option>
                         <option value="2">02 Horas</option>
@@ -579,14 +579,14 @@ export default function Settings() {
                         value={panelUrl} 
                         onChange={e => setPanelUrl(e.target.value)}
                         placeholder="https://meu-painel.com"
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white focus:ring-2 focus:ring-orange-500/20 transition outline-none"
                       />
                     </div>
                   </div>
                   <button 
                     onClick={() => handleSave('trial')}
                     disabled={saving.trial}
-                    className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-black transition shadow-lg shadow-orange-500/20"
+                    className="w-full py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-md text-xs font-black transition shadow-lg shadow-orange-500/20"
                   >
                     {saving.trial ? 'Salvando...' : 'Salvar Configurações de Cadastro'}
                   </button>
@@ -594,23 +594,23 @@ export default function Settings() {
               </div>
 
               {/* Boas vindas WhatsApp */}
-              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-                <div className="flex items-center gap-3 mb-6">
+              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+                <div className="flex items-center gap-2 mb-2">
                   <MessageCircle className="h-5 w-5 text-emerald-500" />
-                  <h2 className="text-lg font-bold text-white">Boas-vindas WhatsApp</h2>
+                  <h2 className="text-sm font-bold text-white">Boas-vindas WhatsApp</h2>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <p className="text-xs text-zinc-500">Personalize a mensagem enviada aos novos revendedores.</p>
                   <textarea 
                     value={welcomeTemplate}
                     onChange={e => setWelcomeTemplate(e.target.value)}
                     placeholder="Olá {nome}, seu acesso foi criado..."
-                    className="w-full h-32 bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-white resize-none focus:ring-2 focus:ring-orange-500/20 outline-none"
+                    className="w-full h-24 bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white resize-none focus:ring-2 focus:ring-orange-500/20 outline-none"
                   />
                   <button 
                     onClick={() => handleSave('trial')}
                     disabled={saving.trial}
-                    className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-bold transition"
+                    className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-xs font-bold transition"
                   >
                     {saving.trial ? 'Salvando...' : 'Salvar Texto de Boas-vindas'}
                   </button>
@@ -620,63 +620,63 @@ export default function Settings() {
           )}
 
           {/* P2P Mesh Engine (Rule 5) */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
                 <Radio className="h-5 w-5 text-orange-500" />
-                <h2 className="text-lg font-bold text-white">P2P Mesh Engine (Rule 5)</h2>
+                <h2 className="text-sm font-bold text-white">P2P Mesh Engine (Rule 5)</h2>
               </div>
               <button onClick={() => handleSave('p2p')}>
-                {p2pEnabled ? <ToggleRight className="h-8 w-8 text-orange-500" /> : <ToggleLeft className="h-8 w-8 text-zinc-700" />}
+                {p2pEnabled ? <ToggleRight className="h-5 w-5 text-orange-500" /> : <ToggleLeft className="h-5 w-5 text-zinc-700" />}
               </button>
             </div>
-            <p className="text-xs text-zinc-500 mb-6">Reduz o buffer e melhora a estabilidade compartilhando banda entre usuários.</p>
-            <div className="space-y-4">
+            <p className="text-xs text-zinc-500 mb-2">Reduz o buffer e melhora a estabilidade compartilhando banda entre usuários.</p>
+            <div className="space-y-2">
                <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1 block">Chave de Licença P2P</label>
                <input 
                  type="password" 
                  value={p2pKey} 
                  onChange={e => setP2pKey(e.target.value)}
-                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white text-sm outline-none"
+                 className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white text-sm outline-none"
                  placeholder="Insira sua chave premium"
                />
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-2">
           {/* Contato do Banner */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-             <div className="flex items-center gap-3 mb-4">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+             <div className="flex items-center gap-2 mb-2">
                <Phone className="h-5 w-5 text-orange-500" />
                <h3 className="font-bold text-white">Contato do Banner</h3>
              </div>
-             <p className="text-[11px] text-zinc-500 mb-4">Configura o número que será estampado automaticamente no rodapé das artes e banners promocionais.</p>
+             <p className="text-[11px] text-zinc-500 mb-2">Configura o número que será estampado automaticamente no rodapé das artes e banners promocionais.</p>
              
              {whatsapp ? (
-               <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg mb-4">
+               <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md mb-2">
                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                  <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Número Atual: {whatsapp}</span>
                </div>
              ) : (
-               <div className="flex items-center gap-2 px-3 py-2 bg-zinc-850/50 border border-zinc-800 rounded-lg mb-4">
+               <div className="flex items-center gap-2 px-2 py-1 bg-zinc-850/50 border border-zinc-800 rounded-md mb-2">
                  <div className="h-2 w-2 rounded-full bg-zinc-650" />
                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Sem número configurado</span>
                </div>
              )}
 
-             <div className="space-y-3">
+             <div className="space-y-2">
                <input 
                  type="text"
                  value={whatsappInput}
                  onChange={e => setWhatsappInput(formatPhone(e.target.value))}
-                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20 transition"
+                 className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20 transition"
                  placeholder="(11) 99912-3745"
                />
                <button 
                  onClick={() => handleSave('wpp')}
                  disabled={saving.wpp}
-                 className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-lg text-xs font-black transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+                 className="w-full py-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-md text-xs font-black transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
                >
                  {saving.wpp ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                  {saving.wpp ? 'Atualizando...' : 'Atualizar Número'}
@@ -685,17 +685,17 @@ export default function Settings() {
           </div>
 
           {/* Identidade Visual */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-2 mb-2">
               <Globe className="h-5 w-5 text-blue-500" />
               <h3 className="font-bold text-white">Identidade Visual (Logo)</h3>
             </div>
-            <p className="text-[11px] text-zinc-500 mb-6">Gerencia a imagem de logotipo que a IA aplica nos templates de banners.</p>
+            <p className="text-[11px] text-zinc-500 mb-2">Gerencia a imagem de logotipo que a IA aplica nos templates de banners.</p>
             
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               {/* Quadro dashed de preview */}
               <div 
-                className="w-full aspect-square md:aspect-video rounded-xl border-2 border-dashed border-zinc-800 bg-zinc-950/50 flex flex-col items-center justify-center gap-3 relative overflow-hidden group p-2"
+                className="w-full aspect-square md:aspect-video rounded-md border-2 border-dashed border-zinc-800 bg-zinc-950/50 flex flex-col items-center justify-center gap-2 relative overflow-hidden group p-2"
               >
                 {logoPreview || logoUrl ? (
                   <img 
@@ -704,11 +704,11 @@ export default function Settings() {
                     className="w-full h-full object-contain transition" 
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-center p-4">
+                  <div className="flex flex-col items-center justify-center text-center p-2">
                     <img 
                       src="/logo_476.png" 
                       alt="Logo Padrão Suporte" 
-                      className="max-h-14 object-contain opacity-50 mb-2"
+                      className="max-h-11 object-contain opacity-50 mb-2"
                       onError={(e) => {
                         e.target.style.display = 'none';
                       }}
@@ -735,7 +735,7 @@ export default function Settings() {
                 <button 
                   type="button"
                   onClick={() => document.getElementById('logo-file-input').click()}
-                  className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2"
+                  className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-xs font-bold transition flex items-center justify-center gap-2"
                 >
                   <Upload className="h-4 w-4" />
                   Selecionar Arquivo
@@ -745,7 +745,7 @@ export default function Settings() {
                   type="button"
                   onClick={handleSaveLogo}
                   disabled={saving.logo || !selectedLogoFile}
-                  className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-850 disabled:opacity-50 text-white rounded-lg text-xs font-black transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+                  className="w-full py-1.5 bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-850 disabled:opacity-50 text-white rounded-md text-xs font-black transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
                 >
                   {saving.logo ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {saving.logo ? 'Enviando...' : 'Salvar Logo'}
@@ -755,37 +755,37 @@ export default function Settings() {
           </div>
 
           {/* Seu Contato de Suporte */}
-          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-5 w-5 text-emerald-500" />
               <h3 className="font-bold text-white">Seu Contato de Suporte</h3>
             </div>
-            <p className="text-[11px] text-zinc-500 mb-4">Este número aparecerá para seus Sub-Revendedores quando o painel deles estiver vencendo.</p>
+            <p className="text-[11px] text-zinc-500 mb-2">Este número aparecerá para seus Sub-Revendedores quando o painel deles estiver vencendo.</p>
             
             {supportWhatsapp ? (
-              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg mb-4">
+              <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md mb-2">
                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Número Configurado: {supportWhatsapp}</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 px-3 py-2 bg-zinc-850/50 border border-zinc-800 rounded-lg mb-4">
+              <div className="flex items-center gap-2 px-2 py-1 bg-zinc-850/50 border border-zinc-800 rounded-md mb-2">
                 <div className="h-2 w-2 rounded-full bg-zinc-650" />
                 <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider font-semibold">Não configurado</span>
               </div>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <input 
                 type="text"
                 value={supportInput}
                 onChange={e => setSupportInput(formatPhone(e.target.value))}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20 transition"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20 transition"
                 placeholder="(11) 99912-3745"
               />
               <button 
                 onClick={() => handleSave('sup')}
                 disabled={saving.sup}
-                className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-zinc-950 rounded-lg text-xs font-black transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                className="w-full py-1.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-zinc-950 rounded-md text-xs font-black transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
               >
                 {saving.sup ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {saving.sup ? 'Salvando...' : 'Salvar Contato'}
@@ -796,18 +796,18 @@ export default function Settings() {
       </div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
          {/* Envio Automático Telegram */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Send className="h-5 w-5 text-sky-400" />
-                <h2 className="text-lg font-bold text-white">Envio Automático</h2>
+                <h2 className="text-sm font-bold text-white">Envio Automático</h2>
               </div>
-              <a href="#" className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition"><ExternalLink className="h-4 w-4" /></a>
+              <a href="#" className="p-2 hover:bg-zinc-800 rounded-md text-zinc-500 transition"><ExternalLink className="h-4 w-4" /></a>
             </div>
-            <p className="text-xs text-zinc-500 mb-6">Receba artes no seu Canal Telegram.</p>
-            <div className="space-y-4">
+            <p className="text-xs text-zinc-500 mb-2">Receba artes no seu Canal Telegram.</p>
+            <div className="space-y-2">
               <div>
                 <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1 mb-2 block">Seu Telegram Chat ID</label>
                 <div className="flex gap-2">
@@ -816,17 +816,17 @@ export default function Settings() {
                     value={telegramId}
                     onChange={e => setTelegramId(e.target.value)}
                     placeholder="Ex: @meucanal ou -100XXXX"
-                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20"
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white text-sm outline-none focus:ring-2 focus:ring-orange-500/20"
                   />
                   <button 
                     onClick={() => handleSave('tel')}
-                    className="px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition"
+                    className="px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md transition"
                   >
                     <RefreshCw className="h-4 w-4" />
                   </button>
                 </div>
               </div>
-              <div className="p-4 bg-sky-500/5 border border-sky-500/10 rounded-xl flex items-center gap-3">
+              <div className="p-2 bg-sky-500/5 border border-sky-500/10 rounded-md flex items-center gap-2">
                  <Bot className="h-5 w-5 text-sky-400" />
                  <p className="text-[10px] font-medium text-sky-400 leading-tight">Certifique-se que o Bot @MaxxManagerBot é Administrador do seu canal.</p>
               </div>
@@ -835,30 +835,30 @@ export default function Settings() {
 
 
          {/* Alterar Senha */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-2 mb-2">
               <Lock className="h-5 w-5 text-rose-500" />
-              <h2 className="text-lg font-bold text-white">Alterar Senha</h2>
+              <h2 className="text-sm font-bold text-white">Alterar Senha</h2>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
                <input 
                  type="password" 
                  value={currentPwd}
                  onChange={e => setCurrentPwd(e.target.value)}
                  placeholder="Senha Atual" 
-                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white text-sm outline-none" 
+                 className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white text-sm outline-none" 
                />
                <input 
                  type="password" 
                  value={newPwd}
                  onChange={e => setNewPwd(e.target.value)}
                  placeholder="Nova Senha" 
-                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white text-sm outline-none" 
+                 className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white text-sm outline-none" 
                />
                <button 
                  onClick={handleUpdatePassword}
                  disabled={saving.password}
-                 className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-bold transition"
+                 className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-xs font-bold transition"
                >
                  {saving.password ? 'Alterando...' : 'Confirmar Mudança'}
                </button>
@@ -866,11 +866,11 @@ export default function Settings() {
          </div>
 
          {/* Automação WhatsApp Status */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-               <div className="flex items-center gap-3">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center justify-between mb-2">
+               <div className="flex items-center gap-2">
                  <Radio className="h-5 w-5 text-emerald-500" />
-                 <h2 className="text-lg font-bold text-white">Automação WhatsApp</h2>
+                 <h2 className="text-sm font-bold text-white">Automação WhatsApp</h2>
                </div>
                <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
                  waStatus === 'connected' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
@@ -878,13 +878,13 @@ export default function Settings() {
                  {waStatus === 'connected' ? 'Ativo' : 'Offline'}
                </div>
             </div>
-            <p className="text-xs text-zinc-500 mb-6 font-medium leading-relaxed">Conecte seu celular para postar artes automaticamente nos seus grupos.</p>
+            <p className="text-xs text-zinc-500 mb-2 font-medium leading-relaxed">Conecte seu celular para postar artes automaticamente nos seus grupos.</p>
             
             {waStatus === 'connected' ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-zinc-950 rounded-xl border border-zinc-800 shadow-inner">
-                   <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <div className="space-y-2">
+                <div className="p-2 bg-zinc-950 rounded-md border border-zinc-800 shadow-inner">
+                   <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
                          <Smartphone className="h-5 w-5 text-emerald-500" />
                       </div>
                       <div>
@@ -894,19 +894,19 @@ export default function Settings() {
                    </div>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Grupo Destino</label>
                   <select 
                     value={waSelectedGroup} 
                     onChange={e => setWaSelectedGroup(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-3 text-white text-sm"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-2 py-1 text-white text-sm"
                   >
                     <option value="">Selecione um grupo...</option>
                     {waGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                   <button 
                     onClick={handleToggleAutoPost}
-                    className={`w-full py-3 rounded-lg text-xs font-black transition ${waAutoPost ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/20' : 'bg-zinc-800 text-white'}`}
+                    className={`w-full py-1.5 rounded-md text-xs font-black transition ${waAutoPost ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/20' : 'bg-zinc-800 text-white'}`}
                   >
                     {waAutoPost ? 'BOT ATIVO NO GRUPO' : 'ATIVAR BOT NO GRUPO'}
                   </button>
@@ -915,27 +915,27 @@ export default function Settings() {
                 <div className="pt-4 border-t border-zinc-800">
                   <button
                     onClick={handleWaDisconnect}
-                    className="w-full py-3 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 text-xs font-bold rounded-lg transition"
+                    className="w-full py-1.5 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 text-xs font-bold rounded-md transition"
                   >
                     Desconectar Celular
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-6 flex flex-col items-center">
+              <div className="space-y-2 flex flex-col items-center">
                 {waQrCode ? (
-                  <div className="bg-white p-4 rounded-xl shadow-2xl animate-in zoom-in-95">
-                    <img src={`data:image/png;base64,${waQrCode}`} alt="QR Code WhatsApp" className="w-48 h-48" />
+                  <div className="bg-white p-2 rounded-md shadow-2xl animate-in zoom-in-95">
+                    <img src={`data:image/png;base64,${waQrCode}`} alt="QR Code WhatsApp" className="w-48 h-36" />
                   </div>
                 ) : (
-                  <div className="h-48 w-48 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-800">
-                    <QrCode className="h-12 w-12" />
+                  <div className="h-36 w-48 bg-zinc-950 border border-zinc-800 rounded-md flex items-center justify-center text-zinc-800">
+                    <QrCode className="h-8 w-8" />
                   </div>
                 )}
                 <button 
                   onClick={handleWaConnect}
                   disabled={waLoadingAction}
-                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-black text-sm rounded-xl transition flex items-center justify-center gap-2 group shadow-lg shadow-emerald-500/20"
+                  className="w-full py-1.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-black text-sm rounded-md transition flex items-center justify-center gap-2 group shadow-lg shadow-emerald-500/20"
                 >
                   {waLoadingAction ? <Loader2 className="h-5 w-5 animate-spin" /> : <QrCode className="h-5 w-5 group-hover:scale-110 transition" />}
                   {waQrCode ? 'REGERAR QR-CODE' : 'GERAR QR-CODE'}
@@ -945,12 +945,12 @@ export default function Settings() {
          </div>
          
          {/* Google Integration */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl col-span-1 md:col-span-2">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Globe className="h-6 w-6 text-blue-500" />
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl col-span-1 md:col-span-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-blue-500" />
                 <div>
-                  <h2 className="text-xl font-bold text-white">Google Integration</h2>
+                  <h2 className="text-sm font-bold text-white">Google Integration</h2>
                   <p className="text-xs text-zinc-500 font-medium">Sincronize sua conta Google para serviços avançados.</p>
                 </div>
               </div>
@@ -961,17 +961,17 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className={`p-4 rounded-xl border transition ${googleConnected ? 'bg-blue-500/5 border-blue-500/10' : 'bg-zinc-950/50 border-zinc-800 opacity-50'}`}>
-                 <div className="h-10 w-10 bg-blue-500/10 rounded-lg flex items-center justify-center mb-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className={`p-2 rounded-md border transition ${googleConnected ? 'bg-blue-500/5 border-blue-500/10' : 'bg-zinc-950/50 border-zinc-800 opacity-50'}`}>
+                 <div className="h-8 w-8 bg-blue-500/10 rounded-md flex items-center justify-center mb-2">
                     <Globe className="h-5 w-5 text-blue-400" />
                  </div>
                  <p className="text-xs font-bold text-white mb-1">Google Drive</p>
                  <p className="text-[10px] text-zinc-500">Backup automático de templates.</p>
               </div>
 
-              <div className={`p-4 rounded-xl border transition ${googleConnected ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-zinc-950/50 border-zinc-800 opacity-50'}`}>
-                 <div className="h-10 w-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-3">
+              <div className={`p-2 rounded-md border transition ${googleConnected ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-zinc-950/50 border-zinc-800 opacity-50'}`}>
+                 <div className="h-8 w-8 bg-emerald-500/10 rounded-md flex items-center justify-center mb-2">
                     <Users className="h-5 w-5 text-emerald-400" />
                  </div>
                  <p className="text-xs font-bold text-white mb-1">Google Contacts</p>
@@ -980,15 +980,15 @@ export default function Settings() {
 
               <div className="flex flex-col justify-center">
                 {googleConnected ? (
-                  <div className="space-y-4">
-                    <div className="px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="px-4 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md flex items-center justify-between">
                        <span className="text-[10px] text-zinc-500 truncate max-w-[150px]">{googleEmail}</span>
                        <CheckCircle className="h-3 w-3 text-emerald-500" />
                     </div>
                     <button 
                       onClick={handleGoogleDisconnect}
                       disabled={googleLoading}
-                      className="w-full py-3 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-red-500/5 transition"
+                      className="w-full py-1.5 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-md hover:bg-red-500/5 transition"
                     >
                       {googleLoading ? 'DESCONECTANDO...' : 'DESCONECTAR GOOGLE'}
                     </button>
@@ -997,7 +997,7 @@ export default function Settings() {
                   <button 
                     onClick={handleGoogleConnect}
                     disabled={googleLoading}
-                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-black rounded-xl shadow-lg shadow-blue-500/20 transition active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-black rounded-md shadow-lg shadow-blue-500/20 transition active:scale-95 flex items-center justify-center gap-2"
                   >
                     {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
                     CONECTAR COM GOOGLE
@@ -1009,29 +1009,29 @@ export default function Settings() {
       </div>
 
       {/* Sessões Ativas / Dispositivos */}
-      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Monitor className="h-6 w-6 text-orange-500" />
+      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Monitor className="h-5 w-5 text-orange-500" />
             <div>
-              <h2 className="text-xl font-bold text-white">Sessões Ativas</h2>
+              <h2 className="text-sm font-bold text-white">Sessões Ativas</h2>
               <p className="text-xs text-zinc-500 font-medium">Dispositivos conectados à sua conta no momento.</p>
             </div>
           </div>
           <button 
             onClick={loadDevices}
             disabled={sessionsLoading}
-            className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition"
+            className="p-2 hover:bg-zinc-800 rounded-md text-zinc-500 transition"
           >
             <RefreshCw className={`h-4 w-4 ${sessionsLoading ? 'animate-spin text-orange-500' : ''}`} />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {sessions.map((session) => (
-            <div key={session.id} className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-between group">
-              <div className="flex items-center gap-4">
-                 <div className="h-10 w-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+            <div key={session.id} className="p-2 bg-zinc-950 border border-zinc-800 rounded-md flex items-center justify-between group">
+              <div className="flex items-center gap-2">
+                 <div className="h-8 w-8 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
                     {session.icon === 'monitor' ? <Monitor className="h-5 w-5" /> : session.icon === 'phone' ? <Smartphone className="h-5 w-5" /> : <Laptop className="h-5 w-5" />}
                  </div>
                  <div>
@@ -1047,7 +1047,7 @@ export default function Settings() {
               {!session.active && (
                                 <button 
                   onClick={() => handleDeleteDevice(session.id)}
-                  className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-red-500 rounded-lg transition active:scale-90"
+                  className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-red-500 rounded-md transition active:scale-90"
                   title="Encerrar Sessão"
                 >
                    <Trash2 className="h-4 w-4" />
@@ -1059,101 +1059,101 @@ export default function Settings() {
       </div>
 
       {/* APIs Obrigatórias (DNS, EPG, Xtream) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
          {/* DNS Custom */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-2 mb-2">
               <Radio className="h-5 w-5 text-orange-500" />
-              <h2 className="text-lg font-bold text-white">DNS Custom (Rule 6)</h2>
+              <h2 className="text-sm font-bold text-white">DNS Custom (Rule 6)</h2>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-2">
                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <select value={dnsProtocol} onChange={e => setDnsProtocol(e.target.value)} className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none">
+                  <select value={dnsProtocol} onChange={e => setDnsProtocol(e.target.value)} className="bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none">
                     <option value="http">HTTP</option>
                     <option value="https">HTTPS</option>
                   </select>
-                  <input type="text" value={dnsHost} onChange={e => setDnsHost(e.target.value)} placeholder="Host" className="sm:col-span-2 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none"/>
+                  <input type="text" value={dnsHost} onChange={e => setDnsHost(e.target.value)} placeholder="Host" className="sm:col-span-2 bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none"/>
                </div>
-               <input type="text" value={dnsPort} onChange={e => setDnsPort(e.target.value)} placeholder="Porta" className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none"/>
-               <button onClick={() => handleSave('dns')} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition">Configurar DNS</button>
+               <input type="text" value={dnsPort} onChange={e => setDnsPort(e.target.value)} placeholder="Porta" className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none"/>
+               <button onClick={() => handleSave('dns')} className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-[10px] font-black uppercase tracking-widest transition">Configurar DNS</button>
             </div>
          </div>
 
          {/* EPG API */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-2 mb-2">
               <Monitor className="h-5 w-5 text-emerald-500" />
-              <h2 className="text-lg font-bold text-white">EPG API (Rule 3)</h2>
+              <h2 className="text-sm font-bold text-white">EPG API (Rule 3)</h2>
             </div>
-            <div className="space-y-4">
-               <input type="text" value={epgUrl} onChange={e => setEpgUrl(e.target.value)} placeholder="URL do XMLTV / JSON" className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none"/>
-               <select value={epgInterval} onChange={e => setEpgInterval(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none">
+            <div className="space-y-2">
+               <input type="text" value={epgUrl} onChange={e => setEpgUrl(e.target.value)} placeholder="URL do XMLTV / JSON" className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none"/>
+               <select value={epgInterval} onChange={e => setEpgInterval(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none">
                   <option value="1">Atualizar a cada 1h</option>
                   <option value="6">Atualizar a cada 6h</option>
                   <option value="12">Atualizar a cada 12h</option>
                   <option value="24">Atualizar a cada 24h</option>
                </select>
-               <button onClick={() => handleSave('epg')} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition">Salvar EPG</button>
+               <button onClick={() => handleSave('epg')} className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-[10px] font-black uppercase tracking-widest transition">Salvar EPG</button>
             </div>
          </div>
 
          {/* Xtream API */}
-         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-            <div className="flex items-center gap-3 mb-6">
+         <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+            <div className="flex items-center gap-2 mb-2">
               <Zap className="h-5 w-5 text-sky-500" />
-              <h2 className="text-lg font-bold text-white">Xtream API (Rule 1)</h2>
+              <h2 className="text-sm font-bold text-white">Xtream API (Rule 1)</h2>
             </div>
-            <div className="space-y-3">
-               <input type="text" value={xtreamUrl} onChange={e => setXtreamUrl(e.target.value)} placeholder="URL do Servidor" className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none"/>
-               <input type="text" value={xtreamUser} onChange={e => setXtreamUser(e.target.value)} placeholder="Usuário" className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none"/>
-               <input type="password" value={xtreamPass} onChange={e => setXtreamPass(e.target.value)} placeholder="Senha" className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-xs outline-none"/>
-               <button onClick={() => handleSave('xtream')} className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition">Conectar Xtream</button>
+            <div className="space-y-2">
+               <input type="text" value={xtreamUrl} onChange={e => setXtreamUrl(e.target.value)} placeholder="URL do Servidor" className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none"/>
+               <input type="text" value={xtreamUser} onChange={e => setXtreamUser(e.target.value)} placeholder="Usuário" className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none"/>
+               <input type="password" value={xtreamPass} onChange={e => setXtreamPass(e.target.value)} placeholder="Senha" className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-xs outline-none"/>
+               <button onClick={() => handleSave('xtream')} className="w-full py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-md text-[10px] font-black uppercase tracking-widest transition">Conectar Xtream</button>
             </div>
          </div>
       </div>
 
       {/* Perfil e Segurança Adicionais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {/* Perfil */}
-        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-           <div className="flex items-center gap-3 mb-6">
+        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+           <div className="flex items-center gap-2 mb-2">
               <User className="h-5 w-5 text-orange-500" />
-              <h2 className="text-lg font-bold text-white">Perfil do Usuário</h2>
+              <h2 className="text-sm font-bold text-white">Perfil do Usuário</h2>
            </div>
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="Nome" className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-sm" />
-              <input type="email" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} placeholder="Email" className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-sm opacity-50 cursor-not-allowed" disabled />
-              <input type="text" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} placeholder="WhatsApp Pessoal" className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-sm" />
-              <input type="text" value={profileTg} onChange={e => setProfileTg(e.target.value)} placeholder="Telegram Username" className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-sm" />
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="Nome" className="bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-sm" />
+              <input type="email" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} placeholder="Email" className="bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-sm opacity-50 cursor-not-allowed" disabled />
+              <input type="text" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} placeholder="WhatsApp Pessoal" className="bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-sm" />
+              <input type="text" value={profileTg} onChange={e => setProfileTg(e.target.value)} placeholder="Telegram Username" className="bg-zinc-950 border border-zinc-800 rounded-md p-2 text-white text-sm" />
            </div>
-           <button onClick={() => handleSave('profile')} className="w-full mt-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-bold transition">Salvar Perfil</button>
+           <button onClick={() => handleSave('profile')} className="w-full mt-2 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-xs font-bold transition">Salvar Perfil</button>
         </div>
 
         {/* Preferências */}
-        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl">
-           <div className="flex items-center gap-3 mb-6">
+        <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl">
+           <div className="flex items-center gap-2 mb-2">
               <SlidersHorizontal className="h-5 w-5 text-orange-500" />
-              <h2 className="text-lg font-bold text-white">Preferências</h2>
+              <h2 className="text-sm font-bold text-white">Preferências</h2>
            </div>
-           <div className="space-y-4">
+           <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-zinc-400">Mostrar Ganhos na Dashboard</span>
-                <button onClick={() => handleSave('earnings')}>{showEarnings ? <ToggleRight className="h-8 w-8 text-orange-500" /> : <ToggleLeft className="h-8 w-8 text-zinc-700" />}</button>
+                <button onClick={() => handleSave('earnings')}>{showEarnings ? <ToggleRight className="h-5 w-5 text-orange-500" /> : <ToggleLeft className="h-5 w-5 text-zinc-700" />}</button>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-zinc-400">Filtros Persistentes</span>
-                <button onClick={() => handleSave('filters')}>{persistFilters ? <ToggleRight className="h-8 w-8 text-orange-500" /> : <ToggleLeft className="h-8 w-8 text-zinc-700" />}</button>
+                <button onClick={() => handleSave('filters')}>{persistFilters ? <ToggleRight className="h-5 w-5 text-orange-500" /> : <ToggleLeft className="h-5 w-5 text-zinc-700" />}</button>
               </div>
            </div>
         </div>
       </div>
 
       {/* Autenticação em Duas Etapas (2FA) */}
-      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-5 backdrop-blur-sm shadow-xl mt-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-6 w-6 text-orange-500" />
-            <h2 className="text-xl font-bold text-white">Segurança 2FA</h2>
+      <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-md p-2 backdrop-blur-sm shadow-xl mt-2">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-orange-500" />
+            <h2 className="text-sm font-bold text-white">Segurança 2FA</h2>
           </div>
           <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
             twoFaEnabled || twoFaTelegram ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
@@ -1162,16 +1162,16 @@ export default function Settings() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <div className="space-y-4">
-            <p className="text-sm text-zinc-400 leading-relaxed font-medium">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-400 leading-relaxed font-medium">
               {twoFaEnabled || twoFaTelegram 
                 ? 'Sua conta já possui uma camada extra de segurança vinculada ao Bot do Telegram ou App de Autenticação.' 
                 : 'Aumente a segurança da sua conta vinculando seu Telegram. Sempre que você entrar de um novo dispositivo, pediremos um código de confirmação.'}
             </p>
             
             {(!twoFaEnabled && !twoFaTelegram) ? (
-              <div className="p-4 bg-zinc-950 border border-orange-500/20 rounded-xl space-y-3">
+              <div className="p-2 bg-zinc-950 border border-orange-500/20 rounded-md space-y-2">
                 <p className="text-[11px] font-bold text-orange-500 uppercase tracking-widest">Como configurar:</p>
                 <ol className="space-y-2 text-xs text-zinc-500">
                   <li className="flex gap-2">
@@ -1183,7 +1183,7 @@ export default function Settings() {
                     Envie o comando abaixo no chat:
                   </li>
                 </ol>
-                <div className="bg-zinc-900 p-3 rounded-lg border border-zinc-800 font-mono text-[11px] text-emerald-400 break-all select-all cursor-copy">
+                <div className="bg-zinc-900 p-2 rounded-md border border-zinc-800 font-mono text-[11px] text-emerald-400 break-all select-all cursor-copy">
                   /2fa start {user?.email || 'seu-email'}
                 </div>
                 
@@ -1193,11 +1193,11 @@ export default function Settings() {
                     placeholder="Código recebido no Telegram"
                     value={twoFaVerifyCode}
                     onChange={e => setTwoFaVerifyCode(e.target.value)}
-                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white text-xs outline-none focus:border-orange-500/50 transition"
+                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded-md px-2 py-1 text-white text-xs outline-none focus:border-orange-500/50 transition"
                   />
                   <button 
                     onClick={() => handleSave('2fa-verify')}
-                    className="px-6 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black text-[10px] uppercase tracking-widest rounded-lg transition active:scale-95"
+                    className="px-6 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black text-[10px] uppercase tracking-widest rounded-md transition active:scale-95"
                   >
                     VERIFICAR
                   </button>
@@ -1209,17 +1209,17 @@ export default function Settings() {
                    if (twoFaEnabled) handleSave('2fa-disable');
                    else handleSave('2fa-telegram-disable');
                 }}
-                className="w-full py-4 bg-zinc-800 hover:bg-red-500/10 hover:text-red-500 text-white text-xs font-black rounded-xl transition"
+                className="w-full py-1.5 bg-zinc-800 hover:bg-red-500/10 hover:text-red-500 text-white text-xs font-black rounded-md transition"
               >
                 DESATIVAR PROTEÇÃO ATUAL
               </button>
             )}
           </div>
           
-          <div className={`p-6 rounded-[2.5rem] border-2 border-dashed transition-all flex flex-col items-center justify-center text-center ${
+          <div className={`p-2 rounded-[2.5rem] border-2 border-dashed transition-all flex flex-col items-center justify-center text-center ${
             twoFaEnabled || twoFaTelegram ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-zinc-950/50 border-zinc-800/50'
           }`}>
-             {twoFaTelegram && !twoFaEnabled ? <Bot className="h-12 w-12 mb-4 text-sky-500" /> : <Key className={`h-12 w-12 mb-4 ${twoFaEnabled ? 'text-emerald-500' : 'text-zinc-800'}`} />}
+             {twoFaTelegram && !twoFaEnabled ? <Bot className="h-8 w-8 mb-2 text-sky-500" /> : <Key className={`h-8 w-8 mb-2 ${twoFaEnabled ? 'text-emerald-500' : 'text-zinc-800'}`} />}
              <p className={`text-[12px] font-black uppercase tracking-widest leading-tight ${twoFaEnabled || twoFaTelegram ? 'text-emerald-500' : 'text-zinc-600'}`}>
                {twoFaEnabled ? 'Acesso Biométrico Ativo' : twoFaTelegram ? 'Proteção Telegram Ativa' : 'Aguardando Configuração'}
              </p>
@@ -1232,15 +1232,15 @@ export default function Settings() {
 
       {/* MODAL TERMOS WHATSAPP */}
       {waTermsModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-6 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="h-14 w-16 bg-orange-500/10 rounded-3xl flex items-center justify-center mb-6">
-              <AlertTriangle className="h-8 w-8 text-orange-500" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 bg-zinc-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-md p-2 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="h-9 w-11 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
             </div>
-            <h2 className="text-2xl font-black text-white mb-4">Boas Práticas & Avisos</h2>
-            <div className="space-y-4 mb-6">
-              <p className="text-sm text-zinc-400 leading-relaxed">Para garantir a estabilidade da sua conta WhatsApp, siga estas recomendações:</p>
-              <ul className="space-y-3">
+            <h2 className="text-sm font-black text-white mb-2">Boas Práticas & Avisos</h2>
+            <div className="space-y-2 mb-2">
+              <p className="text-xs text-zinc-400 leading-relaxed">Para garantir a estabilidade da sua conta WhatsApp, siga estas recomendações:</p>
+              <ul className="space-y-2">
                 {['O uso de contas novas não é recomendado.', 'Evite disparos em massa para quem não tem seu contato salvo.', 'O sistema não se responsabiliza por banimentos.'].map((t, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-zinc-500">
                     <CheckCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
@@ -1249,7 +1249,7 @@ export default function Settings() {
                 ))}
               </ul>
             </div>
-            <button onClick={acceptWaTerms} className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black rounded-xl transition active:scale-95">LI E CONCORDO COM OS TERMOS</button>
+            <button onClick={acceptWaTerms} className="w-full py-1.5 bg-orange-500 hover:bg-orange-600 text-zinc-950 font-black rounded-md transition active:scale-95">LI E CONCORDO COM OS TERMOS</button>
           </div>
         </div>
       )}

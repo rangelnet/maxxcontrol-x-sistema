@@ -7,6 +7,7 @@ import HomeManager from './HomeManager'
 import VodManager from './VodManager'
 import SeriesManager from './SeriesManager'
 import PlatformUiManager from './PlatformUiManager'
+import AnimeManager from './AnimeManager'
 
 const TABS = [
   {
@@ -65,39 +66,46 @@ const TABS = [
     badge: 'NOVO',
     desc: 'Server-Driven UI e Filtros TMDB',
   },
+  {
+    id: 'anime-manager',
+    label: 'Gerenciar Animes',
+    icon: '🍥',
+    badge: 'IA',
+    desc: 'Curadoria, AniList, Crunchyroll e categorias',
+  },
 ]
 
 const BrandingBanners = () => {
   const [activeTab, setActiveTab] = useState('branding')
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
 
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-xl">
+      <div className="flex items-center gap-2">
+        <div className="h-8 w-8 rounded-md bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-base">
           🎨
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white">Branding & Banners</h1>
+          <h1 className="text-sm font-black text-white">Branding & Banners</h1>
           <p className="text-zinc-400 text-sm">Identidade visual e gerador de artes premium</p>
         </div>
       </div>
 
       {/* Abas */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`relative flex items-center gap-4 px-5 py-4 rounded-xl border-2 text-left transition-all duration-200 group
+            className={`relative flex items-center gap-2 px-2 py-1 rounded-md border-2 text-left transition-all duration-200 group
               ${activeTab === tab.id
                 ? 'bg-dark-800 border-brand-500 shadow-lg shadow-brand-500/10'
                 : 'bg-dark-800 border-dark-700 hover:border-dark-600 hover:bg-dark-700/50'
               }`}
           >
             {/* Ícone */}
-            <div className={`h-12 w-12 rounded-lg flex items-center justify-center text-2xl shrink-0 transition-colors
+            <div className={`h-8 w-8 rounded-md flex items-center justify-center text-base shrink-0 transition-colors
               ${activeTab === tab.id ? 'bg-brand-500/20 border border-brand-500/30' : 'bg-dark-900 border border-dark-600'}`}>
               {tab.icon}
             </div>
@@ -142,6 +150,7 @@ const BrandingBanners = () => {
         {activeTab === 'vod-manager' && <VodManager />}
         {activeTab === 'series-manager' && <SeriesManager />}
         {activeTab === 'platform-ui' && <PlatformUiManager />}
+        {activeTab === 'anime-manager' && <AnimeManager />}
       </div>
     </div>
   )

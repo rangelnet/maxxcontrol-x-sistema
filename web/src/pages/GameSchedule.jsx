@@ -107,12 +107,12 @@ export default function GameSchedule() {
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-10">
+    <div className="space-y-2 animate-fadeIn pb-10">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
         <div>
-          <h1 className="text-2xl md:text-2xl font-bold text-white flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-brand/10 flex items-center justify-center border border-brand/20">
+          <h1 className="text-base md:text-sm font-bold text-white flex items-center gap-2">
+            <div className="h-8 w-8 rounded-md bg-brand/10 flex items-center justify-center border border-brand/20">
               <Trophy className="h-5 w-5 text-brand" />
             </div>
             Placares em Tempo Real
@@ -120,7 +120,7 @@ export default function GameSchedule() {
           <p className="text-zinc-400 text-sm mt-1">Dados atualizados via API-Football</p>
         </div>
         
-        <div className="flex items-center gap-3 text-zinc-500 text-[10px] font-mono bg-dark-900/50 px-3 py-1.5 rounded-lg border border-white/5">
+        <div className="flex items-center gap-2 text-zinc-500 text-[10px] font-mono bg-dark-900/50 px-3 py-1.5 rounded-md border border-white/5">
           <RefreshCcw className="h-3 w-3 animate-spin-slow" />
           ÚLTIMA ATUALIZAÇÃO: {ultimoRefresh.toLocaleTimeString('pt-BR')}
         </div>
@@ -132,7 +132,7 @@ export default function GameSchedule() {
           <button
             key={item.id}
             onClick={() => setEsporte(item.id)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap border ${
+            className={`flex items-center gap-2 px-6 py-1.5 rounded-md font-bold text-sm transition-all whitespace-nowrap border ${
               esporte === item.id
                 ? 'bg-brand text-white border-brand shadow-lg shadow-brand/20 scale-105'
                 : 'bg-zinc-900 text-zinc-400 border-white/5 hover:bg-zinc-800 hover:text-white'
@@ -145,16 +145,16 @@ export default function GameSchedule() {
       </div>
 
       {/* Barra de Filtros */}
-      <div className="glass-effect rounded-xl p-4 border border-white/5">
-        <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
+      <div className="glass-effect rounded-md p-2 border border-white/5">
+        <div className="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
           <div className="flex flex-wrap gap-2">
             {/* Filtro de Data */}
-            <div className="flex bg-dark-900/80 p-1 rounded-lg border border-white/10">
+            <div className="flex bg-dark-900/80 p-1 rounded-md border border-white/10">
               {FILTROS_DATA.map(f => (
                 <button
                   key={f}
                   onClick={() => setFiltroData(f)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
                     filtroData === f
                       ? 'bg-brand text-white'
                       : 'text-zinc-500 hover:text-white'
@@ -166,7 +166,7 @@ export default function GameSchedule() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <input
@@ -174,13 +174,13 @@ export default function GameSchedule() {
                 value={termoBusca}
                 onChange={e => setTermoBusca(e.target.value)}
                 placeholder="Buscar time ou liga..."
-                className="w-full bg-dark-900 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-zinc-200 text-sm focus:border-brand/40 outline-none transition"
+                className="w-full bg-dark-900 border border-white/10 rounded-md py-1.5 pl-10 pr-4 text-zinc-200 text-sm focus:border-brand/40 outline-none transition"
               />
             </div>
 
             <button
               onClick={copiarGrade}
-              className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition transform active:scale-95 ${
+              className={`flex items-center justify-center gap-2 px-6 py-1.5 rounded-md font-bold text-sm transition transform active:scale-95 ${
                 copiado ? 'bg-green-600 text-white' : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/20'
               }`}
             >
@@ -194,38 +194,38 @@ export default function GameSchedule() {
       {/* Grid de Jogos */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
-          <Loader2 className="h-10 w-10 animate-spin text-brand mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand mb-2" />
           <p className="text-sm font-bold uppercase tracking-widest animate-pulse">Sincronizando placares ao vivo...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-2">
           {gradeFiltrada.length === 0 ? (
             <div className="glass-effect rounded-3xl border border-dashed border-white/10 py-12 text-center">
-              <Trophy className="h-12 w-12 mx-auto text-zinc-700 mb-4 opacity-50" />
+              <Trophy className="h-8 w-8 mx-auto text-zinc-700 mb-2 opacity-50" />
               <p className="text-zinc-500 font-medium">Nenhum evento ao vivo ou programado para este filtro.</p>
             </div>
           ) : (
             gradeFiltrada.map((camp, idx) => (
-              <div key={idx} className="space-y-4">
-                <div className="flex items-center gap-3 px-2">
+              <div key={idx} className="space-y-2">
+                <div className="flex items-center gap-2 px-2">
                   <div className="h-8 w-1 bg-brand rounded-full shadow-glow"></div>
                   {camp.emoji && camp.emoji.startsWith('http') ? (
                     <img src={camp.emoji} alt={camp.campeonato} className="h-4 w-6 rounded-sm object-cover" />
                   ) : (
-                    <span className="text-xl">{camp.emoji}</span>
+                    <span className="text-base">{camp.emoji}</span>
                   )}
-                  <h3 className="text-lg font-bold text-white tracking-tight">{camp.campeonato}</h3>
+                  <h3 className="text-sm font-bold text-white tracking-tight">{camp.campeonato}</h3>
                   <span className="text-[10px] bg-white/5 border border-white/10 text-zinc-400 px-2 py-0.5 rounded uppercase font-mono">
                     {camp.jogos.length} PARTIDAS
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                   {camp.jogos.map((jogo, i) => (
-                    <div key={i} className="group glass-effect rounded-xl border border-white/5 hover:border-brand/30 transition-all duration-300 overflow-hidden relative">
+                    <div key={i} className="group glass-effect rounded-md border border-white/5 hover:border-brand/30 transition-all duration-300 overflow-hidden relative">
                       {/* Status Flutuante */}
                       {jogo.status === 'INPROGRESS' && (
-                        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">
+                        <div className="absolute top-2 right-3 flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">
                           <div className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"></div>
                           <span className="text-[9px] font-black text-red-500 uppercase italic">AO VIVO</span>
                         </div>
@@ -243,14 +243,14 @@ export default function GameSchedule() {
                         </div>
 
                         {/* Grade de Jogos (Sem Placar) */}
-                        <div className="flex items-center justify-between gap-4 py-2">
+                        <div className="flex items-center justify-between gap-2 py-1.5">
                           {/* Time Casa */}
                           <div className="flex flex-col items-center flex-1 text-center group-hover:scale-105 transition-transform">
-                            <div className="h-14 w-16 rounded-xl bg-zinc-800/50 border border-white/5 flex items-center justify-center mb-3 shadow-xl p-2">
+                            <div className="h-9 w-11 rounded-md bg-zinc-800/50 border border-white/5 flex items-center justify-center mb-2 shadow-xl p-2">
                               {jogo.logo_casa ? (
                                 <img src={jogo.logo_casa} alt={jogo.time_casa} className="w-full h-full object-contain" />
                               ) : (
-                                <span className="text-2xl">⚽</span>
+                                <span className="text-base">⚽</span>
                               )}
                             </div>
                             <span className="text-sm font-bold text-zinc-200 line-clamp-2 min-h-[40px] leading-snug">{jogo.time_casa}</span>
@@ -258,7 +258,7 @@ export default function GameSchedule() {
 
                           {/* VS Center */}
                           <div className="flex flex-col items-center gap-1">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-900 border border-white/5">
+                            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-zinc-900 border border-white/5">
                               <span className="text-zinc-500 font-black text-xs">VS</span>
                             </div>
                             {jogo.status === 'INPROGRESS' && (
@@ -268,11 +268,11 @@ export default function GameSchedule() {
 
                           {/* Time Fora */}
                           <div className="flex flex-col items-center flex-1 text-center group-hover:scale-105 transition-transform">
-                            <div className="h-14 w-16 rounded-xl bg-zinc-800/50 border border-white/5 flex items-center justify-center mb-3 shadow-xl p-2">
+                            <div className="h-9 w-11 rounded-md bg-zinc-800/50 border border-white/5 flex items-center justify-center mb-2 shadow-xl p-2">
                               {jogo.logo_fora ? (
                                 <img src={jogo.logo_fora} alt={jogo.time_fora} className="w-full h-full object-contain" />
                               ) : (
-                                <span className="text-2xl">⚽</span>
+                                <span className="text-base">⚽</span>
                               )}
                             </div>
                             <span className="text-sm font-bold text-zinc-200 line-clamp-2 min-h-[40px] leading-snug">{jogo.time_fora}</span>
@@ -280,8 +280,8 @@ export default function GameSchedule() {
                         </div>
 
                         {/* Canal / Link */}
-                        <div className="mt-5 flex gap-2">
-                           <button className="flex-1 bg-brand/5 hover:bg-brand/10 border border-brand/20 text-brand text-[10px] font-black uppercase tracking-widest py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <div className="mt-2 flex gap-2">
+                           <button className="flex-1 bg-brand/5 hover:bg-brand/10 border border-brand/20 text-brand text-[10px] font-black uppercase tracking-widest py-1.5 rounded-md transition-colors flex items-center justify-center gap-2">
                              <Tv2 className="h-3 w-3" /> Transmitir Agora
                            </button>
                         </div>
@@ -296,7 +296,7 @@ export default function GameSchedule() {
       )}
       {/* Footer info */}
       {!loading && gradeFiltrada.length > 0 && (
-        <div className="text-center text-zinc-600 text-xs py-2">
+        <div className="text-center text-zinc-600 text-xs py-1.5">
           {gradeFiltrada.reduce((acc, c) => acc + c.jogos.length, 0)} jogos encontrados • Dados atualizados automaticamente
         </div>
       )}

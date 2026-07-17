@@ -425,15 +425,15 @@ const Resale = () => {
     return () => clearInterval(intervalId);
   }, [showPixModal, paymentData]);
 
-  if (loading) return <div className="flex items-center justify-center h-full"><div className="text-xl text-zinc-500 animate-pulse"><i className="fas fa-circle-notch fa-spin mr-3"></i> Carregando Painel...</div></div>;
+  if (loading) return <div className="flex items-center justify-center h-full"><div className="text-base text-zinc-500 animate-pulse"><i className="fas fa-circle-notch fa-spin mr-3"></i> Carregando Painel...</div></div>;
 
   return (
     <div className="h-full overflow-y-auto px-4 md:px-6 py-6 custom-scrollbar text-zinc-100">
       
       {/* HEADER DE SEÇÃO */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-2">
         <div>
-          <h1 className="text-2xl md:text-2xl font-bold flex items-center gap-3 text-white">
+          <h1 className="text-base md:text-sm font-bold flex items-center gap-2 text-white">
             <Shield className="w-8 h-8 text-orange-500" /> Sistema de Revenda VIP
           </h1>
           <p className="text-zinc-400 mt-1 flex items-center">
@@ -442,24 +442,24 @@ const Resale = () => {
         </div>
         
         {/* TABS DE NAVEGAÇÃO */}
-        <div className="flex bg-dark-900 border border-dark-700 rounded-lg p-1 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
+        <div className="flex bg-dark-900 border border-dark-700 rounded-md p-1 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
             {canResellers && (
-              <button onClick={() => setActiveTab('resellers')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'resellers' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}>
+              <button onClick={() => setActiveTab('resellers')} className={`flex items-center gap-2 px-4 py-1.5 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'resellers' ? 'bg-dark-700 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}>
                   <Users className="w-4 h-4" /> Revendedores
               </button>
             )}
             {canShop && (
-              <button onClick={() => setActiveTab('shop')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'shop' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-zinc-500 hover:text-yellow-500/50'}`}>
+              <button onClick={() => setActiveTab('shop')} className={`flex items-center gap-2 px-4 py-1.5 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'shop' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : 'text-zinc-500 hover:text-yellow-500/50'}`}>
                   <ShoppingCart className="w-4 h-4" /> Loja de Créditos
               </button>
             )}
             {canApps && (
-              <button onClick={() => setActiveTab('apps')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'apps' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 'text-zinc-500 hover:text-blue-500/50'}`}>
+              <button onClick={() => setActiveTab('apps')} className={`flex items-center gap-2 px-4 py-1.5 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'apps' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : 'text-zinc-500 hover:text-blue-500/50'}`}>
                   <Smartphone className="w-4 h-4" /> Ativação de Apps
               </button>
             )}
             {(isMasterOrUnlimited || canLogs) && (
-              <button onClick={() => setActiveTab('logs')} className={`flex items-center gap-2 px-4 py-2 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'logs' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30' : 'text-zinc-500 hover:text-brand-500/50'}`}>
+              <button onClick={() => setActiveTab('logs')} className={`flex items-center gap-2 px-4 py-1.5 font-bold text-sm rounded-md transition-all transform active:scale-95 shrink-0 ${activeTab === 'logs' ? 'bg-brand-500/20 text-brand-500 border border-brand-500/30' : 'text-zinc-500 hover:text-brand-500/50'}`}>
                   <Activity className="w-4 h-4" /> Logs de Atividades
               </button>
             )}
@@ -471,29 +471,29 @@ const Resale = () => {
       {/* ========================================================================= */}
       {activeTab === 'resellers' && (
       <div>
-        <div className="flex justify-end mb-4">
-            <button onClick={handleOpenNew} className="bg-orange-600 hover:bg-orange-500 active:scale-95 text-white px-5 py-2.5 rounded-lg font-black flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20 border border-orange-500/50">
+        <div className="flex justify-end mb-2">
+            <button onClick={handleOpenNew} className="bg-orange-600 hover:bg-orange-500 active:scale-95 text-white px-5 py-1.5 rounded-md font-black flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20 border border-orange-500/50">
             <Plus className="w-5 h-5 flex-shrink-0" /> Criar Revendedor
             </button>
         </div>
-        <div className="glass-effect rounded-xl border border-dark-700 shadow-xl bg-dark-800/60 overflow-hidden">
+        <div className="glass-effect rounded-md border border-dark-700 shadow-xl bg-dark-800/60 overflow-hidden">
             <div className="overflow-x-auto custom-scrollbar">
                 <table className="min-w-full divide-y divide-dark-700">
                 <thead className="bg-dark-900/50">
                     <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Perfil & Contato</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Acessos & Créditos</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Integração DNS</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Ações</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Perfil & Contato</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Acessos & Créditos</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Integração DNS</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Status</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Ações</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-700">
                     {revendedores.map((revendedor) => (
                     <tr key={revendedor.id} className="hover:bg-dark-700/50 transition-colors group">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-lg bg-dark-900 border border-dark-600 flex items-center justify-center text-zinc-300 font-bold">
+                        <td className="px-2 py-1 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-md bg-dark-900 border border-dark-600 flex items-center justify-center text-zinc-300 font-bold">
                                     {(revendedor.nome || 'R').charAt(0).toUpperCase()}
                                 </div>
                                 <div>
@@ -502,24 +502,24 @@ const Resale = () => {
                                 </div>
                             </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-2 py-1 whitespace-nowrap">
                         <div className="flex flex-col gap-2">
-                            <div className="bg-dark-900 inline-flex flex-col px-3 py-1.5 rounded-lg border border-dark-600">
+                            <div className="bg-dark-900 inline-flex flex-col px-3 py-1.5 rounded-md border border-dark-600">
                                 <div className="flex items-center justify-between w-full">
                                     <span className="text-xs text-zinc-500 font-bold uppercase mr-3">Acessos</span>
-                                    <div><span className="text-sm font-bold text-white">{revendedor.dispositivos_ativos || 0}</span><span className="text-xs text-zinc-500 mx-1">/</span><span className="text-sm text-zinc-400">{revendedor.limite_dispositivos}</span></div>
+                                    <div><span className="text-sm font-bold text-white">{revendedor.dispositivos_ativos || 0}</span><span className="text-xs text-zinc-500 mx-1">/</span><span className="text-xs text-zinc-400">{revendedor.limite_dispositivos}</span></div>
                                 </div>
                                 <div className="w-full bg-dark-700 h-1.5 rounded-full mt-1.5 overflow-hidden">
                                     <div className={`h-full ${(revendedor.dispositivos_ativos / revendedor.limite_dispositivos) > 0.8 ? 'bg-red-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(((revendedor.dispositivos_ativos || 0) / revendedor.limite_dispositivos) * 100, 100)}%` }}></div>
                                 </div>
                             </div>
-                            <div className="bg-yellow-500/10 inline-flex items-center justify-between px-3 py-1.5 rounded-lg border border-yellow-500/20">
+                            <div className="bg-yellow-500/10 inline-flex items-center justify-between px-3 py-1.5 rounded-md border border-yellow-500/20">
                                 <span className="text-xs text-yellow-600 font-bold uppercase mr-3">Créditos App</span>
                                 <span className="text-sm font-bold text-yellow-500 flex items-center gap-1.5"><i className="fas fa-coins text-[10px]"></i> {revendedor.creditos || 0}</span>
                             </div>
                         </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-2 py-1 whitespace-nowrap">
                             <div className="flex flex-col gap-1.5">
                                 <div className="inline-flex items-center gap-1.5 bg-brand-500/10 text-brand-400 px-2 py-1 rounded-md border border-brand-500/20 w-fit cursor-help font-mono" title="Provider Code">
                                     <KeyRound className="w-3.5 h-3.5" /> <span className="text-xs font-bold">{revendedor.provider_code || '---'}</span>
@@ -529,20 +529,20 @@ const Resale = () => {
                                 </div>
                             </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-2 py-1 whitespace-nowrap">
                         <button onClick={() => handleToggleStatus(revendedor.id, revendedor.ativo)} className={`px-3 py-1 inline-flex text-xs font-bold rounded-full transition-all border transform active:scale-90 ${revendedor.ativo ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'}`}>
                             {revendedor.ativo ? 'ATIVO' : 'BLOQUEADO'}
                         </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-2 py-1 whitespace-nowrap text-sm font-medium">
                             <div className="flex gap-2">
                                 <button 
                                     onClick={() => { setTransferData({revendedor_id: revendedor.id, nome: revendedor.nome, quantidade: 5}); setShowTransferModal(true); }}
-                                    className="h-8 px-3 rounded-lg bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 border border-yellow-500/20 flex items-center gap-1.5 transition-all active:scale-95 text-[10px] font-black uppercase">
+                                    className="h-8 px-3 rounded-md bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 border border-yellow-500/20 flex items-center gap-1.5 transition-all active:scale-95 text-[10px] font-black uppercase">
                                     <Plus className="w-3.5 h-3.5" /> Adicionar Créditos
                                 </button>
-                                <button onClick={() => handleEdit(revendedor)} className="h-8 w-8 rounded-lg bg-dark-700 text-zinc-300 hover:text-white hover:bg-orange-500/80 border border-dark-600 flex items-center justify-center transition-all active:scale-90"><Edit2 className="w-4 h-4" /></button>
-                                <button onClick={() => handleDelete(revendedor.id)} className="h-8 w-8 rounded-lg bg-dark-700 text-zinc-300 hover:text-white hover:bg-red-600/80 border border-dark-600 flex items-center justify-center transition-all active:scale-90"><Trash2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleEdit(revendedor)} className="h-5 w-5 rounded-md bg-dark-700 text-zinc-300 hover:text-white hover:bg-orange-500/80 border border-dark-600 flex items-center justify-center transition-all active:scale-90"><Edit2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleDelete(revendedor.id)} className="h-5 w-5 rounded-md bg-dark-700 text-zinc-300 hover:text-white hover:bg-red-600/80 border border-dark-600 flex items-center justify-center transition-all active:scale-90"><Trash2 className="w-4 h-4" /></button>
                             </div>
                         </td>
                     </tr>
@@ -551,9 +551,9 @@ const Resale = () => {
                 </table>
                 {revendedores.length === 0 && (
                 <div className="text-center py-8 bg-dark-900/30">
-                    <Shield className="mx-auto h-14 w-16 text-zinc-600 opacity-50 mb-3" />
-                    <h3 className="text-lg font-bold text-white">Nenhum revendedor cadastrado</h3>
-                    <button onClick={handleOpenNew} className="mt-5 bg-orange-600/10 text-orange-500 px-6 py-2 rounded-lg font-bold border border-orange-500/30">Criar Primeiro Revendedor</button>
+                    <Shield className="mx-auto h-9 w-11 text-zinc-600 opacity-50 mb-2" />
+                    <h3 className="text-sm font-bold text-white">Nenhum revendedor cadastrado</h3>
+                    <button onClick={handleOpenNew} className="mt-2 bg-orange-600/10 text-orange-500 px-6 py-1.5 rounded-md font-bold border border-orange-500/30">Criar Primeiro Revendedor</button>
                 </div>
                 )}
             </div>
@@ -565,28 +565,28 @@ const Resale = () => {
       {/* ABA: LOJA DE CRÉDITOS */}
       {/* ========================================================================= */}
       {activeTab === 'shop' && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 animate-in fade-in duration-300">
         
         {/* PARTE 1: VITRINE DE PACOTES (Lado Esquerdo/Ocupa 2/3) */}
-        <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-xl font-bold flex items-center gap-2"><ShoppingCart className="text-yellow-500 w-5 h-5"/> Compre Mais Créditos</h2>
+        <div className="lg:col-span-2 space-y-2">
+            <h2 className="text-sm font-bold flex items-center gap-2"><ShoppingCart className="text-yellow-500 w-5 h-5"/> Compre Mais Créditos</h2>
             <p className="text-zinc-400 text-sm">Selecione o pacote desejado. Quanto maior a escala, maior o seu desconto de revenda.</p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 mt-2">
                 {creditPackages.map(pkg => (
-                    <div key={pkg.id} className="glass-effect rounded-xl border border-dark-700 hover:border-yellow-500/50 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all bg-gradient-to-br from-dark-800 to-dark-900 p-5 flex flex-col items-center text-center relative overflow-hidden group">
+                    <div key={pkg.id} className="glass-effect rounded-md border border-dark-700 hover:border-yellow-500/50 hover:shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all bg-gradient-to-br from-dark-800 to-dark-900 p-5 flex flex-col items-center text-center relative overflow-hidden group">
                         
                         {/* Brilho hover */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-[50px] -mr-16 -mt-16 group-hover:bg-yellow-500/20 transition-all"></div>
 
                         {/* Ícone ou Badge de Desconto Baseado no Valor */}
                         {pkg.promo_price && (
-                            <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow shadow-red-600/30 uppercase">
+                            <span className="absolute top-2 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow shadow-red-600/30 uppercase">
                                 Promocional
                             </span>
                         )}
 
-                        <h3 className="text-3xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-bottom">{pkg.credit_amount}</h3>
+                        <h3 className="text-sm font-black text-white mt-2 group-hover:scale-110 transition-transform origin-bottom">{pkg.credit_amount}</h3>
                         <p className="text-xs font-bold tracking-widest text-zinc-500 mt-1 uppercase">{pkg.name || 'Créditos'}</p>
                         
                         <div className="w-full h-px bg-gradient-to-r from-transparent via-dark-600 to-transparent my-4"></div>
@@ -594,17 +594,17 @@ const Resale = () => {
                         {pkg.promo_price ? (
                            <>
                              <div className="text-sm font-bold text-zinc-500 line-through">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
-                             <div className="text-2xl font-bold text-white">R$ {parseFloat(pkg.promo_price).toFixed(2).replace('.',',')}</div>
-                             <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {(parseFloat(pkg.promo_price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
-                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.promo_price })} className="w-full py-2.5 rounded-lg bg-red-600/80 text-white font-black border border-red-500/50 hover:bg-red-500 transition-all transform active:scale-95 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2">
+                             <div className="text-sm font-bold text-white">R$ {parseFloat(pkg.promo_price).toFixed(2).replace('.',',')}</div>
+                             <p className="text-[10px] text-yellow-500 mt-1 mb-2">R$ {(parseFloat(pkg.promo_price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
+                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.promo_price })} className="w-full py-1.5 rounded-md bg-red-600/80 text-white font-black border border-red-500/50 hover:bg-red-500 transition-all transform active:scale-95 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2">
                                <ShoppingCart className="w-4 h-4" /> Comprar Agora
                              </button>
                            </>
                         ) : (
                            <>
-                             <div className="text-2xl font-bold text-white mt-4">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
-                             <p className="text-[10px] text-yellow-500 mt-1 mb-5">R$ {(parseFloat(pkg.price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
-                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.price })} className="w-full py-2.5 rounded-lg bg-dark-700 text-zinc-300 font-black border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
+                             <div className="text-sm font-bold text-white mt-2">R$ {parseFloat(pkg.price).toFixed(2).replace('.',',')}</div>
+                             <p className="text-[10px] text-yellow-500 mt-1 mb-2">R$ {(parseFloat(pkg.price) / pkg.credit_amount).toFixed(2).replace('.',',')} / unidade</p>
+                             <button onClick={() => handleCheckout({ id: pkg.id, credits: pkg.credit_amount, price: pkg.price })} className="w-full py-1.5 rounded-md bg-dark-700 text-zinc-300 font-black border border-dark-600 group-hover:bg-yellow-500 group-hover:text-dark-900 group-hover:border-yellow-500 transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
                                <ShoppingCart className="w-4 h-4" /> Comprar Agora
                              </button>
                            </>
@@ -613,28 +613,28 @@ const Resale = () => {
                     </div>
                 ))}
             </div>
-            <p className="text-xs text-zinc-500 text-center mt-6">Compras confirmadas caem no seu saldo automaticamente em até 5 segundos via PIX.</p>
+            <p className="text-xs text-zinc-500 text-center mt-2">Compras confirmadas caem no seu saldo automaticamente em até 5 segundos via PIX.</p>
         </div>
 
         {/* PARTE 2: HISTÓRICO DE COMPRAS (Lado Direito/Ocupa 1/3) */}
         <div className="lg:col-span-1">
-            <div className="glass-effect rounded-xl border border-dark-700 bg-dark-800/80 p-5 sticky top-24">
-                <h2 className="text-lg font-bold flex items-center justify-between border-b border-dark-700 pb-3 mb-4">
+            <div className="glass-effect rounded-md border border-dark-700 bg-dark-800/80 p-5 sticky top-24">
+                <h2 className="text-sm font-bold flex items-center justify-between border-b border-dark-700 pb-3 mb-2">
                     <div className="flex items-center gap-2">
                         <History className="text-orange-500 w-5 h-5"/> Extrato de Créditos
                     </div>
-                    <button onClick={carregarHistorico} className="p-2 hover:bg-dark-700 rounded-lg transition-colors text-zinc-500 hover:text-zinc-300">
+                    <button onClick={carregarHistorico} className="p-2 hover:bg-dark-700 rounded-md transition-colors text-zinc-500 hover:text-zinc-300">
                         <Zap className={`w-3.5 h-3.5 ${historyLoading ? 'animate-spin' : ''}`} />
                     </button>
                 </h2>
 
-                <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
                     {historyLoading ? (
                         <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-zinc-600" /></div>
                     ) : history.map((trx, idx) => (
                         <div key={idx} 
                              onClick={() => { setSelectedTrx(trx); setShowReceiptModal(true); }}
-                             className="bg-dark-900 border border-dark-700 rounded-lg p-4 flex flex-col hover:border-orange-500/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-95">
+                             className="bg-dark-900 border border-dark-700 rounded-md p-2 flex flex-col hover:border-orange-500/50 cursor-pointer transition-all hover:scale-[1.02] active:scale-95">
                             <div className="flex justify-between items-start mb-2">
                                 <div className="text-[10px] font-mono text-zinc-500">#{trx.payment_id?.substring(0,8) || trx.id}</div>
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
@@ -663,7 +663,7 @@ const Resale = () => {
                     
                     {history.length === 0 && !historyLoading && (
                         <div className="text-center py-10 opacity-50">
-                            <ShoppingCart className="mx-auto h-10 w-10 text-zinc-600 mb-2" />
+                            <ShoppingCart className="mx-auto h-8 w-8 text-zinc-600 mb-2" />
                             <p className="text-xs text-zinc-400">Nenhuma movimentação encontrada.</p>
                         </div>
                     )}
@@ -679,22 +679,22 @@ const Resale = () => {
       {/* ========================================================================= */}
       {activeTab === 'logs' && isMasterOrUnlimited && (
       <div className="animate-in fade-in duration-300">
-        <div className="flex justify-between items-center mb-4">
-           <h2 className="text-xl font-bold flex items-center gap-2"><Activity className="text-brand-500 w-5 h-5"/> Logs de Auditoria</h2>
-           <button onClick={carregarLogs} className="bg-dark-800 hover:bg-dark-700 text-zinc-300 px-4 py-2 rounded-lg font-bold border border-dark-600 transition-colors flex items-center gap-2 text-sm">
+        <div className="flex justify-between items-center mb-2">
+           <h2 className="text-sm font-bold flex items-center gap-2"><Activity className="text-brand-500 w-5 h-5"/> Logs de Auditoria</h2>
+           <button onClick={carregarLogs} className="bg-dark-800 hover:bg-dark-700 text-zinc-300 px-4 py-1.5 rounded-md font-bold border border-dark-600 transition-colors flex items-center gap-2 text-sm">
               <RefreshCw className={`w-4 h-4 ${logsLoading ? 'animate-spin' : ''}`} /> Atualizar
            </button>
         </div>
-        <div className="glass-effect rounded-xl border border-dark-700 shadow-xl bg-dark-800/60 overflow-hidden">
+        <div className="glass-effect rounded-md border border-dark-700 shadow-xl bg-dark-800/60 overflow-hidden">
             <div className="overflow-x-auto custom-scrollbar">
                 <table className="min-w-full divide-y divide-dark-700">
                 <thead className="bg-dark-900/50">
                     <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Data e Hora</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Usuário</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Ação</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Detalhes</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-32">IP</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Data e Hora</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Usuário</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-48">Ação</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Detalhes</th>
+                    <th className="px-2 py-1 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider w-32">IP</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-700">
@@ -708,7 +708,7 @@ const Resale = () => {
                     ) : auditLogs.length === 0 ? (
                         <tr>
                             <td colSpan="5" className="px-6 py-8 text-center text-zinc-500">
-                                <Shield className="mx-auto h-8 w-8 text-dark-600 mb-2" />
+                                <Shield className="mx-auto h-5 w-5 text-dark-600 mb-2" />
                                 Nenhum log registrado ainda.
                             </td>
                         </tr>
@@ -719,19 +719,19 @@ const Resale = () => {
                         
                         return (
                             <tr key={log.id} className="hover:bg-dark-700/30 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-400 font-mono">
+                                <td className="px-2 py-1 whitespace-nowrap text-xs text-zinc-400 font-mono">
                                     <span className="text-zinc-300 font-bold">{dataStr}</span> às {horaStr}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-2 py-1 whitespace-nowrap">
                                     <span className="text-sm font-bold text-white bg-dark-900 px-2.5 py-1 rounded-md border border-dark-600">{log.user_name || `ID: ${log.user_id}`}</span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
+                                <td className="px-2 py-1 whitespace-nowrap">
                                     <span className="text-xs font-bold uppercase tracking-wider text-brand-400 bg-brand-500/10 px-2 py-1 rounded border border-brand-500/20">{log.action}</span>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-zinc-300">
+                                <td className="px-2 py-1 text-sm text-zinc-300">
                                     {log.details}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-xs font-mono text-zinc-500">
+                                <td className="px-2 py-1 whitespace-nowrap text-xs font-mono text-zinc-500">
                                     {log.ip_address || 'N/A'}
                                 </td>
                             </tr>
@@ -748,20 +748,20 @@ const Resale = () => {
       {/* MODAL 1: CRIAR/EDITAR REVENDEDOR */}
       {/* ========================================================================= */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="glass-effect relative w-full max-w-2xl shadow-2xl rounded-xl border border-dark-700 bg-dark-900/90 p-1 flex flex-col max-h-[90vh]">
-            <div className="px-5 py-3 border-b border-dark-700 bg-dark-800/50 flex justify-between items-center rounded-t-2xl shrink-0">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-2 z-50 animate-in fade-in duration-200">
+          <div className="glass-effect relative w-full max-w-2xl shadow-2xl rounded-md border border-dark-700 bg-dark-900/90 p-1 flex flex-col max-h-[90vh]">
+            <div className="px-5 py-1.5 border-b border-dark-700 bg-dark-800/50 flex justify-between items-center rounded-t-2xl shrink-0">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
                  <Shield className="w-5 h-5 text-orange-500" /> {editandoRevendedor ? 'Atualizar Revendedor & DNS' : 'Nova Franquia de Revenda'}
               </h3>
               <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="text-zinc-500 hover:text-white"><X className="h-5 w-5" /></button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-4 md:p-5 flex-1 overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5 mb-5">
-                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome Completo *</label><input type="text" required value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
-                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome da Empresa</label><input type="text" value={formData.empresa} onChange={(e) => setFormData({ ...formData, empresa: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
-                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Email (Painel Web) *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
+            <form onSubmit={handleSubmit} className="p-2 md:p-2 flex-1 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-2 mb-2">
+                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome Completo *</label><input type="text" required value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-md px-2 py-1 focus:outline-none focus:border-orange-500" /></div>
+                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Nome da Empresa</label><input type="text" value={formData.empresa} onChange={(e) => setFormData({ ...formData, empresa: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-md px-2 py-1 focus:outline-none focus:border-orange-500" /></div>
+                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Email (Painel Web) *</label><input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-md px-2 py-1 focus:outline-none focus:border-orange-500" /></div>
                 <div>
                     <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Senha de Acesso {editandoRevendedor ? '(Deixe em branco para não alterar)' : '*'}</label>
                     <div className="relative">
@@ -770,29 +770,29 @@ const Resale = () => {
                             required={!editandoRevendedor} 
                             value={formData.senha} 
                             onChange={(e) => setFormData({ ...formData, senha: e.target.value })} 
-                            className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:border-orange-500 font-mono" 
+                            className="w-full bg-dark-900 border border-dark-600 text-white rounded-md pl-10 pr-4 py-1.5 focus:outline-none focus:border-orange-500 font-mono" 
                             placeholder={editandoRevendedor ? "******** (Inalterada)" : "********"}
                         />
-                        <Key className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3.5" />
+                        <Key className="w-4 h-4 text-zinc-500 absolute left-3.5 top-2.5" />
                     </div>
                 </div>
-                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Telefone/WhatsApp</label><input type="text" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" /></div>
+                <div><label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Telefone/WhatsApp</label><input type="text" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-md px-2 py-1 focus:outline-none focus:border-orange-500" /></div>
               </div>
 
 
-              <div className="bg-dark-800/80 rounded-lg p-5 border border-brand-500/30 mb-5 relative overflow-hidden">
+              <div className="bg-dark-800/80 rounded-md p-5 border border-brand-500/30 mb-2 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
-                  <h4 className="text-sm font-bold text-brand-400 mb-4 flex items-center gap-2"><Link2 className="w-4 h-4" /> Integração DNS Local (Redundância)</h4>
-                  <div className="grid grid-cols-1 gap-4">
+                  <h4 className="text-sm font-bold text-brand-400 mb-2 flex items-center gap-2"><Link2 className="w-4 h-4" /> Integração DNS Local (Redundância)</h4>
+                  <div className="grid grid-cols-1 gap-2">
                       <div>
                           <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Provider Code (Identificação do App)</label>
                           <div className="relative">
-                              <input type="text" maxLength={8} required value={formData.provider_code} onChange={(e) => setFormData({ ...formData, provider_code: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-brand-400 font-mono font-bold text-lg rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-brand-500" />
-                              <KeyRound className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3.5" />
+                              <input type="text" maxLength={8} required value={formData.provider_code} onChange={(e) => setFormData({ ...formData, provider_code: e.target.value })} className="w-full bg-dark-900 border border-dark-600 text-brand-400 font-mono font-bold text-base rounded-md pl-10 pr-4 py-1.5 focus:outline-none focus:border-brand-500" />
+                              <KeyRound className="w-4 h-4 text-zinc-500 absolute left-3.5 top-2.5" />
                           </div>
                       </div>
                       
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                           <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest">URLs de Teste (DNS do Revendedor)</label>
                           {formData.test_api_urls.map((url, index) => (
                               <div key={index} className="flex gap-2 group/url">
@@ -806,9 +806,9 @@ const Resale = () => {
                                               newUrls[index] = e.target.value;
                                               setFormData({ ...formData, test_api_urls: newUrls, dns_url: newUrls[0] });
                                           }} 
-                                          className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:border-brand-500 text-sm" 
+                                          className="w-full bg-dark-900 border border-dark-600 text-white rounded-md pl-10 pr-4 py-1.5 focus:outline-none focus:border-brand-500 text-sm" 
                                       />
-                                      <Globe className="w-4 h-4 text-zinc-600 absolute left-3.5 top-3.5" />
+                                      <Globe className="w-4 h-4 text-zinc-600 absolute left-3.5 top-2.5" />
                                   </div>
                                   {formData.test_api_urls.length > 1 && (
                                       <button 
@@ -817,7 +817,7 @@ const Resale = () => {
                                               const newUrls = formData.test_api_urls.filter((_, i) => i !== index);
                                               setFormData({ ...formData, test_api_urls: newUrls, dns_url: newUrls[0] || '' });
                                           }}
-                                          className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 rounded-lg border border-red-500/20 transition-all"
+                                          className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 rounded-md border border-red-500/20 transition-all"
                                       >
                                           <Trash2 className="w-4 h-4" />
                                       </button>
@@ -827,7 +827,7 @@ const Resale = () => {
                           <button 
                               type="button" 
                               onClick={() => setFormData({ ...formData, test_api_urls: [...formData.test_api_urls, ''] })}
-                              className="w-full py-2 border border-dashed border-dark-600 rounded-lg text-zinc-500 hover:text-brand-400 hover:border-brand-500/50 hover:bg-brand-500/5 text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                              className="w-full py-1.5 border border-dashed border-dark-600 rounded-md text-zinc-500 hover:text-brand-400 hover:border-brand-500/50 hover:bg-brand-500/5 text-xs font-bold flex items-center justify-center gap-2 transition-all"
                           >
                               <Plus className="w-4 h-4" /> Adicionar Outro Servidor de Teste
                           </button>
@@ -835,9 +835,9 @@ const Resale = () => {
                   </div>
               </div>
 
-              <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-600 mb-5 max-h-[220px] overflow-y-auto custom-scrollbar">
-                  <h4 className="text-sm font-bold text-zinc-300 mb-4 flex items-center gap-2 sticky top-0 bg-dark-800/90 py-1 backdrop-blur-sm z-10"><Shield className="w-4 h-4 text-zinc-400" /> Permissões de Acesso Ao Menu</h4>
-                  <div className="space-y-4">
+              <div className="bg-dark-800/50 rounded-md p-2 border border-dark-600 mb-2 max-h-[220px] overflow-y-auto custom-scrollbar">
+                  <h4 className="text-sm font-bold text-zinc-300 mb-2 flex items-center gap-2 sticky top-0 bg-dark-800/90 py-1 backdrop-blur-sm z-10"><Shield className="w-4 h-4 text-zinc-400" /> Permissões de Acesso Ao Menu</h4>
+                  <div className="space-y-2">
                       <div>
                           <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 border-b border-dark-700 pb-1">Principal</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -886,7 +886,7 @@ const Resale = () => {
                                 { label: 'Agentes IA', field: 'perm_agentes', color: 'bg-orange-500' }
                              ].map(item => (
                                 <div key={item.field} className="flex flex-col gap-1">
-                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
+                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-md cursor-pointer hover:border-brand-500/50 transition">
                                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
                                       <div className="relative flex-shrink-0">
                                           <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
@@ -927,7 +927,7 @@ const Resale = () => {
                                 { label: 'Árvore IPTV', field: 'perm_arvore', color: 'bg-green-500' }
                              ].map(item => (
                                 <div key={item.field} className="flex flex-col gap-1">
-                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
+                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-md cursor-pointer hover:border-brand-500/50 transition">
                                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
                                       <div className="relative flex-shrink-0">
                                           <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
@@ -989,7 +989,7 @@ const Resale = () => {
                                 }
                              ].map(item => (
                                 <div key={item.field} className="flex flex-col gap-1">
-                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-lg cursor-pointer hover:border-brand-500/50 transition">
+                                  <label className="flex items-center justify-between bg-dark-900 border border-dark-700 px-3 py-1.5 rounded-md cursor-pointer hover:border-brand-500/50 transition">
                                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider truncate mr-2" title={item.label}>{item.label}</span>
                                       <div className="relative flex-shrink-0">
                                           <input type="checkbox" className="sr-only" checked={formData[item.field]} onChange={(e) => setFormData({...formData, [item.field]: e.target.checked})} />
@@ -1018,14 +1018,14 @@ const Resale = () => {
                   </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 mb-5 border-t border-dark-700 pt-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-2 mb-2 border-t border-dark-700 pt-5">
                 <div>
                   {isMasterOrUnlimited && (
                     <label className="flex items-center cursor-pointer mb-2">
                       <span className="text-xs font-bold text-brand-400 mr-2 uppercase">Painel Ilimitado?</span>
                       <div className="relative">
                         <input type="checkbox" className="sr-only" checked={formData.plano_revenda === 'Ilimitado'} onChange={(e) => setFormData({ ...formData, plano_revenda: e.target.checked ? 'Ilimitado' : 'Revenda', limite_dispositivos: e.target.checked ? 999999 : 10, creditos: e.target.checked ? 0 : formData.creditos })} />
-                        <div className={`block w-10 h-5 rounded-full transition-colors ${formData.plano_revenda === 'Ilimitado' ? 'bg-brand-500' : 'bg-dark-600'}`}></div>
+                        <div className={`block w-9 h-5 rounded-full transition-colors ${formData.plano_revenda === 'Ilimitado' ? 'bg-brand-500' : 'bg-dark-600'}`}></div>
                         <div className={`dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform ${formData.plano_revenda === 'Ilimitado' ? 'transform translate-x-5' : ''}`}></div>
                       </div>
                     </label>
@@ -1033,22 +1033,22 @@ const Resale = () => {
                   {formData.plano_revenda !== 'Ilimitado' && (
                     <>
                       <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase">Limite de Acessos *</label>
-                      <input type="number" required min="1" value={formData.limite_dispositivos} onChange={(e) => setFormData({ ...formData, limite_dispositivos: parseInt(e.target.value) })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500" />
+                      <input type="number" required min="1" value={formData.limite_dispositivos} onChange={(e) => setFormData({ ...formData, limite_dispositivos: parseInt(e.target.value) })} className="w-full bg-dark-900 border border-dark-600 text-white rounded-md px-2 py-1 focus:outline-none focus:border-orange-500" />
                     </>
                   )}
                 </div>
                 
                 {formData.plano_revenda !== 'Ilimitado' ? (
-                   <div><label className="block text-xs font-bold w-full text-yellow-500 mb-1.5 uppercase"><i className="fas fa-coins"></i> Créditos Iniciais *</label><input type="number" required min="0" value={formData.creditos} onChange={(e) => setFormData({ ...formData, creditos: parseInt(e.target.value) || 0 })} className="w-full bg-dark-900 border border-yellow-500/30 text-yellow-500 font-bold rounded-lg px-4 py-2.5 focus:outline-none focus:border-yellow-500" /></div>
+                   <div><label className="block text-xs font-bold w-full text-yellow-500 mb-1.5 uppercase"><i className="fas fa-coins"></i> Créditos Iniciais *</label><input type="number" required min="0" value={formData.creditos} onChange={(e) => setFormData({ ...formData, creditos: parseInt(e.target.value) || 0 })} className="w-full bg-dark-900 border border-yellow-500/30 text-yellow-500 font-bold rounded-md px-2 py-1 focus:outline-none focus:border-yellow-500" /></div>
                 ) : (
                    <div></div>
                 )}
                 <div className="flex items-center justify-start sm:justify-end">
-                  <label className="flex items-center cursor-pointer mt-2 sm:mt-5">
+                  <label className="flex items-center cursor-pointer mt-2 sm:mt-2">
                     <span className="mr-3 text-sm font-bold text-white">Ativo</span>
                     <div className="relative">
                       <input type="checkbox" className="sr-only" checked={formData.ativo} onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })} />
-                      <div className={`block w-10 h-5 md:w-12 md:h-6 rounded-full transition-colors ${formData.ativo ? 'bg-green-500' : 'bg-dark-600'}`}></div>
+                      <div className={`block w-9 h-5 md:w-9 md:h-6 rounded-full transition-colors ${formData.ativo ? 'bg-green-500' : 'bg-dark-600'}`}></div>
                       <div className={`dot absolute left-0.5 top-0.5 md:left-1 md:top-1 bg-white w-4 h-4 rounded-full transition-transform ${formData.ativo ? 'transform translate-x-5 md:translate-x-6' : ''}`}></div>
                     </div>
                   </label>
@@ -1056,9 +1056,9 @@ const Resale = () => {
               </div>
 
 
-              <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-dark-700 sticky bottom-0 bg-dark-900/95 py-2 backdrop-blur-sm z-10">
-                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-5 py-2.5 bg-dark-700 hover:bg-dark-600 active:scale-95 text-zinc-300 font-black rounded-lg border border-dark-600 transition-all">Cancelar</button>
-                <button type="submit" className="px-5 py-2.5 bg-orange-600 hover:bg-orange-500 active:scale-95 text-white font-black rounded-lg shadow border border-orange-500/50 flex items-center gap-2 transition-all"><Shield className="w-4 h-4" /> Salvar Configurações</button>
+              <div className="flex justify-end gap-2 pt-4 mt-2 border-t border-dark-700 sticky bottom-0 bg-dark-900/95 py-1.5 backdrop-blur-sm z-10">
+                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="px-5 py-1.5 bg-dark-700 hover:bg-dark-600 active:scale-95 text-zinc-300 font-black rounded-md border border-dark-600 transition-all">Cancelar</button>
+                <button type="submit" className="px-5 py-1.5 bg-orange-600 hover:bg-orange-500 active:scale-95 text-white font-black rounded-md shadow border border-orange-500/50 flex items-center gap-2 transition-all"><Shield className="w-4 h-4" /> Salvar Configurações</button>
               </div>
             </form>
           </div>
@@ -1069,22 +1069,22 @@ const Resale = () => {
       {/* MODAL 2: CHECKOUT PIX */}
       {/* ========================================================================= */}
       {showPixModal && selectedPackage && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="glass-effect relative w-full max-w-sm shadow-2xl rounded-xl border border-dark-700 bg-dark-900 p-1">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-2 z-50 animate-in fade-in duration-200">
+          <div className="glass-effect relative w-full max-w-sm shadow-2xl rounded-md border border-dark-700 bg-dark-900 p-1">
             <button onClick={() => { 
                 setShowPixModal(false); 
                 setPaymentData(null); 
                 setCardForm({ number: '', expiry: '', cvv: '', name: '', doc: '' });
-            }} className="absolute z-10 top-3 right-3 w-8 h-8 flex items-center justify-center bg-dark-800 text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 rounded-full transition-all border border-dark-600">
+            }} className="absolute z-10 top-2 right-3 w-8 h-8 flex items-center justify-center bg-dark-800 text-zinc-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 rounded-full transition-all border border-dark-600">
                 <X className="w-4 h-4" />
             </button>
 
             <div className="p-5 pb-2 text-center text-white mt-2">
-                <div className="w-16 h-14 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+                <div className="w-16 h-14 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-2 border border-green-500/20">
                     <QrCode className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold">Pague R$ {parseFloat(selectedPackage.price).toFixed(2).replace('.',',')}</h3>
-                <p className="text-sm text-zinc-400 mt-1">E receba <strong className="text-yellow-500">{selectedPackage.credits} Créditos</strong> na hora!</p>
+                <h3 className="text-sm font-bold">Pague R$ {parseFloat(selectedPackage.price).toFixed(2).replace('.',',')}</h3>
+                <p className="text-xs text-zinc-400 mt-1">E receba <strong className="text-yellow-500">{selectedPackage.credits} Créditos</strong> na hora!</p>
             </div>
             
             <div className="flex px-6 gap-2 mb-2">
@@ -1094,7 +1094,7 @@ const Resale = () => {
                     setPaymentError(''); 
                     if (!paymentData) handleGeneratePix(selectedPackage);
                   }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
                     checkoutMethod === 'pix' 
                     ? 'bg-green-500/10 border-green-500/50 text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
                     : 'bg-dark-800 border-dark-700 text-zinc-500 hover:text-zinc-300'
@@ -1108,7 +1108,7 @@ const Resale = () => {
                     setPaymentError(''); 
                     setPaymentData(null);
                   }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
                     checkoutMethod === 'card' 
                     ? 'bg-blue-500/10 border-blue-500/50 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)]' 
                     : 'bg-dark-800 border-dark-700 text-zinc-500 hover:text-zinc-300'
@@ -1121,24 +1121,24 @@ const Resale = () => {
             <div className="p-5 pt-2 text-center">
                 {paymentLoading && (
                    <div className="py-10 text-zinc-500 flex flex-col items-center">
-                      <i className="fas fa-circle-notch fa-spin text-2xl mb-3 text-orange-500"></i>
+                      <i className="fas fa-circle-notch fa-spin text-base mb-2 text-orange-500"></i>
                       <p className="text-sm">Processando {checkoutMethod === 'pix' ? 'PIX' : 'Cartão'}...</p>
                    </div>
                 )}
 
                 {paymentError && (
-                   <div className="py-5 px-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg mb-4 text-xs font-bold">
+                   <div className="py-5 px-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-md mb-2 text-xs font-bold">
                        {paymentError}
                    </div>
                 )}
 
                 {checkoutMethod === 'pix' && paymentData && paymentData.status !== 'approved' && !paymentError && !paymentLoading && (
                   <>
-                    <div className="bg-white rounded-lg p-4 flex justify-center mb-4">
-                        <img src={`data:image/png;base64,${paymentData.qr_code_base64}`} alt="QR Code Pix" className="rounded-lg shadow-sm w-48 h-48" />
+                    <div className="bg-white rounded-md p-2 flex justify-center mb-2">
+                        <img src={`data:image/png;base64,${paymentData.qr_code_base64}`} alt="QR Code Pix" className="rounded-md shadow-sm w-48 h-48" />
                     </div>
                     
-                    <button onClick={() => { navigator.clipboard.writeText(paymentData.qr_code); alert('PIX Copiado!'); }} className="w-full bg-dark-800 text-zinc-300 border border-dark-600 py-3 rounded-lg font-mono text-xs flex items-center justify-center gap-2 hover:bg-dark-700 transition-colors uppercase tracking-wider mb-4">
+                    <button onClick={() => { navigator.clipboard.writeText(paymentData.qr_code); alert('PIX Copiado!'); }} className="w-full bg-dark-800 text-zinc-300 border border-dark-600 py-1.5 rounded-md font-mono text-xs flex items-center justify-center gap-2 hover:bg-dark-700 transition-colors uppercase tracking-wider mb-2">
                         <i className="far fa-copy"></i> Copiar Código PIX
                     </button>
 
@@ -1149,25 +1149,25 @@ const Resale = () => {
                 )}
 
                 {checkoutMethod === 'card' && !paymentData && !paymentLoading && (
-                  <form onSubmit={handleCardCheckout} className="space-y-3 text-left">
+                  <form onSubmit={handleCardCheckout} className="space-y-2 text-left">
                      <div>
                         <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">Número do Cartão</label>
                         <input 
                           type="text" 
                           placeholder="0000 0000 0000 0000"
-                          className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                          className="w-full bg-dark-800 border border-dark-700 rounded-md px-2 py-1 text-sm focus:border-blue-500 transition-colors"
                           value={cardForm.number}
                           onChange={e => setCardForm({...cardForm, number: e.target.value})}
                           required
                         />
                      </div>
-                     <div className="grid grid-cols-2 gap-3">
+                     <div className="grid grid-cols-2 gap-2">
                         <div>
                            <label className="text-[10px] font-bold text-zinc-500 uppercase ml-1">Validade</label>
                            <input 
                              type="text" 
                              placeholder="MM/AA"
-                             className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                             className="w-full bg-dark-800 border border-dark-700 rounded-md px-2 py-1 text-sm focus:border-blue-500 transition-colors"
                              value={cardForm.expiry}
                              onChange={e => setCardForm({...cardForm, expiry: e.target.value})}
                              required
@@ -1178,7 +1178,7 @@ const Resale = () => {
                            <input 
                              type="text" 
                              placeholder="123"
-                             className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                             className="w-full bg-dark-800 border border-dark-700 rounded-md px-2 py-1 text-sm focus:border-blue-500 transition-colors"
                              value={cardForm.cvv}
                              onChange={e => setCardForm({...cardForm, cvv: e.target.value})}
                              required
@@ -1190,7 +1190,7 @@ const Resale = () => {
                         <input 
                           type="text" 
                           placeholder="COMO ESTÁ NO CARTÃO"
-                          className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors uppercase"
+                          className="w-full bg-dark-800 border border-dark-700 rounded-md px-2 py-1 text-sm focus:border-blue-500 transition-colors uppercase"
                           value={cardForm.name}
                           onChange={e => setCardForm({...cardForm, name: e.target.value})}
                           required
@@ -1201,14 +1201,14 @@ const Resale = () => {
                         <input 
                           type="text" 
                           placeholder="000.000.000-00"
-                          className="w-full bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 transition-colors"
+                          className="w-full bg-dark-800 border border-dark-700 rounded-md px-2 py-1 text-sm focus:border-blue-500 transition-colors"
                           value={cardForm.doc}
                           onChange={e => setCardForm({...cardForm, doc: e.target.value})}
                           required
                         />
                      </div>
                      
-                     <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 mt-4 flex items-center justify-center gap-2">
+                     <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 rounded-md shadow-lg shadow-blue-500/20 transition-all transform active:scale-95 mt-2 flex items-center justify-center gap-2">
                         <Shield size={16} /> Finalizar Compra
                      </button>
                   </form>
@@ -1216,8 +1216,8 @@ const Resale = () => {
 
                 {paymentData && paymentData.status === 'approved' && (
                   <div className="py-5 text-green-500">
-                    <CheckCircle className="w-16 h-14 mx-auto mb-3 text-green-500 animate-bounce" />
-                    <h3 className="text-xl font-bold mb-2">Pagamento Aprovado!</h3>
+                    <CheckCircle className="w-16 h-14 mx-auto mb-2 text-green-500 animate-bounce" />
+                    <h3 className="text-sm font-bold mb-2">Pagamento Aprovado!</h3>
                     <p className="text-sm text-zinc-300">Seus créditos já foram adicionados na conta.</p>
                   </div>
                 )}
@@ -1230,46 +1230,46 @@ const Resale = () => {
       {/* ABA: ATIVAÇÃO DE APPS (MAXX PLAYER) */}
       {/* ========================================================================= */}
       {activeTab === 'apps' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-500 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 animate-in fade-in duration-500 pb-20">
            <div className="glass-effect rounded-[2rem] p-6 border border-dark-700 bg-dark-900/50 flex flex-col">
-              <div className="flex items-center gap-4 mb-6">
-                 <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+              <div className="flex items-center gap-2 mb-2">
+                 <div className="w-14 h-14 rounded-md bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
                     <Smartphone className="w-7 h-7 text-blue-500" />
                  </div>
                  <div>
-                    <h2 className="text-xl font-black text-white">Ativar Aplicativo</h2>
+                    <h2 className="text-sm font-black text-white">Ativar Aplicativo</h2>
                     <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Liberação instantânea via MAC Address</p>
                  </div>
               </div>
 
-              <div className="space-y-6 flex-1">
+              <div className="space-y-2 flex-1">
                  <div>
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 block ml-1">1. Endereço MAC do Dispositivo</label>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 block ml-1">1. Endereço MAC do Dispositivo</label>
                     <input 
                       type="text" 
                       placeholder="00:11:22:AA:BB:CC"
                       value={activationForm.mac}
                       onChange={e => setActivationForm({...activationForm, mac: e.target.value.toUpperCase()})}
-                      className="w-full bg-dark-800 border-2 border-dark-700 rounded-xl px-6 py-4 text-white focus:border-blue-500 transition-all outline-none font-mono text-xl placeholder:text-zinc-700"
+                      className="w-full bg-dark-800 border-2 border-dark-700 rounded-md px-2 py-1 text-white focus:border-blue-500 transition-all outline-none font-mono text-base placeholder:text-zinc-700"
                     />
-                    <div className="flex items-center gap-2 mt-3 px-1">
+                    <div className="flex items-center gap-2 mt-2 px-1">
                         <div className="w-1 h-1 rounded-full bg-blue-500"></div>
                         <p className="text-[10px] text-zinc-500 font-bold italic">O MAC fica no canto inferior direito da tela inicial do App.</p>
                     </div>
                  </div>
 
                  <div>
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 block ml-1">2. Selecione o Aplicativo</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 block ml-1">2. Selecione o Aplicativo</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                        {apps.length === 0 ? (
-                           <div className="col-span-full py-4 text-center text-zinc-600 text-xs italic">Nenhum app configurado pelo administrador.</div>
+                           <div className="col-span-full py-1.5 text-center text-zinc-600 text-xs italic">Nenhum app configurado pelo administrador.</div>
                        ) : apps.map(app => (
                           <button 
                             key={app.id}
                             onClick={() => setActivationForm({...activationForm, appId: app.id})}
-                            className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${activationForm.appId === app.id ? 'bg-blue-500/10 border-blue-500 text-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500 hover:border-dark-600'}`}
+                            className={`p-2 rounded-md border-2 transition-all flex flex-col items-center gap-2 ${activationForm.appId === app.id ? 'bg-blue-500/10 border-blue-500 text-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500 hover:border-dark-600'}`}
                           >
-                             <div className="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center overflow-hidden border border-white/5">
+                             <div className="w-9 h-9 rounded-md bg-dark-700 flex items-center justify-center overflow-hidden border border-white/5">
                                 {app.logo_url ? <img src={app.logo_url} className="w-full h-full object-cover" /> : <Smartphone size={24} />}
                              </div>
                              <span className="text-[11px] font-black truncate w-full text-center uppercase tracking-tighter">{app.app_name}</span>
@@ -1279,23 +1279,23 @@ const Resale = () => {
                  </div>
 
                  {activationForm.appId && (
-                    <div className="animate-in slide-in-from-top-4 duration-300">
-                       <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3 block ml-1">3. Escolha a Vigência</label>
-                       <div className="flex gap-3">
+                    <div className="animate-in slide-in-from-top-2 duration-300">
+                       <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2 block ml-1">3. Escolha a Vigência</label>
+                       <div className="flex gap-2">
                           <button 
                             onClick={() => setActivationForm({...activationForm, type: 'monthly'})}
-                            className={`flex-1 p-5 rounded-xl border-2 transition-all flex flex-col items-center relative overflow-hidden ${activationForm.type === 'monthly' ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500'}`}
+                            className={`flex-1 p-5 rounded-md border-2 transition-all flex flex-col items-center relative overflow-hidden ${activationForm.type === 'monthly' ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500'}`}
                           >
                              <span className="text-[9px] font-black uppercase tracking-widest mb-1">PLANO MENSAL</span>
-                             <span className="text-xl font-black tracking-tighter">R$ {parseFloat(apps.find(a => a.id === activationForm.appId)?.monthly_price || 0).toFixed(2)}</span>
+                             <span className="text-sm font-black tracking-tighter">R$ {parseFloat(apps.find(a => a.id === activationForm.appId)?.monthly_price || 0).toFixed(2)}</span>
                              {activationForm.type === 'monthly' && <div className="absolute top-0 right-0 w-6 h-6 bg-orange-500 flex items-center justify-center rounded-bl-xl"><CheckCircle size={10} color="#fff" /></div>}
                           </button>
                           <button 
                             onClick={() => setActivationForm({...activationForm, type: 'yearly'})}
-                            className={`flex-1 p-5 rounded-xl border-2 transition-all flex flex-col items-center relative overflow-hidden ${activationForm.type === 'yearly' ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500'}`}
+                            className={`flex-1 p-5 rounded-md border-2 transition-all flex flex-col items-center relative overflow-hidden ${activationForm.type === 'yearly' ? 'bg-orange-500/10 border-orange-500 text-orange-500 shadow-[0_0_20px_rgba(255,165,0,0.1)]' : 'bg-dark-800 border-dark-700 text-zinc-500'}`}
                           >
                              <span className="text-[9px] font-black uppercase tracking-widest mb-1">PLANO ANUAL</span>
-                             <span className="text-xl font-black tracking-tighter">R$ {parseFloat(apps.find(a => a.id === activationForm.appId)?.yearly_price || 0).toFixed(2)}</span>
+                             <span className="text-sm font-black tracking-tighter">R$ {parseFloat(apps.find(a => a.id === activationForm.appId)?.yearly_price || 0).toFixed(2)}</span>
                              {activationForm.type === 'yearly' && <div className="absolute top-0 right-0 w-6 h-6 bg-orange-500 flex items-center justify-center rounded-bl-xl"><CheckCircle size={10} color="#fff" /></div>}
                           </button>
                        </div>
@@ -1317,28 +1317,28 @@ const Resale = () => {
                      app_id: app.id
                    });
                 }}
-                className={`w-full py-5 mt-6 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${(!activationForm.mac || !activationForm.appId) ? 'bg-dark-800 text-zinc-600 cursor-not-allowed border border-dark-700' : 'bg-orange-500 text-white shadow-[0_10px_30px_rgba(255,165,0,0.2)] hover:scale-[1.02] active:scale-95 hover:bg-orange-400'}`}
+                className={`w-full py-5 mt-2 rounded-md font-black text-sm uppercase tracking-widest transition-all ${(!activationForm.mac || !activationForm.appId) ? 'bg-dark-800 text-zinc-600 cursor-not-allowed border border-dark-700' : 'bg-orange-500 text-white shadow-[0_10px_30px_rgba(255,165,0,0.2)] hover:scale-[1.02] active:scale-95 hover:bg-orange-400'}`}
               >
                  ATIVAR AGORA NO MAC
               </button>
 
               {/* FAQ ESTRATÉGICO */}
               <div className="mt-12 border-t border-dark-700 pt-6">
-                 <h3 className="text-lg font-black text-white mb-6 flex items-center gap-2">
+                 <h3 className="text-sm font-black text-white mb-2 flex items-center gap-2">
                     <HelpCircle className="text-orange-500" /> Perguntas Frequentes
                  </h3>
-                 <div className="space-y-4">
+                 <div className="space-y-2">
                     {[
                       { q: 'O que é o MAC Address?', a: 'É o código único da sua TV. Você encontra ele no canto inferior direito do app MAXX PLAYER.' },
                       { q: 'A liberação é automática?', a: 'Sim! Após a confirmação do PIX, sua TV é liberada instantaneamente pelo nosso servidor.' },
                       { q: 'Posso transferir para outra TV?', a: 'Sim, use a ferramenta de "Migração" na aba de Ferramentas usando sua chave de acesso.' }
                     ].map((faq, i) => (
-                       <details key={i} className="group bg-dark-800/50 rounded-xl border border-dark-700 overflow-hidden">
-                          <summary className="p-4 cursor-pointer font-bold text-sm text-zinc-300 flex justify-between items-center hover:bg-dark-700/50 transition-colors list-none">
+                       <details key={i} className="group bg-dark-800/50 rounded-md border border-dark-700 overflow-hidden">
+                          <summary className="p-2 cursor-pointer font-bold text-sm text-zinc-300 flex justify-between items-center hover:bg-dark-700/50 transition-colors list-none">
                              {faq.q}
                              <ChevronRight className="w-4 h-4 group-open:rotate-90 transition-transform" />
                           </summary>
-                          <div className="p-4 pt-0 text-xs text-zinc-500 leading-relaxed border-t border-dark-700/50">
+                          <div className="p-2 pt-0 text-xs text-zinc-500 leading-relaxed border-t border-dark-700/50">
                              {faq.a}
                           </div>
                        </details>
@@ -1347,24 +1347,24 @@ const Resale = () => {
               </div>
            </div>
 
-           <div className="flex flex-col gap-6">
+           <div className="flex flex-col gap-2">
               <div className="glass-effect rounded-[2rem] p-6 border border-dark-700 bg-dark-900/30 flex flex-col h-full">
-                 <h3 className="text-sm font-black text-white mb-6 uppercase tracking-widest flex items-center justify-between">
+                 <h3 className="text-sm font-black text-white mb-2 uppercase tracking-widest flex items-center justify-between">
                     Histórico de Ativações
                     <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full border border-blue-500/20">{history.filter(t => t.mac_address).length} TOTAL</span>
                  </h3>
                  
-                 <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                 <div className="space-y-2 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
                     {history.filter(t => t.mac_address).length === 0 ? (
                         <div className="text-center py-10 opacity-30">
-                            <History size={40} className="mx-auto mb-3" />
+                            <History size={40} className="mx-auto mb-2" />
                             <p className="text-xs font-bold">Nenhuma ativação encontrada.</p>
                         </div>
                     ) : history.filter(t => t.mac_address).map((trx, i) => (
-                        <div key={i} className="bg-dark-800 border border-dark-700 rounded-xl p-4 hover:border-blue-500/30 transition-all group">
-                            <div className="flex justify-between items-start mb-3">
+                        <div key={i} className="bg-dark-800 border border-dark-700 rounded-md p-2 hover:border-blue-500/30 transition-all group">
+                            <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-lg bg-dark-700 flex items-center justify-center text-blue-500">
+                                    <div className="w-8 h-8 rounded-md bg-dark-700 flex items-center justify-center text-blue-500">
                                         <Smartphone size={16} />
                                     </div>
                                     <div>
@@ -1392,26 +1392,26 @@ const Resale = () => {
 
       {/* MODAL 3: RECIBO PREMIUM */}
       {showReceiptModal && selectedTrx && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60] animate-in zoom-in duration-200">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-[60] animate-in zoom-in duration-200">
               <div className="w-full max-w-[320px] bg-white rounded-[2rem] overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-5">
                   <div className={`p-5 text-center ${selectedTrx.type === 'pix' ? 'bg-green-500' : 'bg-orange-500'} relative`}>
-                      <button onClick={() => setShowReceiptModal(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
+                      <button onClick={() => setShowReceiptModal(false)} className="absolute top-2 right-4 text-white/50 hover:text-white">
                           <X className="w-5 h-5" />
                       </button>
-                      <div className="w-16 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                          <CheckCircle className={`w-10 h-10 ${selectedTrx.type === 'pix' ? 'text-green-500' : 'text-orange-500'}`} />
+                      <div className="w-16 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg">
+                          <CheckCircle className={`w-9 h-9 ${selectedTrx.type === 'pix' ? 'text-green-500' : 'text-orange-500'}`} />
                       </div>
-                      <h3 className="text-white font-black text-xl tracking-tighter">RECIBO DE CRÉDITO</h3>
+                      <h3 className="text-white font-black text-base tracking-tighter">RECIBO DE CRÉDITO</h3>
                       <p className="text-white/80 text-[10px] uppercase font-bold tracking-widest mt-1">TV MAXX PRO — {selectedTrx.status === 'approved' ? 'AUTENTICADO' : 'PENDENTE'}</p>
                   </div>
 
-                  <div className="p-6 space-y-6 bg-zinc-50">
+                  <div className="p-6 space-y-2 bg-zinc-50">
                       <div className="text-center">
                           <div className="text-[10px] text-zinc-400 font-bold uppercase mb-1">Total Recebido</div>
-                          <div className="text-3xl font-black text-zinc-900 tracking-tighter">{selectedTrx.credits} <span className="text-lg">CRÉDITOS</span></div>
+                          <div className="text-sm font-black text-zinc-900 tracking-tighter">{selectedTrx.credits} <span className="text-base">CRÉDITOS</span></div>
                       </div>
 
-                      <div className="space-y-3 border-t border-dashed border-zinc-300 pt-5">
+                      <div className="space-y-2 border-t border-dashed border-zinc-300 pt-5">
                           <div className="flex justify-between items-center">
                               <span className="text-[10px] font-bold text-zinc-400 uppercase">Método</span>
                               <span className="text-xs font-black text-zinc-700">{selectedTrx.type === 'pix' ? 'Mercado Pago (PIX)' : 'Transferência Manual'}</span>
@@ -1431,13 +1431,13 @@ const Resale = () => {
                       </div>
 
                       <div className="pt-4 text-center">
-                          <div className="w-12 h-1 bg-zinc-200 mx-auto rounded-full mb-4"></div>
+                          <div className="w-9 h-1 bg-zinc-200 mx-auto rounded-full mb-2"></div>
                           <p className="text-[9px] text-zinc-400 leading-relaxed px-4 italic">
                               Este documento serve como comprovante de entrega de créditos digitais no ecossistema TV MAXX PRO.
                           </p>
                       </div>
 
-                      <button onClick={() => window.print()} className="w-full py-4 bg-zinc-900 text-white font-bold rounded-xl hover:bg-black transition-all active:scale-95 shadow-xl">
+                      <button onClick={() => window.print()} className="w-full py-1.5 bg-zinc-900 text-white font-bold rounded-md hover:bg-black transition-all active:scale-95 shadow-xl">
                           IMPRIMIR RECIBO
                       </button>
                   </div>
@@ -1447,15 +1447,15 @@ const Resale = () => {
 
       {/* MODAL 4: TRANSFERÊNCIA SEGURA (2FA) */}
       {showTransferModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 z-50">
               <div className="w-full max-w-sm glass-effect rounded-[2.5rem] border border-white/10 p-6 shadow-2xl overflow-hidden relative">
                   {!tfaMode ? (
-                      <form onSubmit={handleSendCredits} className="space-y-6">
+                      <form onSubmit={handleSendCredits} className="space-y-2">
                           <div className="text-center">
-                              <div className="w-16 h-14 bg-orange-500/10 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-orange-500/20 rotate-3">
+                              <div className="w-16 h-14 bg-orange-500/10 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-2 border border-orange-500/20 rotate-3">
                                   <Shield className="w-8 h-8" />
                               </div>
-                              <h3 className="text-xl font-black text-white uppercase tracking-tighter">Enviar Créditos</h3>
+                              <h3 className="text-sm font-black text-white uppercase tracking-tighter">Enviar Créditos</h3>
                               <p className="text-xs text-zinc-500 mt-2">Você está prestes a transferir créditos para <br/><strong className="text-white">{transferData.nome}</strong></p>
                           </div>
 
@@ -1467,24 +1467,24 @@ const Resale = () => {
                                       min="1"
                                       value={transferData.quantidade}
                                       onChange={(e) => setTransferData({...transferData, quantidade: e.target.value})}
-                                      className="w-full bg-dark-900 border-2 border-dark-700 focus:border-orange-500 rounded-xl py-4 px-6 text-2xl font-black text-white outline-none transition-all"
+                                      className="w-full bg-dark-900 border-2 border-dark-700 focus:border-orange-500 rounded-md py-1.5 px-6 text-sm font-black text-white outline-none transition-all"
                                   />
                                   <span className="absolute right-6 top-5 text-orange-500 font-black tracking-tighter">CRED</span>
                               </div>
                           </div>
 
-                          <div className="flex gap-3 pt-2">
-                              <button type="button" onClick={() => setShowTransferModal(false)} className="flex-1 py-4 text-sm font-bold text-zinc-500 hover:text-white transition">Cancelar</button>
-                              <button type="submit" className="flex-3 bg-orange-600 hover:bg-orange-500 text-white font-black py-4 px-6 rounded-xl text-sm transition-all shadow-lg active:scale-95">CONTINUAR</button>
+                          <div className="flex gap-2 pt-2">
+                              <button type="button" onClick={() => setShowTransferModal(false)} className="flex-1 py-1.5 text-sm font-bold text-zinc-500 hover:text-white transition">Cancelar</button>
+                              <button type="submit" className="flex-3 bg-orange-600 hover:bg-orange-500 text-white font-black py-1.5 px-6 rounded-md text-sm transition-all shadow-lg active:scale-95">CONTINUAR</button>
                           </div>
                       </form>
                   ) : (
-                      <form onSubmit={handleSendCredits} className="space-y-6 animate-in slide-in-from-right-4">
+                      <form onSubmit={handleSendCredits} className="space-y-2 animate-in slide-in-from-right-4">
                           <div className="text-center">
-                              <div className="w-16 h-14 bg-brand-500/10 text-brand-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-500/20">
+                              <div className="w-16 h-14 bg-brand-500/10 text-brand-500 rounded-full flex items-center justify-center mx-auto mb-2 border border-brand-500/20">
                                   <MessageCircle className="w-8 h-8 animate-pulse" />
                               </div>
-                              <h3 className="text-xl font-black text-white uppercase tracking-tighter">Confirmação VIP</h3>
+                              <h3 className="text-sm font-black text-white uppercase tracking-tighter">Confirmação VIP</h3>
                               <p className="text-xs text-zinc-500 mt-2">Um código de segurança foi enviado ao seu <br/><strong className="text-brand-500">Telegram</strong> para autorizar o envio.</p>
                           </div>
 
@@ -1495,7 +1495,7 @@ const Resale = () => {
                                   placeholder="000000"
                                   value={tfaCode}
                                   onChange={(e) => setTfaCode(e.target.value.replace(/\D/g,''))}
-                                  className="w-full bg-dark-900 border-2 border-brand-500/30 focus:border-brand-500 rounded-3xl py-5 text-center text-3xl font-mono font-black text-white tracking-[0.4em] outline-none transition-all placeholder:text-zinc-800"
+                                  className="w-full bg-dark-900 border-2 border-brand-500/30 focus:border-brand-500 rounded-3xl py-5 text-center text-base font-mono font-black text-white tracking-[0.4em] outline-none transition-all placeholder:text-zinc-800"
                               />
                               <button type="button" onClick={() => setTfaMode(false)} className="text-[10px] text-zinc-600 hover:text-white transition">Errei o código? Voltar</button>
                           </div>

@@ -134,12 +134,12 @@ const APIConfig = () => {
       </div>
 
       {/* Lista de APIs */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {apis.map((apiItem) => (
           <div key={apiItem.id} className="card">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-xl font-bold">{apiItem.nome}</h3>
                   
                   {apiItem.critica && (
@@ -173,7 +173,7 @@ const APIConfig = () => {
                 
                 <p className="text-sm text-gray-500 font-mono mb-2">{apiItem.url}</p>
                 
-                <div className="flex gap-4 text-xs text-gray-500">
+                <div className="flex gap-2 text-xs text-gray-500">
                   <span>Método: {apiItem.metodo}</span>
                   <span>Timeout: {apiItem.timeout}ms</span>
                 </div>
@@ -206,7 +206,7 @@ const APIConfig = () => {
 
       {/* Modal de Criação/Edição */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 z-50">
           <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">
@@ -217,8 +217,8 @@ const APIConfig = () => {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-2">Nome da API *</label>
                   <input
@@ -309,7 +309,7 @@ const APIConfig = () => {
                   />
                 </div>
 
-                <div className="col-span-1 sm:col-span-2 flex gap-4">
+                <div className="col-span-1 sm:col-span-2 flex gap-2">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -332,7 +332,7 @@ const APIConfig = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2 pt-4">
                 <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2">
                   <Save size={18} />
                   {editingAPI ? 'Atualizar' : 'Criar'}

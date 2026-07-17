@@ -4,6 +4,8 @@ const updatesController = require('./updatesController');
 const authMiddleware = require('../../middlewares/auth');
 
 router.get('/version', updatesController.getVersion);
+router.get('/version/check', updatesController.checkVersion);
+router.post('/version/check', updatesController.checkVersion);
 router.post('/version', authMiddleware, updatesController.createVersion);
 router.get('/versions', authMiddleware, updatesController.listVersions);
 

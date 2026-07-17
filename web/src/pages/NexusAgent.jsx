@@ -179,10 +179,10 @@ const NexusAgent = () => {
   ]
 
   return (
-    <div className="space-y-6 animate-fadeIn relative">
+    <div className="space-y-2 animate-fadeIn relative">
       
       {message && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl border ${
+        <div className={`fixed top-2 right-4 z-50 flex items-center gap-2 px-2 py-1 rounded-md shadow-2xl border ${
           message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
         } backdrop-blur-md`}>
           <CheckCircle2 className="h-5 w-5" />
@@ -196,30 +196,30 @@ const NexusAgent = () => {
           <Zap size={120} className="text-orange-500 animate-pulse" />
         </div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-             <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+             <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded-md">
                 <Cpu className="text-orange-500" size={32} />
              </div>
              <div>
-                <h1 className="text-2xl font-bold text-white">Centro de Agentes Nexus</h1>
+                <h1 className="text-sm font-bold text-white">Centro de Agentes Nexus</h1>
                 <p className="text-zinc-400">Inteligência Artificial e Automação Gerenciada</p>
              </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-             <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 shadow-inner">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+             <div className="bg-dark-900/50 p-2 rounded-md border border-dark-700 shadow-inner">
                 <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Carga de Processamento</p>
                 <div className="flex items-end gap-2">
-                   <span className="text-2xl font-bold text-white">{aiLoad}%</span>
+                   <span className="text-sm font-bold text-white">{aiLoad}%</span>
                    <div className="flex-1 h-2 bg-dark-700 rounded-full mb-2 overflow-hidden">
                       <div className="h-full bg-orange-500 transition-all duration-500" style={{ width: aiLoad + '%' }} />
                    </div>
                 </div>
              </div>
-             <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 shadow-inner">
+             <div className="bg-dark-900/50 p-2 rounded-md border border-dark-700 shadow-inner">
                 <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Protocolos Ativos</p>
                 <div className="flex items-center gap-2">
-                   <span className="text-2xl font-bold text-white">{activeProtocols}</span>
+                   <span className="text-sm font-bold text-white">{activeProtocols}</span>
                    <div className="flex gap-1">
                       {[...Array(12)].map((_, i) => (
                         <div key={i} className={`w-1 h-4 rounded-full ${i < activeProtocols ? 'bg-orange-500' : 'bg-dark-700'}`} />
@@ -227,11 +227,11 @@ const NexusAgent = () => {
                    </div>
                 </div>
              </div>
-             <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 shadow-inner">
+             <div className="bg-dark-900/50 p-2 rounded-md border border-dark-700 shadow-inner">
                 <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Status de Segurança</p>
                 <div className="flex items-center gap-2 text-green-500">
                    <CheckCircle2 size={24} />
-                   <span className="text-xl font-bold uppercase tracking-tight">Impenetrável</span>
+                   <span className="text-sm font-bold uppercase tracking-tight">Impenetrável</span>
                 </div>
              </div>
           </div>
@@ -240,23 +240,23 @@ const NexusAgent = () => {
 
       {/* ══ CONFIGURAÇÃO CONDICIONAL (MODAL) ══ */}
       {showConfig && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-800 border border-dark-600 rounded-xl w-full max-w-3xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2">
+          <div className="bg-dark-800 border border-dark-600 rounded-md w-full max-w-3xl overflow-hidden shadow-2xl">
             <div className="p-5 border-b border-dark-600 flex items-center justify-between bg-dark-850">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Cpu className="text-orange-500" />
-                <h2 className="text-lg font-bold text-white">Setup: Varredura VOD Nexus</h2>
+                <h2 className="text-sm font-bold text-white">Setup: Varredura VOD Nexus</h2>
               </div>
               <button onClick={() => setShowConfig(false)} className="text-zinc-500 hover:text-white">
                 <X />
               </button>
             </div>
 
-            <div className="p-5 space-y-6">
-              <div className="flex items-center gap-4 bg-dark-900 p-4 rounded-lg border border-dark-700">
+            <div className="p-5 space-y-2">
+              <div className="flex items-center gap-2 bg-dark-900 p-2 rounded-md border border-dark-700">
                 <button 
                   onClick={() => setConfig({...config, is_active: !config.is_active})}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${config.is_active ? 'bg-orange-500' : 'bg-dark-600'}`}
+                  className={`w-9 h-6 rounded-full relative transition-colors ${config.is_active ? 'bg-orange-500' : 'bg-dark-600'}`}
                 >
                   <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${config.is_active ? 'left-7' : 'left-1'}`} />
                 </button>
@@ -266,10 +266,10 @@ const NexusAgent = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 bg-dark-900 p-4 rounded-lg border border-dark-700">
+              <div className="flex items-center gap-2 bg-dark-900 p-2 rounded-md border border-dark-700">
                 <button 
                   onClick={() => setConfig({...config, auto_approve_words: !config.auto_approve_words})}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${config.auto_approve_words ? 'bg-green-500' : 'bg-dark-600'}`}
+                  className={`w-9 h-6 rounded-full relative transition-colors ${config.auto_approve_words ? 'bg-green-500' : 'bg-dark-600'}`}
                 >
                   <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${config.auto_approve_words ? 'left-7' : 'left-1'}`} />
                 </button>
@@ -285,7 +285,7 @@ const NexusAgent = () => {
                   <select 
                     value={config.cron_schedule}
                     onChange={(e) => setConfig({...config, cron_schedule: e.target.value})}
-                    className="flex-1 bg-dark-900 border border-dark-600 text-white rounded-lg p-3 text-sm focus:border-orange-500 outline-none"
+                    className="flex-1 bg-dark-900 border border-dark-600 text-white rounded-md p-2 text-sm focus:border-orange-500 outline-none"
                   >
                     <option value="0 3 * * *">Diário (Todo dia às 03:00 AM)</option>
                     <option value="0 */12 * * *">A cada 12 horas</option>
@@ -301,19 +301,19 @@ const NexusAgent = () => {
                 <textarea 
                   value={config.dns_list || ''}
                   onChange={(e) => setConfig({...config, dns_list: e.target.value})}
-                  className="w-full bg-dark-900 border border-dark-600 text-white rounded-lg p-4 text-sm focus:border-orange-500 outline-none font-mono resize-none h-32"
+                  className="w-full bg-dark-900 border border-dark-600 text-white rounded-md p-2 text-sm focus:border-orange-500 outline-none font-mono resize-none h-32"
                   placeholder="Ex: https://megga99.shop/api/chatbot/xxxx, https://painel.primelux.cloud/api/chatbot/yyyy"
                 />
                 <p className="text-[11px] text-zinc-500 mt-1">Insira as URLs dos provedores, chatbots ou API de teste Xtream (Separadas por vírgula). O bot detectará as credenciais automaticamente e extrairá o Catálogo!</p>
               </div>
             </div>
 
-            <div className="p-5 border-t border-dark-600 bg-dark-850 flex justify-end gap-3">
-              <button onClick={() => setShowConfig(false)} className="px-5 py-2 text-sm font-bold text-zinc-400 hover:text-white transition">Cancelar</button>
-              <button onClick={handleForceScan} disabled={scanning} className="px-5 py-2 bg-dark-700 border border-dark-600 text-white text-sm font-bold rounded-lg hover:bg-dark-600 transition flex items-center gap-2">
+            <div className="p-5 border-t border-dark-600 bg-dark-850 flex justify-end gap-2">
+              <button onClick={() => setShowConfig(false)} className="px-5 py-1.5 text-sm font-bold text-zinc-400 hover:text-white transition">Cancelar</button>
+              <button onClick={handleForceScan} disabled={scanning} className="px-5 py-1.5 bg-dark-700 border border-dark-600 text-white text-sm font-bold rounded-md hover:bg-dark-600 transition flex items-center gap-2">
                 <Play size={16} className="text-green-500" /> {scanning ? 'Processando...' : 'Varrer Agora!'}
               </button>
-              <button onClick={handleSaveConfig} disabled={saving} className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg transition flex items-center gap-2">
+              <button onClick={handleSaveConfig} disabled={saving} className="px-5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-md transition flex items-center gap-2">
                 {saving ? <RefreshCw className="animate-spin w-4 h-4" /> : <Save size={16} />} Salvar Configurações
               </button>
             </div>
@@ -322,23 +322,23 @@ const NexusAgent = () => {
       )}
 
       {/* ══ AGENTES ══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         {agents.map((agent) => (
           <div key={agent.id} className="bg-dark-800 border border-dark-700 p-5 rounded-3xl hover:border-orange-500/30 transition-all group flex flex-col">
-             <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 border ${agent.bg}`}>
+             <div className={`w-14 h-14 rounded-md flex items-center justify-center mb-2 border ${agent.bg}`}>
                 <agent.icon className={agent.color} size={28} />
              </div>
              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xl font-bold text-white">{agent.name}</h3>
+                <h3 className="text-sm font-bold text-white">{agent.name}</h3>
                 <span className={`px-2 py-0.5 text-[10px] font-bold border rounded-full ${agent.status === 'Online' || agent.status === 'Ativo' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
                    {agent.status}
                 </span>
              </div>
-             <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-3">{agent.role}</p>
-             <p className="text-sm text-zinc-400 leading-relaxed mb-6 flex-1">
+             <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-2">{agent.role}</p>
+             <p className="text-xs text-zinc-400 leading-relaxed mb-2 flex-1">
                 {agent.description}
              </p>
-             <button onClick={agent.action} className="w-full py-3 bg-dark-900 border border-dark-700 rounded-xl text-xs font-bold hover:bg-orange-500 hover:text-white transition-all mt-auto">
+             <button onClick={agent.action} className="w-full py-1.5 bg-dark-900 border border-dark-700 rounded-md text-xs font-bold hover:bg-orange-500 hover:text-white transition-all mt-auto">
                 Configurar Agente
              </button>
           </div>
@@ -350,12 +350,12 @@ const NexusAgent = () => {
         <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/30">
            <div className="flex items-center gap-2">
               <Search className="text-orange-500" size={20} />
-              <h2 className="text-lg font-bold text-white">Palavras detectadas pelo Scanner</h2>
+              <h2 className="text-sm font-bold text-white">Palavras detectadas pelo Scanner</h2>
            </div>
            <button 
               onClick={handleApproveAllWords} 
               disabled={processingWords || dirtyWords.filter(w => w.status === 'new').length === 0}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition"
+              className="px-4 py-1.5 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-md transition"
            >
               {processingWords ? 'Processando...' : 'Adicionar Tudo'}
            </button>
@@ -364,12 +364,12 @@ const NexusAgent = () => {
            <table className="w-full text-left border-collapse">
               <thead className="bg-dark-900 text-[10px] uppercase text-zinc-500 font-bold sticky top-0 z-10">
                  <tr>
-                    <th className="p-4 border-b border-dark-700">Palavra Detectada</th>
-                    <th className="p-4 border-b border-dark-700">Qtd</th>
-                    <th className="p-4 border-b border-dark-700">Exemplo de Título</th>
-                    <th className="p-4 border-b border-dark-700">Origem</th>
-                    <th className="p-4 border-b border-dark-700">Status</th>
-                    <th className="p-4 border-b border-dark-700 text-right">Ação</th>
+                    <th className="p-2 border-b border-dark-700">Palavra Detectada</th>
+                    <th className="p-2 border-b border-dark-700">Qtd</th>
+                    <th className="p-2 border-b border-dark-700">Exemplo de Título</th>
+                    <th className="p-2 border-b border-dark-700">Origem</th>
+                    <th className="p-2 border-b border-dark-700">Status</th>
+                    <th className="p-2 border-b border-dark-700 text-right">Ação</th>
                  </tr>
               </thead>
               <tbody className="text-sm divide-y divide-dark-700">
@@ -377,11 +377,11 @@ const NexusAgent = () => {
                    <tr><td colSpan="6" className="p-8 text-center text-zinc-500">Nenhuma palavra detectada ainda.</td></tr>
                  ) : dirtyWords.map(word => (
                    <tr key={word.id} className="hover:bg-dark-900/50 transition-colors">
-                      <td className="p-4 font-mono text-orange-400 font-bold">{word.word}</td>
-                      <td className="p-4 text-zinc-300 font-bold">{word.occurrences}</td>
-                      <td className="p-4 text-zinc-400 text-xs truncate max-w-[200px]">{word.example_title}</td>
-                      <td className="p-4 text-zinc-500 text-xs truncate max-w-[150px]">{word.source_dns}</td>
-                      <td className="p-4">
+                      <td className="p-2 font-mono text-orange-400 font-bold">{word.word}</td>
+                      <td className="p-2 text-zinc-300 font-bold">{word.occurrences}</td>
+                      <td className="p-2 text-zinc-400 text-xs truncate max-w-[200px]">{word.example_title}</td>
+                      <td className="p-2 text-zinc-500 text-xs truncate max-w-[150px]">{word.source_dns}</td>
+                      <td className="p-2">
                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                            word.status === 'new' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                            word.status === 'approved' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
@@ -389,13 +389,13 @@ const NexusAgent = () => {
                             {word.status === 'new' ? 'Nova' : word.status === 'approved' ? 'Aprovada' : 'Ignorada'}
                          </span>
                       </td>
-                      <td className="p-4 text-right flex justify-end gap-2">
+                      <td className="p-2 text-right flex justify-end gap-2">
                          {word.status === 'new' && (
                            <>
-                              <button onClick={() => handleUpdateWordStatus(word.id, 'approved')} className="p-2 bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-lg transition" title="Aprovar">
+                              <button onClick={() => handleUpdateWordStatus(word.id, 'approved')} className="p-2 bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 hover:border-green-500/40 rounded-md transition" title="Aprovar">
                                  <CheckCircle2 size={16} />
                               </button>
-                              <button onClick={() => handleUpdateWordStatus(word.id, 'ignored')} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/40 rounded-lg transition" title="Ignorar">
+                              <button onClick={() => handleUpdateWordStatus(word.id, 'ignored')} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/40 rounded-md transition" title="Ignorar">
                                  <X size={16} />
                               </button>
                            </>
@@ -413,23 +413,23 @@ const NexusAgent = () => {
         <div className="p-5 border-b border-dark-700 flex justify-between items-center bg-dark-900/30">
            <div className="flex items-center gap-2">
               <Terminal className="text-orange-500" size={20} />
-              <h2 className="text-lg font-bold text-white">Monitor de Operações Globais</h2>
+              <h2 className="text-sm font-bold text-white">Monitor de Operações Globais</h2>
            </div>
-           <div className="flex items-center gap-4">
+           <div className="flex items-center gap-2">
               <span className="text-xs text-zinc-500 font-mono">sys.nexus.kernel_2.0</span>
               <button onClick={handleClearLogs} className="text-xs text-red-500 hover:text-red-400 font-bold bg-red-500/10 px-2 py-1 rounded">Limpar</button>
            </div>
         </div>
-        <div className="p-4 bg-black/50 font-mono text-sm h-72 overflow-y-auto space-y-1 custom-scrollbar flex flex-col-reverse">
+        <div className="p-2 bg-black/50 font-mono text-sm h-72 overflow-y-auto space-y-1 custom-scrollbar flex flex-col-reverse">
            {/* Mostrar input aguardando no fim (que como é reverse, fica no topo) */}
-           <div className="flex gap-3 opacity-50 py-2">
+           <div className="flex gap-2 opacity-50 py-1.5">
               <span className="text-zinc-600">[{new Date().toLocaleTimeString()}]</span>
               <span className="text-orange-500 animate-pulse">_</span>
               <span className="text-zinc-500 italic">Aguardando comando operacional...</span>
            </div>
 
            {logs.map(log => (
-             <div key={log.id} className="flex gap-3 animate-fadeIn py-1 border-b border-zinc-800/50 last:border-0 hover:bg-white/5 transition-colors">
+             <div key={log.id} className="flex gap-2 animate-fadeIn py-1 border-b border-zinc-800/50 last:border-0 hover:bg-white/5 transition-colors">
                 <span className="text-zinc-600 shrink-0">[{new Date(log.created_at).toLocaleTimeString()}]</span>
                 <span className={`shrink-0 ${log.log_level === 'success' ? 'text-green-500' : log.log_level === 'error' ? 'text-red-500' : 'text-blue-400'}`}>
                    {log.log_level === 'success' ? '✔' : log.log_level === 'error' ? '✖' : 'ℹ'}
