@@ -78,6 +78,7 @@ export default function AdultManager() {
   const [config, setConfig] = useState(emptyConfig);
   const [itemDrafts, setItemDrafts] = useState({});
   const [categoryDrafts, setCategoryDrafts] = useState({});
+  const [generatingImages, setGeneratingImages] = useState({});
 
   const stats = useMemo(() => ({
     total: items.length,
@@ -170,6 +171,27 @@ export default function AdultManager() {
       setMessage(error?.response?.data?.error || 'Falha ao salvar item adulto.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function generateItemImage(item) {
+    setGeneratingImages((current) => ({ ...current, [item.id]: true }));
+    setMessage('');
+    try {
+      const { data } = await api.post(`/api/adult-manager/items/${item.id}/generate-image`);
+      if (data.item) {
+        setItems((current) => current.map((entry) => (entry.id === item.id ? data.item : entry)));
+      }
+      setMessage('Imagem automatica gerada a partir do meio do video.');
+      await loadData();
+    } catch (error) {
+      const responseItem = error?.response?.data?.item;
+      if (responseItem) {
+        setItems((current) => current.map((entry) => (entry.id === item.id ? responseItem : entry)));
+      }
+      setMessage(error?.response?.data?.error || 'Falha ao gerar imagem automatica do video.');
+    } finally {
+      setGeneratingImages((current) => ({ ...current, [item.id]: false }));
     }
   }
 
@@ -312,6 +334,8 @@ export default function AdultManager() {
             {filteredItems.map((item) => {
               const draft = itemDrafts[item.id] || {};
               const image = draft.posterUrl || item.posterUrl || item.backdropUrl || item.bannerUrl;
+              const isGeneratingImage = generatingImages[item.id] || item.autoFrameStatus === 'processing';
+              const canGenerateImage = Boolean(item.sourceUrl);
               return (
                 <div key={item.id} className="rounded-2xl border border-white/10 bg-[#111113] p-4 shadow-xl">
                   <div className="flex gap-4">
@@ -325,11 +349,26 @@ export default function AdultManager() {
                         <StatusPill status={item.isHidden ? 'hidden' : item.approvalStatus} />
                       </div>
                       <p className="mt-2 line-clamp-2 text-xs text-white/45">{item.overview || 'Sem descricao recebida da lista.'}</p>
+                      <div className="mt-2 text-[11px] font-bold text-white/40">
+                        {item.autoFrameStatus === 'ready' && <span className="text-emerald-300">Imagem automatica pronta.</span>}
+                        {item.autoFrameStatus === 'processing' && <span className="text-[#ff0f5f]">Gerando imagem automatica...</span>}
+                        {item.autoFrameStatus === 'failed' && <span className="text-red-300">{item.autoFrameError || 'Falha ao gerar imagem automatica.'}</span>}
+                        {!item.autoFrameStatus && !canGenerateImage && <span>Sem URL real do video. Varra o Nexus novamente para gravar o stream.</span>}
+                        {!item.autoFrameStatus && canGenerateImage && !image && <span>URL real encontrada. Gere a imagem pelo meio do video.</span>}
+                      </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button onClick={() => updateStatus(item, 'approved')} className="flex items-center gap-1 rounded-lg bg-emerald-500/15 px-3 py-2 text-xs font-black text-emerald-300"><CheckCircle2 size={14} /> Aprovar</button>
                         <button onClick={() => updateStatus(item, 'pending')} className="flex items-center gap-1 rounded-lg bg-yellow-500/15 px-3 py-2 text-xs font-black text-yellow-300"><XCircle size={14} /> Revisar</button>
                         <button onClick={() => updateStatus(item, 'hidden')} className="flex items-center gap-1 rounded-lg bg-red-500/15 px-3 py-2 text-xs font-black text-red-300"><EyeOff size={14} /> Ocultar</button>
                         <button onClick={() => updateItemDraft(item.id, 'isFeatured', !(draft.isFeatured ?? item.isFeatured))} className={`flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-black ${(draft.isFeatured ?? item.isFeatured) ? 'bg-[#ff0f5f] text-white' : 'bg-white/10 text-white/70'}`}><Star size={14} /> Destaque</button>
+                        <button
+                          onClick={() => generateItemImage(item)}
+                          disabled={!canGenerateImage || isGeneratingImage}
+                          className="flex items-center gap-1 rounded-lg bg-[#ff0f5f]/15 px-3 py-2 text-xs font-black text-[#ff78a4] disabled:cursor-not-allowed disabled:opacity-45"
+                          title={canGenerateImage ? 'Capturar imagem do meio do video' : 'Sem URL real do video. Execute nova varredura Nexus.'}
+                        >
+                          <ImageIcon size={14} /> {isGeneratingImage ? 'Gerando...' : image ? 'Regenerar imagem' : 'Gerar imagem'}
+                        </button>
                       </div>
                     </div>
                   </div>

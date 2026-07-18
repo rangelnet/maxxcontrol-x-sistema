@@ -1,4 +1,5 @@
 const pool = require('../../config/database');
+const { captureMiddleFrameToSupabase } = require('../../services/videoFrameCapture');
 
 const CONFIG_KEY = 'adult_screen_config';
 
@@ -154,6 +155,11 @@ async function ensureSchema() {
       source_provider VARCHAR(255),
       poster_url TEXT,
       backdrop_url TEXT,
+      source_url TEXT,
+      auto_frame_url TEXT,
+      auto_frame_status VARCHAR(50),
+      auto_frame_error TEXT,
+      auto_frame_updated_at TIMESTAMP,
       banner_url TEXT,
       icon_url TEXT,
       overview TEXT,
@@ -191,7 +197,12 @@ async function ensureSchema() {
     ['icon_url', 'TEXT'],
     ['manual_section', 'VARCHAR(100)'],
     ['manual_order', 'INTEGER DEFAULT 0'],
-    ['image_source', "VARCHAR(50) DEFAULT 'nexus'"]
+    ['image_source', "VARCHAR(50) DEFAULT 'nexus'"],
+    ['source_url', 'TEXT'],
+    ['auto_frame_url', 'TEXT'],
+    ['auto_frame_status', 'VARCHAR(50)'],
+    ['auto_frame_error', 'TEXT'],
+    ['auto_frame_updated_at', 'TIMESTAMP']
   ];
 
   for (const [column, type] of catalogColumns) {
@@ -262,19 +273,26 @@ async function upsertAdultFromNexus(row, config) {
   const vodId = row.vod_id || row.stream_id || row.id;
   const originalName = row.original_name || row.name || row.title || `VOD ${vodId}`;
   const cleanName = row.clean_name || row.name || row.title || originalName;
+  const autoFrameUrl = toPublicUrl(row.auto_frame_url);
   const posterUrl = toPublicUrl(row.auto_frame_url || row.poster_url || row.stream_icon || row.cover || row.image);
   const backdropUrl = toPublicUrl(row.backdrop_url || row.auto_frame_url || row.poster_url || row.stream_icon || row.cover || row.image);
+  const sourceUrl = toPublicUrl(row.source_url || row.playback_url || row.url);
   const overview = row.overview || row.description || row.plot || null;
   const contentType = row.content_type || row.type || 'vod';
   const sourceProvider = row.source_provider || row.provider || row.server_name || 'nexus';
+  const imageSource = row.image_source || (autoFrameUrl ? 'auto_middle_frame' : (posterUrl ? 'iptv' : 'nexus'));
+  const autoFrameStatus = row.auto_frame_status || (autoFrameUrl ? 'ready' : null);
+  const autoFrameError = row.auto_frame_error || null;
+  const autoFrameUpdatedAt = row.auto_frame_updated_at || null;
 
   const { rows } = await pool.query(`
     INSERT INTO ai_adult_catalog (
       vod_id, original_name, clean_name, content_type, category_key, category_name,
-      confidence, source_provider, poster_url, backdrop_url, overview, tags,
+      confidence, source_provider, poster_url, backdrop_url, source_url, auto_frame_url,
+      auto_frame_status, auto_frame_error, auto_frame_updated_at, overview, tags,
       approval_status, image_source, created_at, updated_at
     )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,'nexus',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
     ON CONFLICT (vod_id) DO UPDATE SET
       original_name = EXCLUDED.original_name,
       clean_name = EXCLUDED.clean_name,
@@ -285,12 +303,22 @@ async function upsertAdultFromNexus(row, config) {
       source_provider = EXCLUDED.source_provider,
       poster_url = CASE WHEN ai_adult_catalog.image_source = 'manual' THEN ai_adult_catalog.poster_url ELSE COALESCE(EXCLUDED.poster_url, ai_adult_catalog.poster_url) END,
       backdrop_url = CASE WHEN ai_adult_catalog.image_source = 'manual' THEN ai_adult_catalog.backdrop_url ELSE COALESCE(EXCLUDED.backdrop_url, ai_adult_catalog.backdrop_url) END,
+      source_url = COALESCE(EXCLUDED.source_url, ai_adult_catalog.source_url),
+      auto_frame_url = COALESCE(EXCLUDED.auto_frame_url, ai_adult_catalog.auto_frame_url),
+      auto_frame_status = COALESCE(EXCLUDED.auto_frame_status, ai_adult_catalog.auto_frame_status),
+      auto_frame_error = COALESCE(EXCLUDED.auto_frame_error, ai_adult_catalog.auto_frame_error),
+      auto_frame_updated_at = COALESCE(EXCLUDED.auto_frame_updated_at, ai_adult_catalog.auto_frame_updated_at),
       overview = COALESCE(EXCLUDED.overview, ai_adult_catalog.overview),
       tags = EXCLUDED.tags,
       approval_status = CASE
         WHEN ai_adult_catalog.approval_status = 'approved' THEN 'approved'
         WHEN ai_adult_catalog.approval_status = 'hidden' THEN 'hidden'
         ELSE EXCLUDED.approval_status
+      END,
+      image_source = CASE
+        WHEN ai_adult_catalog.image_source = 'manual' THEN 'manual'
+        WHEN EXCLUDED.auto_frame_url IS NOT NULL THEN 'auto_middle_frame'
+        ELSE COALESCE(ai_adult_catalog.image_source, EXCLUDED.image_source)
       END,
       updated_at = CURRENT_TIMESTAMP
     RETURNING *
@@ -305,9 +333,15 @@ async function upsertAdultFromNexus(row, config) {
     sourceProvider,
     posterUrl,
     backdropUrl,
+    sourceUrl,
+    autoFrameUrl,
+    autoFrameStatus,
+    autoFrameError,
+    autoFrameUpdatedAt,
     overview,
     JSON.stringify(detection.tags),
-    detection.approvalStatus
+    detection.approvalStatus,
+    imageSource
   ]);
 
   return rows[0];
@@ -326,6 +360,11 @@ function mapItem(row) {
     sourceProvider: row.source_provider,
     posterUrl: row.poster_url,
     backdropUrl: row.backdrop_url,
+    sourceUrl: row.source_url,
+    autoFrameUrl: row.auto_frame_url,
+    autoFrameStatus: row.auto_frame_status,
+    autoFrameError: row.auto_frame_error,
+    autoFrameUpdatedAt: row.auto_frame_updated_at,
     bannerUrl: row.banner_url,
     iconUrl: row.icon_url,
     overview: row.overview,
@@ -407,6 +446,111 @@ async function syncFromNexusCatalog() {
   };
 }
 
+async function generateAdultItemFrameById(id) {
+  await ensureSchema();
+  const current = await pool.query('SELECT * FROM ai_adult_catalog WHERE id = $1 LIMIT 1', [id]);
+  const item = current.rows[0];
+
+  if (!item) {
+    const error = new Error('Item adulto nao encontrado');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!item.source_url) {
+    const message = 'URL real do video ausente. Execute uma nova varredura Nexus para gravar a URL do stream.';
+    const { rows } = await pool.query(`
+      UPDATE ai_adult_catalog SET
+        auto_frame_status = 'failed',
+        auto_frame_error = $2,
+        auto_frame_updated_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `, [id, message]);
+    const error = new Error(message);
+    error.statusCode = 422;
+    error.item = rows[0] ? mapItem(rows[0]) : null;
+    throw error;
+  }
+
+  await pool.query(`
+    UPDATE ai_adult_catalog SET
+      auto_frame_status = 'processing',
+      auto_frame_error = NULL,
+      auto_frame_updated_at = CURRENT_TIMESTAMP,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $1
+  `, [id]);
+
+  try {
+    const frame = await captureMiddleFrameToSupabase(item.source_url, {
+      title: item.clean_name || item.original_name || `adult-${id}`,
+      folder: 'adult-middle-frames'
+    });
+
+    const { rows } = await pool.query(`
+      UPDATE ai_adult_catalog SET
+        poster_url = $2,
+        backdrop_url = COALESCE(NULLIF(backdrop_url, ''), $2),
+        auto_frame_url = $2,
+        auto_frame_status = 'ready',
+        auto_frame_error = NULL,
+        auto_frame_updated_at = CURRENT_TIMESTAMP,
+        image_source = 'auto_middle_frame',
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `, [id, frame.publicUrl]);
+
+    return mapItem(rows[0]);
+  } catch (error) {
+    const message = error?.message || 'Falha ao gerar imagem automatica do video.';
+    const { rows } = await pool.query(`
+      UPDATE ai_adult_catalog SET
+        auto_frame_status = 'failed',
+        auto_frame_error = $2,
+        auto_frame_updated_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `, [id, message]);
+    const wrapped = new Error(message);
+    wrapped.statusCode = 500;
+    wrapped.item = rows[0] ? mapItem(rows[0]) : null;
+    throw wrapped;
+  }
+}
+
+function queueAdultFrameBackfill(limit = 12) {
+  setTimeout(async () => {
+    try {
+      await ensureSchema();
+      const { rows } = await pool.query(`
+        SELECT id
+        FROM ai_adult_catalog
+        WHERE approval_status = 'approved'
+          AND is_hidden = false
+          AND source_url IS NOT NULL
+          AND (poster_url IS NULL OR poster_url = '')
+          AND COALESCE(auto_frame_status, '') <> 'processing'
+        ORDER BY updated_at DESC
+        LIMIT $1
+      `, [limit]);
+
+      for (const row of rows) {
+        try {
+          await generateAdultItemFrameById(row.id);
+        } catch (error) {
+          console.error('[AdultManager] Falha ao gerar frame adulto:', row.id, error.message);
+        }
+      }
+    } catch (error) {
+      console.error('[AdultManager] Backfill de imagens adulto falhou:', error.message);
+    }
+  }, 1000);
+}
+
 async function getConfig(req, res) {
   try {
     res.json({ success: true, config: await getConfigValue() });
@@ -429,10 +573,25 @@ async function updateConfig(req, res) {
 async function scanCatalog(req, res) {
   try {
     const result = await syncFromNexusCatalog();
+    queueAdultFrameBackfill();
     res.json({ success: true, result });
   } catch (error) {
     console.error('[AdultManager] scanCatalog:', error);
     res.status(500).json({ success: false, error: 'Falha ao varrer catalogo adulto' });
+  }
+}
+
+async function generateItemImage(req, res) {
+  try {
+    const item = await generateAdultItemFrameById(req.params.id);
+    res.json({ success: true, item });
+  } catch (error) {
+    console.error('[AdultManager] generateItemImage:', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message || 'Falha ao gerar imagem adulta',
+      item: error.item || null
+    });
   }
 }
 
@@ -631,7 +790,10 @@ async function getPublicCatalog(req, res) {
 
 function runAdultScanBackground() {
   syncFromNexusCatalog()
-    .then((result) => console.log('[AdultManager] Varredura Nexus adulto concluida:', result))
+    .then((result) => {
+      queueAdultFrameBackfill();
+      console.log('[AdultManager] Varredura Nexus adulto concluida:', result);
+    })
     .catch((error) => console.error('[AdultManager] Falha na varredura Nexus adulto:', error.message));
 }
 
@@ -644,8 +806,10 @@ module.exports = {
   updateCategory,
   updateItemStatus,
   updateItemFeature,
+  generateItemImage,
   getPublicCatalog,
   syncFromNexusCatalog,
+  generateAdultItemFrameById,
   runAdultScanBackground
 };
 

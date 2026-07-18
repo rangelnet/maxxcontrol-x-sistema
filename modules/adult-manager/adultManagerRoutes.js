@@ -12,5 +12,6 @@ router.post('/scan', controller.scanCatalog);
 router.post('/categories/:id', controller.updateCategory);
 router.post('/items/:id/status', controller.updateItemStatus);
 router.post('/items/:id/feature', controller.updateItemFeature);
+router.post('/items/:id/generate-image', controller.generateItemImage);
 
 module.exports = router;

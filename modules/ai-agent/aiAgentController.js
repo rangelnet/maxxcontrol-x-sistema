@@ -340,9 +340,9 @@ const parseApiToExtractVod = async (url) => {
              const savedContent = await pool.query(
                `INSERT INTO ai_vod_library (
                   name, type, category_name, source_dns, source_stream_id, source_series_id,
-                  source_category_id, container_extension, stream_icon, poster_url, image_source
+                  source_category_id, container_extension, stream_icon, poster_url, image_source, source_url
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, CASE WHEN $9 IS NULL THEN NULL ELSE 'iptv' END)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, CASE WHEN $9 IS NULL THEN NULL ELSE 'iptv' END, $10)
                 ON CONFLICT (name) DO UPDATE
                 SET occurrences = ai_vod_library.occurrences + 1,
                     updated_at = CURRENT_TIMESTAMP,
@@ -354,6 +354,7 @@ const parseApiToExtractVod = async (url) => {
                     source_category_id = COALESCE(EXCLUDED.source_category_id, ai_vod_library.source_category_id),
                     container_extension = COALESCE(EXCLUDED.container_extension, ai_vod_library.container_extension),
                     stream_icon = COALESCE(EXCLUDED.stream_icon, ai_vod_library.stream_icon),
+                    source_url = COALESCE(EXCLUDED.source_url, ai_vod_library.source_url),
                     poster_url = CASE
                       WHEN ai_vod_library.image_source = 'manual' THEN ai_vod_library.poster_url
                       WHEN ai_vod_library.auto_frame_url IS NOT NULL THEN ai_vod_library.auto_frame_url
@@ -374,7 +375,8 @@ const parseApiToExtractVod = async (url) => {
                  item.series_id ? String(item.series_id) : null,
                  item.category_id ? String(item.category_id) : null,
                  item.container_extension || null,
-                 item.stream_icon || null
+                 item.stream_icon || null,
+                 item.source_url || null
                ]
              );
 
@@ -613,6 +615,7 @@ exports.initAI = async () => {
         tmdb_id VARCHAR(50),
         poster_url TEXT,
         backdrop_url TEXT,
+        source_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`);
@@ -648,6 +651,7 @@ exports.initAI = async () => {
   try { await pool.query("UPDATE ai_vod_library SET type = 'movie' WHERE type IS NULL"); } catch(e){}
   try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS category_name VARCHAR(255)"); } catch(e){}
   try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_dns TEXT"); } catch(e){}
+  try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_url TEXT"); } catch(e){}
   try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_stream_id VARCHAR(100)"); } catch(e){}
   try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_series_id VARCHAR(100)"); } catch(e){}
   try { await pool.query("ALTER TABLE ai_vod_library ADD COLUMN IF NOT EXISTS source_category_id VARCHAR(100)"); } catch(e){}
