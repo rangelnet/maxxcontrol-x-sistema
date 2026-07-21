@@ -1,5 +1,38 @@
 const pool = require('../../config/database');
 
+const ANILIST_ENDPOINT = 'https://graphql.anilist.co';
+const ANIME_QUERY = `
+  query ($search: String) {
+    Media(search: $search, type: ANIME) {
+      id
+      idMal
+      title {
+        romaji
+        english
+        native
+      }
+      synonyms
+      genres
+      tags {
+        name
+      }
+      format
+      episodes
+      duration
+      seasonYear
+      status
+      averageScore
+      popularity
+      coverImage {
+        extraLarge
+        large
+      }
+      bannerImage
+      description
+    }
+  }
+`;
+
 
 const DEFAULT_CONFIG = {
   enabled: true,

@@ -9,6 +9,7 @@ router.get('/catalog', controller.getCatalog);
 router.get('/categories', controller.getCategories);
 router.get('/public', controller.getPublicCatalog);
 router.post('/scan', controller.scanCatalog);
+router.get('/scan/status', controller.getScanStatus);
 router.post('/categories/:id', controller.updateCategory);
 router.post('/items/:id/status', controller.updateItemStatus);
 router.post('/items/:id/feature', controller.updateItemFeature);

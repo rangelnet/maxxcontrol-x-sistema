@@ -6,6 +6,16 @@ const adultManager = require('../adult-manager/adultManagerController');
 const { captureMiddleFrameToSupabase } = require('../../services/videoFrameCapture');
 
 let currentTimer = null;
+const nexusFrameQueue = [];
+const nexusFrameQueuedIds = new Set();
+let nexusFrameWorkers = 0;
+const MAX_NEXUS_FRAME_WORKERS = Number(process.env.NEXUS_FRAME_WORKERS || 2);
+const NEXUS_FRAME_RETRY_COOLDOWN_MS = Number(process.env.NEXUS_FRAME_RETRY_COOLDOWN_MS || 12 * 60 * 60 * 1000);
+
+const normalizeText = (value = '') => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase();
 
 // Salva um log do Agente no Banco
 const logAgent = async (level, message, source = 'N/A') => {
@@ -129,6 +139,8 @@ const detectDirtyWords = (title) => {
   return [...new Set(found)];
 };
 
+const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const normalizeXtreamBaseUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
 
 const encodeXtreamPart = (value) => encodeURIComponent(String(value || '').trim());
@@ -147,9 +159,43 @@ const buildVodPlaybackUrl = (baseUrl, username, password, streamId, extension) =
   return normalizeXtreamBaseUrl(baseUrl) + '/movie/' + encodeXtreamPart(username) + '/' + encodeXtreamPart(password) + '/' + encodeURIComponent(String(streamId)) + '.' + cleanExtension(extension);
 };
 
+const NEXUS_ADULT_KEYWORDS = [
+  'adulto', 'adultos', 'adult', '18+', 'xxx', 'porn', 'porno', 'pornô',
+  'xvideos', 'onlyfans', 'privacy', 'sexo', 'sex', 'erotico', 'erótico',
+  'sensual', 'amador', 'amadora', 'lesbica', 'lésbica', 'milf', 'anal', 'oral'
+];
+
+const isNexusAdultCandidate = (item = {}) => {
+  const text = normalizeText([
+    item.name,
+    item.cat_name,
+    item.category_name,
+    item.group_title
+  ].filter(Boolean).join(' '));
+
+  return NEXUS_ADULT_KEYWORDS.some((keyword) => text.includes(normalizeText(keyword)));
+};
+
+const summarizeFrameError = (error) => {
+  const message = String(error?.message || error || 'Falha ao gerar imagem automatica do video.');
+  if (/404 Not Found/i.test(message)) return 'Stream indisponivel no provedor IPTV: 404 Not Found.';
+  if (/\b(401|403)\b|Unauthorized|Forbidden/i.test(message)) return 'Stream bloqueado pelo provedor IPTV: acesso negado.';
+  if (/timeout/i.test(message)) return 'Timeout ao ler o stream do provedor IPTV.';
+  if (/Invalid data|format|moov atom|could not find codec|End of file/i.test(message)) return 'Stream em formato invalido ou quebrado para captura automatica.';
+  return message.slice(0, 500);
+};
+
+const failedFrameRecently = (row = {}) => {
+  if (row.auto_frame_status !== 'failed' || !row.auto_frame_updated_at) return false;
+  const lastAttempt = new Date(row.auto_frame_updated_at).getTime();
+  return Number.isFinite(lastAttempt) && Date.now() - lastAttempt < NEXUS_FRAME_RETRY_COOLDOWN_MS;
+};
+
 const applyNexusMiddleFrame = async (libraryRow, item, sourceDns) => {
   if (!libraryRow?.id || item.type !== 'movie' || !item.source_url) return;
+  if (!isNexusAdultCandidate(item)) return;
   if (libraryRow.auto_frame_url && libraryRow.image_source === 'auto_middle_frame') return;
+  if (failedFrameRecently(libraryRow)) return;
 
   try {
     await pool.query(
@@ -179,14 +225,44 @@ const applyNexusMiddleFrame = async (libraryRow, item, sourceDns) => {
 
     await logAgent('success', 'Imagem automatica gerada do meio do video: ' + item.name + ' (' + frame.seekSeconds + 's)', sourceDns);
   } catch (error) {
+    const message = summarizeFrameError(error);
     await pool.query(
       `UPDATE ai_vod_library
        SET auto_frame_status = 'failed', auto_frame_error = $1, auto_frame_updated_at = NOW()
        WHERE id = $2`,
-      [String(error.message || error).slice(0, 500), libraryRow.id]
+      [message, libraryRow.id]
     ).catch(() => {});
-    await logAgent('warning', 'Falha ao gerar imagem do meio do video para ' + item.name + ': ' + error.message, sourceDns);
+    await logAgent('warning', 'Falha ao gerar imagem do meio do video para ' + item.name + ': ' + message, sourceDns);
   }
+};
+
+const drainNexusFrameQueue = () => {
+  while (nexusFrameWorkers < MAX_NEXUS_FRAME_WORKERS && nexusFrameQueue.length > 0) {
+    const job = nexusFrameQueue.shift();
+    nexusFrameWorkers += 1;
+
+    applyNexusMiddleFrame(job.libraryRow, job.item, job.sourceDns)
+      .catch((frameError) => {
+        console.error('[Nexus] Falha ao gerar frame medio:', job.item?.name, frameError.message);
+      })
+      .finally(() => {
+        if (job.libraryRow?.id) nexusFrameQueuedIds.delete(job.libraryRow.id);
+        nexusFrameWorkers -= 1;
+        setImmediate(drainNexusFrameQueue);
+      });
+  }
+};
+
+const enqueueNexusMiddleFrame = (libraryRow, item, sourceDns) => {
+  if (!libraryRow?.id || item.type !== 'movie' || !item.source_url) return;
+  if (!isNexusAdultCandidate(item)) return;
+  if (libraryRow.auto_frame_url && libraryRow.image_source === 'auto_middle_frame') return;
+  if (failedFrameRecently(libraryRow)) return;
+  if (nexusFrameQueuedIds.has(libraryRow.id)) return;
+
+  nexusFrameQueuedIds.add(libraryRow.id);
+  nexusFrameQueue.push({ libraryRow, item, sourceDns });
+  drainNexusFrameQueue();
 };
 
 const parseApiToExtractVod = async (url) => {
@@ -304,6 +380,11 @@ const parseApiToExtractVod = async (url) => {
     }
 
     if (allContent.length > 0) {
+       allContent = allContent
+         .map((item, index) => ({ item, index, adultPriority: isNexusAdultCandidate(item) ? 0 : 1 }))
+         .sort((a, b) => a.adultPriority - b.adultPriority || a.index - b.index)
+         .map(({ item }) => item);
+
        await logAgent('success', `Catálogo mapeado: ${allContent.length} itens encontrados (Filmes & Séries). Processando deduplicação em background...`, baseUrl);
        setTimeout(async () => {
          try {
@@ -338,11 +419,11 @@ const parseApiToExtractVod = async (url) => {
              }
 
              const savedContent = await pool.query(
-               `INSERT INTO ai_vod_library (
+              `INSERT INTO ai_vod_library (
                   name, type, category_name, source_dns, source_stream_id, source_series_id,
                   source_category_id, container_extension, stream_icon, poster_url, image_source, source_url
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, CASE WHEN $9 IS NULL THEN NULL ELSE 'iptv' END, $10)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10, $11)
                 ON CONFLICT (name) DO UPDATE
                 SET occurrences = ai_vod_library.occurrences + 1,
                     updated_at = CURRENT_TIMESTAMP,
@@ -376,11 +457,12 @@ const parseApiToExtractVod = async (url) => {
                  item.category_id ? String(item.category_id) : null,
                  item.container_extension || null,
                  item.stream_icon || null,
+                 item.stream_icon ? 'iptv' : null,
                  item.source_url || null
                ]
              );
 
-             await applyNexusMiddleFrame(savedContent.rows[0], item, baseUrl);
+             enqueueNexusMiddleFrame(savedContent.rows[0], item, baseUrl);
            }
            await logAgent('info', `✅ Processamento VOD/Series concluído: ${allContent.length} itens unificados.`, baseUrl);
          } catch (e) {
@@ -435,7 +517,7 @@ const runPlatformAudit = async () => {
       let cleanName = vod.name.replace(/\s*\(\d{4}\)\s*/g, ' ').replace(/\[.*?\]/g, ' ');
       for (const dw of dirtyWordsArray) {
         if (dw.length > 1) {
-          const reg = new RegExp(`\\b${dw}\\b`, 'gi');
+          const reg = new RegExp(`\\b${escapeRegExp(dw)}\\b`, 'gi');
           cleanName = cleanName.replace(reg, '');
         }
       }
